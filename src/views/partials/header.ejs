@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-surface">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoManager - Panel Santander</title>
+    <!-- Material Symbols & Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- Tailwind CSS CDN configurado con paleta Material Design 3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#006D44',
+                        'on-primary': '#FFFFFF',
+                        'primary-container': '#91F7BD',
+                        'on-primary-container': '#002111',
+                        surface: '#FBFDF8',
+                        'surface-container': '#EDF2EA',
+                        'surface-container-high': '#E7ECE4',
+                        'on-surface': '#191C1A',
+                        'on-surface-variant': '#404943',
+                        outline: '#707973',
+                        'outline-variant': '#BFC9C2',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-full flex text-on-surface antialiased">
+    <!-- Navegación Lateral (Navigation Rail / Drawer MD3) -->
+    <aside aria-label="Navegación Principal"
+        class="w-72 bg-surface-container border-r border-outline-variant/40 flex flex-col justify-between p-4 h-screen sticky top-0">
+        <div>
+            <div class="flex items-center gap-3 px-4 py-3 mb-4">
+                <span class="material-symbols-outlined text-primary text-3xl" aria-hidden="true">recycling</span>
+                <div>
+                    <h1 class="font-bold text-base text-on-surface tracking-tight leading-none">EcoManager</h1>
+                    <span class="text-xs text-on-surface-variant font-medium">Bucaramanga • Santander</span>
+                </div>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="/gestores"
+                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'gestores' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    <%=activeTab==='gestores' ? 'aria-current="page"' : '' %>
+                    >
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">domain</span>
+                    <span>Gestores Certificados</span>
+                </a>
+
+                <a href="/materiales"
+                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'materiales' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    <%=activeTab==='materiales' ? 'aria-current="page"' : '' %>
+                    >
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">category</span>
+                    <span>Catálogo RESPEL</span>
+                </a>
+
+                <a href="/autoridades"
+                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'autoridades' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    <%=activeTab==='autoridades' ? 'aria-current="page"' : '' %>
+                    >
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">account_balance</span>
+                    <span>Autoridades Locales</span>
+                </a>
+            </nav>
+        </div>
+
+        <div
+            class="px-4 py-3 border-t border-outline-variant/30 text-xs text-on-surface-variant flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-primary inline-block" aria-hidden="true"></span>
+            <span>Base de datos activa</span>
+        </div>
+    </aside>
+
+    <!-- Contenedor Principal -->
+    <main id="main-content" class="flex-1 p-8 overflow-y-auto bg-surface">

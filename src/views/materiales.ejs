@@ -1,0 +1,144 @@
+<%- include('partials/header', { activeTab: 'materiales' }) %>
+
+    <div class="max-w-7xl mx-auto space-y-8">
+        <%- include('partials/alert') %>
+
+            <header
+                class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-on-surface">Catálogo Maestro de Residuos (RESPEL)</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Clasificación bajo estándares normativos y Convenio
+                        de Basilea</p>
+                </div>
+                <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
+                    Total: <%= materiales.length %> códigos
+                </span>
+            </header>
+
+            <section aria-labelledby="form-material-title"
+                class="bg-surface rounded-3xl border border-outline-variant p-6 shadow-sm">
+                <h3 id="form-material-title" class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">post_add</span>
+                    <span>Añadir Residuo al Catálogo</span>
+                </h3>
+
+                <form action="/materiales" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label for="codigo" class="block text-xs font-medium text-on-surface-variant mb-1">Código
+                            Oficial *</label>
+                        <input type="text" id="codigo" name="codigo" required placeholder="Ej: Y8, Y9.2, A1160"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="nombre_comun" class="block text-xs font-medium text-on-surface-variant mb-1">Nombre
+                            Descriptivo *</label>
+                        <input type="text" id="nombre_comun" name="nombre_comun" required
+                            placeholder="Aceites minerales usados"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="categoria" class="block text-xs font-medium text-on-surface-variant mb-1">Categoría
+                            de Riesgo *</label>
+                        <select id="categoria" name="categoria" required
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="PELIGROSO">PELIGROSO</option>
+                            <option value="BIOSANITARIO">BIOSANITARIO</option>
+                            <option value="INDUSTRIAL">INDUSTRIAL</option>
+                            <option value="RAEE">RAEE</option>
+                            <option value="APROVECHABLE">APROVECHABLE</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label for="descripcion"
+                            class="block text-xs font-medium text-on-surface-variant mb-1">Descripción Técnica del
+                            Desecho *</label>
+                        <textarea id="descripcion" name="descripcion" required rows="2"
+                            placeholder="Especificar componentes, estado físico y ejemplos de desecho..."
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label for="guia_manejo" class="block text-xs font-medium text-on-surface-variant mb-1">Guía y
+                            Recomendaciones de Acopio</label>
+                        <textarea id="guia_manejo" name="guia_manejo" rows="2"
+                            placeholder="Rotulado requerido, tipo de contenedor y condiciones de ventilación..."
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                    </div>
+
+                    <div class="md:col-span-3 flex justify-end">
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-3 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                            <span>Guardar en Catálogo</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section aria-labelledby="table-mat-title"
+                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-outline-variant/40">
+                    <h3 id="table-mat-title" class="text-lg font-semibold text-on-surface">Materiales Registrados</h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead
+                            class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
+                            <tr>
+                                <th scope="col" class="py-3.5 px-6">Código</th>
+                                <th scope="col" class="py-3.5 px-6">Nombre Común</th>
+                                <th scope="col" class="py-3.5 px-6">Categoría</th>
+                                <th scope="col" class="py-3.5 px-6">Descripción</th>
+                                <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant/20">
+                            <% if (materiales && materiales.length> 0) { %>
+                                <% materiales.forEach(function(m) { %>
+                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                        <td class="py-4 px-6 font-mono font-bold text-primary">
+                                            <%= m.codigo %>
+                                        </td>
+                                        <td class="py-4 px-6 font-semibold text-on-surface">
+                                            <%= m.nombre_comun %>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <span
+                                                class="px-2.5 py-1 rounded-full text-xs font-semibold <%= m.categoria === 'PELIGROSO' ? 'bg-red-100 text-red-800' : (m.categoria === 'BIOSANITARIO' ? 'bg-amber-100 text-amber-900' : 'bg-surface-container-high text-on-surface-variant') %>">
+                                                <%= m.categoria %>
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-6 text-xs text-on-surface-variant max-w-sm">
+                                            <%= m.descripcion %>
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            <form action="/materiales/delete/<%= m.id %>" method="POST"
+                                                onsubmit="return confirm('¿Eliminar este material?');" class="inline">
+                                                <button type="submit" aria-label="Eliminar material <%= m.codigo %>"
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                                                    <span class="material-symbols-outlined text-lg"
+                                                        aria-hidden="true">delete</span>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="5" class="py-12 text-center text-on-surface-variant">
+                                                    No hay materiales registrados en el catálogo.
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+    </div>
+
+    <%- include('partials/footer') %>

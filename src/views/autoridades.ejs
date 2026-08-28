@@ -1,0 +1,163 @@
+<%- include('partials/header', { activeTab: 'autoridades' }) %>
+
+    <div class="max-w-7xl mx-auto space-y-8">
+        <%- include('partials/alert') %>
+
+            <header
+                class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-on-surface">Autoridades Ambientales</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Directorio de corporaciones autónomas y entidades de
+                        control</p>
+                </div>
+                <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
+                    Total: <%= autoridades.length %> entidades
+                </span>
+            </header>
+
+            <section aria-labelledby="form-aut-title"
+                class="bg-surface rounded-3xl border border-outline-variant p-6 shadow-sm">
+                <h3 id="form-aut-title" class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl"
+                        aria-hidden="true">account_balance</span>
+                    <span>Registrar Autoridad Ambiental</span>
+                </h3>
+
+                <form action="/autoridades" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="nombre" class="block text-xs font-medium text-on-surface-variant mb-1">Nombre
+                            Institucional *</label>
+                        <input type="text" id="nombre" name="nombre" required
+                            placeholder="Corporación Autónoma Regional..."
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="sigla" class="block text-xs font-medium text-on-surface-variant mb-1">Sigla Oficial
+                            *</label>
+                        <input type="text" id="sigla" name="sigla" required placeholder="CDMB, AMB, CAS"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="jurisdiccion"
+                            class="block text-xs font-medium text-on-surface-variant mb-1">Jurisdicción Territorial
+                            *</label>
+                        <input type="text" id="jurisdiccion" name="jurisdiccion" required
+                            placeholder="Área metropolitana y municipios de la meseta"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="telefono" class="block text-xs font-medium text-on-surface-variant mb-1">Teléfono
+                            Institucional *</label>
+                        <input type="tel" id="telefono" name="telefono" required placeholder="6076346100"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-xs font-medium text-on-surface-variant mb-1">Correo
+                            Electrónico *</label>
+                        <input type="email" id="email" name="email" required placeholder="contacto@cdmb.gov.co"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="sitio_web" class="block text-xs font-medium text-on-surface-variant mb-1">Portal Web
+                            Oficial *</label>
+                        <input type="url" id="sitio_web" name="sitio_web" required placeholder="https://www.cdmb.gov.co"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label for="direccion" class="block text-xs font-medium text-on-surface-variant mb-1">Dirección
+                            Sede Principal *</label>
+                        <input type="text" id="direccion" name="direccion" required
+                            placeholder="Carrera 23 # 37-63, Bucaramanga"
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-3 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                            <span>Guardar Autoridad</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section aria-labelledby="table-aut-title"
+                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-outline-variant/40">
+                    <h3 id="table-aut-title" class="text-lg font-semibold text-on-surface">Directorio Oficial</h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead
+                            class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
+                            <tr>
+                                <th scope="col" class="py-3.5 px-6">Sigla</th>
+                                <th scope="col" class="py-3.5 px-6">Nombre Oficial</th>
+                                <th scope="col" class="py-3.5 px-6">Jurisdicción</th>
+                                <th scope="col" class="py-3.5 px-6">Contacto</th>
+                                <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant/20">
+                            <% if (autoridades && autoridades.length> 0) { %>
+                                <% autoridades.forEach(function(a) { %>
+                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                        <td class="py-4 px-6 font-bold text-on-surface">
+                                            <%= a.sigla %>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <span class="font-medium text-on-surface block">
+                                                <%= a.nombre %>
+                                            </span>
+                                            <a href="<%= a.sitio_web %>" target="_blank" rel="noopener noreferrer"
+                                                class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
+                                                <span>Sitio Web</span>
+                                                <span class="material-symbols-outlined text-[13px]"
+                                                    aria-hidden="true">open_in_new</span>
+                                            </a>
+                                        </td>
+                                        <td class="py-4 px-6 text-xs text-on-surface-variant">
+                                            <%= a.jurisdiccion %>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <span class="block text-xs font-medium text-on-surface">
+                                                <%= a.telefono %>
+                                            </span>
+                                            <span class="block text-xs text-on-surface-variant">
+                                                <%= a.email %>
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            <form action="/autoridades/delete/<%= a.id %>" method="POST"
+                                                onsubmit="return confirm('¿Eliminar esta autoridad?');" class="inline">
+                                                <button type="submit" aria-label="Eliminar <%= a.sigla %>"
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                                                    <span class="material-symbols-outlined text-lg"
+                                                        aria-hidden="true">delete</span>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="5" class="py-12 text-center text-on-surface-variant">
+                                                    No hay autoridades cargadas en la base de datos.
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+    </div>
+
+    <%- include('partials/footer') %>
