@@ -3,6 +3,7 @@
     <div class="max-w-7xl mx-auto space-y-8">
         <%- include('partials/alert') %>
 
+            <!-- Cabecera de Página -->
             <header
                 class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
                 <div>
@@ -10,12 +11,13 @@
                     <p class="text-sm text-on-surface-variant mt-1">Directorio de corporaciones autónomas y entidades de
                         control</p>
                 </div>
-                <span
+                <span id="aut-counter-badge"
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
                     Total: <%= autoridades.length %> entidades
                 </span>
             </header>
 
+            <!-- Tarjeta Formulario de Inserción (MD3 Outlined Card) -->
             <section aria-labelledby="form-aut-title"
                 class="bg-surface rounded-3xl border border-outline-variant p-6 shadow-sm">
                 <h3 id="form-aut-title" class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
@@ -37,7 +39,7 @@
                         <label for="sigla" class="block text-xs font-medium text-on-surface-variant mb-1">Sigla Oficial
                             *</label>
                         <input type="text" id="sigla" name="sigla" required placeholder="CDMB, AMB, CAS"
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-semibold">
                     </div>
 
                     <div class="md:col-span-2">
@@ -88,14 +90,43 @@
                 </form>
             </section>
 
+            <!-- Tarjeta Tabla de Directorio con Buscador y Filtros -->
             <section aria-labelledby="table-aut-title"
-                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-outline-variant/40">
-                    <h3 id="table-aut-title" class="text-lg font-semibold text-on-surface">Directorio Oficial</h3>
+                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden space-y-4">
+                
+                <div class="p-6 border-b border-outline-variant/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 id="table-aut-title" class="text-lg font-semibold text-on-surface">Directorio Oficial</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Entidades reguladoras y de supervisión ambiental</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <!-- Buscador por Texto -->
+                        <div class="relative min-w-[260px]">
+                            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg select-none pointer-events-none"
+                                aria-hidden="true">search</span>
+                            <input type="text" id="busquedaAutoridad" placeholder="Buscar por sigla, nombre, jurisdicción..."
+                                class="w-full pl-10 pr-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <!-- Selector Filtro de Jurisdicción -->
+                        <div class="relative">
+                            <select id="filtroJurisdiccion"
+                                class="w-full sm:w-auto px-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                                <option value="TODAS">Todas las Jurisdicciones</option>
+                                <% 
+                                    const siglasUnicas = Array.from(new Set(autoridades.map(a => (a.sigla || '').toUpperCase()).filter(Boolean))).sort();
+                                    siglasUnicas.forEach(function(sig) { 
+                                %>
+                                    <option value="<%= sig %>"><%= sig %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
+                    <table class="w-full text-left text-sm" id="tablaAutoridades">
                         <thead
                             class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
                             <tr>
@@ -103,13 +134,19 @@
                                 <th scope="col" class="py-3.5 px-6">Nombre Oficial</th>
                                 <th scope="col" class="py-3.5 px-6">Jurisdicción</th>
                                 <th scope="col" class="py-3.5 px-6">Contacto</th>
+                                <th scope="col" class="py-3.5 px-6">Sede / Ubicación</th>
                                 <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-outline-variant/20">
-                            <% if (autoridades && autoridades.length> 0) { %>
+                            <% if (autoridades && autoridades.length > 0) { %>
                                 <% autoridades.forEach(function(a) { %>
-                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                    <tr class="hover:bg-surface-container-high/40 transition fila-autoridad"
+                                        data-sigla="<%= a.sigla || '' %>"
+                                        data-nombre="<%= a.nombre || '' %>"
+                                        data-jurisdiccion="<%= a.jurisdiccion || '' %>"
+                                        data-direccion="<%= a.direccion || '' %>"
+                                        data-contacto="<%= (a.telefono || '') + ' ' + (a.email || '') %>">
                                         <td class="py-4 px-6 font-bold text-on-surface">
                                             <%= a.sigla %>
                                         </td>
@@ -117,12 +154,14 @@
                                             <span class="font-medium text-on-surface block">
                                                 <%= a.nombre %>
                                             </span>
-                                            <a href="<%= a.sitio_web %>" target="_blank" rel="noopener noreferrer"
-                                                class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
-                                                <span>Sitio Web</span>
-                                                <span class="material-symbols-outlined text-[13px]"
-                                                    aria-hidden="true">open_in_new</span>
-                                            </a>
+                                            <% if (a.sitio_web) { %>
+                                                <a href="<%= a.sitio_web %>" target="_blank" rel="noopener noreferrer"
+                                                    class="text-xs text-primary hover:underline inline-flex items-center gap-0.5 mt-0.5">
+                                                    <span>Sitio Web</span>
+                                                    <span class="material-symbols-outlined text-[13px]"
+                                                        aria-hidden="true">open_in_new</span>
+                                                </a>
+                                            <% } %>
                                         </td>
                                         <td class="py-4 px-6 text-xs text-on-surface-variant">
                                             <%= a.jurisdiccion %>
@@ -135,29 +174,127 @@
                                                 <%= a.email %>
                                             </span>
                                         </td>
+                                        <td class="py-4 px-6 text-xs text-on-surface max-w-xs">
+                                            <% if (a.direccion && a.direccion.trim() !== '') { %>
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span class="text-xs text-on-surface"><%= a.direccion %></span>
+                                                    <a href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(a.direccion + ', Santander, Colombia') %>"
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        class="p-1.5 text-primary hover:bg-primary/10 rounded-full transition flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary"
+                                                        title="Ver sede en Google Maps">
+                                                        <span class="material-symbols-outlined text-lg" aria-hidden="true">pin_drop</span>
+                                                    </a>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-xs text-on-surface-variant italic">No registrada</span>
+                                            <% } %>
+                                        </td>
                                         <td class="py-4 px-6 text-right">
-                                            <form action="/autoridades/delete/<%= a.id %>" method="POST"
-                                                onsubmit="return confirm('¿Eliminar esta autoridad?');" class="inline">
-                                                <button type="submit" aria-label="Eliminar <%= a.sigla %>"
-                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500">
-                                                    <span class="material-symbols-outlined text-lg"
-                                                        aria-hidden="true">delete</span>
-                                                </button>
-                                            </form>
+                                            <div class="inline-flex items-center gap-1">
+                                                <a href="/autoridades/edit/<%= a.id %>"
+                                                    aria-label="Editar autoridad <%= a.sigla %>"
+                                                    class="p-2 text-primary hover:bg-primary/10 rounded-full transition focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    title="Editar Autoridad">
+                                                    <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
+                                                </a>
+                                                <form action="/autoridades/delete/<%= a.id %>" method="POST"
+                                                    onsubmit="return confirm('¿Eliminar esta autoridad?');" class="inline">
+                                                    <button type="submit" aria-label="Eliminar <%= a.sigla %>"
+                                                        class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                        title="Eliminar Autoridad">
+                                                        <span class="material-symbols-outlined text-lg"
+                                                            aria-hidden="true">delete</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
-                                    <% }); %>
-                                        <% } else { %>
-                                            <tr>
-                                                <td colspan="5" class="py-12 text-center text-on-surface-variant">
-                                                    No hay autoridades cargadas en la base de datos.
-                                                </td>
-                                            </tr>
-                                            <% } %>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                        No hay autoridades cargadas en la base de datos.
+                                    </td>
+                                </tr>
+                            <% } %>
+                            <!-- Mensaje cuando la búsqueda no arroja coincidencias -->
+                            <tr id="sinCoincidenciasAut" class="hidden">
+                                <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                    <span class="material-symbols-outlined text-2xl text-on-surface-variant block mb-1">search_off</span>
+                                    No se encontraron autoridades que coincidan con la búsqueda o filtro seleccionado.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
     </div>
+
+    <!-- Script para Búsqueda Dinámica de Autoridades Insensible a Tildes y Mayúsculas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputBusqueda = document.getElementById('busquedaAutoridad');
+            const selectFiltro = document.getElementById('filtroJurisdiccion');
+            const filas = document.querySelectorAll('.fila-autoridad');
+            const sinCoincidencias = document.getElementById('sinCoincidenciasAut');
+            const counterBadge = document.getElementById('aut-counter-badge');
+            const totalRegistros = filas.length;
+
+            // Normalización para eliminar tildes y normalizar mayúsculas/minúsculas
+            function normalizar(texto) {
+                return (texto || '')
+                    .toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            }
+
+            function filtrarTabla() {
+                const query = normalizar(inputBusqueda?.value);
+                const siglaSeleccionada = normalizar(selectFiltro?.value);
+                let visibles = 0;
+
+                filas.forEach(fila => {
+                    const sigla = normalizar(fila.getAttribute('data-sigla'));
+                    const nombre = normalizar(fila.getAttribute('data-nombre'));
+                    const jurisdiccion = normalizar(fila.getAttribute('data-jurisdiccion'));
+                    const direccion = normalizar(fila.getAttribute('data-direccion'));
+                    const contacto = normalizar(fila.getAttribute('data-contacto'));
+
+                    const coincideTexto = !query || 
+                        sigla.includes(query) || 
+                        nombre.includes(query) || 
+                        jurisdiccion.includes(query) || 
+                        direccion.includes(query) || 
+                        contacto.includes(query);
+
+                    const coincideFiltro = siglaSeleccionada === 'todas' || sigla === siglaSeleccionada;
+
+                    if (coincideTexto && coincideFiltro) {
+                        fila.style.display = '';
+                        visibles++;
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+
+                if (sinCoincidencias) {
+                    sinCoincidencias.classList.toggle('hidden', visibles > 0 || totalRegistros === 0);
+                }
+
+                if (counterBadge) {
+                    if (query || siglaSeleccionada !== 'todas') {
+                        counterBadge.textContent = `Filtradas: ${visibles} de ${totalRegistros} entidades`;
+                    } else {
+                        counterBadge.textContent = `Total: ${totalRegistros} entidades`;
+                    }
+                }
+            }
+
+            inputBusqueda?.addEventListener('input', filtrarTabla);
+            selectFiltro?.addEventListener('change', filtrarTabla);
+        });
+    </script>
 
     <%- include('partials/footer') %>

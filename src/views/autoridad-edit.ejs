@@ -1,0 +1,102 @@
+<%- include('partials/header', { activeTab: 'autoridades' }) %>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <%- include('partials/alert') %>
+
+            <!-- Cabecera de Página y Navegación de Regreso -->
+            <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-1">
+                        <a href="/autoridades" class="hover:text-primary transition flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span>Volver a Autoridades Locales</span>
+                        </a>
+                        <span>/</span>
+                        <span class="text-on-surface">Edición</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-on-surface">Editar Autoridad Ambiental</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Actualiza los datos institucionales, contacto y sede de control</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant font-mono">
+                        ID: <%= autoridad.id %>
+                    </span>
+                </div>
+            </header>
+
+            <!-- Tarjeta Formulario de Edición (MD3 Outlined Card) -->
+            <section aria-labelledby="edit-aut-title" class="bg-surface rounded-3xl border border-outline-variant p-6 md:p-8 shadow-sm">
+                <h3 id="edit-aut-title" class="text-lg font-semibold text-on-surface mb-6 flex items-center gap-2 border-b border-outline-variant/30 pb-4">
+                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">edit_note</span>
+                    <span>Modificar Información Institucional</span>
+                </h3>
+
+                <form action="/autoridades/edit/<%= autoridad.id %>" method="POST" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="nombre" class="block text-xs font-medium text-on-surface-variant mb-1.5">Nombre Institucional *</label>
+                            <input type="text" id="nombre" name="nombre" required value="<%= autoridad.nombre %>"
+                                placeholder="Corporación Autónoma Regional..."
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="sigla" class="block text-xs font-medium text-on-surface-variant mb-1.5">Sigla Oficial *</label>
+                            <input type="text" id="sigla" name="sigla" required value="<%= autoridad.sigla %>"
+                                placeholder="CDMB, AMB, CAS"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition uppercase font-semibold">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="jurisdiccion" class="block text-xs font-medium text-on-surface-variant mb-1.5">Jurisdicción Territorial *</label>
+                            <input type="text" id="jurisdiccion" name="jurisdiccion" required value="<%= autoridad.jurisdiccion %>"
+                                placeholder="Área metropolitana y municipios de la meseta"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="telefono" class="block text-xs font-medium text-on-surface-variant mb-1.5">Teléfono Institucional *</label>
+                            <input type="tel" id="telefono" name="telefono" required value="<%= autoridad.telefono %>"
+                                placeholder="6076346100"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-xs font-medium text-on-surface-variant mb-1.5">Correo Electrónico *</label>
+                            <input type="email" id="email" name="email" required value="<%= autoridad.email %>"
+                                placeholder="contacto@cdmb.gov.co"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="sitio_web" class="block text-xs font-medium text-on-surface-variant mb-1.5">Portal Web Oficial *</label>
+                            <input type="url" id="sitio_web" name="sitio_web" required value="<%= autoridad.sitio_web %>"
+                                placeholder="https://www.cdmb.gov.co"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="direccion" class="block text-xs font-medium text-on-surface-variant mb-1.5">Dirección Sede Principal *</label>
+                            <input type="text" id="direccion" name="direccion" required value="<%= autoridad.direccion %>"
+                                placeholder="Carrera 23 # 37-63, Bucaramanga"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
+                        <a href="/autoridades"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-outline text-sm font-medium text-on-surface hover:bg-surface-container-high transition focus:outline-none focus:ring-2 focus:ring-primary">
+                            <span>Cancelar</span>
+                        </a>
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-2.5 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+    </div>
+
+    <%- include('partials/footer') %>

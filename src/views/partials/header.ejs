@@ -80,12 +80,43 @@
             </nav>
         </div>
 
-        <div
-            class="px-4 py-3 border-t border-outline-variant/30 text-xs text-on-surface-variant flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-primary inline-block" aria-hidden="true"></span>
-            <span>Base de datos activa</span>
+        <div class="space-y-2 pt-4 border-t border-outline-variant/30">
+            <a href="/logout"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-on-surface-variant hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                title="Cerrar sesión"
+                aria-label="Cerrar sesión">
+                <span class="material-symbols-outlined text-xl text-red-600" aria-hidden="true">logout</span>
+                <span>Cerrar Sesión</span>
+            </a>
+
+            <div class="px-4 py-1 text-xs text-on-surface-variant flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-primary inline-block" aria-hidden="true"></span>
+                <span>Base de datos activa</span>
+            </div>
         </div>
     </aside>
+
+    <script>
+      (function() {
+        const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutos de inactividad
+        let inactivityTimer;
+
+        function resetInactivityTimer() {
+          clearTimeout(inactivityTimer);
+          inactivityTimer = setTimeout(() => {
+            window.location.href = '/logout?msg=Tu+sesi%C3%B3n+ha+expirado+por+inactividad+(15+minutos)&type=error';
+          }, INACTIVITY_LIMIT_MS);
+        }
+
+        // Eventos que reinician el temporizador de inactividad
+        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(event => {
+          window.addEventListener(event, resetInactivityTimer, { passive: true });
+        });
+
+        // Iniciar temporizador
+        resetInactivityTimer();
+      })();
+    </script>
 
     <!-- Contenedor Principal -->
     <main id="main-content" class="flex-1 p-8 overflow-y-auto bg-surface">

@@ -11,7 +11,7 @@
                     <p class="text-sm text-on-surface-variant mt-1">Directorio de empresas autorizadas en Bucaramanga y
                         Santander</p>
                 </div>
-                <span
+                <span id="gestores-counter-badge"
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
                     Total: <%= gestores.length %> entidades
                 </span>
@@ -29,6 +29,7 @@
                     <div>
                         <label for="nit" class="block text-xs font-medium text-on-surface-variant mb-1">NIT *</label>
                         <input type="text" id="nit" name="nit" required placeholder="900396512"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
 
@@ -43,7 +44,7 @@
                     <div>
                         <label for="municipio" class="block text-xs font-medium text-on-surface-variant mb-1">Municipio
                             *</label>
-                        <input type="text" id="municipio" name="municipio" required value="BUCARAMANGA"
+                        <input type="text" id="municipio" name="municipio" placeholder="Bucaramanga"
                             class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
 
@@ -68,11 +69,11 @@
                         <label for="telefono_contacto"
                             class="block text-xs font-medium text-on-surface-variant mb-1">Teléfono Principal *</label>
                         <input type="tel" id="telefono_contacto" name="telefono_contacto" required
-                            placeholder="6076768585"
+                            placeholder="6076768585" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
 
-                    <div>
+                    <div class="md:col-span-2">
                         <label for="email_contacto" class="block text-xs font-medium text-on-surface-variant mb-1">Email
                             Corporativo *</label>
                         <input type="email" id="email_contacto" name="email_contacto" required
@@ -80,19 +81,40 @@
                             class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="latitud" class="block text-xs font-medium text-on-surface-variant mb-1">Latitud
-                                *</label>
-                            <input type="number" step="any" id="latitud" name="latitud" required value="7.10971682"
-                                class="w-full px-3 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="longitud"
-                                class="block text-xs font-medium text-on-surface-variant mb-1">Longitud *</label>
-                            <input type="number" step="any" id="longitud" name="longitud" required value="-73.16346290"
-                                class="w-full px-3 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                        </div>
+                    <!-- Selección de Residuos / Materiales Autorizados (N:M) -->
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-medium text-on-surface-variant mb-2">
+                            Residuos y Materiales Autorizados (Selección Múltiple)
+                        </label>
+                        <% if (typeof materialesDisponibles !=='undefined' && materialesDisponibles && materialesDisponibles.length> 0) { %>
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto p-3 rounded-2xl bg-surface-container/50 border border-outline-variant/60">
+                                <% materialesDisponibles.forEach(function(mat) { %>
+                                    <label for="mat_<%= mat.id %>"
+                                        class="flex items-start gap-2.5 p-2 rounded-xl bg-surface border border-outline-variant/40 hover:border-primary hover:bg-primary/5 transition cursor-pointer select-none">
+                                        <input type="checkbox" id="mat_<%= mat.id %>" name="materiales_ids[]"
+                                            value="<%= mat.id %>"
+                                            class="mt-0.5 h-4 w-4 rounded border-outline text-primary focus:ring-primary focus:ring-offset-0">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="font-mono text-xs font-bold text-primary">
+                                                    <%= mat.codigo %>
+                                                </span>
+                                                <span
+                                                    class="text-[10px] px-1.5 py-0.2 rounded-full font-medium <%= mat.categoria === 'PELIGROSO' ? 'bg-amber-100 text-amber-900' : (mat.categoria === 'BIOSANITARIO' ? 'bg-rose-100 text-rose-900' : 'bg-emerald-100 text-emerald-900') %>">
+                                                    <%= mat.categoria %>
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-on-surface truncate" title="<%= mat.nombre_comun %>">
+                                                <%= mat.nombre_comun %>
+                                            </p>
+                                        </div>
+                                    </label>
+                                    <% }); %>
+                            </div>
+                            <% } else { %>
+                                <p class="text-xs text-on-surface-variant italic">No hay residuos disponibles en el catálogo.</p>
+                            <% } %>
                     </div>
 
                     <div class="md:col-span-3 flex justify-end mt-2">
@@ -105,29 +127,68 @@
                 </form>
             </section>
 
-            <!-- Tarjeta Tabla (MD3 Surface Container) -->
+            <!-- Tarjeta Tabla con Buscador y Filtro por Municipio (MD3 Surface Container) -->
             <section aria-labelledby="table-title"
-                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-outline-variant/40">
-                    <h3 id="table-title" class="text-lg font-semibold text-on-surface">Listado de Gestores</h3>
+                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden space-y-4">
+                
+                <!-- Barra de Búsqueda y Filtros de Gestores -->
+                <div class="p-6 border-b border-outline-variant/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 id="table-title" class="text-lg font-semibold text-on-surface">Listado de Gestores</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Búsqueda rápida por nombre, NIT, municipio o residuos</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <!-- Buscador por Texto -->
+                        <div class="relative min-w-[260px]">
+                            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg select-none pointer-events-none"
+                                aria-hidden="true">search</span>
+                            <input type="text" id="busquedaGestor" placeholder="Buscar por NIT, razón social, dirección..."
+                                class="w-full pl-10 pr-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <!-- Selector Filtro de Municipio -->
+                        <div class="relative">
+                            <select id="filtroMunicipioGestor"
+                                class="w-full sm:w-auto px-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                                <option value="TODOS">Todos los Municipios</option>
+                                <% 
+                                    const municipiosUnicos = Array.from(new Set(gestores.map(g => (g.municipio || '').toUpperCase()).filter(Boolean))).sort();
+                                    municipiosUnicos.forEach(function(muni) { 
+                                %>
+                                    <option value="<%= muni %>"><%= muni %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
+                    <table class="w-full text-left text-sm" id="tablaGestores">
                         <thead
                             class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
                             <tr>
                                 <th scope="col" class="py-3.5 px-6">NIT</th>
                                 <th scope="col" class="py-3.5 px-6">Razón Social</th>
                                 <th scope="col" class="py-3.5 px-6">Municipio</th>
+                                <th scope="col" class="py-3.5 px-6">Residuos Autorizados</th>
                                 <th scope="col" class="py-3.5 px-6">Contacto</th>
+                                <th scope="col" class="py-3.5 px-6">Sede / Ubicación</th>
                                 <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-outline-variant/20">
                             <% if (gestores && gestores.length> 0) { %>
-                                <% gestores.forEach(function(g) { %>
-                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                <% gestores.forEach(function(g) { 
+                                    const listaMaterialesTexto = (g.materiales || []).map(m => (m.codigo + ' ' + m.nombre_comun)).join(' ');
+                                %>
+                                    <tr class="hover:bg-surface-container-high/40 transition fila-gestor"
+                                        data-nit="<%= g.nit || '' %>"
+                                        data-razon="<%= g.razon_social || '' %>"
+                                        data-municipio="<%= g.municipio || '' %>"
+                                        data-direccion="<%= g.direccion || '' %>"
+                                        data-contacto="<%= (g.telefono_contacto || '') + ' ' + (g.email_contacto || '') + ' ' + (g.representante_legal || '') %>"
+                                        data-materiales="<%= listaMaterialesTexto %>">
                                         <td class="py-4 px-6 font-mono text-xs font-medium text-on-surface">
                                             <%= g.nit %>
                                         </td>
@@ -135,15 +196,28 @@
                                             <span class="font-semibold text-on-surface block">
                                                 <%= g.razon_social %>
                                             </span>
-                                            <span class="text-xs text-on-surface-variant">
-                                                <%= g.direccion %>
-                                            </span>
                                         </td>
                                         <td class="py-4 px-6">
                                             <span
                                                 class="px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container-high text-on-surface-variant">
                                                 <%= g.municipio %>
                                             </span>
+                                        </td>
+                                        <td class="py-4 px-6 max-w-xs">
+                                            <% if (g.materiales && g.materiales.length> 0) { %>
+                                                <div class="flex flex-wrap gap-1">
+                                                    <% g.materiales.forEach(function(m) { %>
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold <%= m.categoria === 'PELIGROSO' ? 'bg-amber-50 text-amber-900 border border-amber-200' : (m.categoria === 'BIOSANITARIO' ? 'bg-rose-50 text-rose-900 border border-rose-200' : 'bg-emerald-50 text-emerald-900 border border-emerald-200') %>"
+                                                            title="<%= m.codigo %> - <%= m.nombre_comun %> (<%= m.categoria %>)">
+                                                            <%= m.codigo %>
+                                                        </span>
+                                                        <% }); %>
+                                                </div>
+                                                <% } else { %>
+                                                    <span class="text-xs text-on-surface-variant italic">Sin
+                                                        residuos</span>
+                                                    <% } %>
                                         </td>
                                         <td class="py-4 px-6">
                                             <span class="block text-xs font-medium text-on-surface">
@@ -153,30 +227,133 @@
                                                 <%= g.email_contacto %>
                                             </span>
                                         </td>
+                                        <td class="py-4 px-6 text-xs text-on-surface max-w-xs">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="text-xs text-on-surface">
+                                                    <%= g.direccion || 'Sin dirección registrada' %>
+                                                </span>
+                                                <% if (g.latitud && g.longitud) { %>
+                                                    <a href="https://www.google.com/maps/search/?api=1&query=<%= g.latitud %>,<%= g.longitud %>"
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        class="p-1.5 text-primary hover:bg-primary/10 rounded-full transition flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary"
+                                                        title="Ver ubicación en Google Maps">
+                                                        <span class="material-symbols-outlined text-lg"
+                                                            aria-hidden="true">pin_drop</span>
+                                                    </a>
+                                                    <% } %>
+                                            </div>
+                                        </td>
                                         <td class="py-4 px-6 text-right">
-                                            <form action="/gestores/delete/<%= g.id %>" method="POST"
-                                                onsubmit="return confirm('¿Seguro que deseas eliminar este gestor?');"
-                                                class="inline">
-                                                <button type="submit" aria-label="Eliminar gestor <%= g.razon_social %>"
-                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                                            <div class="inline-flex items-center gap-1">
+                                                <a href="/gestores/edit/<%= g.id %>"
+                                                    aria-label="Editar gestor <%= g.razon_social %>"
+                                                    class="p-2 text-primary hover:bg-primary/10 rounded-full transition focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    title="Editar Gestor">
                                                     <span class="material-symbols-outlined text-lg"
-                                                        aria-hidden="true">delete</span>
-                                                </button>
-                                            </form>
+                                                        aria-hidden="true">edit</span>
+                                                </a>
+                                                <form action="/gestores/delete/<%= g.id %>" method="POST"
+                                                    onsubmit="return confirm('¿Seguro que deseas eliminar este gestor?');"
+                                                    class="inline">
+                                                    <button type="submit"
+                                                        aria-label="Eliminar gestor <%= g.razon_social %>"
+                                                        class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                        title="Eliminar Gestor">
+                                                        <span class="material-symbols-outlined text-lg"
+                                                            aria-hidden="true">delete</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                     <% }); %>
                                         <% } else { %>
                                             <tr>
-                                                <td colspan="5" class="py-12 text-center text-on-surface-variant">
+                                                <td colspan="7" class="py-12 text-center text-on-surface-variant">
                                                     No hay gestores disponibles en la base de datos.
                                                 </td>
                                             </tr>
                                             <% } %>
+                            <!-- Mensaje cuando la búsqueda no arroja coincidencias -->
+                            <tr id="sinCoincidenciasGestor" class="hidden">
+                                <td colspan="7" class="py-12 text-center text-on-surface-variant">
+                                    <span class="material-symbols-outlined text-2xl text-on-surface-variant block mb-1">search_off</span>
+                                    No se encontraron gestores que coincidan con la búsqueda o filtro seleccionado.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
     </div>
+
+    <!-- Script para Búsqueda y Filtrado Dinámico Insensible a Tildes y Mayúsculas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputBusqueda = document.getElementById('busquedaGestor');
+            const selectMunicipio = document.getElementById('filtroMunicipioGestor');
+            const filas = document.querySelectorAll('.fila-gestor');
+            const sinCoincidencias = document.getElementById('sinCoincidenciasGestor');
+            const counterBadge = document.getElementById('gestores-counter-badge');
+            const totalRegistros = filas.length;
+
+            // Función de normalización para ignorar tildes, diacríticos y mayúsculas
+            function normalizar(texto) {
+                return (texto || '')
+                    .toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            }
+
+            function filtrarTabla() {
+                const query = normalizar(inputBusqueda?.value);
+                const municipioSeleccionado = normalizar(selectMunicipio?.value);
+                let visibles = 0;
+
+                filas.forEach(fila => {
+                    const nit = normalizar(fila.getAttribute('data-nit'));
+                    const razon = normalizar(fila.getAttribute('data-razon'));
+                    const municipio = normalizar(fila.getAttribute('data-municipio'));
+                    const direccion = normalizar(fila.getAttribute('data-direccion'));
+                    const contacto = normalizar(fila.getAttribute('data-contacto'));
+                    const materiales = normalizar(fila.getAttribute('data-materiales'));
+
+                    const coincideTexto = !query || 
+                        nit.includes(query) || 
+                        razon.includes(query) || 
+                        municipio.includes(query) || 
+                        direccion.includes(query) || 
+                        contacto.includes(query) || 
+                        materiales.includes(query);
+
+                    const coincideMunicipio = municipioSeleccionado === 'todos' || municipio === municipioSeleccionado;
+
+                    if (coincideTexto && coincideMunicipio) {
+                        fila.style.display = '';
+                        visibles++;
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+
+                if (sinCoincidencias) {
+                    sinCoincidencias.classList.toggle('hidden', visibles > 0 || totalRegistros === 0);
+                }
+
+                if (counterBadge) {
+                    if (query || municipioSeleccionado !== 'todos') {
+                        counterBadge.textContent = `Filtrados: ${visibles} de ${totalRegistros} entidades`;
+                    } else {
+                        counterBadge.textContent = `Total: ${totalRegistros} entidades`;
+                    }
+                }
+            }
+
+            inputBusqueda?.addEventListener('input', filtrarTabla);
+            selectMunicipio?.addEventListener('change', filtrarTabla);
+        });
+    </script>
 
     <%- include('partials/footer') %>

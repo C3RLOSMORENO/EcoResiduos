@@ -1,0 +1,158 @@
+<%- include('partials/header', { activeTab: 'gestores' }) %>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <%- include('partials/alert') %>
+
+            <!-- Cabecera de Página y Navegación de Regreso -->
+            <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-1">
+                        <a href="/gestores" class="hover:text-primary transition flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span>Volver a Gestores</span>
+                        </a>
+                        <span>/</span>
+                        <span class="text-on-surface">Edición</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-on-surface">Editar Gestor Ambiental</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Actualiza los datos, residuos autorizados y ubicación del gestor</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">
+                        ID: <%= gestor.id %>
+                    </span>
+                </div>
+            </header>
+
+            <!-- Tarjeta Formulario de Edición (MD3 Outlined Card) -->
+            <section aria-labelledby="edit-form-title" class="bg-surface rounded-3xl border border-outline-variant p-6 md:p-8 shadow-sm">
+                <h3 id="edit-form-title" class="text-lg font-semibold text-on-surface mb-6 flex items-center gap-2 border-b border-outline-variant/30 pb-4">
+                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">edit_note</span>
+                    <span>Modificar Información del Gestor</span>
+                </h3>
+
+                <form action="/gestores/edit/<%= gestor.id %>" method="POST" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label for="nit" class="block text-xs font-medium text-on-surface-variant mb-1.5">NIT *</label>
+                            <input type="text" id="nit" name="nit" required value="<%= gestor.nit %>"
+                                placeholder="900396512"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="razon_social" class="block text-xs font-medium text-on-surface-variant mb-1.5">Razón Social *</label>
+                            <input type="text" id="razon_social" name="razon_social" required value="<%= gestor.razon_social %>"
+                                placeholder="ALBEDO S.A.S. E.S.P."
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="municipio" class="block text-xs font-medium text-on-surface-variant mb-1.5">Municipio *</label>
+                            <input type="text" id="municipio" name="municipio" required value="<%= gestor.municipio %>"
+                                placeholder="Bucaramanga"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="direccion" class="block text-xs font-medium text-on-surface-variant mb-1.5">Dirección Física *</label>
+                            <input type="text" id="direccion" name="direccion" required value="<%= gestor.direccion %>"
+                                placeholder="Parque Industrial Bodega C-25"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="representante_legal" class="block text-xs font-medium text-on-surface-variant mb-1.5">Representante / Contacto</label>
+                            <input type="text" id="representante_legal" name="representante_legal" value="<%= gestor.representante_legal || '' %>"
+                                placeholder="Nombre completo"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="telefono_contacto" class="block text-xs font-medium text-on-surface-variant mb-1.5">Teléfono Principal *</label>
+                            <input type="tel" id="telefono_contacto" name="telefono_contacto" required value="<%= gestor.telefono_contacto %>"
+                                placeholder="6076768585" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="email_contacto" class="block text-xs font-medium text-on-surface-variant mb-1.5">Email Corporativo *</label>
+                            <input type="email" id="email_contacto" name="email_contacto" required value="<%= gestor.email_contacto %>"
+                                placeholder="contacto@empresa.com"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+                    </div>
+
+                    <!-- Selección de Residuos / Materiales Autorizados (N:M) -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-on-surface-variant">
+                            Residuos y Materiales Autorizados (Selección Múltiple)
+                        </label>
+                        <% if (typeof materialesDisponibles !== 'undefined' && materialesDisponibles && materialesDisponibles.length > 0) { %>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-3 rounded-2xl bg-surface-container/50 border border-outline-variant/60">
+                                <% materialesDisponibles.forEach(function(mat) { 
+                                    const isSelected = gestor.material_ids && gestor.material_ids.includes(mat.id);
+                                %>
+                                    <label for="edit_mat_<%= mat.id %>" class="flex items-start gap-2.5 p-2 rounded-xl bg-surface border <%= isSelected ? 'border-primary bg-primary/5' : 'border-outline-variant/40' %> hover:border-primary transition cursor-pointer select-none">
+                                        <input type="checkbox" id="edit_mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>"
+                                            <%= isSelected ? 'checked' : '' %>
+                                            class="mt-0.5 h-4 w-4 rounded border-outline text-primary focus:ring-primary focus:ring-offset-0">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="font-mono text-xs font-bold text-primary"><%= mat.codigo %></span>
+                                                <span class="text-[10px] px-1.5 py-0.2 rounded-full font-medium <%= mat.categoria === 'PELIGROSO' ? 'bg-amber-100 text-amber-900' : (mat.categoria === 'BIOSANITARIO' ? 'bg-rose-100 text-rose-900' : 'bg-emerald-100 text-emerald-900') %>">
+                                                    <%= mat.categoria %>
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-on-surface truncate" title="<%= mat.nombre_comun %>">
+                                                <%= mat.nombre_comun %>
+                                            </p>
+                                        </div>
+                                    </label>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-xs text-on-surface-variant italic">No hay materiales registrados en el catálogo.</p>
+                        <% } %>
+                    </div>
+
+                    <!-- Nota Informativa de Geocodificación Pasiva -->
+                    <div class="p-4 rounded-2xl bg-surface-container border border-outline-variant/60 flex items-start gap-3 text-xs text-on-surface-variant">
+                        <span class="material-symbols-outlined text-primary text-lg flex-shrink-0 mt-0.5">travel_explore</span>
+                        <div class="space-y-1">
+                            <p class="font-medium text-on-surface">Geocodificación Pasiva Automática:</p>
+                            <p>Al guardar los cambios, las coordenadas GPS se recalcularán automáticamente en segundo plano usando la dirección y municipio actualizados.</p>
+                            <% if (gestor.latitud && gestor.longitud) { %>
+                                <div class="pt-1 flex items-center gap-2">
+                                    <span class="font-mono text-[11px] bg-surface px-2 py-0.5 rounded border border-outline-variant/40">
+                                        GPS actual: <%= gestor.latitud %>, <%= gestor.longitud %>
+                                    </span>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=<%= gestor.latitud %>,<%= gestor.longitud %>"
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="text-primary font-medium hover:underline inline-flex items-center gap-0.5">
+                                        <span>Ver en Maps</span>
+                                        <span class="material-symbols-outlined text-xs">open_in_new</span>
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
+                        <a href="/gestores"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-outline text-sm font-medium text-on-surface hover:bg-surface-container-high transition focus:outline-none focus:ring-2 focus:ring-primary">
+                            <span>Cancelar</span>
+                        </a>
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-2.5 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+    </div>
+
+    <%- include('partials/footer') %>

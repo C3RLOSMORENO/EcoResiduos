@@ -3,6 +3,7 @@
     <div class="max-w-7xl mx-auto space-y-8">
         <%- include('partials/alert') %>
 
+            <!-- Cabecera de Página -->
             <header
                 class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
                 <div>
@@ -10,12 +11,13 @@
                     <p class="text-sm text-on-surface-variant mt-1">Clasificación bajo estándares normativos y Convenio
                         de Basilea</p>
                 </div>
-                <span
+                <span id="counter-badge"
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
                     Total: <%= materiales.length %> códigos
                 </span>
             </header>
 
+            <!-- Tarjeta Formulario de Inserción (MD3 Outlined Card) -->
             <section aria-labelledby="form-material-title"
                 class="bg-surface rounded-3xl border border-outline-variant p-6 shadow-sm">
                 <h3 id="form-material-title" class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
@@ -28,7 +30,7 @@
                         <label for="codigo" class="block text-xs font-medium text-on-surface-variant mb-1">Código
                             Oficial *</label>
                         <input type="text" id="codigo" name="codigo" required placeholder="Ej: Y8, Y9.2, A1160"
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono uppercase">
                     </div>
 
                     <div>
@@ -79,28 +81,63 @@
                 </form>
             </section>
 
+            <!-- Tarjeta Tabla con Barra de Búsqueda y Filtro de Categoría -->
             <section aria-labelledby="table-mat-title"
-                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-outline-variant/40">
-                    <h3 id="table-mat-title" class="text-lg font-semibold text-on-surface">Materiales Registrados</h3>
+                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden space-y-4">
+                
+                <!-- Barra de Búsqueda y Filtros Interactivos -->
+                <div class="p-6 border-b border-outline-variant/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 id="table-mat-title" class="text-lg font-semibold text-on-surface">Materiales Registrados</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Explora y filtra los residuos habilitados</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <!-- Buscador por Texto -->
+                        <div class="relative min-w-[260px]">
+                            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg select-none pointer-events-none"
+                                aria-hidden="true">search</span>
+                            <input type="text" id="busquedaMaterial" placeholder="Buscar por código, nombre o descripción..."
+                                class="w-full pl-10 pr-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <!-- Selector Filtro de Categoría -->
+                        <div class="relative">
+                            <select id="filtroCategoria"
+                                class="w-full sm:w-auto px-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                                <option value="TODAS">Todas las Categorías</option>
+                                <option value="PELIGROSO">PELIGROSO</option>
+                                <option value="BIOSANITARIO">BIOSANITARIO</option>
+                                <option value="INDUSTRIAL">INDUSTRIAL</option>
+                                <option value="RAEE">RAEE</option>
+                                <option value="APROVECHABLE">APROVECHABLE</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
+                    <table class="w-full text-left text-sm" id="tablaMateriales">
                         <thead
                             class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
                             <tr>
                                 <th scope="col" class="py-3.5 px-6">Código</th>
                                 <th scope="col" class="py-3.5 px-6">Nombre Común</th>
                                 <th scope="col" class="py-3.5 px-6">Categoría</th>
-                                <th scope="col" class="py-3.5 px-6">Descripción</th>
+                                <th scope="col" class="py-3.5 px-6">Descripción Técnica</th>
+                                <th scope="col" class="py-3.5 px-6">Guía y Recomendación de Acopio</th>
                                 <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-outline-variant/20">
-                            <% if (materiales && materiales.length> 0) { %>
+                            <% if (materiales && materiales.length > 0) { %>
                                 <% materiales.forEach(function(m) { %>
-                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                    <tr class="hover:bg-surface-container-high/40 transition fila-material"
+                                        data-codigo="<%= m.codigo || '' %>"
+                                        data-nombre="<%= m.nombre_comun || '' %>"
+                                        data-descripcion="<%= m.descripcion || '' %>"
+                                        data-guia="<%= m.guia_manejo || '' %>"
+                                        data-categoria="<%= m.categoria || '' %>">
                                         <td class="py-4 px-6 font-mono font-bold text-primary">
                                             <%= m.codigo %>
                                         </td>
@@ -109,36 +146,128 @@
                                         </td>
                                         <td class="py-4 px-6">
                                             <span
-                                                class="px-2.5 py-1 rounded-full text-xs font-semibold <%= m.categoria === 'PELIGROSO' ? 'bg-red-100 text-red-800' : (m.categoria === 'BIOSANITARIO' ? 'bg-amber-100 text-amber-900' : 'bg-surface-container-high text-on-surface-variant') %>">
+                                                class="px-2.5 py-1 rounded-full text-xs font-semibold <%= m.categoria === 'PELIGROSO' ? 'bg-red-100 text-red-800' : (m.categoria === 'BIOSANITARIO' ? 'bg-amber-100 text-amber-900' : (m.categoria === 'APROVECHABLE' ? 'bg-emerald-100 text-emerald-900' : 'bg-surface-container-high text-on-surface-variant')) %>">
                                                 <%= m.categoria %>
                                             </span>
                                         </td>
-                                        <td class="py-4 px-6 text-xs text-on-surface-variant max-w-sm">
+                                        <td class="py-4 px-6 text-xs text-on-surface-variant max-w-xs">
                                             <%= m.descripcion %>
                                         </td>
+                                        <td class="py-4 px-6 text-xs max-w-xs">
+                                            <% if (m.guia_manejo && m.guia_manejo.trim() !== '') { %>
+                                                <div class="flex items-start gap-1.5 text-on-surface bg-surface-container/60 p-2.5 rounded-xl border border-outline-variant/40">
+                                                    <span class="material-symbols-outlined text-base text-primary flex-shrink-0 mt-0.5" aria-hidden="true">assignment</span>
+                                                    <span class="leading-relaxed"><%= m.guia_manejo %></span>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-xs text-on-surface-variant italic">Sin guía de acopio registrada</span>
+                                            <% } %>
+                                        </td>
                                         <td class="py-4 px-6 text-right">
-                                            <form action="/materiales/delete/<%= m.id %>" method="POST"
-                                                onsubmit="return confirm('¿Eliminar este material?');" class="inline">
-                                                <button type="submit" aria-label="Eliminar material <%= m.codigo %>"
-                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500">
-                                                    <span class="material-symbols-outlined text-lg"
-                                                        aria-hidden="true">delete</span>
-                                                </button>
-                                            </form>
+                                            <div class="inline-flex items-center gap-1">
+                                                <a href="/materiales/edit/<%= m.id %>"
+                                                    aria-label="Editar material <%= m.codigo %>"
+                                                    class="p-2 text-primary hover:bg-primary/10 rounded-full transition focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    title="Editar Material">
+                                                    <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
+                                                </a>
+                                                <form action="/materiales/delete/<%= m.id %>" method="POST"
+                                                    onsubmit="return confirm('¿Eliminar este material del catálogo?');" class="inline">
+                                                    <button type="submit" aria-label="Eliminar material <%= m.codigo %>"
+                                                        class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                        title="Eliminar Material">
+                                                        <span class="material-symbols-outlined text-lg"
+                                                            aria-hidden="true">delete</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
-                                    <% }); %>
-                                        <% } else { %>
-                                            <tr>
-                                                <td colspan="5" class="py-12 text-center text-on-surface-variant">
-                                                    No hay materiales registrados en el catálogo.
-                                                </td>
-                                            </tr>
-                                            <% } %>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                        No hay materiales registrados en el catálogo.
+                                    </td>
+                                </tr>
+                            <% } %>
+                            <!-- Mensaje cuando la búsqueda no arroja coincidencias -->
+                            <tr id="sinCoincidencias" class="hidden">
+                                <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                    <span class="material-symbols-outlined text-2xl text-on-surface-variant block mb-1">search_off</span>
+                                    No se encontraron residuos que coincidan con la búsqueda o filtro seleccionado.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
     </div>
+
+    <!-- Script para Búsqueda y Filtrado Dinámico Insensible a Tildes y Mayúsculas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputBusqueda = document.getElementById('busquedaMaterial');
+            const selectCategoria = document.getElementById('filtroCategoria');
+            const filas = document.querySelectorAll('.fila-material');
+            const sinCoincidencias = document.getElementById('sinCoincidencias');
+            const counterBadge = document.getElementById('counter-badge');
+            const totalRegistros = filas.length;
+
+            // Función de normalización para ignorar tildes, acentos y mayúsculas
+            function normalizar(texto) {
+                return (texto || '')
+                    .toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            }
+
+            function filtrarTabla() {
+                const query = normalizar(inputBusqueda?.value);
+                const categoriaSeleccionada = normalizar(selectCategoria?.value);
+                let visibles = 0;
+
+                filas.forEach(fila => {
+                    const codigo = normalizar(fila.getAttribute('data-codigo'));
+                    const nombre = normalizar(fila.getAttribute('data-nombre'));
+                    const descripcion = normalizar(fila.getAttribute('data-descripcion'));
+                    const guia = normalizar(fila.getAttribute('data-guia'));
+                    const categoria = normalizar(fila.getAttribute('data-categoria'));
+
+                    const coincideTexto = !query || 
+                        codigo.includes(query) || 
+                        nombre.includes(query) || 
+                        descripcion.includes(query) || 
+                        guia.includes(query);
+
+                    const coincideCategoria = categoriaSeleccionada === 'todas' || categoria === categoriaSeleccionada;
+
+                    if (coincideTexto && coincideCategoria) {
+                        fila.style.display = '';
+                        visibles++;
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+
+                if (sinCoincidencias) {
+                    sinCoincidencias.classList.toggle('hidden', visibles > 0 || totalRegistros === 0);
+                }
+
+                if (counterBadge) {
+                    if (query || categoriaSeleccionada !== 'todas') {
+                        counterBadge.textContent = `Filtrados: ${visibles} de ${totalRegistros} códigos`;
+                    } else {
+                        counterBadge.textContent = `Total: ${totalRegistros} códigos`;
+                    }
+                }
+            }
+
+            inputBusqueda?.addEventListener('input', filtrarTabla);
+            selectCategoria?.addEventListener('change', filtrarTabla);
+        });
+    </script>
 
     <%- include('partials/footer') %>

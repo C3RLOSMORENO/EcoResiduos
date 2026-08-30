@@ -1,0 +1,93 @@
+<%- include('partials/header', { activeTab: 'materiales' }) %>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <%- include('partials/alert') %>
+
+            <!-- Cabecera de Página y Navegación de Regreso -->
+            <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-1">
+                        <a href="/materiales" class="hover:text-primary transition flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span>Volver a Catálogo RESPEL</span>
+                        </a>
+                        <span>/</span>
+                        <span class="text-on-surface">Edición</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-on-surface">Editar Residuo / Material</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Modifica la clasificación, especificaciones y guías de manejo</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant font-mono">
+                        ID: <%= material.id %>
+                    </span>
+                </div>
+            </header>
+
+            <!-- Tarjeta Formulario de Edición (MD3 Outlined Card) -->
+            <section aria-labelledby="edit-mat-title" class="bg-surface rounded-3xl border border-outline-variant p-6 md:p-8 shadow-sm">
+                <h3 id="edit-mat-title" class="text-lg font-semibold text-on-surface mb-6 flex items-center gap-2 border-b border-outline-variant/30 pb-4">
+                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">edit_note</span>
+                    <span>Modificar Ficha Técnica de Residuo</span>
+                </h3>
+
+                <form action="/materiales/edit/<%= material.id %>" method="POST" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label for="codigo" class="block text-xs font-medium text-on-surface-variant mb-1.5">Código Oficial *</label>
+                            <input type="text" id="codigo" name="codigo" required value="<%= material.codigo %>"
+                                placeholder="Ej: Y8, Y9.2, A1160"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition font-mono uppercase">
+                        </div>
+
+                        <div>
+                            <label for="nombre_comun" class="block text-xs font-medium text-on-surface-variant mb-1.5">Nombre Descriptivo *</label>
+                            <input type="text" id="nombre_comun" name="nombre_comun" required value="<%= material.nombre_comun %>"
+                                placeholder="Aceites minerales usados"
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                        </div>
+
+                        <div>
+                            <label for="categoria" class="block text-xs font-medium text-on-surface-variant mb-1.5">Categoría de Riesgo *</label>
+                            <select id="categoria" name="categoria" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
+                                <option value="PELIGROSO" <%= material.categoria === 'PELIGROSO' ? 'selected' : '' %>>PELIGROSO</option>
+                                <option value="BIOSANITARIO" <%= material.categoria === 'BIOSANITARIO' ? 'selected' : '' %>>BIOSANITARIO</option>
+                                <option value="INDUSTRIAL" <%= material.categoria === 'INDUSTRIAL' ? 'selected' : '' %>>INDUSTRIAL</option>
+                                <option value="RAEE" <%= material.categoria === 'RAEE' ? 'selected' : '' %>>RAEE</option>
+                                <option value="APROVECHABLE" <%= material.categoria === 'APROVECHABLE' ? 'selected' : '' %>>APROVECHABLE</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label for="descripcion" class="block text-xs font-medium text-on-surface-variant mb-1.5">Descripción Técnica del Desecho *</label>
+                            <textarea id="descripcion" name="descripcion" required rows="3"
+                                placeholder="Especificar componentes, estado físico y ejemplos de desecho..."
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"><%= material.descripcion %></textarea>
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label for="guia_manejo" class="block text-xs font-medium text-on-surface-variant mb-1.5">Guía y Recomendaciones de Acopio</label>
+                            <textarea id="guia_manejo" name="guia_manejo" rows="3"
+                                placeholder="Rotulado requerido, tipo de contenedor y condiciones de ventilación..."
+                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"><%= material.guia_manejo || '' %></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
+                        <a href="/materiales"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-outline text-sm font-medium text-on-surface hover:bg-surface-container-high transition focus:outline-none focus:ring-2 focus:ring-primary">
+                            <span>Cancelar</span>
+                        </a>
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-2.5 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+    </div>
+
+    <%- include('partials/footer') %>
