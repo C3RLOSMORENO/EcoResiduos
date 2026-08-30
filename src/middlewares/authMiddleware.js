@@ -2,7 +2,6 @@ const supabase = require('../config/supabase');
 
 const authMiddleware = {
     async requireAuth(req, res, next) {
-        // Evitamos que el navegador guarde la página en caché para que no se vea tras cerrar sesión
         res.set({
             'Cache-Control': 'no-store, no-cache, must-revalidate, private',
             'Pragma': 'no-cache',
@@ -10,7 +9,6 @@ const authMiddleware = {
         });
 
         const token = req.cookies && req.cookies.sb_access_token;
-
         if (!token) {
             return res.redirect('/login?msg=Debes+iniciar+sesi%C3%B3n+para+continuar&type=error');
         }
@@ -23,7 +21,6 @@ const authMiddleware = {
                 return res.redirect('/login?msg=Sesi%C3%B3n+inv%C3%A1lida+o+expirada.+Por+favor+inicia+sesi%C3%B3n&type=error');
             }
 
-            // Renovar cookie para mantener los 15 minutos de inactividad mientras el usuario interactúa
             res.cookie('sb_access_token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -43,5 +40,3 @@ const authMiddleware = {
 };
 
 module.exports = authMiddleware;
-
-

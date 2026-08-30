@@ -1,25 +1,64 @@
-<% if (typeof feedback !=='undefined' && feedback) { %>
-    <div role="alert" aria-live="assertive"
-        class="mb-6 flex items-start gap-3 p-4 rounded-2xl border transition-all <%= feedback.type === 'error' ? 'bg-red-50 border-red-200 text-red-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900' %> shadow-sm">
-        <div class="flex-shrink-0 mt-0.5">
-            <% if (feedback.type==='error' ) { %>
-                <svg aria-hidden="true" class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd" />
-                </svg>
-                <% } else { %>
-                    <svg aria-hidden="true" class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    <% } %>
-        </div>
-        <div class="flex-1">
-            <p class="text-sm font-medium">
-                <%= feedback.message %>
-            </p>
-        </div>
+<!-- M3 Snackbar / Toast Flotante (Inverse Surface, Elevation Level 3) -->
+<% 
+  const textoMensaje = (typeof mensajeExito !== 'undefined' && mensajeExito) || 
+                       (typeof feedback !== 'undefined' && feedback && feedback.message) || 
+                       (typeof mensaje !== 'undefined' && mensaje);
+  const esError = (typeof feedback !== 'undefined' && feedback && feedback.type === 'error') || 
+                  (typeof mensajeError !== 'undefined' && mensajeError);
+%>
+<% if (textoMensaje) { %>
+  <div id="m3Snackbar" 
+       role="status" 
+       aria-live="polite"
+       class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-xl dark:bg-slate-100 dark:text-slate-900 transition-all duration-300 transform translate-y-2 opacity-0">
+    
+    <!-- Leading Icon M3 -->
+    <div class="flex h-6 w-6 shrink-0 items-center justify-center <%= esError ? 'text-rose-400 dark:text-rose-600' : 'text-emerald-400 dark:text-emerald-600' %>">
+      <% if (esError) { %>
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <% } else { %>
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <% } %>
     </div>
-    <% } %>
+
+    <!-- Body Medium Text -->
+    <p class="text-xs font-medium leading-none">
+      <%= textoMensaje %>
+    </p>
+
+    <!-- Close Icon Button -->
+    <button type="button" 
+            onclick="cerrarSnackbar()" 
+            aria-label="Cerrar notificación" 
+            class="ml-2 -mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 transition">
+      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const snackbar = document.getElementById('m3Snackbar');
+      if (snackbar) {
+        // Entrada animada
+        requestAnimationFrame(() => {
+          snackbar.classList.remove('translate-y-2', 'opacity-0');
+          snackbar.classList.add('translate-y-0', 'opacity-100');
+        });
+
+        // Cierre automático a los 3.5 segundos
+        setTimeout(() => {
+          cerrarSnackbar();
+        }, 3500);
+      }
+    });
+
+    function cerrarSnackbar() {
+      const snackbar = document.getElementById('m3Snackbar');
+      if (snackbar) {
+        snackbar.classList.remove('translate-y-0', 'opacity-100');
+        snackbar.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => snackbar.remove(), 300);
+      }
+    }
+  </script>
+<% } %>

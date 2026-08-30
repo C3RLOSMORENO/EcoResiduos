@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 
 const materialService = {
+    // Consulta todos los materiales ordenados por identificador ascendente
     async getAllMateriales() {
         const { data, error } = await supabase
             .from('materiales_residuos')
@@ -39,11 +40,11 @@ const materialService = {
         };
     },
 
+    // Inserta un nuevo residuo verificando código alfanumérico y categoría oficial
     async createMaterial(dto = {}) {
-        // Códigos oficiales (ej: Y8, A1160) en mayúsculas para evitar duplicados
         const codigoLimpio = String(dto.codigo || '').trim().toUpperCase();
-        const nombreComunLimpio = String(dto.nombre_comun || '').trim();
-        const categoriaLimpia = String(dto.categoria || '').trim().toUpperCase();
+        const nombreComunLimpio = String(dto.nombre_comun || dto.nombre || '').trim();
+        let categoriaLimpia = String(dto.categoria || 'PELIGROSO').trim().toUpperCase();
         const descripcionLimpia = String(dto.descripcion || '').trim();
         const guiaManejoLimpia = dto.guia_manejo && String(dto.guia_manejo).trim() !== ''
             ? String(dto.guia_manejo).trim()
@@ -60,7 +61,7 @@ const materialService = {
 
         const categoriasPermitidas = ['PELIGROSO', 'BIOSANITARIO', 'INDUSTRIAL', 'RAEE', 'APROVECHABLE'];
         if (!categoriasPermitidas.includes(categoriaLimpia)) {
-            throw new Error(`La categoría "${categoriaLimpia}" no es válida. Debe ser una de: ${categoriasPermitidas.join(', ')}.`);
+            categoriaLimpia = 'PELIGROSO';
         }
 
         if (!descripcionLimpia || descripcionLimpia.length < 10) {
@@ -93,8 +94,8 @@ const materialService = {
         }
 
         const codigoLimpio = String(dto.codigo || '').trim().toUpperCase();
-        const nombreComunLimpio = String(dto.nombre_comun || '').trim();
-        const categoriaLimpia = String(dto.categoria || '').trim().toUpperCase();
+        const nombreComunLimpio = String(dto.nombre_comun || dto.nombre || '').trim();
+        let categoriaLimpia = String(dto.categoria || 'PELIGROSO').trim().toUpperCase();
         const descripcionLimpia = String(dto.descripcion || '').trim();
         const guiaManejoLimpia = dto.guia_manejo && String(dto.guia_manejo).trim() !== ''
             ? String(dto.guia_manejo).trim()
@@ -111,7 +112,7 @@ const materialService = {
 
         const categoriasPermitidas = ['PELIGROSO', 'BIOSANITARIO', 'INDUSTRIAL', 'RAEE', 'APROVECHABLE'];
         if (!categoriasPermitidas.includes(categoriaLimpia)) {
-            throw new Error(`La categoría "${categoriaLimpia}" no es válida. Debe ser una de: ${categoriasPermitidas.join(', ')}.`);
+            categoriaLimpia = 'PELIGROSO';
         }
 
         if (!descripcionLimpia || descripcionLimpia.length < 10) {
@@ -139,12 +140,12 @@ const materialService = {
         return data;
     },
 
+    // Elimina el residuo limpiando previamente sus referencias intermedias
     async deleteMaterial(id) {
         if (!id) {
             throw new Error('El identificador del material es obligatorio para eliminarlo.');
         }
 
-        // Limpiamos referencias previas en gestor_material
         await supabase
             .from('gestor_material')
             .delete()

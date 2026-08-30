@@ -1,158 +1,256 @@
 <%- include('partials/header', { activeTab: 'gestores' }) %>
 
-    <div class="max-w-4xl mx-auto space-y-8">
-        <%- include('partials/alert') %>
+<%
+  // Función global para obtener clases tonales M3 según categoría y código del residuo
+  function getBadgeClasses(cat, cod) {
+    const c = (cod || '').toUpperCase();
+    const catUpper = (cat || '').toUpperCase();
+    if (c.startsWith('Y1') || c.startsWith('Y2') || c.startsWith('Y3') || catUpper.includes('BIOSANITARIO') || catUpper.includes('HOSPITAL')) {
+      return 'chip-respel-bio';
+    }
+    if (c.startsWith('Y8') || c.startsWith('Y9') || c.startsWith('Y4') || c.startsWith('Y5') || c.startsWith('Y6') || c.startsWith('Y7') || catUpper.includes('PELIGROSO') || catUpper.includes('BASILEA')) {
+      return 'chip-respel-oil';
+    }
+    if (c.startsWith('RAEE') || c.startsWith('Y26') || c.startsWith('Y29') || catUpper.includes('RAEE') || catUpper.includes('INDUSTRIAL') || catUpper.includes('QUIMIC')) {
+      return 'chip-respel-raee';
+    }
+    if (c.startsWith('REC') || c.startsWith('ORG') || catUpper.includes('APROVECHABLE') || catUpper.includes('ORGAN') || catUpper.includes('RECICL')) {
+      return 'chip-respel-eco';
+    }
+    return 'chip-respel-neutral';
+  }
+%>
 
-            <!-- Cabecera de Página y Navegación de Regreso -->
-            <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+<div class="max-w-4xl mx-auto space-y-6">
+    <%- include('partials/alert') %>
+
+    <!-- Cabecera de edición y botón para retornar al listado -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                <a href="/gestores" class="hover:text-brand dark:hover:text-emerald-400 transition flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span>Volver a Gestores</span>
+                </a>
+                <span>/</span>
+                <span class="text-slate-800 dark:text-slate-200">Edición</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Editar Gestor Ambiental</h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Actualiza los datos, residuos autorizados y ubicación del gestor</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                ID: <%= gestor.id %>
+            </span>
+        </div>
+    </header>
+
+    <!-- Tarjeta de edición con campos normalizados -->
+    <section aria-labelledby="edit-form-title" class="m3-surface-container p-6 md:p-8">
+        <h2 id="edit-form-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <span class="material-symbols-outlined text-brand dark:text-emerald-400 text-xl" aria-hidden="true">edit_note</span>
+            <span>Modificar Información del Gestor</span>
+        </h2>
+
+        <form action="/gestores/edit/<%= gestor.id %>" method="POST" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
-                    <div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-1">
-                        <a href="/gestores" class="hover:text-primary transition flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">arrow_back</span>
-                            <span>Volver a Gestores</span>
-                        </a>
-                        <span>/</span>
-                        <span class="text-on-surface">Edición</span>
-                    </div>
-                    <h2 class="text-2xl font-bold text-on-surface">Editar Gestor Ambiental</h2>
-                    <p class="text-sm text-on-surface-variant mt-1">Actualiza los datos, residuos autorizados y ubicación del gestor</p>
+                    <label for="nit" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">NIT *</label>
+                    <input type="text" id="nit" name="nit" required value="<%= gestor.nit %>"
+                        placeholder="Ej. 900396512-1"
+                        data-format="nit"
+                        class="input-ui font-mono">
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">
-                        ID: <%= gestor.id %>
-                    </span>
+
+                <div class="md:col-span-2">
+                    <label for="razon_social" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Razón Social *</label>
+                    <input type="text" id="razon_social" name="razon_social" required value="<%= gestor.razon_social %>"
+                        placeholder="ALBEDO S.A.S. E.S.P."
+                        class="input-ui">
                 </div>
-            </header>
 
-            <!-- Tarjeta Formulario de Edición (MD3 Outlined Card) -->
-            <section aria-labelledby="edit-form-title" class="bg-surface rounded-3xl border border-outline-variant p-6 md:p-8 shadow-sm">
-                <h3 id="edit-form-title" class="text-lg font-semibold text-on-surface mb-6 flex items-center gap-2 border-b border-outline-variant/30 pb-4">
-                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">edit_note</span>
-                    <span>Modificar Información del Gestor</span>
-                </h3>
+                <div>
+                    <label for="municipio" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Municipio *</label>
+                    <input type="text" id="municipio" name="municipio" required value="<%= gestor.municipio %>"
+                        placeholder="Bucaramanga"
+                        class="input-ui">
+                </div>
 
-                <form action="/gestores/edit/<%= gestor.id %>" method="POST" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div>
-                            <label for="nit" class="block text-xs font-medium text-on-surface-variant mb-1.5">NIT *</label>
-                            <input type="text" id="nit" name="nit" required value="<%= gestor.nit %>"
-                                placeholder="900396512"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
+                <div class="md:col-span-2">
+                    <label for="direccion" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Dirección Física *</label>
+                    <input type="text" id="direccion" name="direccion" required value="<%= gestor.direccion %>"
+                        placeholder="Parque Industrial Bodega C-25"
+                        class="input-ui">
+                </div>
 
-                        <div class="md:col-span-2">
-                            <label for="razon_social" class="block text-xs font-medium text-on-surface-variant mb-1.5">Razón Social *</label>
-                            <input type="text" id="razon_social" name="razon_social" required value="<%= gestor.razon_social %>"
-                                placeholder="ALBEDO S.A.S. E.S.P."
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
+                <div>
+                    <label for="representante_legal" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Representante / Contacto</label>
+                    <input type="text" id="representante_legal" name="representante_legal" value="<%= gestor.representante_legal || gestor.contacto || '' %>"
+                        placeholder="Nombre completo"
+                        class="input-ui">
+                </div>
 
-                        <div>
-                            <label for="municipio" class="block text-xs font-medium text-on-surface-variant mb-1.5">Municipio *</label>
-                            <input type="text" id="municipio" name="municipio" required value="<%= gestor.municipio %>"
-                                placeholder="Bucaramanga"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
+                <div>
+                    <label for="telefono_contacto" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Teléfono Principal *</label>
+                    <input type="text" id="telefono_contacto" name="telefono_contacto" required value="<%= gestor.telefono_contacto || gestor.telefono || '' %>"
+                        placeholder="6076768585"
+                        data-format="phone"
+                        class="input-ui">
+                </div>
 
-                        <div class="md:col-span-2">
-                            <label for="direccion" class="block text-xs font-medium text-on-surface-variant mb-1.5">Dirección Física *</label>
-                            <input type="text" id="direccion" name="direccion" required value="<%= gestor.direccion %>"
-                                placeholder="Parque Industrial Bodega C-25"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
+                <div>
+                    <label for="email_contacto" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Corporativo *</label>
+                    <input type="email" id="email_contacto" name="email_contacto" required value="<%= gestor.email_contacto || gestor.email || '' %>"
+                        placeholder="contacto@empresa.com"
+                        class="input-ui">
+                </div>
+            </div>
 
-                        <div>
-                            <label for="representante_legal" class="block text-xs font-medium text-on-surface-variant mb-1.5">Representante / Contacto</label>
-                            <input type="text" id="representante_legal" name="representante_legal" value="<%= gestor.representante_legal || '' %>"
-                                placeholder="Nombre completo"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
-
-                        <div>
-                            <label for="telefono_contacto" class="block text-xs font-medium text-on-surface-variant mb-1.5">Teléfono Principal *</label>
-                            <input type="tel" id="telefono_contacto" name="telefono_contacto" required value="<%= gestor.telefono_contacto %>"
-                                placeholder="6076768585" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
-
-                        <div>
-                            <label for="email_contacto" class="block text-xs font-medium text-on-surface-variant mb-1.5">Email Corporativo *</label>
-                            <input type="email" id="email_contacto" name="email_contacto" required value="<%= gestor.email_contacto %>"
-                                placeholder="contacto@empresa.com"
-                                class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
+            <!-- Selección de residuos autorizados -->
+            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Residuos y Materiales Autorizados (Selección Múltiple)
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <span id="contadorSeleccionadosEdit" class="text-xs font-semibold text-brand dark:text-emerald-400">
+                            <%= (gestor.material_ids || []).length %> seleccionados
+                        </span>
+                        <button type="button" onclick="toggleTodosMaterialesEdit(true)" class="text-xs text-slate-500 hover:text-brand dark:hover:text-emerald-400 underline">Todos</button>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <button type="button" onclick="toggleTodosMaterialesEdit(false)" class="text-xs text-slate-500 hover:text-rose-600 underline">Ninguno</button>
                     </div>
+                </div>
 
-                    <!-- Selección de Residuos / Materiales Autorizados (N:M) -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-medium text-on-surface-variant">
-                            Residuos y Materiales Autorizados (Selección Múltiple)
-                        </label>
-                        <% if (typeof materialesDisponibles !== 'undefined' && materialesDisponibles && materialesDisponibles.length > 0) { %>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-3 rounded-2xl bg-surface-container/50 border border-outline-variant/60">
-                                <% materialesDisponibles.forEach(function(mat) { 
-                                    const isSelected = gestor.material_ids && gestor.material_ids.includes(mat.id);
-                                %>
-                                    <label for="edit_mat_<%= mat.id %>" class="flex items-start gap-2.5 p-2 rounded-xl bg-surface border <%= isSelected ? 'border-primary bg-primary/5' : 'border-outline-variant/40' %> hover:border-primary transition cursor-pointer select-none">
-                                        <input type="checkbox" id="edit_mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>"
-                                            <%= isSelected ? 'checked' : '' %>
-                                            class="mt-0.5 h-4 w-4 rounded border-outline text-primary focus:ring-primary focus:ring-offset-0">
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="font-mono text-xs font-bold text-primary"><%= mat.codigo %></span>
-                                                <span class="text-[10px] px-1.5 py-0.2 rounded-full font-medium <%= mat.categoria === 'PELIGROSO' ? 'bg-amber-100 text-amber-900' : (mat.categoria === 'BIOSANITARIO' ? 'bg-rose-100 text-rose-900' : 'bg-emerald-100 text-emerald-900') %>">
-                                                    <%= mat.categoria %>
-                                                </span>
-                                            </div>
-                                            <p class="text-xs text-on-surface truncate" title="<%= mat.nombre_comun %>">
-                                                <%= mat.nombre_comun %>
-                                            </p>
-                                        </div>
-                                    </label>
-                                <% }); %>
-                            </div>
-                        <% } else { %>
-                            <p class="text-xs text-on-surface-variant italic">No hay materiales registrados en el catálogo.</p>
-                        <% } %>
-                    </div>
+                <!-- Buscador dentro de la lista de materiales -->
+                <div class="relative">
+                    <input type="text" id="buscadorMaterialesEdit" placeholder="Filtrar materiales por código, nombre o categoría..." 
+                        class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-brand">
+                    <svg class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
 
-                    <!-- Nota Informativa de Geocodificación Pasiva -->
-                    <div class="p-4 rounded-2xl bg-surface-container border border-outline-variant/60 flex items-start gap-3 text-xs text-on-surface-variant">
-                        <span class="material-symbols-outlined text-primary text-lg flex-shrink-0 mt-0.5">travel_explore</span>
-                        <div class="space-y-1">
-                            <p class="font-medium text-on-surface">Geocodificación Pasiva Automática:</p>
-                            <p>Al guardar los cambios, las coordenadas GPS se recalcularán automáticamente en segundo plano usando la dirección y municipio actualizados.</p>
-                            <% if (gestor.latitud && gestor.longitud) { %>
-                                <div class="pt-1 flex items-center gap-2">
-                                    <span class="font-mono text-[11px] bg-surface px-2 py-0.5 rounded border border-outline-variant/40">
-                                        GPS actual: <%= gestor.latitud %>, <%= gestor.longitud %>
-                                    </span>
-                                    <a href="https://www.google.com/maps/search/?api=1&query=<%= gestor.latitud %>,<%= gestor.longitud %>"
-                                        target="_blank" rel="noopener noreferrer"
-                                        class="text-primary font-medium hover:underline inline-flex items-center gap-0.5">
-                                        <span>Ver en Maps</span>
-                                        <span class="material-symbols-outlined text-xs">open_in_new</span>
-                                    </a>
+                <% if (typeof materialesDisponibles !== 'undefined' && materialesDisponibles && materialesDisponibles.length > 0) { %>
+                    <div id="contenedorMaterialesEdit" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800">
+                        <% materialesDisponibles.forEach(function(mat) { 
+                            const isSelected = gestor.material_ids && gestor.material_ids.includes(mat.id);
+                            const badgeColor = getBadgeClasses(mat.categoria, mat.codigo);
+                        %>
+                            <label for="edit_mat_<%= mat.id %>" class="item-mat-edit flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-900 border <%= isSelected ? 'border-brand dark:border-emerald-500 ring-1 ring-brand/20' : 'border-slate-200/80 dark:border-slate-800' %> hover:border-brand dark:hover:border-emerald-500 transition cursor-pointer select-none"
+                                   data-busqueda="<%= ((mat.codigo || '') + ' ' + (mat.nombre_comun || mat.nombre || '') + ' ' + (mat.categoria || '')).toLowerCase() %>">
+                                <input type="checkbox" id="edit_mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>"
+                                    <%= isSelected ? 'checked' : '' %>
+                                    class="chk-mat-edit mt-0.5 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100"><%= mat.codigo %></span>
+                                        <span class="m3-chip !py-0.5 !px-2 !text-[10px] <%= badgeColor %>">
+                                            <%= mat.categoria || 'RESPEL' %>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-700 dark:text-slate-300 truncate font-medium mt-0.5" title="<%= mat.nombre_comun || mat.nombre %>">
+                                        <%= mat.nombre_comun || mat.nombre %>
+                                    </p>
                                 </div>
-                            <% } %>
+                            </label>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <p class="text-xs text-slate-400 italic p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">No hay materiales registrados en el catálogo.</p>
+                <% } %>
+            </div>
+
+            <!-- Recálculo de coordenadas en segundo plano -->
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300">
+                <span class="material-symbols-outlined text-brand dark:text-emerald-400 text-lg flex-shrink-0 mt-0.5">travel_explore</span>
+                <div class="space-y-1">
+                    <p class="font-bold text-slate-900 dark:text-slate-100">Geocodificación Automática:</p>
+                    <p>Las coordenadas GPS se recalculan automáticamente en segundo plano utilizando la dirección y el municipio ingresados.</p>
+                    <% if (gestor.latitud && gestor.longitud) { %>
+                        <div class="pt-1 flex items-center gap-2">
+                            <span class="font-mono text-[11px] bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/80 dark:border-slate-800">
+                                GPS actual: <%= gestor.latitud %>, <%= gestor.longitud %>
+                            </span>
+                            <a href="https://www.google.com/maps/search/?api=1&query=<%= gestor.latitud %>,<%= gestor.longitud %>"
+                                target="_blank" rel="noopener noreferrer"
+                                class="text-brand dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-0.5">
+                                <span>Ver en Maps</span>
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            </a>
                         </div>
-                    </div>
+                    <% } %>
+                </div>
+            </div>
 
-                    <!-- Botones de Acción -->
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
-                        <a href="/gestores"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-outline text-sm font-medium text-on-surface hover:bg-surface-container-high transition focus:outline-none focus:ring-2 focus:ring-primary">
-                            <span>Cancelar</span>
-                        </a>
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-2.5 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
-                            <span>Guardar Cambios</span>
-                        </button>
-                    </div>
-                </form>
-            </section>
-    </div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <a href="/gestores" class="btn-tonal !h-10 !px-5">
+                    <span>Cancelar</span>
+                </a>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+                    <span>Guardar Cambios</span>
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
 
-    <%- include('partials/footer') %>
+<script>
+    function toggleTodosMaterialesEdit(check) {
+        const checks = document.querySelectorAll('.chk-mat-edit');
+        checks.forEach(c => {
+            const label = c.closest('.item-mat-edit');
+            if (!label || label.style.display !== 'none') {
+                c.checked = check;
+                if (check) {
+                    label.classList.add('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
+                } else {
+                    label.classList.remove('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
+                }
+            }
+        });
+        actualizarContadorEdit();
+    }
+
+    function actualizarContadorEdit() {
+        const checked = document.querySelectorAll('.chk-mat-edit:checked').length;
+        const contador = document.getElementById('contadorSeleccionadosEdit');
+        if (contador) {
+            contador.textContent = `${checked} seleccionado${checked === 1 ? '' : 's'}`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const chks = document.querySelectorAll('.chk-mat-edit');
+        chks.forEach(chk => {
+            chk.addEventListener('change', () => {
+                const label = chk.closest('.item-mat-edit');
+                if (label) {
+                    if (chk.checked) {
+                        label.classList.add('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
+                    } else {
+                        label.classList.remove('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
+                    }
+                }
+                actualizarContadorEdit();
+            });
+        });
+
+        const buscador = document.getElementById('buscadorMaterialesEdit');
+        if (buscador) {
+            buscador.addEventListener('input', (e) => {
+                const query = (e.target.value || '').toLowerCase().trim();
+                const items = document.querySelectorAll('#contenedorMaterialesEdit .item-mat-edit');
+                items.forEach(item => {
+                    const texto = item.getAttribute('data-busqueda') || '';
+                    if (!query || texto.includes(query)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+
+<%- include('partials/footer') %>

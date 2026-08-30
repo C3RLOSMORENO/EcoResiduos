@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 
 const autoridadService = {
+    // Consulta autoridades ambientales registradas en el departamento de Santander
     async getAllAutoridades() {
         const { data, error } = await supabase
             .from('autoridades_ambientales')
@@ -11,7 +12,6 @@ const autoridadService = {
             throw new Error(`Error en base de datos al listar autoridades: ${error.message}`);
         }
 
-        // Mapeo tolerante si las columnas vienen en mayúsculas o minúsculas
         return (data || []).map((row) => ({
             id: row.id ?? row.ID,
             nombre: row.nombre ?? row.NOMBRE ?? '',
@@ -51,44 +51,30 @@ const autoridadService = {
         };
     },
 
+    // Valida y registra una nueva entidad de control ambiental
     async createAutoridad(dto = {}) {
-        // Sigla institucional en mayúsculas (ej: CDMB, CAS, AMB)
-        const siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
+        let siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
         const nombreLimpio = String(dto.nombre || '').trim();
-        const jurisdiccionLimpia = String(dto.jurisdiccion || '').trim();
-        const telefonoLimpio = String(dto.telefono || '').trim();
-        const emailLimpio = String(dto.email || '').trim().toLowerCase();
-        const sitioWebLimpio = String(dto.sitio_web || '').trim();
-        const direccionLimpia = String(dto.direccion || '').trim();
+        const jurisdiccionLimpia = String(dto.jurisdiccion || 'Santander').trim();
+        const telefonoLimpio = String(dto.telefono || 'Sin registrar').trim();
+        let emailLimpio = String(dto.email || '').trim().toLowerCase();
+        let sitioWebLimpio = String(dto.sitio_web || '').trim();
+        const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
 
-        if (!siglaLimpia || siglaLimpia.length < 2) {
-            throw new Error('La sigla oficial de la autoridad es obligatoria (ejemplo: CDMB, CAS, AMB).');
+        if (!nombreLimpio || nombreLimpio.length < 3) {
+            throw new Error('El nombre institucional de la autoridad es obligatorio.');
         }
 
-        if (!nombreLimpio || nombreLimpio.length < 5) {
-            throw new Error('El nombre institucional de la autoridad es obligatorio y debe tener al menos 5 caracteres.');
+        if (!siglaLimpia) {
+            siglaLimpia = nombreLimpio.substring(0, 4).toUpperCase();
         }
 
-        if (!jurisdiccionLimpia) {
-            throw new Error('La jurisdicción territorial de la autoridad es obligatoria.');
+        if (!emailLimpio) {
+            emailLimpio = 'contacto@autoridad.gov.co';
         }
 
-        if (!telefonoLimpio) {
-            throw new Error('El teléfono institucional de contacto es obligatorio.');
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailLimpio)) {
-            throw new Error('El correo electrónico institucional no tiene un formato válido (ejemplo: contacto@cdmb.gov.co).');
-        }
-
-        const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
-        if (!sitioWebLimpio || !urlRegex.test(sitioWebLimpio)) {
-            throw new Error('El portal web oficial debe ser una URL válida (ejemplo: https://www.cdmb.gov.co).');
-        }
-
-        if (!direccionLimpia) {
-            throw new Error('La dirección física de la sede principal es obligatoria.');
+        if (!sitioWebLimpio) {
+            sitioWebLimpio = 'https://www.santander.gov.co';
         }
 
         const payloadAutoridad = {
@@ -118,42 +104,28 @@ const autoridadService = {
             throw new Error('El identificador de la autoridad es obligatorio para la actualización.');
         }
 
-        const siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
+        let siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
         const nombreLimpio = String(dto.nombre || '').trim();
-        const jurisdiccionLimpia = String(dto.jurisdiccion || '').trim();
-        const telefonoLimpio = String(dto.telefono || '').trim();
-        const emailLimpio = String(dto.email || '').trim().toLowerCase();
-        const sitioWebLimpio = String(dto.sitio_web || '').trim();
-        const direccionLimpia = String(dto.direccion || '').trim();
+        const jurisdiccionLimpia = String(dto.jurisdiccion || 'Santander').trim();
+        const telefonoLimpio = String(dto.telefono || 'Sin registrar').trim();
+        let emailLimpio = String(dto.email || '').trim().toLowerCase();
+        let sitioWebLimpio = String(dto.sitio_web || '').trim();
+        const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
 
-        if (!siglaLimpia || siglaLimpia.length < 2) {
-            throw new Error('La sigla oficial de la autoridad es obligatoria (ejemplo: CDMB, CAS, AMB).');
+        if (!nombreLimpio || nombreLimpio.length < 3) {
+            throw new Error('El nombre institucional de la autoridad es obligatorio.');
         }
 
-        if (!nombreLimpio || nombreLimpio.length < 5) {
-            throw new Error('El nombre institucional de la autoridad es obligatorio y debe tener al menos 5 caracteres.');
+        if (!siglaLimpia) {
+            siglaLimpia = nombreLimpio.substring(0, 4).toUpperCase();
         }
 
-        if (!jurisdiccionLimpia) {
-            throw new Error('La jurisdicción territorial de la autoridad es obligatoria.');
+        if (!emailLimpio) {
+            emailLimpio = 'contacto@autoridad.gov.co';
         }
 
-        if (!telefonoLimpio) {
-            throw new Error('El teléfono institucional de contacto es obligatorio.');
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailLimpio)) {
-            throw new Error('El correo electrónico institucional no tiene un formato válido (ejemplo: contacto@cdmb.gov.co).');
-        }
-
-        const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
-        if (!sitioWebLimpio || !urlRegex.test(sitioWebLimpio)) {
-            throw new Error('El portal web oficial debe ser una URL válida (ejemplo: https://www.cdmb.gov.co).');
-        }
-
-        if (!direccionLimpia) {
-            throw new Error('La dirección física de la sede principal es obligatoria.');
+        if (!sitioWebLimpio) {
+            sitioWebLimpio = 'https://www.santander.gov.co';
         }
 
         const payloadUpdate = {

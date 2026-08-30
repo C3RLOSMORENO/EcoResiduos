@@ -1,273 +1,305 @@
 <%- include('partials/header', { activeTab: 'materiales' }) %>
 
-    <div class="max-w-7xl mx-auto space-y-8">
-        <%- include('partials/alert') %>
+<%
+  function obtenerClaseColor(codigo) {
+    if (!codigo) return 'chip-respel-neutral';
+    const c = String(codigo).toUpperCase().trim();
+    if (c.startsWith('Y1') || c.startsWith('Y2') || c.startsWith('Y3') || c.includes('BIO') || c.includes('HOSP')) {
+      return 'chip-respel-bio';
+    }
+    if (c.startsWith('Y8') || c.startsWith('Y9') || c.includes('ACEITE') || c.includes('HIDRO') || c.startsWith('Y4') || c.startsWith('Y5') || c.startsWith('Y6') || c.startsWith('Y7')) {
+      return 'chip-respel-oil';
+    }
+    if (c.startsWith('RAEE') || c.startsWith('Y26') || c.startsWith('Y29') || c.includes('ELEC') || c.includes('METAL') || c.includes('QUIMIC') || c.includes('INDUSTRIAL')) {
+      return 'chip-respel-raee';
+    }
+    if (c.startsWith('REC') || c.startsWith('ORG') || c.includes('PLAST') || c.includes('CART') || c.includes('APROVECHABLE')) {
+      return 'chip-respel-eco';
+    }
+    return 'chip-respel-neutral';
+  }
+%>
 
-            <!-- Cabecera de Página -->
-            <header
-                class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-on-surface">Catálogo Maestro de Residuos (RESPEL)</h2>
-                    <p class="text-sm text-on-surface-variant mt-1">Clasificación bajo estándares normativos y Convenio
-                        de Basilea</p>
-                </div>
-                <span id="counter-badge"
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
-                    Total: <%= materiales.length %> códigos
-                </span>
-            </header>
+<div class="max-w-7xl mx-auto space-y-6">
+  <%- include('partials/alert') %>
 
-            <!-- Tarjeta Formulario de Inserción (MD3 Outlined Card) -->
-            <section aria-labelledby="form-material-title"
-                class="bg-surface rounded-3xl border border-outline-variant p-6 shadow-sm">
-                <h3 id="form-material-title" class="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-xl" aria-hidden="true">post_add</span>
-                    <span>Añadir Residuo al Catálogo</span>
-                </h3>
-
-                <form action="/materiales" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <div>
-                        <label for="codigo" class="block text-xs font-medium text-on-surface-variant mb-1">Código
-                            Oficial *</label>
-                        <input type="text" id="codigo" name="codigo" required placeholder="Ej: Y8, Y9.2, A1160"
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono uppercase">
-                    </div>
-
-                    <div>
-                        <label for="nombre_comun" class="block text-xs font-medium text-on-surface-variant mb-1">Nombre
-                            Descriptivo *</label>
-                        <input type="text" id="nombre_comun" name="nombre_comun" required
-                            placeholder="Aceites minerales usados"
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                    </div>
-
-                    <div>
-                        <label for="categoria" class="block text-xs font-medium text-on-surface-variant mb-1">Categoría
-                            de Riesgo *</label>
-                        <select id="categoria" name="categoria" required
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                            <option value="PELIGROSO">PELIGROSO</option>
-                            <option value="BIOSANITARIO">BIOSANITARIO</option>
-                            <option value="INDUSTRIAL">INDUSTRIAL</option>
-                            <option value="RAEE">RAEE</option>
-                            <option value="APROVECHABLE">APROVECHABLE</option>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-3">
-                        <label for="descripcion"
-                            class="block text-xs font-medium text-on-surface-variant mb-1">Descripción Técnica del
-                            Desecho *</label>
-                        <textarea id="descripcion" name="descripcion" required rows="2"
-                            placeholder="Especificar componentes, estado físico y ejemplos de desecho..."
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-                    </div>
-
-                    <div class="md:col-span-3">
-                        <label for="guia_manejo" class="block text-xs font-medium text-on-surface-variant mb-1">Guía y
-                            Recomendaciones de Acopio</label>
-                        <textarea id="guia_manejo" name="guia_manejo" rows="2"
-                            placeholder="Rotulado requerido, tipo de contenedor y condiciones de ventilación..."
-                            class="w-full px-4 py-2.5 rounded-xl border border-outline bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-                    </div>
-
-                    <div class="md:col-span-3 flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 font-medium px-6 py-3 rounded-full text-sm shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                            <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
-                            <span>Guardar en Catálogo</span>
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Tarjeta Tabla con Barra de Búsqueda y Filtro de Categoría -->
-            <section aria-labelledby="table-mat-title"
-                class="bg-surface rounded-3xl border border-outline-variant/60 shadow-sm overflow-hidden space-y-4">
-                
-                <!-- Barra de Búsqueda y Filtros Interactivos -->
-                <div class="p-6 border-b border-outline-variant/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <h3 id="table-mat-title" class="text-lg font-semibold text-on-surface">Materiales Registrados</h3>
-                        <p class="text-xs text-on-surface-variant mt-0.5">Explora y filtra los residuos habilitados</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <!-- Buscador por Texto -->
-                        <div class="relative min-w-[260px]">
-                            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg select-none pointer-events-none"
-                                aria-hidden="true">search</span>
-                            <input type="text" id="busquedaMaterial" placeholder="Buscar por código, nombre o descripción..."
-                                class="w-full pl-10 pr-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
-                        </div>
-
-                        <!-- Selector Filtro de Categoría -->
-                        <div class="relative">
-                            <select id="filtroCategoria"
-                                class="w-full sm:w-auto px-4 py-2 rounded-full border border-outline bg-surface text-on-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                                <option value="TODAS">Todas las Categorías</option>
-                                <option value="PELIGROSO">PELIGROSO</option>
-                                <option value="BIOSANITARIO">BIOSANITARIO</option>
-                                <option value="INDUSTRIAL">INDUSTRIAL</option>
-                                <option value="RAEE">RAEE</option>
-                                <option value="APROVECHABLE">APROVECHABLE</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm" id="tablaMateriales">
-                        <thead
-                            class="bg-surface-container text-on-surface-variant text-xs font-semibold uppercase tracking-wider">
-                            <tr>
-                                <th scope="col" class="py-3.5 px-6">Código</th>
-                                <th scope="col" class="py-3.5 px-6">Nombre Común</th>
-                                <th scope="col" class="py-3.5 px-6">Categoría</th>
-                                <th scope="col" class="py-3.5 px-6">Descripción Técnica</th>
-                                <th scope="col" class="py-3.5 px-6">Guía y Recomendación de Acopio</th>
-                                <th scope="col" class="py-3.5 px-6 text-right">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-outline-variant/20">
-                            <% if (materiales && materiales.length > 0) { %>
-                                <% materiales.forEach(function(m) { %>
-                                    <tr class="hover:bg-surface-container-high/40 transition fila-material"
-                                        data-codigo="<%= m.codigo || '' %>"
-                                        data-nombre="<%= m.nombre_comun || '' %>"
-                                        data-descripcion="<%= m.descripcion || '' %>"
-                                        data-guia="<%= m.guia_manejo || '' %>"
-                                        data-categoria="<%= m.categoria || '' %>">
-                                        <td class="py-4 px-6 font-mono font-bold text-primary">
-                                            <%= m.codigo %>
-                                        </td>
-                                        <td class="py-4 px-6 font-semibold text-on-surface">
-                                            <%= m.nombre_comun %>
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            <span
-                                                class="px-2.5 py-1 rounded-full text-xs font-semibold <%= m.categoria === 'PELIGROSO' ? 'bg-red-100 text-red-800' : (m.categoria === 'BIOSANITARIO' ? 'bg-amber-100 text-amber-900' : (m.categoria === 'APROVECHABLE' ? 'bg-emerald-100 text-emerald-900' : 'bg-surface-container-high text-on-surface-variant')) %>">
-                                                <%= m.categoria %>
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-6 text-xs text-on-surface-variant max-w-xs">
-                                            <%= m.descripcion %>
-                                        </td>
-                                        <td class="py-4 px-6 text-xs max-w-xs">
-                                            <% if (m.guia_manejo && m.guia_manejo.trim() !== '') { %>
-                                                <div class="flex items-start gap-1.5 text-on-surface bg-surface-container/60 p-2.5 rounded-xl border border-outline-variant/40">
-                                                    <span class="material-symbols-outlined text-base text-primary flex-shrink-0 mt-0.5" aria-hidden="true">assignment</span>
-                                                    <span class="leading-relaxed"><%= m.guia_manejo %></span>
-                                                </div>
-                                            <% } else { %>
-                                                <span class="text-xs text-on-surface-variant italic">Sin guía de acopio registrada</span>
-                                            <% } %>
-                                        </td>
-                                        <td class="py-4 px-6 text-right">
-                                            <div class="inline-flex items-center gap-1">
-                                                <a href="/materiales/edit/<%= m.id %>"
-                                                    aria-label="Editar material <%= m.codigo %>"
-                                                    class="p-2 text-primary hover:bg-primary/10 rounded-full transition focus:outline-none focus:ring-2 focus:ring-primary"
-                                                    title="Editar Material">
-                                                    <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
-                                                </a>
-                                                <form action="/materiales/delete/<%= m.id %>" method="POST"
-                                                    onsubmit="return confirm('¿Eliminar este material del catálogo?');" class="inline">
-                                                    <button type="submit" aria-label="Eliminar material <%= m.codigo %>"
-                                                        class="p-2 text-red-600 hover:bg-red-50 rounded-full transition focus:outline-none focus:ring-2 focus:ring-red-500"
-                                                        title="Eliminar Material">
-                                                        <span class="material-symbols-outlined text-lg"
-                                                            aria-hidden="true">delete</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="py-12 text-center text-on-surface-variant">
-                                        No hay materiales registrados en el catálogo.
-                                    </td>
-                                </tr>
-                            <% } %>
-                            <!-- Mensaje cuando la búsqueda no arroja coincidencias -->
-                            <tr id="sinCoincidencias" class="hidden">
-                                <td colspan="6" class="py-12 text-center text-on-surface-variant">
-                                    <span class="material-symbols-outlined text-2xl text-on-surface-variant block mb-1">search_off</span>
-                                    No se encontraron residuos que coincidan con la búsqueda o filtro seleccionado.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+  <!-- Encabezado y barra de acciones -->
+  <div class="mb-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Catálogo RESPEL</h1>
+        <span class="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+          <%= materiales ? materiales.length : 0 %>
+        </span>
+      </div>
+      <button type="button" onclick="abrirModalUI('modalNuevoMaterial')" class="btn-primary">
+        <svg class="h-4 w-4 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Nuevo residuo</span>
+      </button>
     </div>
 
-    <!-- Script para Búsqueda y Filtrado Dinámico Insensible a Tildes y Mayúsculas -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const inputBusqueda = document.getElementById('busquedaMaterial');
-            const selectCategoria = document.getElementById('filtroCategoria');
-            const filas = document.querySelectorAll('.fila-material');
-            const sinCoincidencias = document.getElementById('sinCoincidencias');
-            const counterBadge = document.getElementById('counter-badge');
-            const totalRegistros = filas.length;
+    <!-- Barra de búsqueda y filtros -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="relative w-full max-w-sm">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+          <svg class="h-4 w-4 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <input type="text" id="buscadorMateriales" placeholder="Buscar por código, residuo o categoría..." class="input-ui !pl-10">
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="filtroCategoria" class="input-ui !w-auto">
+          <option value="">Todas las categorías</option>
+          <option value="PELIGROSO">Peligrosos (Convenio Basilea)</option>
+          <option value="BIOSANITARIO">Biosanitarios / Hospitalarios</option>
+          <option value="RAEE">RAEE / Eléctricos y Electrónicos</option>
+          <option value="APROVECHABLE">Aprovechables / Orgánicos</option>
+          <option value="INDUSTRIAL">Industriales / Químicos</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-            // Función de normalización para ignorar tildes, acentos y mayúsculas
-            function normalizar(texto) {
-                return (texto || '')
-                    .toString()
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .toLowerCase()
-                    .trim();
-            }
+  <!-- Tabla de datos -->
+  <div class="tabla-container">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-left">
+        <thead>
+          <tr>
+            <th scope="col" class="tabla-th pl-6">Código RESPEL</th>
+            <th scope="col" class="tabla-th">Denominación del Residuo</th>
+            <th scope="col" class="tabla-th">Categoría</th>
+            <th scope="col" class="tabla-th pr-6 text-right"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <% if (materiales && materiales.length > 0) { %>
+            <% materiales.forEach(m => { 
+                const nombreMostrar = m.nombre || m.nombre_comun || '';
+                const claseColor = obtenerClaseColor(m.codigo);
+            %>
+              <tr class="tabla-tr fila-material"
+                  data-codigo="<%= m.codigo || '' %>"
+                  data-nombre="<%= nombreMostrar %>"
+                  data-descripcion="<%= m.descripcion || '' %>"
+                  data-categoria="<%= m.categoria || '' %>">
+                <td class="py-3.5 pl-6 pr-4 whitespace-nowrap">
+                  <span class="m3-chip <%= obtenerClaseColor(m.codigo) %>">
+                    <%= m.codigo %>
+                  </span>
+                </td>
+                <td class="px-4 py-3.5">
+                  <div class="text-sm font-semibold text-slate-800 dark:text-slate-100"><%= nombreMostrar %></div>
+                  <% if (m.descripcion) { %>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5"><%= m.descripcion %></div>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3.5 whitespace-nowrap">
+                  <span class="m3-chip <%= claseColor %>">
+                    <%= m.categoria || 'PELIGROSO' %>
+                  </span>
+                </td>
+                <td class="py-3.5 pl-4 pr-6 text-right whitespace-nowrap">
+                  <button type="button" onclick='abrirFichaMaterialBtn(this)' data-material='<%= JSON.stringify(m) %>' class="btn-tonal">
+                    Ver detalle
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="4" class="py-10 text-center text-xs text-slate-500">No hay materiales registrados.</td></tr>
+          <% } %>
+          <tr id="sinCoincidenciasMateriales" class="hidden">
+            <td colspan="4" class="py-10 text-center text-xs text-slate-500">
+              No se encontraron materiales que coincidan con la búsqueda o filtro seleccionado.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-            function filtrarTabla() {
-                const query = normalizar(inputBusqueda?.value);
-                const categoriaSeleccionada = normalizar(selectCategoria?.value);
-                let visibles = 0;
+<!-- Modal: Ficha de detalle (3 capas M3) -->
+<div id="modalFichaMaterial" role="dialog" aria-modal="true" class="modal-scrim">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 id="fichaMatCodigo" class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100"></h2>
+          <span id="fichaMatBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full border"></span>
+        </div>
+        <p id="fichaMatCategoria" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+      </div>
+      <button type="button" onclick="cerrarModalUI('modalFichaMaterial')" aria-label="Cerrar" class="btn-icon">
+        <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
 
-                filas.forEach(fila => {
-                    const codigo = normalizar(fila.getAttribute('data-codigo'));
-                    const nombre = normalizar(fila.getAttribute('data-nombre'));
-                    const descripcion = normalizar(fila.getAttribute('data-descripcion'));
-                    const guia = normalizar(fila.getAttribute('data-guia'));
-                    const categoria = normalizar(fila.getAttribute('data-categoria'));
+    <div class="modal-body divide-y divide-slate-100 dark:divide-slate-800">
+      <div class="flex items-center gap-4 py-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Denominación oficial</p>
+          <p id="fichaMatNombre" class="text-sm text-slate-800 dark:text-slate-200 mt-0.5 font-semibold"></p>
+        </div>
+      </div>
 
-                    const coincideTexto = !query || 
-                        codigo.includes(query) || 
-                        nombre.includes(query) || 
-                        descripcion.includes(query) || 
-                        guia.includes(query);
+      <div class="flex items-start gap-4 py-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 mt-0.5">
+          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Descripción del residuo</p>
+          <p id="fichaMatDescripcion" class="text-sm text-slate-800 dark:text-slate-200 mt-0.5 leading-relaxed"></p>
+        </div>
+      </div>
+    </div>
 
-                    const coincideCategoria = categoriaSeleccionada === 'todas' || categoria === categoriaSeleccionada;
+    <div class="modal-footer">
+      <form id="formEliminarMaterial" action="" method="POST" onsubmit="return confirm('¿Confirmas eliminar este residuo?');">
+        <button type="submit" class="h-10 rounded-full px-4 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">Eliminar residuo</button>
+      </form>
+      <a id="btnEditarMat" href="#" class="btn-primary">Editar residuo</a>
+    </div>
+  </div>
+</div>
 
-                    if (coincideTexto && coincideCategoria) {
-                        fila.style.display = '';
-                        visibles++;
-                    } else {
-                        fila.style.display = 'none';
-                    }
-                });
+<!-- Modal: Registrar Nuevo Residuo -->
+<div id="modalNuevoMaterial" role="dialog" aria-modal="true" class="modal-scrim">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo Residuo (RESPEL)</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Registra un nuevo tipo de residuo en el catálogo</p>
+      </div>
+      <button type="button" onclick="cerrarModalUI('modalNuevoMaterial')" aria-label="Cerrar" class="btn-icon">
+        <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
 
-                if (sinCoincidencias) {
-                    sinCoincidencias.classList.toggle('hidden', visibles > 0 || totalRegistros === 0);
-                }
+    <div class="modal-body">
+      <form id="formMaterial" action="/materiales/guardar" method="POST" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Código RESPEL *</label>
+            <input type="text" name="codigo" required placeholder="Ej. Y9.2, RAEE-01" data-format="uppercase" class="input-ui font-mono uppercase font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría *</label>
+            <select name="categoria" required class="input-ui font-semibold">
+              <option value="PELIGROSO">PELIGROSO (Basilea)</option>
+              <option value="BIOSANITARIO">BIOSANITARIO (Hospitalario)</option>
+              <option value="RAEE">RAEE (Eléctricos / Electrónicos)</option>
+              <option value="APROVECHABLE">APROVECHABLE (Orgánico / Reciclable)</option>
+              <option value="INDUSTRIAL">INDUSTRIAL (Químico)</option>
+              <option value="ESPECIAL">ESPECIAL</option>
+            </select>
+          </div>
+        </div>
 
-                if (counterBadge) {
-                    if (query || categoriaSeleccionada !== 'todas') {
-                        counterBadge.textContent = `Filtrados: ${visibles} de ${totalRegistros} códigos`;
-                    } else {
-                        counterBadge.textContent = `Total: ${totalRegistros} códigos`;
-                    }
-                }
-            }
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Denominación del Residuo *</label>
+          <input type="text" name="nombre" required placeholder="Nombre técnico descriptivo completo" class="input-ui">
+        </div>
 
-            inputBusqueda?.addEventListener('input', filtrarTabla);
-            selectCategoria?.addEventListener('change', filtrarTabla);
-        });
-    </script>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Descripción y alcance</label>
+          <textarea name="descripcion" rows="3" placeholder="Detalles normativos, características físicas o componentes..." class="input-ui !h-auto py-2.5"></textarea>
+        </div>
+      </form>
+    </div>
 
-    <%- include('partials/footer') %>
+    <div class="modal-footer">
+      <button type="button" onclick="cerrarModalUI('modalNuevoMaterial')" class="btn-tonal">Cancelar</button>
+      <button type="submit" form="formMaterial" class="btn-primary">Guardar residuo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function abrirFichaMaterialBtn(btn) {
+    try {
+      const m = JSON.parse(btn.getAttribute('data-material'));
+      const cod = m.codigo || 'Sin código';
+      const cat = m.categoria || 'PELIGROSO';
+      const badgeCls = window.obtenerClaseResiduo ? window.obtenerClaseResiduo(cod) : 'chip-respel-neutral';
+
+      document.getElementById('fichaMatCodigo').textContent = cod;
+      
+      const badgeEl = document.getElementById('fichaMatBadge');
+      if (badgeEl) {
+        badgeEl.className = `m3-chip ${badgeCls}`;
+        badgeEl.textContent = cat;
+      }
+
+      document.getElementById('fichaMatCategoria').textContent = `Clasificación normativa: ${cat}`;
+      document.getElementById('fichaMatNombre').textContent = m.nombre || m.nombre_comun || 'Sin nombre';
+      document.getElementById('fichaMatDescripcion').textContent = m.descripcion || 'Sin descripción técnica registrada.';
+      
+      document.getElementById('btnEditarMat').href = `/materiales/editar/${m.id}`;
+      document.getElementById('formEliminarMaterial').action = `/materiales/eliminar/${m.id}`;
+
+      window.abrirModalUI('modalFichaMaterial');
+    } catch (e) {
+      console.error('Error al abrir detalle del material:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const inputBusqueda = document.getElementById('buscadorMateriales');
+    const selectCategoria = document.getElementById('filtroCategoria');
+    const filas = document.querySelectorAll('.fila-material');
+    const sinCoincidencias = document.getElementById('sinCoincidenciasMateriales');
+
+    function normalizarTexto(texto) {
+      return (texto || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function filtrarTabla() {
+      const query = normalizarTexto(inputBusqueda?.value);
+      const catFiltro = normalizarTexto(selectCategoria?.value);
+      let visibles = 0;
+
+      filas.forEach(fila => {
+        const codigo = normalizarTexto(fila.getAttribute('data-codigo'));
+        const nombre = normalizarTexto(fila.getAttribute('data-nombre'));
+        const descripcion = normalizarTexto(fila.getAttribute('data-descripcion'));
+        const categoria = normalizarTexto(fila.getAttribute('data-categoria'));
+
+        const coincideTexto = !query || 
+          codigo.includes(query) || 
+          nombre.includes(query) || 
+          descripcion.includes(query) ||
+          categoria.includes(query);
+
+        let coincideCat = true;
+        if (catFiltro) {
+          coincideCat = categoria.includes(catFiltro) || codigo.includes(catFiltro);
+        }
+
+        if (coincideTexto && coincideCat) {
+          fila.style.display = '';
+          visibles++;
+        } else {
+          fila.style.display = 'none';
+        }
+      });
+
+      if (sinCoincidencias) {
+        sinCoincidencias.classList.toggle('hidden', visibles > 0 || filas.length === 0);
+      }
+    }
+
+    inputBusqueda?.addEventListener('input', filtrarTabla);
+    selectCategoria?.addEventListener('change', filtrarTabla);
+  });
+</script>
+
+<%- include('partials/footer') %>

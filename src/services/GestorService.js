@@ -1,8 +1,8 @@
 const supabase = require('../config/supabase');
 
-// Convierte los IDs de materiales seleccionados a un arreglo de números limpios
+// Convierte la lista de IDs recibida en un arreglo de números enteros válidos
 function extractMaterialIds(dto) {
-    const raw = dto.materiales_ids || dto['materiales_ids[]'] || dto.material_ids || [];
+    const raw = dto.materiales_ids || dto['materiales_ids[]'] || dto.material_ids || dto.residuos || [];
     if (Array.isArray(raw)) {
         return raw.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
     }
@@ -14,8 +14,8 @@ function extractMaterialIds(dto) {
 }
 
 const gestorService = {
+    // Consulta gestores y sus residuos autorizados mediante la tabla intermedia gestor_material
     async getAllGestores() {
-        // Traemos gestores y sus materiales autorizados mediante la tabla intermedia gestor_material
         const { data, error } = await supabase
             .from('perfiles_gestor')
             .select(`
@@ -36,7 +36,6 @@ const gestorService = {
             throw new Error(`Error al consultar gestores: ${error.message}`);
         }
 
-        // Aplanamos la lista de materiales y aseguramos valores por defecto si una columna viene nula
         return (data || []).map((row) => {
             const materiales = (row.gestor_material || [])
                 .map((gm) => gm.materiales_residuos)
@@ -109,22 +108,23 @@ const gestorService = {
         };
     },
 
+    // Valida datos de entrada y crea el registro con geocodificación pasiva
     async createGestor(dto = {}) {
-        // Limpiamos texto para evitar inconsistencias en búsquedas y filtros
         const nitLimpio = String(dto.nit || '').trim();
         const razonSocialLimpia = String(dto.razon_social || '').trim().toUpperCase();
         const municipioLimpio = dto.municipio && String(dto.municipio).trim() !== ''
             ? String(dto.municipio).trim().toUpperCase()
             : 'BUCARAMANGA';
         const direccionLimpia = String(dto.direccion || '').trim();
-        const representanteLegalLimpio = dto.representante_legal && String(dto.representante_legal).trim() !== ''
-            ? String(dto.representante_legal).trim()
+        const representanteLegalRaw = dto.representante_legal || dto.contacto;
+        const representanteLegalLimpio = representanteLegalRaw && String(representanteLegalRaw).trim() !== ''
+            ? String(representanteLegalRaw).trim()
             : null;
-        const telefonoContactoLimpio = String(dto.telefono_contacto || '').trim();
-        const emailContactoLimpio = String(dto.email_contacto || '').trim().toLowerCase();
+        const telefonoContactoLimpio = String(dto.telefono_contacto || dto.telefono || '').trim();
+        const emailContactoLimpio = String(dto.email_contacto || dto.email || '').trim().toLowerCase();
         const materialIds = extractMaterialIds(dto);
 
-        // Validaciones de negocio antes de tocar la base de datos
+        // Regla: El NIT debe ser numérico entre 8 y 15 dígitos
         const nitRegex = /^\d{8,15}$/;
         if (!nitRegex.test(nitLimpio)) {
             throw new Error('El NIT es obligatorio y debe ser numérico entre 8 y 15 dígitos (sin guiones ni puntos).');
@@ -147,10 +147,10 @@ const gestorService = {
             throw new Error('El correo electrónico de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
         }
 
-        // Geocodificación pasiva: convertimos dirección a GPS con fallback a Bucaramanga si falla la API
         let latitud = 7.119349;
         let longitud = -73.122741;
 
+        // Intenta obtener coordenadas en OpenStreetMap; si falla, usa el centro de Bucaramanga
         try {
             const consulta = encodeURIComponent(`${direccionLimpia}, ${municipioLimpio}, Santander, Colombia`);
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${consulta}&limit=1`, {
@@ -162,7 +162,7 @@ const gestorService = {
                 longitud = parseFloat(data[0].lon);
             }
         } catch {
-            // Si Nominatim falla o no hay internet, usamos las coordenadas centrales de la ciudad
+            // Asigna coordenadas por defecto en Bucaramanga
         }
 
         const payloadGestor = {
@@ -190,7 +190,7 @@ const gestorService = {
 
         const nuevoGestor = gestorCreado && gestorCreado[0];
 
-        // Guardamos la relación N:M en la tabla intermedia
+        // Registra los residuos asociados en la tabla intermedia
         if (nuevoGestor && materialIds.length > 0) {
             const relaciones = materialIds.map((matId) => ({
                 gestor_id: nuevoGestor.id,
@@ -205,6 +205,7 @@ const gestorService = {
         return gestorCreado;
     },
 
+    // Actualiza datos del gestor y sincroniza las relaciones con materiales
     async updateGestor(id, dto = {}) {
         if (!id) {
             throw new Error('El identificador del gestor es obligatorio para la actualización.');
@@ -245,7 +246,6 @@ const gestorService = {
             throw new Error('El correo electrónico de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
         }
 
-        // Recalculamos coordenadas por si la dirección cambió
         let latitud = 7.119349;
         let longitud = -73.122741;
 
@@ -260,7 +260,7 @@ const gestorService = {
                 longitud = parseFloat(data[0].lon);
             }
         } catch {
-            // Fallback a coordenadas de Bucaramanga si falla la API
+            // Asigna coordenadas por defecto en Bucaramanga
         }
 
         const payloadUpdate = {
@@ -285,7 +285,7 @@ const gestorService = {
             throw new Error(`Error en base de datos al actualizar gestor: ${gestorError.message}`);
         }
 
-        // Sincronizamos materiales: borramos los anteriores e insertamos la nueva selección
+        // Reemplaza los materiales asignados con la nueva selección
         await supabase
             .from('gestor_material')
             .delete()
@@ -305,12 +305,12 @@ const gestorService = {
         return gestorActualizado;
     },
 
+    // Elimina el gestor y sus dependencias en la tabla intermedia
     async deleteGestor(id) {
         if (!id) {
             throw new Error('El identificador del gestor es obligatorio para la eliminación.');
         }
 
-        // Borramos primero las relaciones en gestor_material para evitar errores de clave foránea
         await supabase
             .from('gestor_material')
             .delete()

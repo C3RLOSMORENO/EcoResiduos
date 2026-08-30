@@ -1,61 +1,80 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-surface">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoManager - Panel Santander</title>
-    <!-- Material Symbols & Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
-    <!-- Tailwind CSS CDN configurado con paleta Material Design 3 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
                         sans: ['Roboto', 'sans-serif'],
                     },
                     colors: {
-                        primary: '#006D44',
+                        brand: {
+                            DEFAULT: '#1E4620',
+                            hover: '#163518',
+                            subtle: '#E8F0E6',
+                        },
+                        primary: '#1E4620',
                         'on-primary': '#FFFFFF',
-                        'primary-container': '#91F7BD',
-                        'on-primary-container': '#002111',
-                        surface: '#FBFDF8',
-                        'surface-container': '#EDF2EA',
-                        'surface-container-high': '#E7ECE4',
-                        'on-surface': '#191C1A',
-                        'on-surface-variant': '#404943',
-                        outline: '#707973',
-                        'outline-variant': '#BFC9C2',
+                        'primary-container': '#2D5B30',
+                        'surface-light': '#FFFFFF',
+                        'surface-dark': '#1E293B',
+                        'bg-light': '#F9FAFB',
+                        'bg-dark': '#0F172A'
                     }
                 }
             }
         }
     </script>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Motor global de validación, colores tonales y modales M3 -->
+    <script src="/js/main.js" defer></script>
+
+
+
+    <!-- Aplica tema claro como base y activa oscuro únicamente si existe preferencia guardada -->
+    <script>
+        (function() {
+            const temaGuardado = localStorage.getItem('theme');
+            if (temaGuardado === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
 </head>
 
-<body class="h-full flex text-on-surface antialiased">
-    <!-- Navegación Lateral (Navigation Rail / Drawer MD3) -->
+<body class="h-full flex bg-[#F9FAFB] text-slate-900 dark:bg-[#0F172A] dark:text-slate-100 antialiased">
     <aside aria-label="Navegación Principal"
-        class="w-72 bg-surface-container border-r border-outline-variant/40 flex flex-col justify-between p-4 h-screen sticky top-0">
+        class="w-72 bg-white dark:bg-[#1E293B] border-r border-slate-300 dark:border-slate-700 flex flex-col justify-between p-4 h-screen sticky top-0">
         <div>
             <div class="flex items-center gap-3 px-4 py-3 mb-4">
-                <span class="material-symbols-outlined text-primary text-3xl" aria-hidden="true">recycling</span>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#1E4620] dark:text-emerald-400">
+                    <span class="material-symbols-outlined text-2xl" aria-hidden="true">recycling</span>
+                </div>
                 <div>
-                    <h1 class="font-bold text-base text-on-surface tracking-tight leading-none">EcoManager</h1>
-                    <span class="text-xs text-on-surface-variant font-medium">Bucaramanga • Santander</span>
+                    <h1 class="font-bold text-base text-slate-900 dark:text-slate-100 tracking-tight leading-none">EcoManager</h1>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Bucaramanga • Santander</span>
                 </div>
             </div>
 
             <nav class="space-y-1">
                 <a href="/gestores"
-                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'gestores' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'gestores' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
                     <%=activeTab==='gestores' ? 'aria-current="page"' : '' %>
                     >
                     <span class="material-symbols-outlined text-xl" aria-hidden="true">domain</span>
@@ -63,7 +82,7 @@
                 </a>
 
                 <a href="/materiales"
-                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'materiales' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'materiales' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
                     <%=activeTab==='materiales' ? 'aria-current="page"' : '' %>
                     >
                     <span class="material-symbols-outlined text-xl" aria-hidden="true">category</span>
@@ -71,7 +90,7 @@
                 </a>
 
                 <a href="/autoridades"
-                    class="flex items-center gap-4 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary <%= activeTab === 'autoridades' ? 'bg-primary text-on-primary shadow-sm font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high' %>"
+                    class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'autoridades' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
                     <%=activeTab==='autoridades' ? 'aria-current="page"' : '' %>
                     >
                     <span class="material-symbols-outlined text-xl" aria-hidden="true">account_balance</span>
@@ -80,43 +99,41 @@
             </nav>
         </div>
 
-        <div class="space-y-2 pt-4 border-t border-outline-variant/30">
+        <div class="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
             <a href="/logout"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-on-surface-variant hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 focus:outline-none transition-colors"
                 title="Cerrar sesión"
                 aria-label="Cerrar sesión">
-                <span class="material-symbols-outlined text-xl text-red-600" aria-hidden="true">logout</span>
+                <span class="material-symbols-outlined text-xl text-rose-600" aria-hidden="true">logout</span>
                 <span>Cerrar Sesión</span>
             </a>
 
-            <div class="px-4 py-1 text-xs text-on-surface-variant flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-primary inline-block" aria-hidden="true"></span>
+            <div class="px-4 py-1 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#1E4620] inline-block" aria-hidden="true"></span>
                 <span>Base de datos activa</span>
             </div>
         </div>
     </aside>
 
+    <!-- Cierre de sesión por inactividad tras 15 minutos sin interacción -->
     <script>
       (function() {
-        const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutos de inactividad
-        let inactivityTimer;
+        const LIMITE_INACTIVIDAD_MS = 15 * 60 * 1000;
+        let temporizador;
 
-        function resetInactivityTimer() {
-          clearTimeout(inactivityTimer);
-          inactivityTimer = setTimeout(() => {
+        function reiniciarTemporizador() {
+          clearTimeout(temporizador);
+          temporizador = setTimeout(() => {
             window.location.href = '/logout?msg=Tu+sesi%C3%B3n+ha+expirado+por+inactividad+(15+minutos)&type=error';
-          }, INACTIVITY_LIMIT_MS);
+          }, LIMITE_INACTIVIDAD_MS);
         }
 
-        // Eventos que reinician el temporizador de inactividad
-        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(event => {
-          window.addEventListener(event, resetInactivityTimer, { passive: true });
+        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evento => {
+          window.addEventListener(evento, reiniciarTemporizador, { passive: true });
         });
 
-        // Iniciar temporizador
-        resetInactivityTimer();
+        reiniciarTemporizador();
       })();
     </script>
 
-    <!-- Contenedor Principal -->
-    <main id="main-content" class="flex-1 p-8 overflow-y-auto bg-surface">
+    <main id="main-content" class="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F9FAFB] dark:bg-[#0F172A]">

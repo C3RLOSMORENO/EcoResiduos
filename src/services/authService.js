@@ -1,12 +1,12 @@
 const supabase = require('../config/supabase');
 
 const authService = {
+    // Autentica credenciales mediante Supabase Auth
     async login(email, password) {
         if (!email || !password) {
             throw new Error('Debe proporcionar tanto el correo electrónico como la contraseña.');
         }
 
-        // Limpiamos espacios y pasamos a minúsculas para evitar fallos de tipeo
         const sanitizedEmail = String(email).trim().toLowerCase();
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -36,5 +36,3 @@ const authService = {
 };
 
 module.exports = authService;
-
-

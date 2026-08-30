@@ -5,7 +5,6 @@ const authController = {
     async renderLogin(req, res) {
         const token = req.cookies && req.cookies.sb_access_token;
 
-        // Si ya hay token válido, redirigimos directamente a gestores
         if (token) {
             try {
                 const { data, error } = await supabase.auth.getUser(token);
@@ -38,7 +37,6 @@ const authController = {
             const { session } = await authService.login(email, password);
 
             if (session && session.access_token) {
-                // httpOnly impide leer la cookie con JS (XSS) y maxAge expira la sesión a los 15 min
                 res.cookie('sb_access_token', session.access_token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
@@ -67,5 +65,3 @@ const authController = {
 };
 
 module.exports = authController;
-
-
