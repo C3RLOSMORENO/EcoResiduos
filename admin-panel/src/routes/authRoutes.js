@@ -8,4 +8,11 @@ router.post('/auth/login', authController.handleLogin);
 router.get('/logout', authController.handleLogout);
 router.post('/logout', authController.handleLogout);
 
+router.get('/restablecer-password', (req, res) => {
+    res.render('restablecer-password', {
+        supabaseUrl: process.env.SUPABASE_URL,
+        supabaseAnonKey: process.env.SUPABASE_ANON_KEY
+    });
+});
+
 module.exports = router;

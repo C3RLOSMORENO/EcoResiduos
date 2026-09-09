@@ -1,0 +1,3 @@
+[submodule "Ecoresiduos_app"]
+	path = Ecoresiduos_app
+	url = https://github.com/JanerBus/Ecoresiduos_App.git
