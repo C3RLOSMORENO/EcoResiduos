@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/eco_colors.dart';
 import 'registro_screen.dart';
+import 'recuperar_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -211,9 +212,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Implementar recuperación de contraseña
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Función de recuperación en desarrollo')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RecuperarPasswordScreen(),
+                          ),
                         );
                       },
                       style: TextButton.styleFrom(
