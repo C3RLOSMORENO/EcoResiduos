@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.example.ecoresiduos"
     compileSdk = 37
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
