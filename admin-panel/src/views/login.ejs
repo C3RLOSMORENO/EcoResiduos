@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 
 <head>
     <meta charset="UTF-8">
@@ -45,8 +45,8 @@
     <script src="/js/main.js" defer></script>
 </head>
 
-<body class="min-h-full flex items-center justify-center bg-[#F9FAFB] dark:bg-[#0F172A] p-4 sm:p-6 lg:p-8 font-sans text-slate-900 dark:text-slate-100 antialiased">
-    <main class="w-full max-w-md">
+<body class="min-h-screen w-full flex items-center justify-center bg-[#F9FAFB] dark:bg-[#0F172A] p-4 sm:p-6 lg:p-8 font-sans text-slate-900 dark:text-slate-100 antialiased">
+    <main class="w-full max-w-md my-auto">
         <!-- Tarjeta de autenticación -->
         <div class="bg-white dark:bg-[#1E293B] rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl p-8 sm:p-10 transition-all">
             <div class="flex flex-col items-center text-center mb-8">
@@ -86,6 +86,9 @@
                         <label for="password" class="block text-xs font-medium text-slate-700 dark:text-slate-300">
                             Contraseña <span class="text-red-600" aria-hidden="true">*</span>
                         </label>
+                        <a href="/restablecer-password" class="text-xs font-medium text-brand dark:text-emerald-400 hover:underline">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -124,18 +127,7 @@
                     </button>
                 </div>
             </form>
-
-            <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
-                    <span class="material-symbols-outlined text-base text-brand dark:text-emerald-400" aria-hidden="true">verified_user</span>
-                    <span>Acceso protegido con cifrado SSL y Supabase Auth</span>
-                </p>
-            </div>
         </div>
-
-        <p class="text-center text-xs text-slate-400 mt-6">
-            &copy; <%= new Date().getFullYear() %> EcoResiduos Santander • Gestión Integral de Residuos
-        </p>
     </main>
 
     <!-- Visibilidad de contraseña -->
