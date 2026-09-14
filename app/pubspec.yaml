@@ -45,6 +45,8 @@ dependencies:
   google_generative_ai: ^0.4.7
   flutter_dotenv: ^6.0.1
   path: ^1.9.1
+  tflite_flutter: ^0.12.1
+  image: ^4.10.1
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +72,8 @@ flutter:
 
   assets:
     - .env
+    - assets/models/ecoresiduos_model.tflite
+    - assets/models/labels.txt
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

@@ -1,29 +1,40 @@
 import os
+import sys
+from pathlib import Path
+
+# Configurar salida UTF-8 para consola de Windows
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.models import Model
-import matplotlib.pyplot as plt
 
 # 1. Configuración de parámetros
-DATASET_DIR = 'dataset' # Aquí deben ir las carpetas con las fotos
+SCRIPT_DIR = Path(__file__).resolve().parent
+DATASET_DIR = SCRIPT_DIR / 'dataset'
+OUTPUT_MODEL = SCRIPT_DIR / 'ecoresiduos_model.tflite'
+OUTPUT_LABELS = SCRIPT_DIR / 'labels.txt'
+
 BATCH_SIZE = 32
 IMG_SIZE = (224, 224) # Tamaño ideal para MobileNetV2
-EPOCHS = 10 # Para empezar, luego puedes subir a 20 o 30
+EPOCHS = 10 # 10 épocas es ideal para transfer learning con capas congeladas
 
 def check_dataset():
-    if not os.path.exists(DATASET_DIR):
+    if not DATASET_DIR.exists():
         print(f"❌ Error: No se encontró la carpeta '{DATASET_DIR}'.")
-        print("Debes crearla y colocar dentro subcarpetas por cada categoría.")
         return False
     
-    categories = [d for d in os.listdir(DATASET_DIR) if os.path.isdir(os.path.join(DATASET_DIR, d))]
+    categories = [d.name for d in DATASET_DIR.iterdir() if d.is_dir()]
     if len(categories) == 0:
         print(f"❌ Error: La carpeta '{DATASET_DIR}' está vacía.")
         return False
         
-    print(f"✅ Categorías encontradas: {categories}")
+    print(f"✅ Categorías encontradas ({len(categories)}): {categories}")
     return True
 
 def main():
@@ -65,10 +76,10 @@ def main():
     # Guardar las etiquetas (categorías) para usarlas en Flutter
     labels = (train_generator.class_indices)
     labels = dict((v,k) for k,v in labels.items())
-    with open('labels.txt', 'w') as f:
+    with open(OUTPUT_LABELS, 'w', encoding='utf-8') as f:
         for i in range(len(labels)):
             f.write(f"{labels[i]}\n")
-    print("✅ Archivo labels.txt generado.")
+    print(f"✅ Archivo {OUTPUT_LABELS.name} generado.")
 
     # 3. Construir el Modelo (Transfer Learning con MobileNetV2)
     print("🧠 Descargando arquitectura MobileNetV2...")
@@ -104,17 +115,16 @@ def main():
     # 5. Guardar y exportar a TensorFlow Lite
     print("💾 Convirtiendo modelo a TensorFlow Lite (.tflite)...")
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    # Optimizaciones para móvil (reduce el peso del modelo)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     tflite_model = converter.convert()
 
-    with open('ecoresiduos_model.tflite', 'wb') as f:
+    with open(OUTPUT_MODEL, 'wb') as f:
         f.write(tflite_model)
     
     print("🎉 ¡Entrenamiento finalizado exitosamente!")
     print("Archivos generados para Flutter:")
-    print(" 1. ecoresiduos_model.tflite")
-    print(" 2. labels.txt")
+    print(f" 1. {OUTPUT_MODEL}")
+    print(f" 2. {OUTPUT_LABELS}")
 
 if __name__ == '__main__':
     main()
