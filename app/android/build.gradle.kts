@@ -20,13 +20,13 @@ subprojects {
 }
 
 subprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
+    }
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
-            if (project.name == "tflite_flutter") {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-            } else {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-            }
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 }
@@ -34,3 +34,5 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+
