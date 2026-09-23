@@ -74,7 +74,7 @@ class IdentificacionService {
       // 3. Preprocesamiento: redimensionar a 224x224 (tamaño de entrada de MobileNetV2)
       final resizedImage = img.copyResize(croppedImage, width: 224, height: 224);
 
-      // Convertir imagen a tensor [1, 224, 224, 3] normalizado a [0, 1]
+      // Convertir imagen a tensor [1, 224, 224, 3] en rango [0, 255] (Requerido por MobileNetV3)
       final input = List.generate(
         1,
         (_) => List.generate(
@@ -84,9 +84,9 @@ class IdentificacionService {
             (x) {
               final pixel = resizedImage.getPixel(x, y);
               return [
-                pixel.r / 255.0,
-                pixel.g / 255.0,
-                pixel.b / 255.0,
+                pixel.r.toDouble(),
+                pixel.g.toDouble(),
+                pixel.b.toDouble(),
               ];
             },
           ),
