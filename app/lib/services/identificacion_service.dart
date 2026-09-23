@@ -144,6 +144,18 @@ class IdentificacionService {
   /// Información ambiental y guía de manejo según la normativa colombiana (Resolución 2184)
   Map<String, dynamic> _obtenerMetadataCategoria(String categoria) {
     switch (categoria.toUpperCase()) {
+      case 'FONDO':
+        return {
+          'nombre': 'No es un residuo',
+          'descripcion': 'La imagen no parece contener un residuo reconocible, está desenfocada, o es parte del fondo.',
+          'caracteristicas': 'Disposición: N/A',
+          'pasosManejo': [
+            'Asegúrate de centrar bien el objeto en la pantalla.',
+            'Evita fondos con demasiados objetos que puedan confundir a la cámara.',
+            'Acércate un poco más si el objeto es muy pequeño.',
+          ],
+        };
+
       case 'RECICLABLE':
         return {
           'nombre': 'Residuo Aprovechable (Reciclable)',
