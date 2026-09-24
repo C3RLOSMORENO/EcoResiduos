@@ -69,10 +69,20 @@ class IdentificacionService {
         throw ErrorProcesamientoException('No se pudo decodificar la imagen.');
       }
 
-      // Preprocesamiento: redimensionar a 224x224 (tamaño de entrada de MobileNetV2)
-      final resizedImage = img.copyResize(decodedImage, width: 224, height: 224);
+      // 1. Corregir orientación EXIF (crítico para fotos tomadas con el celular)
+      final orientedImage = img.bakeOrientation(decodedImage);
 
-      // Convertir imagen a tensor [1, 224, 224, 3] normalizado a [0, 1]
+      // 2. Recortar al centro para hacer la imagen cuadrada antes de redimensionar.
+      // Esto evita que las fotos 16:9 se aplasten/deformen al forzarlas a 224x224.
+      final size = orientedImage.width < orientedImage.height ? orientedImage.width : orientedImage.height;
+      final x = (orientedImage.width - size) ~/ 2;
+      final y = (orientedImage.height - size) ~/ 2;
+      final croppedImage = img.copyCrop(orientedImage, x: x, y: y, width: size, height: size);
+
+      // 3. Preprocesamiento: redimensionar a 224x224 (tamaño de entrada de MobileNetV2)
+      final resizedImage = img.copyResize(croppedImage, width: 224, height: 224);
+
+      // Convertir imagen a tensor [1, 224, 224, 3] en rango [0, 255] (Requerido por MobileNetV3)
       final input = List.generate(
         1,
         (_) => List.generate(
