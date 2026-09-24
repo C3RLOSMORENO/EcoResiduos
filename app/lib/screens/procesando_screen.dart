@@ -38,7 +38,11 @@ class _ProcesandoScreenState extends State<ProcesandoScreen> {
       HistorialService.guardarEscaneoEnSegundoPlano(resultado, widget.imagePath);
       siguiente = ResultadoScreen(item: resultado, imagePath: widget.imagePath);
     } on ResiduoNoIdentificadoException catch (e) {
-      siguiente = ResiduoNoIdentificadoScreen(imagePath: widget.imagePath, confianza: e.confianza);
+      siguiente = ResiduoNoIdentificadoScreen(
+        imagePath: widget.imagePath,
+        confianza: e.confianza,
+        sinResiduo: e.sinResiduo,
+      );
     } catch (e) {
       debugPrint('Falló el análisis de la foto: $e');
       siguiente = ErrorProcesamientoScreen(imagePath: widget.imagePath);

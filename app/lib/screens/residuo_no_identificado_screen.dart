@@ -9,10 +9,18 @@ import 'residuos_screen.dart';
 
 /// Confianza bajo el umbral (23): tono tranquilo y tres salidas con pesos distintos.
 class ResiduoNoIdentificadoScreen extends StatelessWidget {
-  const ResiduoNoIdentificadoScreen({super.key, required this.imagePath, required this.confianza});
+  const ResiduoNoIdentificadoScreen({
+    super.key,
+    required this.imagePath,
+    required this.confianza,
+    this.sinResiduo = false,
+  });
 
   final String imagePath;
   final int confianza;
+
+  /// La IA reconoció que la foto no muestra un residuo.
+  final bool sinResiduo;
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +31,10 @@ class ResiduoNoIdentificadoScreen extends StatelessWidget {
           FotoCapturada(ruta: imagePath),
           EmptyStateWidget(
             icon: Icons.help_outline,
-            title: 'No pudimos identificarlo',
-            description: 'La IA no está segura ($confianza %). Prueba con más luz y con el residuo solo en la foto.',
+            title: sinResiduo ? 'No vemos un residuo' : 'No pudimos identificarlo',
+            description: sinResiduo
+                ? 'La foto parece mostrar solo el fondo. Centra el residuo y acércate un poco más.'
+                : 'La IA no está segura ($confianza %). Prueba con más luz y con el residuo solo en la foto.',
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s24),
