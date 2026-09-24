@@ -1,194 +1,186 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+import '../data/guia_categorias.dart';
+import '../features/solicitudes/screens/publicar_residuo_screen.dart';
 import '../models/waste_item.dart';
-import '../theme/eco_colors.dart';
+import '../repositories/gestores_repository.dart';
+import '../services/identificacion_service.dart';
+import '../theme/eco_theme.dart';
+import '../widgets/categoria_chip.dart';
+import '../widgets/foto_capturada.dart';
+import 'flujo_identificacion.dart';
+import 'guia_manejo_general_screen.dart';
+import 'informacion_residuo_screen.dart';
 
-/// WF-06 — Resultado de identificación
+/// Resultado de la IA (22). Orgánico y Ordinario solo los detecta el modelo:
+/// ningún gestor de la app los recibe, así que no se ofrece publicarlos.
 class ResultadoScreen extends StatelessWidget {
-  const ResultadoScreen({
-    super.key,
-    required this.item,
-    this.onVerInformacion,
-    this.onReintentar,
-  });
+  const ResultadoScreen({super.key, required this.item, required this.imagePath, this.gestoresRepository});
 
   final WasteItem item;
-  final void Function(BuildContext)? onVerInformacion;
-  final void Function(BuildContext)? onReintentar;
+  final String imagePath;
+  final GestoresRepository? gestoresRepository;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final categoria = categoriaFromString(item.categoria);
+    final codigo = item.categoria.toUpperCase();
+    final guia = guiasPorCategoria[categoria]!;
+    final publicable = categoriasPublicables.containsKey(codigo);
+
+    void verGuia() => Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => GuiaManejoGeneralScreen(categoriaInicial: categoria)),
+    );
+
     return Scaffold(
-      backgroundColor: EcoColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _Header(title: 'Resultado'),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          FotoCapturada(ruta: imagePath),
+          Transform.translate(
+            offset: const Offset(0, -44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16),
+              child: Material(
+                color: scheme.surfaceContainerLowest,
+                shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 20),
+                clipBehavior: Clip.antiAlias,
+                elevation: 1,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _FotoResultado(imagenPath: item.imagenPath),
-                    const SizedBox(height: 16),
-                    Text(
-                      item.nombre,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        height: 32 / 24,
-                        fontWeight: FontWeight.bold,
-                        color: EcoColors.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: EcoColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        '${item.confianza}% de confianza',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          letterSpacing: 0.4,
-                          fontWeight: FontWeight.w500,
-                          color: EcoColors.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Categoría: ${item.categoria}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 20 / 14,
-                        color: EcoColors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: FilledButton(
-                        onPressed: onVerInformacion == null ? null : () => onVerInformacion!(context),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: EcoColors.primary,
-                          foregroundColor: EcoColors.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                        child: const Text(
-                          'VER INFORMACIÓN',
-                          style: TextStyle(fontSize: 14, letterSpacing: 0.4),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: onReintentar == null ? null : () => onReintentar!(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: EcoColors.primary,
-                          side: const BorderSide(
-                            color: Color(0xFF73796D),
-                            width: 1.4,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                        child: const Text(
-                          'REINTENTAR',
-                          style: TextStyle(fontSize: 14, letterSpacing: 0.4),
-                        ),
+                    CategoriaBanner(categoria: categoria, height: 56),
+                    Padding(
+                      padding: const EdgeInsets.all(EcoSpace.s16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Confianza(valor: item.confianza),
+                          const SizedBox(height: EcoSpace.s16),
+                          Text(guia.consejoResultado, style: theme.textTheme.bodyLarge),
+                          if (categoria == Categoria.peligroso) ...[
+                            const SizedBox(height: EcoSpace.s12),
+                            const AvisoAdvertencia(
+                              titulo: 'Guárdalo aparte',
+                              texto: 'Mientras lo recogen, déjalo en un envase cerrado y lejos del calor.',
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: const BoxDecoration(
-        color: EcoColors.background,
-        border: Border(bottom: BorderSide(color: EcoColors.outline)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            color: EcoColors.onSurface,
-            onPressed: () => Navigator.maybePop(context),
           ),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              height: 28 / 20,
-              fontWeight: FontWeight.bold,
-              color: EcoColors.onSurface,
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s24),
+            child: publicable
+                ? GestoresCercanos(categoria: codigo, repository: gestoresRepository)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                        onPressed: verGuia,
+                        icon: const Icon(Icons.menu_book_outlined),
+                        label: const Text('Ver cómo separarlo'),
+                      ),
+                      const SizedBox(height: EcoSpace.s8),
+                      TextButton(
+                        onPressed: () => abrirIdentificacion(context, reemplazarActual: true),
+                        child: const Text('Identificar otro residuo'),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
+      bottomNavigationBar: publicable
+          ? Container(
+              color: scheme.surfaceContainer,
+              padding: EdgeInsets.fromLTRB(
+                EcoSpace.s16,
+                EcoSpace.s12,
+                EcoSpace.s16,
+                EcoSpace.s12 + MediaQuery.viewPaddingOf(context).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                    onPressed: () => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PublicarResiduoScreen(fotoInicial: imagePath, categoriaSugerida: codigo),
+                      ),
+                    ),
+                    icon: const Icon(Icons.upload),
+                    label: const Text('Publicar para recolección'),
+                  ),
+                  TextButton(onPressed: verGuia, child: const Text('Ver información de la categoría')),
+                ],
+              ),
+            )
+          : null,
     );
   }
 }
 
-/// Miniatura de la foto capturada. Si aún no hay imagen real disponible,
-/// cae en un placeholder con el ícono de cámara, tal como en el wireframe.
-class _FotoResultado extends StatelessWidget {
-  const _FotoResultado({this.imagenPath});
+/// Confianza en número y en texto: «Muy probable» desde el 85 %, «Probable» por debajo.
+class _Confianza extends StatelessWidget {
+  const _Confianza({required this.valor});
 
-  final String? imagenPath;
+  final int valor;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        height: 200,
-        width: double.infinity,
-        child: imagenPath != null
-            ? Image.file(File(imagenPath!), fit: BoxFit.cover)
-            : Container(
-                color: const Color(0xFFDFE4D7),
-                child: const Center(
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.photo_camera_rounded,
-                      color: EcoColors.onSurfaceVariant,
-                    ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final reducir = MediaQuery.of(context).disableAnimations;
+    final texto = valor >= IdentificacionService.confianzaAlta ? 'Muy probable' : 'Probable';
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: valor.toDouble()),
+      duration: reducir ? Duration.zero : EcoMotion.conteo,
+      curve: Curves.easeOutCubic,
+      builder: (_, actual, _) => Semantics(
+        label: 'Confianza de la IA: $valor por ciento, $texto',
+        excludeSemantics: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('${actual.round()} %', style: theme.textTheme.displayMedium?.copyWith(height: 1)),
+                const SizedBox(width: EcoSpace.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(texto, style: theme.textTheme.titleMedium),
+                      Text(
+                        'Confianza de la IA',
+                        style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
+            ),
+            const SizedBox(height: EcoSpace.s8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(value: actual / 100, minHeight: 8),
+            ),
+          ],
+        ),
       ),
     );
   }

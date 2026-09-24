@@ -1,31 +1,41 @@
-/// Una autoridad ambiental oficial (WF-18, WF-19).
+/// Autoridad ambiental con jurisdicción en Santander (tabla `autoridades_ambientales`).
 class AutoridadAmbiental {
   const AutoridadAmbiental({
+    this.id,
     required this.nombre,
-    required this.descripcion,
-    required this.direccion,
-    required this.telefono,
-    required this.correo,
-    required this.sitioWeb,
+    this.sigla,
+    this.jurisdiccion = '',
+    this.telefono = '',
+    this.email = '',
+    this.sitioWeb = '',
+    this.direccion = '',
+    this.horario,
   });
 
-  factory AutoridadAmbiental.fromJson(Map<String, dynamic> json) {
+  factory AutoridadAmbiental.fromMap(Map<String, dynamic> map) {
     return AutoridadAmbiental(
-      nombre: json['nombre']?.toString() ?? json['sigla']?.toString() ?? '',
-      descripcion: json['jurisdiccion']?.toString() ?? '',
-      direccion: json['direccion']?.toString() ?? '',
-      telefono: json['telefono']?.toString() ?? '',
-      correo: json['email']?.toString() ?? '',
-      sitioWeb: json['sitio_web']?.toString() ?? '',
+      id: (map['id'] as num?)?.toInt(),
+      nombre: (map['nombre'] ?? '').toString(),
+      sigla: map['sigla']?.toString(),
+      jurisdiccion: (map['jurisdiccion'] ?? map['descripcion'] ?? '').toString(),
+      telefono: (map['telefono'] ?? '').toString(),
+      email: (map['email'] ?? map['correo'] ?? '').toString(),
+      sitioWeb: (map['sitio_web'] ?? '').toString(),
+      direccion: (map['direccion'] ?? '').toString(),
+      horario: map['horario']?.toString(),
     );
   }
 
+  final int? id;
   final String nombre;
-
-  /// Ej. "Autoridad ambiental regional".
-  final String descripcion;
-  final String direccion;
+  final String? sigla;
+  final String jurisdiccion;
   final String telefono;
-  final String correo;
+  final String email;
   final String sitioWeb;
+  final String direccion;
+  final String? horario;
+
+  /// Nombre con su sigla, p. ej. «Área Metropolitana de Bucaramanga (AMB)».
+  String get nombreCompleto => sigla == null || nombre.contains('($sigla)') ? nombre : '$nombre ($sigla)';
 }

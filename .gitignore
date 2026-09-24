@@ -1,20 +1,44 @@
-# Environment variables
+# Variables de entorno y secretos
 .env
 .env.*
 !.env.example
 
-# OS files
+# Sistema operativo
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# IDEs
+# Editores
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Dependencies & Build
+# Dependencias y compilación
 node_modules/
 dist/
 build/
 .dart_tool/
+coverage/
+
+# Python (entrenamiento del modelo)
+__pycache__/
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Supabase CLI: estado local, no las migraciones
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+
+# Copias y volcados de la base de datos
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db

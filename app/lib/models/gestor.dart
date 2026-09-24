@@ -1,41 +1,74 @@
-/// Un gestor certificado de residuos (WF-09, WF-10).
+/// Gestor certificado tal como se muestra en el directorio y en las fichas.
 class Gestor {
   const Gestor({
+    required this.id,
     required this.nombre,
-    required this.categoria,
-    required this.distanciaKm,
-    required this.direccion,
-    required this.telefono,
-    required this.correo,
-    required this.horario,
+    required this.municipio,
+    this.nit = '',
+    this.direccion = '',
+    this.telefono = '',
+    this.correo = '',
+    this.horario,
     this.latitud,
     this.longitud,
+    this.categorias = const [],
+    this.distanciaKm,
   });
 
-  factory Gestor.fromJson(Map<String, dynamic> json) {
+  /// Construye un gestor desde `perfiles_gestor` con sus materiales
+  /// verificados (`gestor_material` → `materiales_residuos.categoria`).
+  factory Gestor.fromMap(Map<String, dynamic> map) {
+    final materiales = map['gestor_material'] as List<dynamic>? ?? const [];
+    final categorias = <String>{
+      for (final fila in materiales.whereType<Map<String, dynamic>>())
+        if (fila['verificado'] != false && fila['materiales_residuos'] is Map)
+          (fila['materiales_residuos'] as Map)['categoria']?.toString().toUpperCase() ?? '',
+    }..remove('');
+
     return Gestor(
-      nombre: json['razon_social']?.toString() ?? '',
-      // Usaremos el municipio temporalmente o un valor por defecto
-      categoria: json['municipio']?.toString() ?? 'Gestor Autorizado', 
-      distanciaKm: 0.0, // Pendiente de cálculo por geolocalización
-      direccion: json['direccion']?.toString() ?? '',
-      telefono: json['telefono_contacto']?.toString() ?? '',
-      correo: json['email_contacto']?.toString() ?? '',
-      horario: json['estado_verificacion'] == 'verificado' ? 'Verificado' : 'Pendiente',
-      latitud: json['latitud'] != null ? double.tryParse(json['latitud'].toString()) : null,
-      longitud: json['longitud'] != null ? double.tryParse(json['longitud'].toString()) : null,
+      id: (map['id'] as num?)?.toInt() ?? 0,
+      nombre: (map['razon_social'] ?? '').toString(),
+      municipio: (map['municipio'] ?? '').toString(),
+      nit: (map['nit'] ?? '').toString(),
+      direccion: (map['direccion'] ?? '').toString(),
+      telefono: (map['telefono_contacto'] ?? '').toString(),
+      correo: (map['email_contacto'] ?? '').toString(),
+      horario: (map['horario'] ?? map['horario_atencion'])?.toString(),
+      latitud: double.tryParse(map['latitud']?.toString() ?? ''),
+      longitud: double.tryParse(map['longitud']?.toString() ?? ''),
+      categorias: categorias.toList(),
     );
   }
 
+  final int id;
   final String nombre;
-
-  /// Ej. "Plásticos y papel".
-  final String categoria;
-  final double distanciaKm;
+  final String municipio;
+  final String nit;
   final String direccion;
   final String telefono;
   final String correo;
-  final String horario;
+  final String? horario;
   final double? latitud;
   final double? longitud;
+
+  /// Categorías que recibe (códigos de `materiales_residuos.categoria`).
+  final List<String> categorias;
+
+  /// Distancia al usuario en km; null si no se conoce su ubicación.
+  final double? distanciaKm;
+
+  Gestor conDistancia(double? km) => Gestor(
+    id: id,
+    nombre: nombre,
+    municipio: municipio,
+    nit: nit,
+    direccion: direccion,
+    telefono: telefono,
+    correo: correo,
+    horario: horario,
+    latitud: latitud,
+    longitud: longitud,
+    categorias: categorias,
+    distanciaKm: km,
+  );
 }

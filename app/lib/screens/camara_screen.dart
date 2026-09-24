@@ -2,190 +2,218 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/eco_colors.dart';
+import '../services/fotos_service.dart';
+import '../theme/eco_theme.dart';
 
-/// WF-04 — Cámara
-///
-/// Vista de captura en vivo utilizando el paquete `camera`.
+/// Visor de cámara (20). Siempre oscuro; la guía de encuadre tiene la forma
+/// de la etiqueta y el disparador de 80 dp queda en la zona del pulgar.
 class CamaraScreen extends StatefulWidget {
-  const CamaraScreen({
-    super.key,
-    this.onCerrar,
-    this.onCapturar,
-  });
+  const CamaraScreen({super.key, required this.onCapturar});
 
-  final VoidCallback? onCerrar;
-  /// Callback llamado al tomar la foto, pasando la ruta del archivo.
-  final ValueChanged<String>? onCapturar;
+  /// Recibe la ruta de la foto tomada o elegida de la galería.
+  final ValueChanged<String> onCapturar;
 
   @override
   State<CamaraScreen> createState() => _CamaraScreenState();
 }
 
-class _CamaraScreenState extends State<CamaraScreen> {
+class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver {
   CameraController? _controller;
-  List<CameraDescription> _cameras = [];
-  bool _isInitialized = false;
-  FlashMode _flashMode = FlashMode.off;
+  bool _flash = false;
+  bool _capturando = false;
+  bool _sinCamara = false;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
-  }
-
-  Future<void> _initCamera() async {
-    try {
-      _cameras = await availableCameras();
-      if (_cameras.isNotEmpty) {
-        _controller = CameraController(
-          _cameras.first,
-          ResolutionPreset.high,
-          enableAudio: false,
-        );
-
-        await _controller!.initialize();
-        await _controller!.setFlashMode(_flashMode);
-        
-        if (mounted) {
-          setState(() {
-            _isInitialized = true;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Error inicializando la cámara: $e');
-    }
-  }
-
-  Future<void> _toggleFlash() async {
-    if (_controller == null || !_controller!.value.isInitialized) return;
-    
-    HapticFeedback.lightImpact();
-    FlashMode nextMode = _flashMode == FlashMode.off ? FlashMode.torch : FlashMode.off;
-
-    try {
-      await _controller!.setFlashMode(nextMode);
-      setState(() {
-        _flashMode = nextMode;
-      });
-    } catch (e) {
-      debugPrint('Error cambiando el flash: $e');
-    }
-  }
-
-  Future<void> _tomarFoto() async {
-    if (_controller == null || !_controller!.value.isInitialized) return;
-    
-    HapticFeedback.mediumImpact();
-
-    try {
-      final image = await _controller!.takePicture();
-      widget.onCapturar?.call(image.path);
-    } catch (e) {
-      debugPrint('Error capturando foto: $e');
-    }
+    WidgetsBinding.instance.addObserver(this);
+    _iniciar();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     super.dispose();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive) {
+      controller.dispose();
+      _controller = null;
+    } else if (state == AppLifecycleState.resumed) {
+      _iniciar();
+    }
+  }
+
+  Future<void> _iniciar() async {
+    try {
+      final camaras = await availableCameras();
+      if (camaras.isEmpty) {
+        if (mounted) setState(() => _sinCamara = true);
+        return;
+      }
+      final trasera = camaras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => camaras.first,
+      );
+      final controller = CameraController(trasera, ResolutionPreset.high, enableAudio: false);
+      await controller.initialize();
+      await controller.setFlashMode(FlashMode.off);
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() => _controller = controller);
+    } catch (e) {
+      debugPrint('No se pudo iniciar la cámara: $e');
+      if (mounted) setState(() => _sinCamara = true);
+    }
+  }
+
+  Future<void> _alternarFlash() async {
+    final controller = _controller;
+    if (controller == null) return;
+    HapticFeedback.selectionClick();
+    try {
+      await controller.setFlashMode(_flash ? FlashMode.off : FlashMode.torch);
+      setState(() => _flash = !_flash);
+    } catch (e) {
+      debugPrint('No se pudo cambiar el flash: $e');
+    }
+  }
+
+  Future<void> _tomarFoto() async {
+    final controller = _controller;
+    if (controller == null || _capturando) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _capturando = true);
+    try {
+      final foto = await controller.takePicture();
+      if (_flash) await controller.setFlashMode(FlashMode.off);
+      widget.onCapturar(foto.path);
+    } catch (e) {
+      debugPrint('No se pudo tomar la foto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo tomar la foto.')));
+      }
+    } finally {
+      if (mounted) setState(() => _capturando = false);
+    }
+  }
+
+  Future<void> _galeria() async {
+    final ruta = await FotosService.elegirDeGaleria();
+    if (ruta != null) widget.onCapturar(ruta);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: EcoColors.cameraBackground,
-      body: SafeArea(
-        child: Column(
+    final theme = Theme.of(context);
+    final controller = _controller;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: colorVisorCamara,
+        body: Stack(
+          fit: StackFit.expand,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _CircleIconButton(
-                    icon: Icons.close_rounded,
-                    onTap: widget.onCerrar ?? () => Navigator.maybePop(context),
+            if (controller != null && controller.value.isInitialized)
+              FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.previewSize?.height ?? 1,
+                  height: controller.value.previewSize?.width ?? 1,
+                  child: CameraPreview(controller),
+                ),
+              )
+            else if (_sinCamara)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(EcoSpace.s32),
+                  child: Text(
+                    'No pudimos abrir la cámara. Puedes elegir una foto de la galería.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white),
                   ),
-                  _CircleIconButton(
-                    icon: _flashMode != FlashMode.off
-                        ? Icons.flash_on_rounded
-                        : Icons.flash_off_rounded,
-                    onTap: _toggleFlash,
+                ),
+              )
+            else
+              const Center(child: CircularProgressIndicator(color: Colors.white)),
+            const IgnorePointer(child: CustomPaint(painter: _GuiaEtiquetaPainter())),
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(EcoSpace.s8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _BotonCircular(icono: Icons.close, tooltip: 'Cerrar', onTap: () => Navigator.maybePop(context)),
+                        if (controller != null)
+                          _BotonCircular(
+                            icono: _flash ? Icons.flash_on : Icons.flash_off,
+                            tooltip: _flash ? 'Apagar flash' : 'Encender flash',
+                            onTap: _alternarFlash,
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s24),
+                    child: Text(
+                      'Centra el residuo dentro de la etiqueta',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleSmall?.copyWith(color: Colors.white),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 150,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: _BotonCircular(
+                              icono: Icons.photo_library_outlined,
+                              tooltip: 'Galería',
+                              onTap: _galeria,
+                            ),
+                          ),
+                        ),
+                        Semantics(
+                          button: true,
+                          label: 'Tomar foto',
+                          child: GestureDetector(
+                            onTap: _tomarFoto,
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 4),
+                              ),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _capturando ? Colors.white54 : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: Center(
-                child: Container(
-                  width: 310,
-                  height: 384,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14), // un poco menos por el borde
-                    child: _isInitialized && _controller != null
-                        ? AspectRatio(
-                            aspectRatio: 310 / 384,
-                            child: FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _controller!.value.previewSize?.height ?? 1,
-                                height: _controller!.value.previewSize?.width ?? 1,
-                                child: CameraPreview(_controller!),
-                              ),
-                            ),
-                          )
-                        : const Center(
-                            child: CircularProgressIndicator(color: Colors.white),
-                          ),
-                  ),
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Centra el residuo dentro del marco',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 40),
-            Center(
-              child: GestureDetector(
-                onTap: _tomarFoto,
-                child: Container(
-                  width: 76,
-                  height: 76,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.fromBorderSide(
-                      BorderSide(color: Colors.white, width: 4),
-                    ),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -193,26 +221,51 @@ class _CamaraScreenState extends State<CamaraScreen> {
   }
 }
 
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({required this.icon, this.onTap});
+/// Oscurece el visor fuera de la guía y dibuja el contorno de la etiqueta
+/// (inset 40, arriba 140, alto 340, corte 28) con su ojal.
+class _GuiaEtiquetaPainter extends CustomPainter {
+  const _GuiaEtiquetaPainter();
 
-  final IconData icon;
-  final VoidCallback? onTap;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final alto = (size.height - 140 - 230).clamp(200.0, 340.0);
+    final guia = Rect.fromLTWH(40, 140, size.width - 80, alto);
+    const forma = EtiquetaBorder(radius: EcoRadius.medium, cut: 28, hole: 8, holeCenter: Offset(30, 30));
+    final contorno = forma.getOuterPath(guia);
+
+    final velo = Path.combine(PathOperation.difference, Path()..addRect(Offset.zero & size), contorno);
+    canvas.drawPath(velo, Paint()..color = Colors.black.withValues(alpha: 0.45));
+    canvas.drawPath(
+      contorno,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GuiaEtiquetaPainter oldDelegate) => false;
+}
+
+class _BotonCircular extends StatelessWidget {
+  const _BotonCircular({required this.icono, required this.tooltip, required this.onTap});
+
+  final IconData icono;
+  final String tooltip;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.2),
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onTap,
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(48),
+        backgroundColor: Colors.white.withValues(alpha: 0.18),
+        foregroundColor: Colors.white,
       ),
+      icon: Icon(icono),
     );
   }
 }

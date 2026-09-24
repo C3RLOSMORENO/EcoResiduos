@@ -1,4 +1,4 @@
-const supabase = require('../config/supabase');
+const authService = require('../services/authService');
 
 const authMiddleware = {
     async requireAuth(req, res, next) {
@@ -14,11 +14,11 @@ const authMiddleware = {
         }
 
         try {
-            const { data, error } = await supabase.auth.getUser(token);
+            const user = await authService.getAdmin(token);
 
-            if (error || !data || !data.user) {
+            if (!user) {
                 res.clearCookie('sb_access_token');
-                return res.redirect('/login?msg=Sesi%C3%B3n+inv%C3%A1lida+o+expirada.+Por+favor+inicia+sesi%C3%B3n&type=error');
+                return res.redirect('/login?msg=Sesi%C3%B3n+inv%C3%A1lida,+expirada+o+sin+permisos+de+administrador&type=error');
             }
 
             res.cookie('sb_access_token', token, {
@@ -29,8 +29,8 @@ const authMiddleware = {
                 maxAge: 15 * 60 * 1000
             });
 
-            req.user = data.user;
-            res.locals.user = data.user;
+            req.user = user;
+            res.locals.user = user;
             next();
         } catch {
             res.clearCookie('sb_access_token');

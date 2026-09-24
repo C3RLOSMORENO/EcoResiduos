@@ -1,0 +1,329 @@
+<%- include('partials/header', { activeTab: 'dashboard' }) %>
+
+<div class="max-w-7xl mx-auto space-y-8">
+  <%- include('partials/alert') %>
+
+  <!-- Cabecera del Dashboard -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+        <span>EcoManager Santander</span>
+        <span>/</span>
+        <span class="text-slate-800 dark:text-slate-200 font-bold">Panel Principal</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Panel de Control Ambiental</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Supervisión en tiempo real de recolecciones, gestión de residuos y certificación de gestores en Santander
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Servicios en Línea</span>
+      </span>
+      <a href="/gestores" class="btn-primary !h-9 !text-xs">
+        <span class="material-symbols-outlined text-base">domain</span>
+        <span>Auditar Gestores</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Tarjetas KPI -->
+  <section aria-label="Métricas Principales" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Total Solicitudes -->
+    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Solicitudes</span>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">receipt_long</span>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <span class="text-3xl font-bold text-slate-900 dark:text-slate-100"><%= kpis.totalSolicitudes %></span>
+        <span class="text-xs text-slate-500">publicadas</span>
+      </div>
+      <div class="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+        <span class="font-medium text-emerald-600 dark:text-emerald-400"><%= kpis.solicitudesPublicadas %> activas</span>
+        <span>•</span>
+        <span><%= kpis.solicitudesEnProceso %> en negociación</span>
+      </div>
+    </div>
+
+    <!-- Solicitudes Recolectadas -->
+    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recolectadas</span>
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">check_circle</span>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <span class="text-3xl font-bold text-emerald-700 dark:text-emerald-400"><%= kpis.solicitudesRecolectadas %></span>
+        <span class="text-xs text-slate-500">completadas</span>
+      </div>
+      <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        <% const tasa = kpis.totalSolicitudes > 0 ? Math.round((kpis.solicitudesRecolectadas / kpis.totalSolicitudes) * 100) : 0; %>
+        <span class="font-semibold text-emerald-600 dark:text-emerald-400"><%= tasa %>%</span> tasa de efectividad
+      </div>
+    </div>
+
+    <!-- Gestores Pendientes de Verificación -->
+    <div class="m3-surface-container p-5 rounded-2xl border <%= kpis.gestoresPendientesCount > 0 ? 'border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/10' : 'border-slate-200/80 dark:border-slate-800' %> hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gestores Pendientes</span>
+        <div class="w-10 h-10 rounded-xl <%= kpis.gestoresPendientesCount > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600' %> flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">pending_actions</span>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <span class="text-3xl font-bold <%= kpis.gestoresPendientesCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100' %>">
+          <%= kpis.gestoresPendientesCount %>
+        </span>
+        <span class="text-xs text-slate-500">por auditar</span>
+      </div>
+      <div class="mt-3 text-xs">
+        <% if (kpis.gestoresPendientesCount > 0) { %>
+          <span class="text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">priority_high</span> Requieren revisión inmediata
+          </span>
+        <% } else { %>
+          <span class="text-slate-500 dark:text-slate-400 font-medium">Al día sin pendientes</span>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Red de Gestores y Catálogo -->
+    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Red Certificada</span>
+        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">verified</span>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <span class="text-3xl font-bold text-slate-900 dark:text-slate-100"><%= kpis.gestoresAprobados %></span>
+        <span class="text-xs text-slate-500">gestores certificados</span>
+      </div>
+      <div class="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+        <span><%= kpis.totalMateriales %> tipos de residuos</span>
+        <span>•</span>
+        <span><%= kpis.totalAutoridades %> autoridades</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección de Auditoría Urgente de Gestores -->
+  <% if (gestoresPendientes && gestoresPendientes.length > 0) { %>
+    <section aria-labelledby="seccion-auditoria" class="m3-surface-container rounded-2xl border border-amber-200 dark:border-amber-800/80 p-6 bg-gradient-to-r from-amber-50/50 via-white to-amber-50/20 dark:from-amber-950/20 dark:via-slate-900 dark:to-amber-950/10">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">gavel</span>
+          </div>
+          <div>
+            <h2 id="seccion-auditoria" class="text-base font-bold text-slate-900 dark:text-slate-100">
+              Gestores Pendientes de Auditoría y Verificación
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Aprueba o rechaza gestores ambientales que solicitaron certificación oficial</p>
+          </div>
+        </div>
+        <a href="/gestores" class="text-xs font-semibold text-brand dark:text-emerald-400 hover:underline flex items-center gap-1">
+          <span>Ver todos los gestores</span>
+          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 uppercase font-semibold">
+            <tr>
+              <th class="py-3 px-4">Razón Social / NIT</th>
+              <th class="py-3 px-4">Municipio</th>
+              <th class="py-3 px-4">Contacto</th>
+              <th class="py-3 px-4">Estado</th>
+              <th class="py-3 px-4 text-right">Acción de Auditoría</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <% gestoresPendientes.forEach(g => { %>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-slate-900 dark:text-slate-100"><%= g.razon_social %></div>
+                  <div class="text-[11px] font-mono text-slate-500">NIT: <%= g.nit %></div>
+                </td>
+                <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
+                  <%= g.municipio || 'Bucaramanga' %>
+                </td>
+                <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                  <div><%= g.email_contacto %></div>
+                  <div class="text-[11px]"><%= g.telefono_contacto %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                    PENDIENTE
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <form action="/gestores/estado/<%= g.id %>" method="POST" onsubmit="return confirm('¿Confirmas la APROBACIÓN formal de este gestor ambiental para operar en Santander?');" class="inline">
+                      <input type="hidden" name="estado" value="APROBADO">
+                      <input type="hidden" name="redirectUrl" value="/dashboard">
+                      <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">check</span>
+                        <span>Aprobar</span>
+                      </button>
+                    </form>
+                    <form action="/gestores/estado/<%= g.id %>" method="POST" onsubmit="return confirm('¿Confirmas el RECHAZO formal de esta solicitud de gestor ambiental?');" class="inline">
+                      <input type="hidden" name="estado" value="RECHAZADO">
+                      <input type="hidden" name="redirectUrl" value="/dashboard">
+                      <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                        <span>Rechazar</span>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Panel de dos columnas: Solicitudes Recientes y Accesos Rápidos -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Últimas Solicitudes Registradas (2 Cols) -->
+    <div class="lg:col-span-2 m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <span class="material-symbols-outlined text-brand dark:text-emerald-400">history</span>
+            <span>Solicitudes Recientes en Santander</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Últimos residuos reportados por generadores en la plataforma</p>
+        </div>
+      </div>
+
+      <% if (ultimasSolicitudes && ultimasSolicitudes.length > 0) { %>
+        <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 uppercase font-semibold">
+              <tr>
+                <th class="py-3 px-4">Residuo</th>
+                <th class="py-3 px-4">Cantidad</th>
+                <th class="py-3 px-4">Municipio</th>
+                <th class="py-3 px-4">Estado</th>
+                <th class="py-3 px-4">Fecha</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <% ultimasSolicitudes.forEach(s => { 
+                const mat = s.materiales_residuos || {};
+                let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                if (s.estado === 'RECOLECTADO') badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+                else if (s.estado === 'EN_NEGOCIACION') badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
+                else if (s.estado === 'PUBLICADO') badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
+                else if (s.estado === 'CANCELADO') badgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+              %>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100"><%= mat.nombre_comun || 'Residuo #' + s.id %></div>
+                    <div class="text-[11px] text-slate-500 font-mono"><%= mat.codigo || 'S/' + s.id %></div>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                    <%= s.cantidad_estimada %> <span class="text-xs font-normal text-slate-500"><%= s.unidad_medida %></span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400 capitalize">
+                    <%= (s.municipio || 'Bucaramanga').toLowerCase() %>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase <%= badgeClass %>">
+                      <%= s.estado %>
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-500 text-[11px]">
+                    <%= s.created_at ? new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }) : '-' %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="py-12 text-center text-xs text-slate-400 italic">
+          No hay solicitudes de recolección registradas aún.
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Accesos Rápidos y Modos de Configuración (1 Col) -->
+    <div class="space-y-6">
+      <!-- Tarjeta Accesos Directos -->
+      <div class="m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand dark:text-emerald-400">tune</span>
+          <span>Módulos de Administración</span>
+        </h3>
+
+        <div class="space-y-2.5">
+          <a href="/gestores" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">domain</span>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Gestores Ambientales</p>
+                <p class="text-[11px] text-slate-500">Auditoría y asignación de materiales</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </a>
+
+          <a href="/materiales" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">category</span>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Catálogo de Materiales</p>
+                <p class="text-[11px] text-slate-500">RESPEL, RCD, RAEE y aprovechables</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </a>
+
+          <a href="/autoridades" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">account_balance</span>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Autoridades Ambientales</p>
+                <p class="text-[11px] text-slate-500">CDMB, AMB, CAS y normatividad</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Resumen Jurisdiccional Santander -->
+      <div class="p-5 rounded-2xl bg-[#1E4620] text-white space-y-3 shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-300 text-xl">map</span>
+          <span class="text-xs font-bold tracking-wide uppercase text-emerald-200">Jurisdicción Santander</span>
+        </div>
+        <p class="text-xs text-emerald-100 leading-relaxed">
+          Monitoreo articulado con la <strong>CDMB</strong> (Área Metropolitana y Soto Norte), <strong>AMB</strong> (Bucaramanga, Floridablanca, Girón, Piedecuesta) y la <strong>CAS</strong> (Provincias de Santander).
+        </p>
+        <div class="pt-2 border-t border-emerald-800/80 flex items-center justify-between text-[11px] text-emerald-200">
+          <span>SSOT Supabase Activo</span>
+          <span class="font-mono text-emerald-300 font-bold">v1.0.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

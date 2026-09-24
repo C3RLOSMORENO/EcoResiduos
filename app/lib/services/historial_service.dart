@@ -1,51 +1,68 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:path/path.dart' as p;
+
+import '../models/historial_escaneo_ia.dart';
 import '../models/waste_item.dart';
+import 'fotos_service.dart';
 
+/// Historial de escaneos con IA (tabla `historial_escaneos_ia`).
 class HistorialService {
-  static final _supabase = Supabase.instance.client;
+  /// Escaneos más recientes que se muestran; el resto sigue en la base de datos.
+  static const _limiteHistorial = 50;
 
-  /// Guarda el escaneo subiendo primero la foto a Storage y luego insertando el registro.
-  /// Esto se hace en segundo plano para no congelar la pantalla del usuario.
-  static Future<void> guardarEscaneoEnSegundoPlano(WasteItem item, String imagePath) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      debugPrint('No hay usuario logueado. Saltando guardado de historial.');
-      return;
-    }
-
+  static SupabaseClient? get _supabase {
     try {
-      final file = File(imagePath);
-      final fileExtension = p.extension(imagePath);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$fileExtension';
-      
-      // Guardamos la imagen en una carpeta con el ID del usuario
-      final storagePath = '$userId/$fileName';
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
-      debugPrint('Subiendo imagen a Supabase Storage...');
-      await _supabase.storage.from('escaneos_ia').upload(
-        storagePath,
-        file,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-      );
+  /// Sube la foto y registra el escaneo. No se espera su resultado: si falla,
+  /// el usuario igual ve su resultado.
+  static Future<void> guardarEscaneoEnSegundoPlano(WasteItem item, String imagePath) async {
+    final client = _supabase;
+    if (client == null) return;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
 
-      final imageUrl = _supabase.storage.from('escaneos_ia').getPublicUrl(storagePath);
-      debugPrint('Imagen subida: $imageUrl');
-
-      debugPrint('Insertando registro en historial_escaneos_ia...');
-      await _supabase.from('historial_escaneos_ia').insert({
+    final fotos = FotosService(client: client);
+    String? imageUrl;
+    try {
+      imageUrl = await fotos.subir(imagePath, CarpetaFoto.escaneos);
+      await client.from('historial_escaneos_ia').insert({
         'usuario_id': userId,
         'nombre_detectado': item.nombre,
         'categoria_detectada': item.categoria,
         'nivel_confianza': item.confianza,
         'imagen_path': imageUrl,
       });
-
-      debugPrint('Historial guardado exitosamente.');
     } catch (e) {
-      debugPrint('Error grave al guardar el historial: $e');
+      debugPrint('No se pudo guardar el escaneo en el historial: $e');
+      await fotos.eliminar(imageUrl);
+    }
+  }
+
+  /// Consulta y mapea el historial de escaneos para un usuario determinado.
+  static Future<List<HistorialEscaneoIa>> getHistorialUsuario([String? targetUserId]) async {
+    final client = _supabase;
+    if (client == null) return [];
+
+    final userId = targetUserId ?? client.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    try {
+      final List<dynamic> data = await client
+          .from('historial_escaneos_ia')
+          .select()
+          .eq('usuario_id', userId)
+          .order('created_at', ascending: false)
+          .limit(_limiteHistorial);
+
+      return data.map((map) => HistorialEscaneoIa.fromMap(map as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint('Error al consultar historial_escaneos_ia: $e');
+      return [];
     }
   }
 }

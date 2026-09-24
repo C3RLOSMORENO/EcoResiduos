@@ -11,5 +11,7 @@ router.post('/edit/:id', gestorController.handleUpdateGestor);
 router.post('/editar/:id', gestorController.handleUpdateGestor);
 router.post('/delete/:id', gestorController.handleDeleteGestor);
 router.post('/eliminar/:id', gestorController.handleDeleteGestor);
+router.post('/estado/:id', gestorController.handleUpdateEstado);
+router.post('/:id/estado', gestorController.handleUpdateEstado);
 
 module.exports = router;

@@ -71,6 +71,18 @@ const gestorController = {
         } catch (err) {
             res.redirect(`/gestores?msg=${encodeURIComponent(err.message)}&type=error`);
         }
+    },
+
+    async handleUpdateEstado(req, res) {
+        const { id } = req.params;
+        const { estado, redirectUrl } = req.body;
+        const target = redirectUrl || '/gestores';
+        try {
+            await gestorService.updateEstadoVerificacion(id, estado);
+            res.redirect(`${target}?msg=Estado+del+gestor+actualizado+a+${encodeURIComponent(estado)}&type=success`);
+        } catch (err) {
+            res.redirect(`${target}?msg=${encodeURIComponent(err.message)}&type=error`);
+        }
     }
 };
 
