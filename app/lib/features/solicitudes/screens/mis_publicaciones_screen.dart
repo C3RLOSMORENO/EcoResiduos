@@ -325,7 +325,7 @@ class _FilaEscaneo extends StatelessWidget {
 
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: EcoRadius.corte),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       child: Padding(
         padding: const EdgeInsets.all(EcoSpace.s12),
         child: Row(

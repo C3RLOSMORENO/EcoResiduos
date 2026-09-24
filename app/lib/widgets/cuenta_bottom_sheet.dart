@@ -127,7 +127,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
                 alignment: Alignment.center,
                 decoration: ShapeDecoration(
                   color: scheme.tertiaryContainer,
-                  shape: const EtiquetaBorder(radius: EcoRadius.small, cut: 10),
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
                 ),
                 child: Text(
                   iniciales(_nombre),

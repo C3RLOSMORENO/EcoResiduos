@@ -67,7 +67,7 @@ class _GuiaManejoGeneralScreenState extends State<GuiaManejoGeneralScreen> {
             padding: const EdgeInsets.all(EcoSpace.s16),
             child: Material(
               color: scheme.surfaceContainerLowest,
-              shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 18),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -622,7 +622,7 @@ class _SlotFoto extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: scheme.surfaceContainerHigh,
-        shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 20),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       ),
       child: imagen == null
           ? Column(

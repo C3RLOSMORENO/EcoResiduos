@@ -93,7 +93,7 @@ class _EtiquetaAnimada extends StatelessWidget {
       height: 100,
       decoration: ShapeDecoration(
         color: scheme.primaryContainer,
-        shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 18, hole: 6, holeCenter: _ojal),
+        shape: const EtiquetaBorder(radius: EcoRadius.medium, hole: 6, holeCenter: _ojal),
       ),
       alignment: const Alignment(0, 0.35),
       child: Icon(icono, size: 40, color: scheme.onPrimaryContainer),

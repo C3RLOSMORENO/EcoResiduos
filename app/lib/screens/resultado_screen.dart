@@ -46,7 +46,7 @@ class ResultadoScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16),
               child: Material(
                 color: scheme.surfaceContainerLowest,
-                shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 20),
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
                 clipBehavior: Clip.antiAlias,
                 elevation: 1,
                 child: Column(

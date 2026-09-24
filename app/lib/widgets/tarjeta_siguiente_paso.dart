@@ -44,7 +44,7 @@ class TarjetaSiguientePaso extends StatelessWidget {
     return Container(
       decoration: ShapeDecoration(
         color: scheme.primary,
-        shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 24, hole: 7),
+        shape: const EtiquetaBorder(radius: EcoRadius.medium, hole: 7),
       ),
       padding: const EdgeInsets.fromLTRB(20, 44, 20, 20),
       child: Column(
@@ -146,7 +146,7 @@ class FilaDespues extends StatelessWidget {
 
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 12),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -291,7 +291,7 @@ class InicioSkeleton extends StatelessWidget {
           height: 248,
           decoration: ShapeDecoration(
             color: scheme.surfaceContainerHigh,
-            shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 24, hole: 7),
+            shape: const EtiquetaBorder(radius: EcoRadius.medium, hole: 7),
           ),
         ),
         const SizedBox(height: EcoSpace.s12),

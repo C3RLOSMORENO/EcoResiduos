@@ -2,18 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'eco_colors.dart';
-import 'etiqueta_border.dart';
 
 export 'eco_colors.dart';
 export 'etiqueta_border.dart';
 
-/// Escala de radios de Material 3 usada en EcoResiduos (máx 4 valores + corte de firma)
+/// Escala de radios de Material 3 usada en EcoResiduos (máx 4 valores)
 abstract final class EcoRadius {
   static const double small = 8.0; // Campos, tiles, miniaturas, avatar
   static const double medium = 12.0; // Etiquetas, tarjetas, botones modales
   static const double extraLarge = 28.0; // Bottom sheets, diálogos
   static const double full = 9999.0; // Botones píldora, badges, SearchBar
-  static const double corte = 16.0; // Corte de firma a 45°
 }
 
 /// Escala de espaciado estándar de 4 dp
@@ -241,7 +239,7 @@ ThemeData ecoTheme(Brightness brightness) {
       elevation: 0,
       margin: EdgeInsets.zero,
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: EcoRadius.corte),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -273,7 +271,7 @@ ThemeData ecoTheme(Brightness brightness) {
       backgroundColor: scheme.tertiaryContainer,
       foregroundColor: scheme.onTertiaryContainer,
       elevation: 3,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 12),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       extendedTextStyle: GoogleFonts.publicSans(fontSize: 15, fontWeight: FontWeight.w600),
     ),
     inputDecorationTheme: InputDecorationTheme(

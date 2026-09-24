@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Firma visual de EcoResiduos: Borde con forma de etiqueta de residuo.
+/// Borde con forma de etiqueta de residuo: esquinas redondeadas y un ojal
+/// circular recortado (vaciado real con `PathOperation.difference`).
 ///
-/// Presenta esquinas redondeadas en 3 vértices y un corte a 45° en el vértice
-/// superior derecho, con opción de un ojal circular recortado (vaciado real
-/// con `PathOperation.difference`).
+/// Con [cut] el vértice superior derecho se corta a 45°; solo lo usa el logo.
+/// Para tarjetas sin ojal se usa `RoundedRectangleBorder`.
 class EtiquetaBorder extends OutlinedBorder {
   const EtiquetaBorder({
     this.radius = 12.0,
-    this.cut = 16.0,
+    this.cut = 0.0,
     this.hole = 0.0,
     this.holeCenter = const Offset(26, 26),
     super.side,
@@ -20,10 +20,17 @@ class EtiquetaBorder extends OutlinedBorder {
   final Offset holeCenter;
 
   Path _path(Rect r) {
-    final p = Path()
-      ..moveTo(r.left + radius, r.top)
-      ..lineTo(r.right - cut, r.top)
-      ..lineTo(r.right, r.top + cut)
+    final p = Path()..moveTo(r.left + radius, r.top);
+    if (cut > 0) {
+      p
+        ..lineTo(r.right - cut, r.top)
+        ..lineTo(r.right, r.top + cut);
+    } else {
+      p
+        ..lineTo(r.right - radius, r.top)
+        ..arcToPoint(Offset(r.right, r.top + radius), radius: Radius.circular(radius));
+    }
+    p
       ..lineTo(r.right, r.bottom - radius)
       ..arcToPoint(Offset(r.right - radius, r.bottom), radius: Radius.circular(radius))
       ..lineTo(r.left + radius, r.bottom)

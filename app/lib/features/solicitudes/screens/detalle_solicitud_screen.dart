@@ -836,7 +836,7 @@ class _TarjetaPostulacion extends StatelessWidget {
 
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 14),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       child: Padding(
         padding: const EdgeInsets.all(EcoSpace.s16),
         child: Column(

@@ -67,7 +67,7 @@ class EmptyStateWidget extends StatelessWidget {
             height: 100,
             decoration: ShapeDecoration(
               color: fondo,
-              shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 18, hole: 6, holeCenter: Offset(40, 18)),
+              shape: const EtiquetaBorder(radius: EcoRadius.medium, hole: 6, holeCenter: Offset(40, 18)),
             ),
             alignment: const Alignment(0, 0.3),
             child: Icon(icon, size: 36, color: frente),
