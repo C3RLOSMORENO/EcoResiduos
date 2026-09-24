@@ -222,7 +222,7 @@ class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver
 }
 
 /// Oscurece el visor fuera de la guía y dibuja el contorno de la etiqueta
-/// (inset 40, arriba 140, alto 340, corte 28) con su ojal.
+/// (inset 40, arriba 140, alto 340) con su ojal.
 class _GuiaEtiquetaPainter extends CustomPainter {
   const _GuiaEtiquetaPainter();
 
@@ -230,7 +230,7 @@ class _GuiaEtiquetaPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final alto = (size.height - 140 - 230).clamp(200.0, 340.0);
     final guia = Rect.fromLTWH(40, 140, size.width - 80, alto);
-    const forma = EtiquetaBorder(radius: EcoRadius.medium, cut: 28, hole: 8, holeCenter: Offset(30, 30));
+    const forma = EtiquetaBorder(radius: EcoRadius.medium, hole: 8, holeCenter: Offset(30, 30));
     final contorno = forma.getOuterPath(guia);
 
     final velo = Path.combine(PathOperation.difference, Path()..addRect(Offset.zero & size), contorno);

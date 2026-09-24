@@ -93,7 +93,7 @@ class PasoNumerado extends StatelessWidget {
             alignment: const Alignment(0, 0.3),
             decoration: ShapeDecoration(
               color: scheme.primaryContainer,
-              shape: const EtiquetaBorder(radius: EcoRadius.small, cut: 10),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
             ),
             child: Text('$numero', style: theme.textTheme.headlineMedium?.copyWith(color: scheme.onPrimaryContainer)),
           ),

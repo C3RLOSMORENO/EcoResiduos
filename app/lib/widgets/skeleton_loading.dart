@@ -56,7 +56,7 @@ class SkeletonList extends StatelessWidget {
 
         decoration: ShapeDecoration(
           color: scheme.surfaceContainerLowest,
-          shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 12),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
         ),
         child: Row(
           children: [

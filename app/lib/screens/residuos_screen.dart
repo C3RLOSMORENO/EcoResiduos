@@ -312,7 +312,7 @@ class _CeldaCategoria extends StatelessWidget {
     final color = colores.categoria(categoria);
     return Material(
       color: color.container,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 14),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -349,7 +349,7 @@ class _CeldaGuia extends StatelessWidget {
     final scheme = theme.colorScheme;
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 14),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

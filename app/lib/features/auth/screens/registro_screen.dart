@@ -580,9 +580,8 @@ class _TarjetaRol extends StatelessWidget {
 
     return Material(
       color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
-      shape: EtiquetaBorder(
-        radius: EcoRadius.medium,
-        cut: EcoRadius.corte,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(EcoRadius.medium)),
         side: BorderSide(color: elegido ? scheme.primary : scheme.outlineVariant, width: elegido ? 2 : 1),
       ),
       clipBehavior: Clip.antiAlias,

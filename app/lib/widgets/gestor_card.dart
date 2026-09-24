@@ -88,7 +88,7 @@ class GestorCard extends StatelessWidget {
 
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 14),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -152,7 +152,7 @@ class AvatarEntidad extends StatelessWidget {
       alignment: Alignment.center,
       decoration: ShapeDecoration(
         color: fondo,
-        shape: EtiquetaBorder(radius: EcoRadius.small, cut: size / 5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
       ),
       child: FittedBox(
         child: Padding(

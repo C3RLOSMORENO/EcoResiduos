@@ -71,7 +71,7 @@ class EcoTopAppBar extends StatelessWidget implements PreferredSizeWidget {
               label: 'Tu cuenta',
               child: Material(
                 color: scheme.tertiaryContainer,
-                shape: const EtiquetaBorder(radius: EcoRadius.small, cut: 8),
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: () => CuentaBottomSheet.show(context),

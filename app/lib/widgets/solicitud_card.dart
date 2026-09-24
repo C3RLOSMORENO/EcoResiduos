@@ -46,7 +46,7 @@ class SolicitudCard extends StatelessWidget {
 
     return Material(
       color: scheme.surfaceContainerLowest,
-      shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: EcoRadius.corte),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

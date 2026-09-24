@@ -114,7 +114,7 @@ class CategoriaTile extends StatelessWidget {
       height: size,
       decoration: ShapeDecoration(
         color: color.container,
-        shape: EtiquetaBorder(radius: EcoRadius.small, cut: size / 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
       ),
       alignment: Alignment.center,
       child: CategoriaIcon(categoria: categoria, size: size * 0.55, color: color.onContainer),

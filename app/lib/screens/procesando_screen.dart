@@ -69,7 +69,7 @@ class _ProcesandoScreenState extends State<ProcesandoScreen> {
             bottom: 40 + MediaQuery.paddingOf(context).bottom,
             child: Material(
               color: scheme.surfaceContainerLowest,
-              shape: const EtiquetaBorder(radius: EcoRadius.medium, cut: 20, hole: 6),
+              shape: const EtiquetaBorder(radius: EcoRadius.medium, hole: 6),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
