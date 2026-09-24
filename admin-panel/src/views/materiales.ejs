@@ -10,7 +10,7 @@
     if (c.startsWith('Y8') || c.startsWith('Y9') || c.includes('ACEITE') || c.includes('HIDRO') || c.startsWith('Y4') || c.startsWith('Y5') || c.startsWith('Y6') || c.startsWith('Y7')) {
       return 'chip-respel-oil';
     }
-    if (c.startsWith('RAEE') || c.startsWith('Y26') || c.startsWith('Y29') || c.includes('ELEC') || c.includes('METAL') || c.includes('QUIMIC') || c.includes('INDUSTRIAL')) {
+    if (c.startsWith('RAEE') || c.startsWith('RCD') || c.startsWith('Y26') || c.startsWith('Y29') || c.includes('ELEC') || c.includes('METAL') || c.includes('QUIMIC') || c.includes('INDUSTRIAL')) {
       return 'chip-respel-raee';
     }
     if (c.startsWith('REC') || c.startsWith('ORG') || c.includes('PLAST') || c.includes('CART') || c.includes('APROVECHABLE')) {
@@ -50,10 +50,10 @@
         <select id="filtroCategoria" class="input-ui !w-auto">
           <option value="">Todas las categorías</option>
           <option value="PELIGROSO">Peligrosos (Convenio Basilea)</option>
-          <option value="BIOSANITARIO">Biosanitarios / Hospitalarios</option>
+          <option value="RIESGO_BIOLOGICO">Riesgo Biológico / Hospitalarios</option>
           <option value="RAEE">RAEE / Eléctricos y Electrónicos</option>
           <option value="APROVECHABLE">Aprovechables / Orgánicos</option>
-          <option value="INDUSTRIAL">Industriales / Químicos</option>
+          <option value="RCD">RCD / Construcción y Demolición</option>
         </select>
       </div>
     </div>
@@ -190,11 +190,10 @@
             <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría *</label>
             <select name="categoria" required class="input-ui font-semibold">
               <option value="PELIGROSO">PELIGROSO (Basilea)</option>
-              <option value="BIOSANITARIO">BIOSANITARIO (Hospitalario)</option>
+              <option value="RIESGO_BIOLOGICO">RIESGO_BIOLOGICO (Hospitalario)</option>
               <option value="RAEE">RAEE (Eléctricos / Electrónicos)</option>
               <option value="APROVECHABLE">APROVECHABLE (Orgánico / Reciclable)</option>
-              <option value="INDUSTRIAL">INDUSTRIAL (Químico)</option>
-              <option value="ESPECIAL">ESPECIAL</option>
+              <option value="RCD">RCD (Construcción y Demolición)</option>
             </select>
           </div>
         </div>

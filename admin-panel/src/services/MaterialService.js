@@ -59,7 +59,7 @@ const materialService = {
             throw new Error('El nombre descriptivo del material es obligatorio y debe tener al menos 3 caracteres.');
         }
 
-        const categoriasPermitidas = ['PELIGROSO', 'BIOSANITARIO', 'INDUSTRIAL', 'RAEE', 'APROVECHABLE'];
+        const categoriasPermitidas = ['PELIGROSO', 'RIESGO_BIOLOGICO', 'RCD', 'RAEE', 'APROVECHABLE'];
         if (!categoriasPermitidas.includes(categoriaLimpia)) {
             categoriaLimpia = 'PELIGROSO';
         }
@@ -110,7 +110,7 @@ const materialService = {
             throw new Error('El nombre descriptivo del material es obligatorio y debe tener al menos 3 caracteres.');
         }
 
-        const categoriasPermitidas = ['PELIGROSO', 'BIOSANITARIO', 'INDUSTRIAL', 'RAEE', 'APROVECHABLE'];
+        const categoriasPermitidas = ['PELIGROSO', 'RIESGO_BIOLOGICO', 'RCD', 'RAEE', 'APROVECHABLE'];
         if (!categoriasPermitidas.includes(categoriaLimpia)) {
             categoriaLimpia = 'PELIGROSO';
         }

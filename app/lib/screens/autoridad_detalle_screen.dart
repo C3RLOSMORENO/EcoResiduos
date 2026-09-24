@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
 
 import '../models/autoridad_ambiental.dart';
-import '../widgets/contacto_detalle_screen.dart';
+import '../theme/eco_theme.dart';
+import '../widgets/ficha_contacto.dart';
 
-/// WF-19 — Detalle de autoridad
+/// Ficha de autoridad ambiental (17): la plantilla de contacto del gestor,
+/// sin materiales y con el banner en el tono secondary.
 class AutoridadDetalleScreen extends StatelessWidget {
-  const AutoridadDetalleScreen({
-    super.key,
-    required this.autoridad,
-    this.onLlamar,
-    this.onComoLlegar,
-  });
+  const AutoridadDetalleScreen({super.key, required this.autoridad});
 
   final AutoridadAmbiental autoridad;
-  final VoidCallback? onLlamar;
-  final VoidCallback? onComoLlegar;
 
   @override
   Widget build(BuildContext context) {
-    return ContactoDetalleScreen(
-      inicial: 'A',
+    final theme = Theme.of(context);
+    return FichaContacto(
       nombre: autoridad.nombre,
-      etiqueta: autoridad.descripcion,
+      subtitulo: ['Autoridad ambiental', ?autoridad.sigla].join(' · '),
+      avatarTexto: autoridad.sigla,
+      secundaria: true,
       direccion: autoridad.direccion,
       telefono: autoridad.telefono,
-      correo: autoridad.correo,
-      horario: autoridad.sitioWeb,
-      // TODO: usar url_launcher para tel:/geo: cuando se integre.
-      onLlamar: onLlamar,
-      onComoLlegar: onComoLlegar,
+      correo: autoridad.email,
+      horario: autoridad.horario,
+      contenido: [
+        if (autoridad.jurisdiccion.isNotEmpty) ...[
+          Text('Jurisdicción', style: theme.textTheme.titleMedium),
+          const SizedBox(height: EcoSpace.s4),
+          Text(autoridad.jurisdiccion, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: EcoSpace.s8),
+        ],
+      ],
     );
   }
 }

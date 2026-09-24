@@ -73,6 +73,14 @@
             </div>
 
             <nav class="space-y-1">
+                <a href="/dashboard"
+                    class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'dashboard' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
+                    <%=activeTab==='dashboard' ? 'aria-current="page"' : '' %>
+                    >
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">dashboard</span>
+                    <span>Panel de Control</span>
+                </a>
+
                 <a href="/gestores"
                     class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'gestores' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
                     <%=activeTab==='gestores' ? 'aria-current="page"' : '' %>

@@ -22,6 +22,7 @@ const gestorService = {
                 *,
                 gestor_material (
                     material_id,
+                    verificado,
                     materiales_residuos (
                         id,
                         codigo,
@@ -41,6 +42,8 @@ const gestorService = {
                 .map((gm) => gm.materiales_residuos)
                 .filter(Boolean);
 
+            const materialesPorVerificar = (row.gestor_material || []).filter((gm) => gm.verificado === false).length;
+
             return {
                 id: row.id ?? row.ID,
                 nit: row.nit ?? row.NIT ?? '',
@@ -54,7 +57,8 @@ const gestorService = {
                 longitud: row.longitud !== undefined && row.longitud !== null ? row.longitud : (row.LONGITUD !== undefined ? row.LONGITUD : -73.122741),
                 estado_verificacion: row.estado_verificacion ?? row.ESTADO_VERIFICACION ?? 'APROBADO',
                 disponible: row.disponible !== undefined ? row.disponible : (row.DISPONIBLE !== undefined ? row.DISPONIBLE : true),
-                materiales
+                materiales,
+                materiales_por_verificar: materialesPorVerificar
             };
         });
     },
@@ -70,6 +74,7 @@ const gestorService = {
                 *,
                 gestor_material (
                     material_id,
+                    verificado,
                     materiales_residuos (
                         id,
                         codigo,
@@ -86,6 +91,10 @@ const gestorService = {
         }
 
         const materialIds = (data.gestor_material || []).map((gm) => gm.material_id);
+        // Materiales que el gestor declaró al registrarse y aún no se han aprobado.
+        const materialIdsPorVerificar = (data.gestor_material || [])
+            .filter((gm) => gm.verificado === false)
+            .map((gm) => gm.material_id);
         const materiales = (data.gestor_material || [])
             .map((gm) => gm.materiales_residuos)
             .filter(Boolean);
@@ -104,6 +113,7 @@ const gestorService = {
             estado_verificacion: data.estado_verificacion ?? data.ESTADO_VERIFICACION ?? 'APROBADO',
             disponible: data.disponible !== undefined ? data.disponible : (data.DISPONIBLE !== undefined ? data.DISPONIBLE : true),
             material_ids: materialIds,
+            material_ids_por_verificar: materialIdsPorVerificar,
             materiales
         };
     },
@@ -190,11 +200,12 @@ const gestorService = {
 
         const nuevoGestor = gestorCreado && gestorCreado[0];
 
-        // Registra los residuos asociados en la tabla intermedia
+        // Registra los residuos asociados en la tabla intermedia verificados por el administrador
         if (nuevoGestor && materialIds.length > 0) {
             const relaciones = materialIds.map((matId) => ({
                 gestor_id: nuevoGestor.id,
-                material_id: matId
+                material_id: matId,
+                verificado: true
             }));
 
             await supabase
@@ -275,6 +286,13 @@ const gestorService = {
             longitud
         };
 
+        if (dto.estado_verificacion) {
+            payloadUpdate.estado_verificacion = String(dto.estado_verificacion).trim().toUpperCase();
+        }
+        if (dto.disponible !== undefined) {
+            payloadUpdate.disponible = dto.disponible === true || dto.disponible === 'true' || dto.disponible === 'on' || dto.disponible === '1';
+        }
+
         const { data: gestorActualizado, error: gestorError } = await supabase
             .from('perfiles_gestor')
             .update(payloadUpdate)
@@ -294,7 +312,8 @@ const gestorService = {
         if (materialIds.length > 0) {
             const relaciones = materialIds.map((matId) => ({
                 gestor_id: parseInt(id, 10),
-                material_id: matId
+                material_id: matId,
+                verificado: true
             }));
 
             await supabase
@@ -303,6 +322,27 @@ const gestorService = {
         }
 
         return gestorActualizado;
+    },
+
+    // Actualiza el estado de verificación del gestor (Auditoría Admin)
+    async updateEstadoVerificacion(id, estado) {
+        if (!id) throw new Error('El identificador del gestor es obligatorio');
+        const estadosValidos = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'];
+        const estadoUpper = String(estado).trim().toUpperCase();
+        if (!estadosValidos.includes(estadoUpper)) {
+            throw new Error(`Estado inválido. Debe ser uno de: ${estadosValidos.join(', ')}`);
+        }
+
+        const { data, error } = await supabase
+            .from('perfiles_gestor')
+            .update({ estado_verificacion: estadoUpper })
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            throw new Error(`Error al actualizar estado del gestor: ${error.message}`);
+        }
+        return data;
     },
 
     // Elimina el gestor y sus dependencias en la tabla intermedia

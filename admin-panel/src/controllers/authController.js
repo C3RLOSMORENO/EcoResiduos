@@ -1,4 +1,3 @@
-const supabase = require('../config/supabase');
 const authService = require('../services/authService');
 
 const authController = {
@@ -7,8 +6,7 @@ const authController = {
 
         if (token) {
             try {
-                const { data, error } = await supabase.auth.getUser(token);
-                if (!error && data && data.user) {
+                if (await authService.getAdmin(token)) {
                     return res.redirect('/gestores');
                 }
                 res.clearCookie('sb_access_token');
@@ -53,9 +51,10 @@ const authController = {
     },
 
     async handleLogout(req, res) {
+        const token = req.cookies && req.cookies.sb_access_token;
         try {
             res.clearCookie('sb_access_token');
-            await authService.logout();
+            await authService.logout(token);
             res.redirect('/login?msg=Sesi%C3%B3n+cerrada+correctamente&type=success');
         } catch (err) {
             res.clearCookie('sb_access_token');
