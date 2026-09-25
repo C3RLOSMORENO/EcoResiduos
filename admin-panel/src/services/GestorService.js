@@ -112,6 +112,7 @@ const gestorService = {
             longitud: data.longitud !== undefined && data.longitud !== null ? data.longitud : (data.LONGITUD !== undefined ? data.LONGITUD : -73.122741),
             estado_verificacion: data.estado_verificacion ?? data.ESTADO_VERIFICACION ?? 'APROBADO',
             disponible: data.disponible !== undefined ? data.disponible : (data.DISPONIBLE !== undefined ? data.DISPONIBLE : true),
+            horario: data.horario ?? '',
             material_ids: materialIds,
             material_ids_por_verificar: materialIdsPorVerificar,
             materiales
@@ -233,6 +234,7 @@ const gestorService = {
             : null;
         const telefonoContactoLimpio = String(dto.telefono_contacto || '').trim();
         const emailContactoLimpio = String(dto.email_contacto || '').trim().toLowerCase();
+        const horarioLimpio = String(dto.horario || '').trim();
         const materialIds = extractMaterialIds(dto);
 
         const nitRegex = /^\d{8,15}$/;
@@ -282,9 +284,14 @@ const gestorService = {
             representante_legal: representanteLegalLimpio,
             telefono_contacto: telefonoContactoLimpio,
             email_contacto: emailContactoLimpio,
+            horario: horarioLimpio || null,
             latitud,
             longitud
         };
+
+        if (horarioLimpio.length > 120) {
+            throw new Error('El horario de atención no puede superar los 120 caracteres.');
+        }
 
         if (dto.estado_verificacion) {
             payloadUpdate.estado_verificacion = String(dto.estado_verificacion).trim().toUpperCase();

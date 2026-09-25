@@ -1,5 +1,7 @@
 const supabase = require('../config/supabase');
 
+const textoOpcional = (valor) => (valor && String(valor).trim() !== '' ? String(valor).trim() : null);
+
 const materialService = {
     // Consulta todos los materiales ordenados por identificador ascendente
     async getAllMateriales() {
@@ -36,7 +38,9 @@ const materialService = {
             nombre_comun: data.nombre_comun ?? data.NOMBRE_COMUN ?? '',
             categoria: data.categoria ?? data.CATEGORIA ?? 'PELIGROSO',
             descripcion: data.descripcion ?? data.DESCRIPCION ?? '',
-            guia_manejo: data.guia_manejo ?? data.GUIA_MANEJO ?? ''
+            guia_manejo: data.guia_manejo ?? data.GUIA_MANEJO ?? '',
+            subcategoria: data.subcategoria ?? '',
+            advertencia_manejo: data.advertencia_manejo ?? ''
         };
     },
 
@@ -46,9 +50,9 @@ const materialService = {
         const nombreComunLimpio = String(dto.nombre_comun || dto.nombre || '').trim();
         let categoriaLimpia = String(dto.categoria || 'PELIGROSO').trim().toUpperCase();
         const descripcionLimpia = String(dto.descripcion || '').trim();
-        const guiaManejoLimpia = dto.guia_manejo && String(dto.guia_manejo).trim() !== ''
-            ? String(dto.guia_manejo).trim()
-            : null;
+        const guiaManejoLimpia = textoOpcional(dto.guia_manejo);
+        const subcategoriaLimpia = textoOpcional(dto.subcategoria);
+        const advertenciaLimpia = textoOpcional(dto.advertencia_manejo);
 
         const codigoRegex = /^[A-Z0-9.\-_]+$/;
         if (!codigoLimpio || !codigoRegex.test(codigoLimpio)) {
@@ -73,7 +77,9 @@ const materialService = {
             nombre_comun: nombreComunLimpio,
             categoria: categoriaLimpia,
             descripcion: descripcionLimpia,
-            guia_manejo: guiaManejoLimpia
+            guia_manejo: guiaManejoLimpia,
+            subcategoria: subcategoriaLimpia,
+            advertencia_manejo: advertenciaLimpia
         };
 
         const { data, error } = await supabase
@@ -97,9 +103,9 @@ const materialService = {
         const nombreComunLimpio = String(dto.nombre_comun || dto.nombre || '').trim();
         let categoriaLimpia = String(dto.categoria || 'PELIGROSO').trim().toUpperCase();
         const descripcionLimpia = String(dto.descripcion || '').trim();
-        const guiaManejoLimpia = dto.guia_manejo && String(dto.guia_manejo).trim() !== ''
-            ? String(dto.guia_manejo).trim()
-            : null;
+        const guiaManejoLimpia = textoOpcional(dto.guia_manejo);
+        const subcategoriaLimpia = textoOpcional(dto.subcategoria);
+        const advertenciaLimpia = textoOpcional(dto.advertencia_manejo);
 
         const codigoRegex = /^[A-Z0-9.\-_]+$/;
         if (!codigoLimpio || !codigoRegex.test(codigoLimpio)) {
@@ -124,7 +130,9 @@ const materialService = {
             nombre_comun: nombreComunLimpio,
             categoria: categoriaLimpia,
             descripcion: descripcionLimpia,
-            guia_manejo: guiaManejoLimpia
+            guia_manejo: guiaManejoLimpia,
+            subcategoria: subcategoriaLimpia,
+            advertencia_manejo: advertenciaLimpia
         };
 
         const { data, error } = await supabase
