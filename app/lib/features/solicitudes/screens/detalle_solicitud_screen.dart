@@ -48,6 +48,8 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
   bool _cambio = false;
   bool _ocupado = false;
 
+  Map<String, DateTime> _fechasEstado = const {};
+
   List<PostulacionRecoleccion>? _postulaciones;
   bool _errorPostulaciones = false;
 
@@ -87,6 +89,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
       setState(() => _cargandoMiPostulacion = false);
       return;
     }
+    _cargarHistorial(id);
     if (_esGestor) {
       try {
         final postulacion = await _repository.getMiPostulacion(id);
@@ -109,6 +112,15 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
         debugPrint('No se pudieron cargar las postulaciones: $e');
         if (mounted) setState(() => _errorPostulaciones = true);
       }
+    }
+  }
+
+  Future<void> _cargarHistorial(int id) async {
+    try {
+      final fechas = await _repository.getHistorialEstados(id);
+      if (mounted) setState(() => _fechasEstado = fechas);
+    } catch (e) {
+      debugPrint('No se pudo consultar el historial de estados: $e');
     }
   }
 
@@ -357,7 +369,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
                   : (s.tieneProblema ? 'Recolectado · con problema reportado' : null),
             ),
             const SizedBox(height: EcoSpace.s16),
-            LineaTiempoEstado(solicitud: s),
+            LineaTiempoEstado(solicitud: s, fechas: _fechasEstado),
             const SizedBox(height: EcoSpace.s24),
             _Resumen(solicitud: s),
             const SizedBox(height: EcoSpace.s24),
@@ -561,6 +573,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
                 size: double.infinity,
                 height: 220,
                 radio: 0,
+                ampliable: true,
               ),
             ),
           ),
@@ -758,7 +771,14 @@ class _Resumen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FotoResiduo(url: s.fotoUrl, categoria: categoria, size: double.infinity, height: 180, radio: EcoRadius.medium),
+        FotoResiduo(
+          url: s.fotoUrl,
+          categoria: categoria,
+          size: double.infinity,
+          height: 180,
+          radio: EcoRadius.medium,
+          ampliable: true,
+        ),
         const SizedBox(height: EcoSpace.s16),
         CategoriaChip(categoria: categoria),
         const SizedBox(height: EcoSpace.s8),

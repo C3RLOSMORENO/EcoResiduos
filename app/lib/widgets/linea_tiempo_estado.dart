@@ -6,29 +6,33 @@ import '../utils/formato.dart';
 /// Línea de tiempo de 3 nodos del detalle de solicitud (28): Publicado →
 /// En negociación → Recolectado, o Publicado → Cancelado.
 ///
-/// La fecha de «En negociación» se pierde al pasar a Recolectado porque la
-/// base no guarda un historial de estados; en ese caso se muestra «—».
+/// Las fechas salen del historial de estados ([fechas]); mientras carga, o
+/// en solicitudes anteriores al historial, se usan las columnas de la
+/// solicitud. Si no hay forma de saber una fecha se muestra «—».
 class LineaTiempoEstado extends StatelessWidget {
-  const LineaTiempoEstado({super.key, required this.solicitud});
+  const LineaTiempoEstado({super.key, required this.solicitud, this.fechas = const {}});
 
   final SolicitudRecoleccion solicitud;
+  final Map<String, DateTime> fechas;
 
   @override
   Widget build(BuildContext context) {
     final s = solicitud;
+    final publicado = _fecha(fechas['PUBLICADO'] ?? s.createdAt);
     final nodos = s.estado == 'CANCELADO'
         ? [
-            _Nodo('Publicado', _fecha(s.createdAt), true),
-            _Nodo('Cancelado', _fecha(s.updatedAt), true, cancelado: true),
+            _Nodo('Publicado', publicado, true),
+            _Nodo('Cancelado', _fecha(fechas['CANCELADO'] ?? s.updatedAt), true, cancelado: true),
           ]
         : [
-            _Nodo('Publicado', _fecha(s.createdAt), true),
+            _Nodo('Publicado', publicado, true),
             _Nodo(
               'En negociación',
-              s.estado == 'EN_NEGOCIACION' ? _fecha(s.updatedAt) : (s.estado == 'RECOLECTADO' ? '—' : null),
+              _fecha(fechas['EN_NEGOCIACION'] ?? (s.estado == 'EN_NEGOCIACION' ? s.updatedAt : null)) ??
+                  (s.estado == 'RECOLECTADO' ? '—' : null),
               s.estado == 'EN_NEGOCIACION' || s.estado == 'RECOLECTADO',
             ),
-            _Nodo('Recolectado', _fecha(s.recolectadoAt), s.estado == 'RECOLECTADO'),
+            _Nodo('Recolectado', _fecha(s.recolectadoAt ?? fechas['RECOLECTADO']), s.estado == 'RECOLECTADO'),
           ];
 
     return Row(

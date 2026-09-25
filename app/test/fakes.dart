@@ -99,9 +99,13 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
   EstadoMaterialesGestor estadoMateriales;
   Map<int, ResumenPostulaciones> resumen;
   PostulacionRecoleccion? miPostulacion;
+  Map<String, DateTime> historialEstados = {};
 
   /// Hace fallar el guardado para probar la limpieza de la foto subida.
   bool fallarAlGuardar = false;
+
+  /// Error que lanza al crear una solicitud (p. ej. falta de conexión).
+  Object? errorAlCrear;
 
   final llamadas = <String>[];
   SolicitudRecoleccion? creada;
@@ -124,6 +128,7 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
 
   @override
   Future<SolicitudRecoleccion> crearSolicitud(SolicitudRecoleccion solicitud) async {
+    if (errorAlCrear != null) throw errorAlCrear!;
     creada = solicitud;
     return solicitud.copyWith(id: 99);
   }
@@ -163,13 +168,13 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
   Future<SolicitudRecoleccion?> getSolicitud(int id) async => null;
 
   @override
+  Future<Map<String, DateTime>> getHistorialEstados(int solicitudId) async => historialEstados;
+
+  @override
   Future<List<PostulacionRecoleccion>> getMisPostulaciones() async => misPostulaciones;
 
   @override
   Future<Map<int, ResumenPostulaciones>> getResumenPostulaciones(List<int> solicitudIds) async => resumen;
-
-  @override
-  Future<List<PostulacionRecoleccion>> getPostulacionesRecibidas({required DateTime desde}) async => [];
 
   @override
   Future<List<PostulacionRecoleccion>> getPostulacionesDeSolicitud(int solicitudId) async => postulaciones;

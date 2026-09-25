@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/notificaciones_screen.dart';
+import '../services/contador_novedades.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../utils/sesion.dart';
@@ -11,19 +12,11 @@ import 'cuenta_bottom_sheet.dart';
 /// El avatar abre la hoja de cuenta (05) y la campana, las novedades (5b).
 /// Si la vista se abrió encima de otra, muestra «volver» a la izquierda.
 class EcoTopAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const EcoTopAppBar({
-    super.key,
-    required this.titulo,
-    this.subtitulo,
-    this.mostrarCuenta = true,
-    this.hayNovedades = false,
-    this.bottom,
-  });
+  const EcoTopAppBar({super.key, required this.titulo, this.subtitulo, this.mostrarCuenta = true, this.bottom});
 
   final String titulo;
   final String? subtitulo;
   final bool mostrarCuenta;
-  final bool hayNovedades;
   final PreferredSizeWidget? bottom;
 
   @override
@@ -54,14 +47,18 @@ class EcoTopAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         if (mostrarCuenta) ...[
-          IconButton(
-            tooltip: 'Novedades',
-            onPressed: () => NotificacionesScreen.show(context),
-            icon: Badge(
-              isLabelVisible: hayNovedades,
-              smallSize: 8,
-              backgroundColor: scheme.tertiary,
-              child: const Icon(Icons.notifications_outlined),
+          ValueListenableBuilder<int>(
+            valueListenable: ContadorNovedades.noLeidas,
+            builder: (context, noLeidas, _) => IconButton(
+              tooltip: noLeidas > 0 ? 'Novedades, $noLeidas sin leer' : 'Novedades',
+              onPressed: () => NotificacionesScreen.show(context),
+              icon: Badge.count(
+                count: noLeidas,
+                isLabelVisible: noLeidas > 0,
+                backgroundColor: scheme.tertiary,
+                textColor: scheme.onTertiary,
+                child: Icon(noLeidas > 0 ? Icons.notifications : Icons.notifications_outlined),
+              ),
             ),
           ),
           Padding(

@@ -1,64 +1,56 @@
 import 'package:flutter/material.dart';
 
-import '../theme/eco_theme.dart';
-
-/// Logo de EcoResiduos: la etiqueta blanca con la banda de las 7 categorías.
-/// Sus colores son fijos para que la marca se vea igual en claro y oscuro.
+/// Logo e isotipo oficial de EcoResiduos con acabado premium.
 class EcoLogo extends StatelessWidget {
-  const EcoLogo({super.key, this.width = 134});
+  const EcoLogo({
+    super.key,
+    this.width = 134,
+    this.showBadge = true,
+  });
 
   final double width;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    final alto = width * 1.25;
+    Widget image = Image.asset(
+      'assets/branding/app_icon.png',
+      width: showBadge ? width * 0.72 : width,
+      height: showBadge ? width * 0.72 : width,
+      fit: BoxFit.contain,
+    );
+
+    if (!showBadge) {
+      return Semantics(
+        label: 'EcoResiduos',
+        image: true,
+        child: image,
+      );
+    }
+
     return Semantics(
       label: 'EcoResiduos',
       image: true,
       child: Container(
         width: width,
-        height: alto,
-        clipBehavior: Clip.antiAlias,
-        decoration: ShapeDecoration(
+        height: width,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
           color: Colors.white,
-          shape: EtiquetaBorder(
-            radius: width * 0.107,
-            cut: width * 0.196,
-            hole: width * 0.071,
-            holeCenter: Offset(width * 0.214, alto * 0.414),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: width * 0.321,
-              child: Row(
-                children: [
-                  for (final categoria in Categoria.values)
-                    Expanded(child: ColoredBox(color: ecoColoresLight.categoria(categoria).color)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(width * 0.125),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    'eco',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontSize: width * 0.232,
-                      height: 1,
-                      color: ecoLightColorScheme.primary,
-                    ),
-                  ),
-                ),
-              ),
+          borderRadius: BorderRadius.circular(width * 0.24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
+        child: image,
       ),
     );
   }
 }
+
+
+

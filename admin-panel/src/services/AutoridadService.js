@@ -20,7 +20,8 @@ const autoridadService = {
             telefono: row.telefono ?? row.TELEFONO ?? '',
             email: row.email ?? row.EMAIL ?? '',
             sitio_web: row.sitio_web ?? row.SITIO_WEB ?? row.Sitio_Web ?? '',
-            direccion: row.direccion ?? row.DIRECCION ?? ''
+            direccion: row.direccion ?? row.DIRECCION ?? '',
+            horario: row.horario ?? ''
         }));
     },
 
@@ -47,7 +48,8 @@ const autoridadService = {
             telefono: data.telefono ?? data.TELEFONO ?? '',
             email: data.email ?? data.EMAIL ?? '',
             sitio_web: data.sitio_web ?? data.SITIO_WEB ?? data.Sitio_Web ?? '',
-            direccion: data.direccion ?? data.DIRECCION ?? ''
+            direccion: data.direccion ?? data.DIRECCION ?? '',
+            horario: data.horario ?? ''
         };
     },
 
@@ -60,6 +62,7 @@ const autoridadService = {
         let emailLimpio = String(dto.email || '').trim().toLowerCase();
         let sitioWebLimpio = String(dto.sitio_web || '').trim();
         const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
+        const horarioLimpio = String(dto.horario || '').trim();
 
         if (!nombreLimpio || nombreLimpio.length < 3) {
             throw new Error('El nombre institucional de la autoridad es obligatorio.');
@@ -84,7 +87,8 @@ const autoridadService = {
             telefono: telefonoLimpio,
             email: emailLimpio,
             sitio_web: sitioWebLimpio,
-            direccion: direccionLimpia
+            direccion: direccionLimpia,
+            horario: horarioLimpio || null
         };
 
         const { data, error } = await supabase
@@ -111,6 +115,7 @@ const autoridadService = {
         let emailLimpio = String(dto.email || '').trim().toLowerCase();
         let sitioWebLimpio = String(dto.sitio_web || '').trim();
         const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
+        const horarioLimpio = String(dto.horario || '').trim();
 
         if (!nombreLimpio || nombreLimpio.length < 3) {
             throw new Error('El nombre institucional de la autoridad es obligatorio.');
@@ -135,7 +140,8 @@ const autoridadService = {
             telefono: telefonoLimpio,
             email: emailLimpio,
             sitio_web: sitioWebLimpio,
-            direccion: direccionLimpia
+            direccion: direccionLimpia,
+            horario: horarioLimpio || null
         };
 
         const { data, error } = await supabase

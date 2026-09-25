@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../features/solicitudes/models/solicitud_recoleccion.dart';
 import '../features/solicitudes/repositories/solicitudes_repository.dart';
 import '../features/solicitudes/screens/detalle_solicitud_screen.dart';
+import '../models/notificacion.dart';
+import '../repositories/notificaciones_repository.dart';
+import '../services/contador_novedades.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../utils/sesion.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/skeleton_loading.dart';
 
-/// Novedades (5b, versión mínima): se calculan con los datos existentes de
-/// los últimos 7 días. Leído/no leído, descartar y push requieren una tabla
-/// de notificaciones que aún no existe.
+/// Novedades (5b): avisos que crea el servidor cuando cambian las solicitudes
+/// o postulaciones del usuario. Se marcan como leídas al abrirlas y se
+/// descartan deslizando.
 class NotificacionesScreen extends StatefulWidget {
-  const NotificacionesScreen({super.key, this.repository});
+  const NotificacionesScreen({super.key, this.repository, this.solicitudes});
 
-  final SolicitudesRepository? repository;
+  final NotificacionesRepository? repository;
+  final SolicitudesRepository? solicitudes;
 
   static Future<void> show(BuildContext context) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificacionesScreen()));
@@ -24,192 +27,251 @@ class NotificacionesScreen extends StatefulWidget {
   State<NotificacionesScreen> createState() => _NotificacionesScreenState();
 }
 
-class _Novedad {
-  const _Novedad({required this.icono, required this.titulo, required this.fecha, required this.solicitud});
-
-  final IconData icono;
-  final String titulo;
-  final DateTime fecha;
-  final SolicitudRecoleccion solicitud;
-}
-
 class _NotificacionesScreenState extends State<NotificacionesScreen> {
-  late final SolicitudesRepository _repository = widget.repository ?? SupabaseSolicitudesRepository();
+  late final NotificacionesRepository _repository = widget.repository ?? SupabaseNotificacionesRepository();
+  late final SolicitudesRepository _solicitudes = widget.solicitudes ?? SupabaseSolicitudesRepository();
   late final bool _esGestor = SesionUsuario.actual().esGestor;
-  late Future<List<_Novedad>> _novedades = _cargar();
 
-  static const _ventana = Duration(days: 7);
+  List<Notificacion>? _avisos;
+  bool _error = false;
 
-  Future<List<_Novedad>> _cargar() async {
-    final desde = DateTime.now().subtract(_ventana);
-    final novedades = _esGestor ? await _novedadesGestor(desde) : await _novedadesGenerador(desde);
-    novedades.sort((a, b) => b.fecha.compareTo(a.fecha));
-    return novedades;
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
   }
 
-  Future<List<_Novedad>> _novedadesGenerador(DateTime desde) async {
-    final resultados = await Future.wait([
-      _repository.getPostulacionesRecibidas(desde: desde),
-      _repository.getMisPublicaciones(),
-    ]);
-    final postulaciones = resultados[0] as List;
-    final publicaciones = resultados[1] as List<SolicitudRecoleccion>;
-    return [
-      for (final p in postulaciones)
-        if (p.solicitud != null && p.createdAt != null)
-          _Novedad(
-            icono: Icons.handshake_outlined,
-            titulo:
-                '${p.gestorRazonSocial ?? 'Un gestor'} se postuló a tu ${minusculaInicial(p.solicitud!.material?.nombreComun ?? 'residuo')}',
-            fecha: p.createdAt!,
-            solicitud: p.solicitud!,
-          ),
-      for (final s in publicaciones)
-        if (s.estado == 'RECOLECTADO' && s.recolectadoAt != null && s.recolectadoAt!.isAfter(desde))
-          _Novedad(
-            icono: Icons.local_shipping_outlined,
-            titulo: 'Tu solicitud de ${minusculaInicial(s.material?.nombreComun ?? 'residuo')} quedó como recolectada',
-            fecha: s.recolectadoAt!,
-            solicitud: s,
-          ),
-    ];
-  }
-
-  Future<List<_Novedad>> _novedadesGestor(DateTime desde) async {
-    final resultados = await Future.wait([_repository.getMisPostulaciones(), _repository.getSolicitudesDisponibles()]);
-    final postulaciones = resultados[0] as List;
-    final disponibles = resultados[1] as List<SolicitudRecoleccion>;
-    final novedades = <_Novedad>[];
-    for (final p in postulaciones) {
-      final s = p.solicitud as SolicitudRecoleccion?;
-      final fecha = s?.updatedAt;
-      if (s == null || fecha == null || fecha.isBefore(desde)) continue;
-      final material = minusculaInicial(s.material?.nombreComun ?? 'residuo');
-      if (p.esAceptada) {
-        novedades.add(
-          _Novedad(
-            icono: Icons.check_circle_outline,
-            titulo: 'Te aceptaron la recolección de $material',
-            fecha: fecha,
-            solicitud: s,
-          ),
-        );
-      } else if (p.esNoSeleccionada) {
-        novedades.add(
-          _Novedad(
-            icono: Icons.assignment_ind_outlined,
-            titulo: 'Esta solicitud fue asignada a otro gestor: $material',
-            fecha: fecha,
-            solicitud: s,
-          ),
-        );
-      }
+  Future<void> _cargar() async {
+    try {
+      final avisos = await _repository.listar();
+      if (!mounted) return;
+      setState(() {
+        _avisos = avisos;
+        _error = false;
+      });
+    } catch (e) {
+      debugPrint('No se pudieron cargar las novedades: $e');
+      if (mounted) setState(() => _error = true);
     }
-    for (final s in disponibles) {
-      if (s.createdAt == null || s.createdAt!.isBefore(desde)) continue;
-      novedades.add(
-        _Novedad(
-          icono: Icons.inventory_2_outlined,
-          titulo:
-              'Nueva solicitud de ${minusculaInicial(s.material?.nombreComun ?? 'residuo')} en ${capitalizar(s.municipio)}',
-          fecha: s.createdAt!,
-          solicitud: s,
+    ContadorNovedades.actualizar();
+  }
+
+  Future<void> _reintentar() async {
+    setState(() {
+      _avisos = null;
+      _error = false;
+    });
+    await _cargar();
+  }
+
+  Future<void> _abrir(Notificacion aviso) async {
+    if (!aviso.leida) {
+      setState(() => _avisos = [for (final a in _avisos!) a.id == aviso.id ? a.marcadaComoLeida() : a]);
+      _repository.marcarLeida(aviso.id).then((_) => ContadorNovedades.actualizar()).catchError((Object e) {
+        debugPrint('No se pudo marcar la novedad como leída: $e');
+      });
+    }
+    final id = aviso.solicitudId;
+    if (id == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final solicitud = await _solicitudes.getSolicitud(id);
+      if (!mounted) return;
+      if (solicitud == null) {
+        messenger.showSnackBar(const SnackBar(content: Text('Esta solicitud ya no está disponible.')));
+        return;
+      }
+      await navigator.push(
+        MaterialPageRoute(
+          builder: (_) => DetalleSolicitudScreen(
+            solicitud: solicitud,
+            repository: _solicitudes,
+            rol: _esGestor ? 'GESTOR' : 'GENERADOR',
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('No se pudo abrir la solicitud $id: $e');
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos abrir la solicitud. Revisa tu conexión.')));
+    }
+  }
+
+  Future<void> _descartar(Notificacion aviso) async {
+    final anteriores = _avisos!;
+    setState(
+      () => _avisos = [
+        for (final a in anteriores)
+          if (a.id != aviso.id) a,
+      ],
+    );
+    try {
+      await _repository.descartar(aviso.id);
+    } catch (e) {
+      debugPrint('No se pudo descartar la novedad: $e');
+      if (!mounted) return;
+      setState(() => _avisos = anteriores);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No pudimos descartarla. Revisa tu conexión.')));
+    }
+    ContadorNovedades.actualizar();
+  }
+
+  Future<void> _marcarTodas() async {
+    final anteriores = _avisos!;
+    setState(() => _avisos = [for (final a in anteriores) a.marcadaComoLeida()]);
+    try {
+      await _repository.marcarTodasLeidas();
+    } catch (e) {
+      debugPrint('No se pudieron marcar las novedades: $e');
+      if (mounted) setState(() => _avisos = anteriores);
+    }
+    ContadorNovedades.actualizar();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avisos = _avisos;
+    final hayNoLeidas = avisos?.any((a) => !a.leida) ?? false;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Novedades'),
+        actions: [
+          if (hayNoLeidas)
+            IconButton(tooltip: 'Marcar todo como leído', onPressed: _marcarTodas, icon: const Icon(Icons.done_all)),
+        ],
+      ),
+      body: _cuerpo(avisos),
+    );
+  }
+
+  Widget _cuerpo(List<Notificacion>? avisos) {
+    if (_error) {
+      return EstadoDesplazable(
+        child: EmptyStateWidget.error(title: 'No pudimos cargar tus novedades', onRetry: _reintentar),
+      );
+    }
+    if (avisos == null) return const SkeletonList(itemHeight: 64);
+    if (avisos.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _cargar,
+        child: EstadoDesplazable(
+          child: EmptyStateWidget(
+            icon: Icons.notifications_none,
+            title: 'Sin novedades',
+            description: _esGestor
+                ? 'Te avisamos aquí cuando haya solicitudes nuevas de tus materiales o te acepten una recolección.'
+                : 'Te avisamos aquí cuando un gestor se postule a tus residuos o cambie el estado de una solicitud.',
+          ),
         ),
       );
     }
-    return novedades;
+    return RefreshIndicator(
+      onRefresh: _cargar,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: EcoSpace.s8),
+        itemCount: avisos.length,
+        separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
+        itemBuilder: (context, i) {
+          final aviso = avisos[i];
+          return Dismissible(
+            key: ValueKey(aviso.id),
+            direction: DismissDirection.endToStart,
+            background: const _FondoDescartar(),
+            onDismissed: (_) => _descartar(aviso),
+            child: _TileAviso(aviso: aviso, onTap: () => _abrir(aviso)),
+          );
+        },
+      ),
+    );
   }
+}
 
-  Future<void> _recargar() async {
-    final futuro = _cargar();
-    setState(() => _novedades = futuro);
-    await futuro;
-  }
+class _TileAviso extends StatelessWidget {
+  const _TileAviso({required this.aviso, required this.onTap});
+
+  final Notificacion aviso;
+  final VoidCallback onTap;
+
+  static IconData _icono(String tipo) => switch (tipo) {
+    'POSTULACION_NUEVA' => Icons.handshake_outlined,
+    'POSTULACION_ACEPTADA' => Icons.check_circle_outline,
+    'POSTULACION_NO_SELECCIONADA' => Icons.assignment_ind_outlined,
+    'POSTULACION_RECHAZADA' => Icons.do_not_disturb_on_outlined,
+    'SOLICITUD_NUEVA' => Icons.inventory_2_outlined,
+    'SOLICITUD_CANCELADA' => Icons.block,
+    'RECOLECCION_MARCADA' => Icons.local_shipping_outlined,
+    'RECOLECCION_CONFIRMADA' => Icons.verified_outlined,
+    'PROBLEMA_REPORTADO' => Icons.report_problem_outlined,
+    _ => Icons.notifications_none,
+  };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Novedades')),
-      body: FutureBuilder<List<_Novedad>>(
-        future: _novedades,
-        builder: (context, snapshot) {
-          if (snapshot.hasError && snapshot.connectionState == ConnectionState.done) {
-            return EstadoDesplazable(
-              child: EmptyStateWidget.error(title: 'No pudimos cargar tus novedades', onRetry: _recargar),
-            );
-          }
-          final novedades = snapshot.data;
-          if (novedades == null) return const SkeletonList(itemHeight: 64);
-          if (novedades.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: _recargar,
-              child: EstadoDesplazable(
-                child: EmptyStateWidget(
-                  icon: Icons.notifications_none,
-                  title: 'Sin novedades',
-                  description: _esGestor
-                      ? 'Te avisamos aquí cuando haya solicitudes nuevas de tus materiales o te acepten una recolección.'
-                      : 'Te avisamos aquí cuando un gestor se postule a tus residuos o cambie el estado de una solicitud.',
-                ),
+    final nueva = !aviso.leida;
+
+    return Semantics(
+      label: nueva ? 'Sin leer' : null,
+      child: ListTile(
+        minTileHeight: 72,
+        tileColor: nueva ? scheme.secondaryContainer.withValues(alpha: 0.35) : null,
+        onTap: onTap,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: nueva ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(EcoRadius.small),
+          ),
+          child: Icon(_icono(aviso.tipo), color: nueva ? scheme.onSecondaryContainer : scheme.onSurfaceVariant),
+        ),
+        title: Text(
+          aviso.titulo,
+          maxLines: 3,
+          style: theme.textTheme.bodyLarge?.copyWith(fontWeight: nueva ? FontWeight.w600 : FontWeight.w400),
+        ),
+        subtitle: Text(mayusculaInicial(tiempoRelativo(aviso.createdAt))),
+        trailing: nueva
+            ? Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: scheme.tertiary, shape: BoxShape.circle),
+              )
+            : (aviso.solicitudId != null ? const Icon(Icons.chevron_right) : null),
+      ),
+    );
+  }
+}
+
+class _FondoDescartar extends StatelessWidget {
+  const _FondoDescartar();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: scheme.errorContainer,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(right: EcoSpace.s24),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Descartar',
+                style: TextStyle(color: scheme.onErrorContainer, fontWeight: FontWeight.w600),
               ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: _recargar,
-            child: ListView(
-              children: [
-                Container(
-                  margin: const EdgeInsets.all(EcoSpace.s16),
-                  padding: const EdgeInsets.all(EcoSpace.s12),
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(EcoRadius.medium),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: EcoSpace.s12),
-                      Expanded(
-                        child: Text(
-                          'Se calcula con tus datos. Muestra los cambios de los últimos 7 días.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                for (final n in novedades)
-                  ListTile(
-                    minTileHeight: 64,
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: scheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(EcoRadius.small),
-                      ),
-                      child: Icon(n.icono, color: scheme.onSecondaryContainer),
-                    ),
-                    title: Text(n.titulo, maxLines: 3),
-                    subtitle: Text(mayusculaInicial(tiempoRelativo(n.fecha))),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DetalleSolicitudScreen(
-                          solicitud: n.solicitud,
-                          repository: _repository,
-                          rol: _esGestor ? 'GESTOR' : 'GENERADOR',
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+              const SizedBox(width: EcoSpace.s8),
+              Icon(Icons.delete_outline, color: scheme.onErrorContainer),
+            ],
+          ),
+        ),
       ),
     );
   }
