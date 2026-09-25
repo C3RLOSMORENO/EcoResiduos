@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoManager - Panel Santander</title>
+    <title>EcoResiduos - Panel de Administración</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -22,13 +23,13 @@
                     },
                     colors: {
                         brand: {
-                            DEFAULT: '#1E4620',
-                            hover: '#163518',
-                            subtle: '#E8F0E6',
+                            DEFAULT: '#16A34A',
+                            hover: '#15803D',
+                            subtle: '#DCFCE7',
                         },
-                        primary: '#1E4620',
+                        primary: '#16A34A',
                         'on-primary': '#FFFFFF',
-                        'primary-container': '#2D5B30',
+                        'primary-container': '#0F3D5B',
                         'surface-light': '#FFFFFF',
                         'surface-dark': '#1E293B',
                         'bg-light': '#F9FAFB',
@@ -62,13 +63,15 @@
     <aside aria-label="Navegación Principal"
         class="w-72 bg-white dark:bg-[#1E293B] border-r border-slate-300 dark:border-slate-700 flex flex-col justify-between p-4 h-screen sticky top-0">
         <div>
-            <div class="flex items-center gap-3 px-4 py-3 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#1E4620] dark:text-emerald-400">
-                    <span class="material-symbols-outlined text-2xl" aria-hidden="true">recycling</span>
+            <div class="flex items-center gap-3.5 px-3 py-3 mb-4">
+                <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center">
+                    <img src="/images/isotipo.png" alt="EcoResiduos" class="w-full h-full object-contain filter drop-shadow-sm">
                 </div>
                 <div>
-                    <h1 class="font-bold text-base text-slate-900 dark:text-slate-100 tracking-tight leading-none">EcoManager</h1>
-                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Bucaramanga • Santander</span>
+                    <h1 class="font-black text-xl tracking-tight leading-none">
+                        <span class="text-[#16A34A]">Eco</span><span class="text-[#0F3D5B] dark:text-slate-100">Residuos</span>
+                    </h1>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider block mt-1">Panel Santander</span>
                 </div>
             </div>
 
