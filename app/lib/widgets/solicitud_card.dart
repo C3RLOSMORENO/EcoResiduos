@@ -6,6 +6,7 @@ import '../utils/formato.dart';
 import 'categoria_chip.dart';
 import 'estado_badge.dart';
 import 'imagen_foto.dart';
+import 'visor_foto.dart';
 
 /// Tarjeta de solicitud (26a, 29a, 31a): etiqueta con banda lateral del color
 /// de la categoría, foto, material completo y cantidad con su propia unidad.
@@ -152,6 +153,8 @@ class FilaEstado extends StatelessWidget {
 }
 
 /// Foto del residuo (URL o archivo local) con respaldo al pictograma de la categoría.
+///
+/// Con [ampliable], tocarla abre la foto a pantalla completa.
 class FotoResiduo extends StatelessWidget {
   const FotoResiduo({
     super.key,
@@ -160,6 +163,7 @@ class FotoResiduo extends StatelessWidget {
     this.size = 72,
     this.height,
     this.radio = EcoRadius.small,
+    this.ampliable = false,
   });
 
   final String? url;
@@ -169,6 +173,7 @@ class FotoResiduo extends StatelessWidget {
   final double size;
   final double? height;
   final double radio;
+  final bool ampliable;
 
   @override
   Widget build(BuildContext context) {
@@ -178,13 +183,48 @@ class FotoResiduo extends StatelessWidget {
     final respaldo = Center(
       child: CategoriaIcon(categoria: categoria, size: (lado.isFinite ? lado : 72) * 0.42, color: color.onContainer),
     );
+    final ruta = url;
+    final conFoto = ampliable && ruta != null && ruta.isNotEmpty;
+    final imagen = ImagenFoto(ruta: ruta, respaldo: respaldo);
     return ClipRRect(
       borderRadius: BorderRadius.circular(radio),
       child: Container(
         width: size,
         height: height ?? size,
         color: color.container,
-        child: ImagenFoto(ruta: url, respaldo: respaldo),
+        child: !conFoto
+            ? imagen
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  Hero(tag: ruta, child: imagen),
+                  Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: () => abrirVisorFoto(context, ruta),
+                      child: Semantics(button: true, label: 'Ver foto en grande', child: const SizedBox.expand()),
+                    ),
+                  ),
+                  const Positioned(right: EcoSpace.s8, bottom: EcoSpace.s8, child: _IndicadorAmpliar()),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _IndicadorAmpliar extends StatelessWidget {
+  const _IndicadorAmpliar();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
+        child: const Padding(
+          padding: EdgeInsets.all(EcoSpace.s4),
+          child: Icon(Icons.open_in_full, size: 16, color: Colors.white),
+        ),
       ),
     );
   }

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../models/historial_escaneo_ia.dart';
 import '../../../screens/flujo_identificacion.dart';
+import '../../../services/cola_publicaciones.dart';
 import '../../../services/historial_service.dart';
 import '../../../theme/eco_theme.dart';
 import '../../../utils/formato.dart';
 import '../../../widgets/categoria_chip.dart';
 import '../../../widgets/eco_top_app_bar.dart';
 import '../../../widgets/empty_state_widget.dart';
+import '../../../widgets/publicaciones_pendientes.dart';
 import '../../../widgets/skeleton_loading.dart';
 import '../../../widgets/solicitud_card.dart';
 import '../models/solicitud_recoleccion.dart';
@@ -40,10 +42,12 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
   Map<int, ResumenPostulaciones> _postulaciones = const {};
   Object? _error;
   String? _filtro;
+  int _pendientes = ColaPublicaciones.pendientes.value.length;
 
   @override
   void initState() {
     super.initState();
+    ColaPublicaciones.pendientes.addListener(_alCambiarPendientes);
     _repository = widget.repository ?? SupabaseSolicitudesRepository();
     if (widget.publicacionesIniciales != null) {
       _publicaciones = List.of(widget.publicacionesIniciales!);
@@ -54,8 +58,16 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
 
   @override
   void dispose() {
+    ColaPublicaciones.pendientes.removeListener(_alCambiarPendientes);
     _tabs.dispose();
     super.dispose();
+  }
+
+  /// Si se envió alguna pendiente, ya existe en el servidor: se recarga la lista.
+  void _alCambiarPendientes() {
+    final actuales = ColaPublicaciones.pendientes.value.length;
+    if (actuales < _pendientes && _publicaciones != null) _cargar();
+    _pendientes = actuales;
   }
 
   void _alCambiarPestana() {
@@ -124,7 +136,12 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
       body: TabBarView(
         controller: _tabs,
         children: [
-          _publicacionesView(),
+          Column(
+            children: [
+              PublicacionesPendientes(repository: _repository),
+              Expanded(child: _publicacionesView()),
+            ],
+          ),
           _EscaneosView(cargar: widget.cargarEscaneos, repository: _repository),
         ],
       ),

@@ -4,6 +4,9 @@ import '../features/solicitudes/repositories/solicitudes_repository.dart';
 import '../features/solicitudes/screens/mis_postulaciones_screen.dart';
 import '../features/solicitudes/screens/mis_publicaciones_screen.dart';
 import '../features/solicitudes/screens/solicitudes_disponibles_screen.dart';
+import '../repositories/notificaciones_repository.dart';
+import '../services/cola_publicaciones.dart';
+import '../services/contador_novedades.dart';
 import 'flujo_identificacion.dart';
 import 'gestores_asociados_screen.dart';
 import 'inicio_generador_view.dart';
@@ -37,12 +40,24 @@ class _InicioScreenState extends State<InicioScreen> {
   /// que muestre datos al día (p. ej. tras publicar o aceptar una postulación).
   final _visitas = List<int>.filled(4, 0);
 
+  late final AppLifecycleListener _ciclo;
+
   @override
   void initState() {
     super.initState();
     _repository = widget.repository ?? SupabaseSolicitudesRepository();
     _rol = widget.rol?.toUpperCase();
     if (_rol == null) _cargarRol();
+    ContadorNovedades.iniciar(SupabaseNotificacionesRepository());
+    _ciclo = AppLifecycleListener(onResume: _enviarPendientes);
+    ColaPublicaciones.cargar().then((_) => _enviarPendientes());
+  }
+
+  @override
+  void dispose() {
+    _ciclo.dispose();
+    ContadorNovedades.detener();
+    super.dispose();
   }
 
   Future<void> _cargarRol() async {
@@ -54,6 +69,21 @@ class _InicioScreenState extends State<InicioScreen> {
       rol = 'GENERADOR';
     }
     if (mounted) setState(() => _rol = rol.toUpperCase());
+  }
+
+  /// Envía las publicaciones que se guardaron sin conexión.
+  Future<void> _enviarPendientes() async {
+    final enviadas = await ColaPublicaciones.enviar(_repository);
+    if (enviadas == 0 || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enviadas == 1
+              ? 'Publicamos el residuo que guardaste sin conexión.'
+              : 'Publicamos los $enviadas residuos que guardaste sin conexión.',
+        ),
+      ),
+    );
   }
 
   void _irA(int indice) {

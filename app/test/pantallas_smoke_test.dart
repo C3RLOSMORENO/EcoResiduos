@@ -14,6 +14,9 @@ import 'package:ecoresiduos/screens/residuos_screen.dart';
 import 'package:ecoresiduos/screens/resultado_screen.dart';
 import 'package:ecoresiduos/screens/splash_screen.dart';
 import 'package:ecoresiduos/theme/eco_theme.dart';
+import 'package:ecoresiduos/widgets/eco_logo.dart';
+import 'package:ecoresiduos/widgets/solicitud_card.dart';
+import 'package:ecoresiduos/widgets/visor_foto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -108,5 +111,40 @@ void main() {
     await tester.enterText(find.byType(SearchBar), 'llantas');
     await tester.pumpAndSettle();
     expect(find.text('Ningún gestor coincide con «llantas»'), findsOneWidget);
+  });
+
+  testWidgets('la foto ampliable se abre a pantalla completa y se cierra', (tester) async {
+    await tester.pumpWidget(
+      app(
+        const Center(
+          child: FotoResiduo(url: 'fotos/carton.jpg', categoria: Categoria.aprovechable, ampliable: true),
+        ),
+      ),
+    );
+    await tester.tap(find.bySemanticsLabel('Ver foto en grande'));
+    await tester.pumpAndSettle();
+    expect(find.byType(VisorFoto), findsOneWidget);
+    expect(
+      tester.getSize(find.descendant(of: find.byType(VisorFoto), matching: find.byType(InteractiveViewer))),
+      tester.view.physicalSize / tester.view.devicePixelRatio,
+      reason: 'la foto ocupa toda la pantalla',
+    );
+
+    await tester.tap(find.byTooltip('Cerrar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(VisorFoto), findsNothing);
+  });
+
+  testWidgets('sin foto no se ofrece ampliar', (tester) async {
+    await tester.pumpWidget(
+      app(const Center(child: FotoResiduo(url: null, categoria: Categoria.aprovechable, ampliable: true))),
+    );
+    expect(find.bySemanticsLabel('Ver foto en grande'), findsNothing);
+  });
+
+  testWidgets('el logo de EcoResiduos se dibuja correctamente', (tester) async {
+    await tester.pumpWidget(app(const Center(child: EcoLogo())));
+    expect(find.byType(EcoLogo), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
   });
 }

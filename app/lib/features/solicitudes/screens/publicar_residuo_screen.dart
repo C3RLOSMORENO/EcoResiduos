@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/guia_categorias.dart';
 import '../../../screens/camara_screen.dart';
+import '../../../services/cola_publicaciones.dart';
 import '../../../services/fotos_service.dart';
 import '../../../services/identificacion_service.dart';
 import '../../../services/ubicacion_service.dart';
@@ -333,31 +334,17 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
 
       final generadorId = await _repository.getGeneradorId();
       if (generadorId == null) throw StateError('No se encontró el perfil de generador.');
-      // Quien publica suele estar donde está el residuo: su ubicación permite
-      // que los gestores vean a qué distancia queda la recogida.
-      final posicion = await UbicacionService.actual();
-      final creada = await _repository.crearSolicitud(
-        _completar(
-          SolicitudRecoleccion(
-            generadorId: generadorId,
-            materialId: _material!.id,
-            cantidadEstimada: 0,
-            unidadMedida: _unidad,
-            direccionRecoleccion: '',
-            municipio: '',
-            telefono: '',
-            latitud: posicion?.latitude,
-            longitud: posicion?.longitude,
-          ),
-          fotoUrl,
-        ),
-      );
+      final creada = await _repository.crearSolicitud(await _nueva(generadorId: generadorId, fotoUrl: fotoUrl));
       if (mounted) _mostrarExito(creada);
     } catch (e) {
       debugPrint('No se pudo guardar la publicación: $e');
       // Ninguna publicación quedó apuntando a la foto recién subida.
       if (fotoSubida != null) unawaited(_repository.eliminarFoto(fotoSubida));
       if (!mounted) return;
+      if (!_esEdicion && esErrorDeConexion(e)) {
+        await _guardarSinConexion();
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -369,6 +356,62 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
+  }
+
+  /// Quien publica suele estar donde está el residuo: su ubicación permite
+  /// que los gestores vean a qué distancia queda la recogida.
+  Future<SolicitudRecoleccion> _nueva({required int generadorId, String? fotoUrl}) async {
+    final posicion = await UbicacionService.actual();
+    return _completar(
+      SolicitudRecoleccion(
+        generadorId: generadorId,
+        materialId: _material!.id,
+        cantidadEstimada: 0,
+        unidadMedida: _unidad,
+        direccionRecoleccion: '',
+        municipio: '',
+        telefono: '',
+        latitud: posicion?.latitude,
+        longitud: posicion?.longitude,
+      ),
+      fotoUrl,
+    );
+  }
+
+  /// Sin conexión, la publicación se guarda en el teléfono y se envía sola después.
+  Future<void> _guardarSinConexion() async {
+    try {
+      await ColaPublicaciones.agregar(
+        solicitud: await _nueva(generadorId: 0, fotoUrl: _fotoRemota),
+        nombreMaterial: _material!.nombreComun,
+        foto: _fotoLocal,
+      );
+    } catch (e) {
+      debugPrint('No se pudo guardar la publicación en el teléfono: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No hay conexión y no pudimos guardarla. Tus datos siguen aquí.'),
+          action: SnackBarAction(label: 'Reintentar', onPressed: _guardar),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (exito) => ExitoEtiquetaScreen(
+          icono: Icons.schedule_send_outlined,
+          titulo: 'Guardada para publicar',
+          descripcion:
+              'No hay conexión. La publicamos apenas vuelvas a tener internet; mientras tanto la ves en Actividad como pendiente.',
+          accionPrincipal: 'Entendido',
+          onAccionPrincipal: () => Navigator.pop(exito, true),
+        ),
+      ),
+      result: true,
+    );
   }
 
   SolicitudRecoleccion _completar(SolicitudRecoleccion base, String? fotoUrl) => base.copyWith(
@@ -618,7 +661,9 @@ class _SlotFoto extends StatelessWidget {
     final imagen = ruta == null ? null : ImagenFoto(ruta: ruta, respaldo: const SizedBox());
 
     return Container(
+      width: double.infinity,
       height: 176,
+      padding: imagen == null ? const EdgeInsets.all(EcoSpace.s16) : null,
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: scheme.surfaceContainerHigh,
@@ -631,7 +676,9 @@ class _SlotFoto extends StatelessWidget {
                 Icon(Icons.add_a_photo_outlined, size: 36, color: scheme.onSurfaceVariant),
                 const SizedBox(height: EcoSpace.s12),
                 Wrap(
+                  alignment: WrapAlignment.center,
                   spacing: EcoSpace.s8,
+                  runSpacing: EcoSpace.s8,
                   children: [
                     FilledButton.tonalIcon(
                       onPressed: onCamara,

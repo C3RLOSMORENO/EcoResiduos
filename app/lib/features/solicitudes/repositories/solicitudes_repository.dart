@@ -54,14 +54,14 @@ abstract class SolicitudesRepository {
   /// Vuelve a leer una solicitud para mostrar su estado actual.
   Future<SolicitudRecoleccion?> getSolicitud(int id);
 
+  /// Fecha en que la solicitud llegó a cada estado (la más reciente por estado).
+  Future<Map<String, DateTime>> getHistorialEstados(int solicitudId);
+
   /// Obtiene las postulaciones del gestor autenticado con su solicitud.
   Future<List<PostulacionRecoleccion>> getMisPostulaciones();
 
   /// Cuenta, por solicitud, las propuestas pendientes y el gestor aceptado.
   Future<Map<int, ResumenPostulaciones>> getResumenPostulaciones(List<int> solicitudIds);
-
-  /// Postulaciones que recibieron las publicaciones del generador desde [desde].
-  Future<List<PostulacionRecoleccion>> getPostulacionesRecibidas({required DateTime desde});
 
   /// Obtiene las postulaciones recibidas para una solicitud específica.
   Future<List<PostulacionRecoleccion>> getPostulacionesDeSolicitud(int solicitudId);
@@ -287,24 +287,6 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
   }
 
   @override
-  Future<List<PostulacionRecoleccion>> getPostulacionesRecibidas({required DateTime desde}) async {
-    final client = _supabase;
-    if (client == null) return [];
-
-    final generadorId = await getGeneradorId();
-    if (generadorId == null) return [];
-
-    final List<dynamic> data = await client
-        .from('postulaciones_recoleccion')
-        .select('*, perfiles_gestor(*), solicitudes_recoleccion!inner(*, materiales_residuos(*))')
-        .eq('solicitudes_recoleccion.generador_id', generadorId)
-        .gte('created_at', desde.toUtc().toIso8601String())
-        .order('created_at', ascending: false);
-
-    return data.map((item) => PostulacionRecoleccion.fromMap(item as Map<String, dynamic>)).toList();
-  }
-
-  @override
   Future<List<PostulacionRecoleccion>> getPostulacionesDeSolicitud(int solicitudId) async {
     final client = _supabase;
     if (client == null) return [];
@@ -422,6 +404,22 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
         .eq('gestor_id', gestorId)
         .maybeSingle();
     return fila == null ? null : PostulacionRecoleccion.fromMap(fila);
+  }
+
+  @override
+  Future<Map<String, DateTime>> getHistorialEstados(int solicitudId) async {
+    final client = _supabase;
+    if (client == null) return {};
+
+    final List<dynamic> filas = await client
+        .from('solicitudes_historial_estados')
+        .select('estado, created_at')
+        .eq('solicitud_id', solicitudId)
+        .order('created_at');
+    return {
+      for (final f in filas.cast<Map<String, dynamic>>())
+        f['estado'].toString().toUpperCase(): DateTime.parse(f['created_at'].toString()),
+    };
   }
 
   @override
