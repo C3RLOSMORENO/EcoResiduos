@@ -133,9 +133,9 @@ TextTheme ecoTextTheme([Color? textColor]) {
       color: textColor,
     ),
     bodySmall: GoogleFonts.publicSans(
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: FontWeight.w400,
-      height: 16 / 12,
+      height: 18 / 13,
       letterSpacing: 0.3,
       color: textColor,
     ),

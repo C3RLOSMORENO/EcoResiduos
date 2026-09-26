@@ -87,7 +87,7 @@ class ResultadoScreen extends StatelessWidget {
                         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                         onPressed: verGuia,
                         icon: const Icon(Icons.menu_book_outlined),
-                        label: const Text('Ver cómo separarlo'),
+                        label: const Text('¿Cómo separarlo correctamente?'),
                       ),
                       const SizedBox(height: EcoSpace.s8),
                       TextButton(
