@@ -10,9 +10,11 @@ import '../theme/eco_theme.dart';
 import '../utils/sesion.dart';
 import '../widgets/boton_fijo_inferior.dart';
 import '../widgets/categoria_chip.dart';
+import '../widgets/contenido_guia.dart';
 import '../widgets/gestor_card.dart';
 import 'gestor_detalle_screen.dart';
 import 'gestores_asociados_screen.dart';
+import 'guia_manejo_general_screen.dart';
 import 'manejo_residuo_screen.dart';
 
 /// Ficha de un material (11): qué es, su riesgo, quién lo recibe cerca y
@@ -66,7 +68,7 @@ class InformacionResiduoScreen extends StatelessWidget {
                     if (material.subcategoria?.trim().isNotEmpty ?? false)
                       Text(
                         material.subcategoria!.trim(),
-                        style: theme.textTheme.bodyMedium?.copyWith(color: color.onColor),
+                        style: theme.textTheme.bodyLarge?.copyWith(color: color.onColor),
                       ),
                   ],
                 ),
@@ -81,24 +83,53 @@ class InformacionResiduoScreen extends StatelessWidget {
                   AvisoAdvertencia(texto: material.advertenciaManejo!),
                   const SizedBox(height: EcoSpace.s16),
                 ],
-                Text('Qué es', style: theme.textTheme.titleMedium),
-                const SizedBox(height: EcoSpace.s4),
-                Text(
-                  material.descripcion?.trim().isNotEmpty ?? false ? material.descripcion!.trim() : guia.queEs,
-                  style: theme.textTheme.bodyLarge,
-                ),
-                if (material.descripcion?.trim().isNotEmpty ?? false) ...[
-                  const SizedBox(height: EcoSpace.s8),
-                  Text(guia.queEs, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                ],
-                const SizedBox(height: EcoSpace.s16),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ManejoResiduoScreen(material: material)),
+                SeccionGuia(
+                  titulo: '¿Qué es?',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        material.descripcion?.trim().isNotEmpty ?? false ? material.descripcion!.trim() : guia.queEs,
+                        style: estiloLectura(context),
+                      ),
+                      if (material.descripcion?.trim().isNotEmpty ?? false) ...[
+                        const SizedBox(height: EcoSpace.s8),
+                        Text(guia.queEs, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                      ],
+                    ],
                   ),
-                  icon: const Icon(Icons.list_alt),
-                  label: const Text('Ver manejo seguro'),
+                ),
+                RecuadroNormativa(guia: guia),
+                const SizedBox(height: EcoSpace.s16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(46),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(EcoRadius.medium)),
+                        ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ManejoResiduoScreen(material: material)),
+                        ),
+                        icon: const Icon(Icons.list_alt, size: 18),
+                        label: const Text('Manejo seguro'),
+                      ),
+                    ),
+                    const SizedBox(width: EcoSpace.s8),
+                    IconButton.outlined(
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(EcoRadius.medium)),
+                      ),
+                      tooltip: 'Guía técnica y normativa',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => GuiaManejoGeneralScreen(categoriaInicial: categoria)),
+                      ),
+                      icon: const Icon(Icons.menu_book_outlined, size: 20),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: EcoSpace.s24),
                 GestoresCercanos(
@@ -146,7 +177,6 @@ class _GestoresCercanosState extends State<GestoresCercanos> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FutureBuilder<List<Gestor>>(
       future: _gestores,
       builder: (context, snapshot) {
@@ -156,7 +186,7 @@ class _GestoresCercanosState extends State<GestoresCercanos> {
           children: [
             Row(
               children: [
-                Expanded(child: Text('Quién lo recibe cerca', style: theme.textTheme.titleMedium)),
+                Expanded(child: TituloSeccion('¿Quién lo recibe cerca?')),
                 if (gestores != null && gestores.isNotEmpty)
                   TextButton(
                     onPressed: () =>

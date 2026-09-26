@@ -79,7 +79,7 @@ class GestorCard extends StatelessWidget {
               if (gestor.distanciaKm != null)
                 Text(
                   formatoDistancia(gestor.distanciaKm!),
-                  style: theme.textTheme.headlineSmall?.copyWith(fontSize: 18, color: scheme.primary),
+                  style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20, color: scheme.primary),
                 )
               else
                 Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),

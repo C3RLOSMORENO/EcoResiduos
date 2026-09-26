@@ -88,7 +88,7 @@ class SolicitudCard extends StatelessWidget {
                             ],
                             Text(
                               solicitud.material?.nombreComun ?? 'Residuo sin especificar',
-                              style: theme.textTheme.titleMedium?.copyWith(fontSize: 15, height: 20 / 15),
+                              style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 6),
                             Wrap(
@@ -102,10 +102,7 @@ class SolicitudCard extends StatelessWidget {
                                 if (ubicacion.isNotEmpty)
                                   Text(
                                     ubicacion,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontSize: 13,
-                                      color: scheme.onSurfaceVariant,
-                                    ),
+                                    style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                                   ),
                               ],
                             ),

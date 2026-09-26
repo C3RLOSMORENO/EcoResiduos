@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../data/guia_categorias.dart';
 import '../theme/eco_theme.dart';
 import '../widgets/categoria_chip.dart';
+import '../widgets/contenido_guia.dart';
 
-/// Guía de manejo por categoría (13). La pestaña activa muestra el chip
-/// completo de su categoría y las demás solo el ícono.
+/// Guía de manejo y marco normativo oficial colombiano por categoría (13).
+/// Diseñada con proporciones armónicas, tipografía legible y jerarquía visual clara.
 class GuiaManejoGeneralScreen extends StatefulWidget {
   const GuiaManejoGeneralScreen({super.key, this.categoriaInicial});
 
@@ -30,15 +31,15 @@ class _GuiaManejoGeneralScreenState extends State<GuiaManejoGeneralScreen> {
     final guia = guiasPorCategoria[_actual]!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Guía de manejo')),
+      appBar: AppBar(title: const Text('Guía técnica y normativa')),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: EcoSpace.s32),
+        padding: const EdgeInsets.only(bottom: EcoSpace.s40),
         children: [
           SizedBox(
-            height: 56,
+            height: 54,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16, vertical: 4),
               itemCount: _categorias.length,
               separatorBuilder: (_, _) => const SizedBox(width: EcoSpace.s8),
               itemBuilder: (_, i) {
@@ -64,7 +65,7 @@ class _GuiaManejoGeneralScreenState extends State<GuiaManejoGeneralScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(EcoSpace.s16),
+            padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s12, EcoSpace.s16, EcoSpace.s16),
             child: Material(
               color: scheme.surfaceContainerLowest,
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
@@ -74,35 +75,41 @@ class _GuiaManejoGeneralScreenState extends State<GuiaManejoGeneralScreen> {
                 children: [
                   CategoriaBanner(categoria: _actual),
                   Padding(
-                    padding: const EdgeInsets.all(EcoSpace.s16),
+                    padding: const EdgeInsets.all(EcoSpace.s20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _Seccion(
-                          titulo: 'Cómo reconocerlo',
-                          child: Text(guia.reconocer, style: theme.textTheme.bodyLarge),
+                        RecuadroNormativa(guia: guia, conArticulo: true),
+                        const SizedBox(height: EcoSpace.s24),
+                        SeccionGuia(
+                          titulo: 'Definición técnica',
+                          child: Text(guia.queEs, style: estiloLectura(context)),
                         ),
-                        _Seccion(
-                          titulo: 'Qué hacer',
+                        SeccionGuia(
+                          titulo: '¿Cómo reconocerlo?',
+                          child: Text(guia.reconocer, style: estiloLectura(context)),
+                        ),
+                        SeccionGuia(
+                          titulo: '¿Qué hacer?',
                           child: Column(
                             children: [
                               for (final item in guia.hacer)
-                                _Item(icono: Icons.check_circle, color: scheme.primary, texto: item),
+                                ItemGuia(icono: Icons.check_circle_outline, color: scheme.primary, texto: item),
                             ],
                           ),
                         ),
-                        _Seccion(
-                          titulo: 'Qué no hacer',
+                        SeccionGuia(
+                          titulo: '¿Qué no hacer?',
                           child: Column(
                             children: [
                               for (final item in guia.noHacer)
-                                _Item(icono: Icons.block, color: scheme.error, texto: item),
+                                ItemGuia(icono: Icons.cancel_outlined, color: scheme.error, texto: item),
                             ],
                           ),
                         ),
-                        _Seccion(
-                          titulo: 'Dónde entregarlo',
-                          child: Text(guia.entregar, style: theme.textTheme.bodyLarge),
+                        SeccionGuia(
+                          titulo: '¿Dónde entregarlo?',
+                          child: Text(guia.entregar, style: estiloLectura(context)),
                         ),
                       ],
                     ),
@@ -111,51 +118,6 @@ class _GuiaManejoGeneralScreenState extends State<GuiaManejoGeneralScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Seccion extends StatelessWidget {
-  const _Seccion({required this.titulo, required this.child});
-
-  final String titulo;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: EcoSpace.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(titulo, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: EcoSpace.s8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _Item extends StatelessWidget {
-  const _Item({required this.icono, required this.color, required this.texto});
-
-  final IconData icono;
-  final Color color;
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: EcoSpace.s8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icono, size: 20, color: color),
-          const SizedBox(width: EcoSpace.s8),
-          Expanded(child: Text(texto, style: Theme.of(context).textTheme.bodyLarge)),
         ],
       ),
     );

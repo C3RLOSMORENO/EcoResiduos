@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Logo e isotipo oficial de EcoResiduos con acabado premium.
 class EcoLogo extends StatelessWidget {
-  const EcoLogo({
-    super.key,
-    this.width = 134,
-    this.showBadge = true,
-  });
+  const EcoLogo({super.key, this.width = 134, this.showBadge = true});
 
   final double width;
   final bool showBadge;
@@ -21,11 +17,7 @@ class EcoLogo extends StatelessWidget {
     );
 
     if (!showBadge) {
-      return Semantics(
-        label: 'EcoResiduos',
-        image: true,
-        child: image,
-      );
+      return Semantics(label: 'EcoResiduos', image: true, child: image);
     }
 
     return Semantics(
@@ -39,11 +31,7 @@ class EcoLogo extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(width * 0.24),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: image,
@@ -51,6 +39,3 @@ class EcoLogo extends StatelessWidget {
     );
   }
 }
-
-
-

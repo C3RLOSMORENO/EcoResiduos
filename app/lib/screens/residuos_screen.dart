@@ -5,6 +5,7 @@ import '../data/guia_categorias.dart';
 import '../features/solicitudes/models/material_residuo.dart';
 import '../features/solicitudes/repositories/solicitudes_repository.dart';
 import '../theme/eco_theme.dart';
+import '../widgets/contenido_guia.dart';
 import '../widgets/categoria_chip.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
@@ -111,8 +112,60 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
           padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, 96 + EcoSpace.s16),
           children: [
             _barraBusqueda(catalogo ?? const []),
-            const SizedBox(height: EcoSpace.s24),
-            Text('Categorías', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: EcoSpace.s16),
+            InkWell(
+              borderRadius: BorderRadius.circular(EcoRadius.medium),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuiaManejoGeneralScreen())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16, vertical: EcoSpace.s12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(EcoRadius.medium),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(EcoSpace.s8),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
+                      child: Icon(Icons.gavel_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
+                    ),
+                    const SizedBox(width: EcoSpace.s12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Normativa Nacional de Separación',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Res. 2184/2019, Dec. 1076/2015, Ley RAEE y RCD',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: EcoSpace.s20),
+            const TituloSeccion('Categorías de residuos'),
             const SizedBox(height: EcoSpace.s12),
             if (snapshot.hasError && snapshot.connectionState == ConnectionState.done)
               EmptyStateWidget.error(
