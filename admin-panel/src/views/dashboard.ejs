@@ -111,6 +111,28 @@
       </div>
     </div>
   </section>
+  <!-- Panel de Gráficos (Añadido) -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-8">
+    <div class="m3-surface-container p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+      <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-brand dark:text-emerald-400">pie_chart</span>
+        Estado de las Solicitudes
+      </h3>
+      <div class="relative h-64 w-full">
+        <canvas id="estadoSolicitudesChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="m3-surface-container p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+      <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-brand dark:text-emerald-400">bar_chart</span>
+        Solicitudes por Municipio
+      </h3>
+      <div class="relative h-64 w-full">
+        <canvas id="municipiosChart"></canvas>
+      </div>
+    </div>
+  </section>
 
   <!-- Sección de Auditoría Urgente de Gestores -->
   <% if (gestoresPendientes && gestoresPendientes.length > 0) { %>
@@ -326,6 +348,89 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Datos inyectados desde el Controller
+    const kpis = <%- JSON.stringify(kpis || {}) %>;
+    const chartData = <%- JSON.stringify(chartData || {municipiosLabels:[], municipiosData:[]}) %>;
+    
+    // Variables de color para Dark Mode (Opcional, pero se ve mejor)
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const textColor = isDarkMode ? '#cbd5e1' : '#475569';
+    const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.font.family = "'Roboto', sans-serif";
+
+    // 1. Gráfico de Dona: Estado de Solicitudes
+    const ctxEstado = document.getElementById('estadoSolicitudesChart').getContext('2d');
+    new Chart(ctxEstado, {
+      type: 'doughnut',
+      data: {
+        labels: ['Recolectadas', 'En Negociación', 'Publicadas', 'Canceladas'],
+        datasets: [{
+          data: [
+            kpis.solicitudesRecolectadas || 0, 
+            kpis.solicitudesEnProceso || 0, 
+            kpis.solicitudesPublicadas || 0, 
+            kpis.solicitudesCanceladas || 0
+          ],
+          backgroundColor: [
+            '#10B981', // Emerald 500
+            '#3B82F6', // Blue 500
+            '#F59E0B', // Amber 500
+            '#EF4444'  // Red 500
+          ],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right' }
+        },
+        cutout: '70%'
+      }
+    });
+
+    // 2. Gráfico de Barras: Municipios
+    const ctxMuni = document.getElementById('municipiosChart').getContext('2d');
+    new Chart(ctxMuni, {
+      type: 'bar',
+      data: {
+        labels: chartData.municipiosLabels.length ? chartData.municipiosLabels : ['Bucaramanga', 'Floridablanca'],
+        datasets: [{
+          label: 'Total Reportes',
+          data: chartData.municipiosData.length ? chartData.municipiosData : [0, 0],
+          backgroundColor: '#16A34A', // Brand
+          borderRadius: 6,
+          barThickness: 32
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            grid: { color: gridColor }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  });
+</script>
 <%- include('partials/footer') %>
+
 
 

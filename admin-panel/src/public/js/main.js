@@ -159,3 +159,46 @@ window.cerrarSnackbar = function(el) {
   }
 };
 
+
+// ==========================================================================
+// 5. BUSCADOR INTELIGENTE DE TABLAS (FILTRO CLIENT-SIDE)
+// ==========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInputs = document.querySelectorAll('input[data-table-target]');
+  
+  searchInputs.forEach(input => {
+    input.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      const tableId = e.target.getAttribute('data-table-target');
+      const table = document.getElementById(tableId);
+      
+      if (!table) return;
+
+      const rows = table.querySelectorAll('tbody tr:not(.empty-state)');
+      let hasVisibleRows = false;
+      
+      rows.forEach(row => {
+        const textContent = row.textContent.toLowerCase();
+        if (textContent.includes(searchTerm)) {
+          row.style.display = '';
+          hasVisibleRows = true;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Handle empty state row logic
+      const emptyStateRow = table.querySelector('tbody tr.empty-state');
+      if (emptyStateRow) {
+        if (!hasVisibleRows && searchTerm !== '') {
+            emptyStateRow.style.display = '';
+            // Change message to indicate no search results
+            const p = emptyStateRow.querySelector('p.font-medium');
+            if(p) p.textContent = 'No se encontraron resultados para "' + searchTerm + '"';
+        } else {
+            emptyStateRow.style.display = 'none';
+        }
+      }
+    });
+  });
+});
