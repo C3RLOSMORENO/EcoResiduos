@@ -2228,6 +2228,10 @@ input[type="checkbox"]:checked,
   font-size: 16px;
 }
 
+.text-\[14px\] {
+  font-size: 14px;
+}
+
 .font-black {
   font-weight: 900;
 }

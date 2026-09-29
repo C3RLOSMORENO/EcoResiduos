@@ -7,6 +7,7 @@ const gestorRoutes = require('./GestorRoutes');
 const materialRoutes = require('./MaterialRoutes');
 const autoridadRoutes = require('./AutoridadRoutes');
 const solicitudRoutes = require('./SolicitudRoutes');
+const generadorRoutes = require('./GeneradorRoutes');
 const { requireAuth } = require('../middlewares/authMiddleware');
 
 router.use('/', authRoutes);
@@ -21,9 +22,11 @@ router.use('/gestores', requireAuth, gestorRoutes);
 router.use('/materiales', requireAuth, materialRoutes);
 router.use('/autoridades', requireAuth, autoridadRoutes);
 router.use('/solicitudes', requireAuth, solicitudRoutes);
+router.use('/ciudadanos', requireAuth, generadorRoutes);
 
 router.use((req, res) => {
     res.redirect('/login');
 });
 
 module.exports = router;
+
