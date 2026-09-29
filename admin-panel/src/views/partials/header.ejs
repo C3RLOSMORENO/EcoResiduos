@@ -115,6 +115,14 @@
                     <span class="material-symbols-outlined text-xl" aria-hidden="true">local_shipping</span>
                     <span>Solicitudes</span>
                 </a>
+
+                <a href="/ciudadanos"
+                    class="flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-1 focus:ring-[#1E4620] <%= activeTab === 'generadores' ? 'bg-[#1E4620] text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' %>"
+                    <%=activeTab==='generadores' ? 'aria-current="page"' : '' %>
+                    >
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">groups</span>
+                    <span>Ciudadanos</span>
+                </a>
             </nav>
         </div>
 
@@ -156,5 +164,6 @@
     </script>
 
     <main id="main-content" class="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F9FAFB] dark:bg-[#0F172A]">
+
 
 

@@ -25,6 +25,11 @@
     border-color: #34d399 !important;
   }
 
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-webkit-reveal {
+    display: none !important;
+  }
+
   input[type="checkbox"]:checked,
   input[type="radio"]:checked {
     background-color: #1E4620 !important;
@@ -108,5 +113,6 @@
     @apply bg-[#E2E2E6] text-[#1A1C1E] border-[#C6C6CA] dark:bg-[#43474E]/60 dark:text-[#E2E2E6] dark:border-[#43474E];
   }
 }
+
 
 

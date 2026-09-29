@@ -1,8 +1,8 @@
-const supabase = require('../config/supabase');
+﻿const supabase = require('../config/supabase');
 
 const dashboardService = {
     async getDashboardKpis() {
-        // 1. Estadísticas de solicitudes
+        // 1. EstadÃ­sticas de solicitudes
         const { data: solicitudes, error: errSol } = await supabase
             .from('solicitudes_recoleccion')
             .select(`
@@ -25,7 +25,7 @@ const dashboardService = {
             console.error('Error al consultar solicitudes para dashboard:', errSol.message);
         }
 
-        // 2. Estadísticas de gestores
+        // 2. EstadÃ­sticas de gestores
         const { data: gestores, error: errGest } = await supabase
             .from('perfiles_gestor')
             .select(`
@@ -45,7 +45,7 @@ const dashboardService = {
             console.error('Error al consultar gestores para dashboard:', errGest.message);
         }
 
-        // 3. Cantidad de materiales en catálogo
+        // 3. Cantidad de materiales en catÃ¡logo
         const { count: totalMateriales } = await supabase
             .from('materiales_residuos')
             .select('id', { count: 'exact', head: true });
@@ -96,3 +96,4 @@ const dashboardService = {
 };
 
 module.exports = dashboardService;
+
