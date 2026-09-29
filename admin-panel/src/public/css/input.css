@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -50,7 +50,7 @@
     @apply h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-xs text-slate-900 placeholder:text-slate-400 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
   }
 
-  /* Tablas de administración */
+  /* Tablas de administraciÃ³n */
   .tabla-container {
     @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
   }
@@ -83,7 +83,7 @@
     @apply inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors;
   }
 
-  /* 1. Biológicos e Infecciosos (Y1, Y2, Y3) - Error Tonal Role */
+  /* 1. BiolÃ³gicos e Infecciosos (Y1, Y2, Y3) - Error Tonal Role */
   .chip-respel-bio {
     @apply bg-[#FFDAD6] text-[#410002] border-[#FFB4AB] dark:bg-[#93000A]/60 dark:text-[#FFDAD6] dark:border-[#93000A];
   }
@@ -93,12 +93,12 @@
     @apply bg-[#FFDF9E] text-[#251A00] border-[#E5C158] dark:bg-[#554400]/60 dark:text-[#FFDF9E] dark:border-[#554400];
   }
 
-  /* 3. RAEE y Químicos Pesados (Y26, Y29, RAEE) - Terracotta Tonal */
+  /* 3. RAEE y QuÃ­micos Pesados (Y26, Y29, RAEE) - Terracotta Tonal */
   .chip-respel-raee {
     @apply bg-[#FFDCC2] text-[#2E1500] border-[#FFB77C] dark:bg-[#6A3800]/60 dark:text-[#FFDCC2] dark:border-[#6A3800];
   }
 
-  /* 4. Aprovechables y Orgánicos (REC, ORG) - Success Green Tonal */
+  /* 4. Aprovechables y OrgÃ¡nicos (REC, ORG) - Success Green Tonal */
   .chip-respel-eco {
     @apply bg-[#C2ECCD] text-[#00210E] border-[#85D3A2] dark:bg-[#0C5229]/60 dark:text-[#C2ECCD] dark:border-[#0C5229];
   }
@@ -108,3 +108,5 @@
     @apply bg-[#E2E2E6] text-[#1A1C1E] border-[#C6C6CA] dark:bg-[#43474E]/60 dark:text-[#E2E2E6] dark:border-[#43474E];
   }
 }
+
+

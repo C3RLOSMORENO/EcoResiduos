@@ -1,0 +1,100 @@
+﻿<%- include('partials/header') %>
+
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Centro de Solicitudes</h2>
+        <p class="mt-2 text-slate-600 dark:text-slate-400">Monitoriza las solicitudes de recolección creadas por los ciudadanos.</p>
+    </div>
+</div>
+
+<% if (locals.error) { %>
+    <%- include('partials/alert', { type: 'error', message: error, title: 'Error' }) %>
+<% } %>
+<% if (locals.success) { %>
+    <%- include('partials/alert', { type: 'success', message: success, title: 'Éxito' }) %>
+<% } %>
+
+<div class="bg-white dark:bg-[#1E293B] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Material</th>
+                    <th scope="col" class="px-6 py-4">Cantidad</th>
+                    <th scope="col" class="px-6 py-4">Municipio</th>
+                    <th scope="col" class="px-6 py-4">Estado</th>
+                    <th scope="col" class="px-6 py-4">Fecha</th>
+                    <th scope="col" class="px-6 py-4 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                <% if (solicitudes && solicitudes.length > 0) { %>
+                    <% solicitudes.forEach(sol => { %>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                                <div class="flex items-center gap-3">
+                                    <% if (sol.foto_url) { %>
+                                        <img src="<%= sol.foto_url %>" alt="Foto" class="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700" onerror="this.onerror=null; this.outerHTML='<div class=\'w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center\'><span class=\'material-symbols-outlined text-slate-400\'>broken_image</span></div>';">
+                                    <% } else { %>
+                                        <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-slate-400">image_not_supported</span>
+                                        </div>
+                                    <% } %>
+                                    <span><%= sol.materiales_residuos ? sol.materiales_residuos.nombre_comun : 'Material Desconocido' %></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
+                                <%= sol.cantidad_estimada %> <%= sol.unidad_medida %>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 uppercase">
+                                <%= sol.municipio %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <% 
+                                    let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                                    if (sol.estado === 'PUBLICADO') badgeColor = 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+                                    else if (sol.estado === 'EN_NEGOCIACION') badgeColor = 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
+                                    else if (sol.estado === 'ASIGNADO') badgeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
+                                    else if (sol.estado === 'RECOLECTADO') badgeColor = 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
+                                    else if (sol.estado === 'CANCELADO') badgeColor = 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+                                %>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wide <%= badgeColor %>">
+                                    <%= sol.estado.replace('_', ' ') %>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">
+                                <%= new Date(sol.created_at).toLocaleDateString('es-CO') %>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <form action="/solicitudes/<%= sol.id %>/estado" method="POST" class="inline-flex">
+                                    <div class="relative">
+                                        <select name="estado" onchange="this.form.submit()" class="appearance-none bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand cursor-pointer shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
+                                            <option value="PUBLICADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'PUBLICADO' ? 'selected' : '' %>>Publicado</option>
+                                            <option value="EN_NEGOCIACION" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'EN_NEGOCIACION' ? 'selected' : '' %>>En Negociación</option>
+                                            <option value="ASIGNADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'ASIGNADO' ? 'selected' : '' %>>Asignado</option>
+                                            <option value="RECOLECTADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'RECOLECTADO' ? 'selected' : '' %>>Recolectado</option>
+                                            <option value="CANCELADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'CANCELADO' ? 'selected' : '' %>>Cancelado</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
+                                            <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <span class="material-symbols-outlined text-4xl mb-3 opacity-50 block">inbox</span>
+                            <p class="text-base font-medium">No hay solicitudes registradas</p>
+                            <p class="text-sm mt-1">Cuando los ciudadanos reporten residuos, aparecerán aquí.</p>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
