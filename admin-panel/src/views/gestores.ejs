@@ -27,14 +27,19 @@
         <input type="text" id="buscadorGestores" placeholder="Buscar por razón social, NIT o material..." class="input-ui !pl-10">
       </div>
       <div class="flex items-center gap-2">
-        <select id="filtroMunicipio" class="input-ui !w-auto">
-          <option value="">Todos los municipios</option>
-          <option value="Bucaramanga">Bucaramanga</option>
-          <option value="Floridablanca">Floridablanca</option>
-          <option value="Girón">Girón</option>
-          <option value="Piedecuesta">Piedecuesta</option>
-          <option value="Barrancabermeja">Barrancabermeja</option>
+        <div class="relative inline-block w-full sm:w-auto">
+        <select id="filtroMunicipio" class="appearance-none w-full bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand cursor-pointer shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
+          <option value="" class="bg-white dark:bg-slate-800 font-medium">Todos los municipios</option>
+          <option value="Bucaramanga" class="bg-white dark:bg-slate-800 font-medium">Bucaramanga</option>
+          <option value="Floridablanca" class="bg-white dark:bg-slate-800 font-medium">Floridablanca</option>
+          <option value="Girón" class="bg-white dark:bg-slate-800 font-medium">Girón</option>
+          <option value="Piedecuesta" class="bg-white dark:bg-slate-800 font-medium">Piedecuesta</option>
+          <option value="Barrancabermeja" class="bg-white dark:bg-slate-800 font-medium">Barrancabermeja</option>
         </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 dark:text-slate-400">
+          <span class="material-symbols-outlined text-[18px]">expand_more</span>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -218,12 +223,16 @@
             <span id="fichaEstadoBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase"></span>
           </div>
           <form id="formCambiarEstado" action="" method="POST" class="flex items-center gap-2">
-            <select id="selectCambiarEstado" name="estado" class="input-ui !text-xs !py-1.5 flex-1 font-semibold">
-              <option value="APROBADO">APROBADO (Certificado)</option>
-              <option value="PENDIENTE">PENDIENTE (En Revisión)</option>
-              <option value="RECHAZADO">RECHAZADO</option>
-              <option value="SUSPENDIDO">SUSPENDIDO</option>
-            </select>
+            <div class="relative flex-1">
+              <select id="selectCambiarEstado" name="estado" class="appearance-none w-full bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs py-1.5 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand cursor-pointer shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold">
+                <option value="PENDIENTE" class="bg-white dark:bg-slate-800 font-medium">Pendiente</option>
+                <option value="APROBADO" class="bg-white dark:bg-slate-800 font-medium">Aprobado</option>
+                <option value="RECHAZADO" class="bg-white dark:bg-slate-800 font-medium">Rechazado</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
+                <span class="material-symbols-outlined text-[16px]">expand_more</span>
+              </div>
+            </div>
             <button type="submit" onclick="return confirm('¿Confirmas el cambio de estado de verificación de este gestor ambiental?');" class="btn-tonal !text-xs !h-9 !px-3 font-semibold whitespace-nowrap">
               Actualizar
             </button>
@@ -536,5 +545,7 @@
 </script>
 
 <%- include('partials/footer') %>
+
+
 
 
