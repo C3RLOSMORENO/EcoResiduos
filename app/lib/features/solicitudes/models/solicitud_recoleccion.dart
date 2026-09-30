@@ -1,4 +1,4 @@
-import 'material_residuo.dart';
+﻿import 'material_residuo.dart';
 
 /// Modelo de dominio fuertemente tipado para la tabla 'public.solicitudes_recoleccion'.
 class SolicitudRecoleccion {
@@ -13,6 +13,7 @@ class SolicitudRecoleccion {
   final String telefono;
   final String estado;
   final String? fotoUrl;
+  final String? certificadoUrl;
   final double? latitud;
   final double? longitud;
   final DateTime? createdAt;
@@ -37,6 +38,7 @@ class SolicitudRecoleccion {
     required this.telefono,
     this.estado = 'PUBLICADO',
     this.fotoUrl,
+    this.certificadoUrl,
     this.latitud,
     this.longitud,
     this.createdAt,
@@ -68,6 +70,7 @@ class SolicitudRecoleccion {
       telefono: (map['telefono'] ?? '').toString(),
       estado: (map['estado'] ?? 'PUBLICADO').toString().toUpperCase(),
       fotoUrl: map['foto_url']?.toString(),
+      certificadoUrl: map['certificado_url']?.toString(),
       latitud: map['latitud'] != null ? double.tryParse(map['latitud'].toString()) : null,
       longitud: map['longitud'] != null ? double.tryParse(map['longitud'].toString()) : null,
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
@@ -81,7 +84,7 @@ class SolicitudRecoleccion {
     );
   }
 
-  /// Serializa los campos que edita el generador. Las columnas de recolección
+  /// Serializa los campos que edita el generador. Las columnas de recolecciÃ³n
   /// (`recolectado_at`, `confirmado_at`, `problema_*`, `gestor_asignado_id`)
   /// solo las escriben las funciones RPC del servidor.
   Map<String, dynamic> toMap({bool forInsert = false}) {
@@ -96,6 +99,7 @@ class SolicitudRecoleccion {
       'telefono': telefono,
       'estado': estado,
       if (fotoUrl != null) 'foto_url': fotoUrl,
+      if (certificadoUrl != null) 'certificado_url': certificadoUrl,
       if (latitud != null) 'latitud': latitud,
       if (longitud != null) 'longitud': longitud,
     };
@@ -106,7 +110,7 @@ class SolicitudRecoleccion {
     return map;
   }
 
-  /// Campos que el generador puede cambiar al editar. El estado, el dueño y
+  /// Campos que el generador puede cambiar al editar. El estado, el dueÃ±o y
   /// las fechas los cambian solo las funciones del servidor.
   Map<String, dynamic> toMapEdicion() {
     return {
@@ -136,6 +140,7 @@ class SolicitudRecoleccion {
     String? telefono,
     String? estado,
     String? fotoUrl,
+    String? certificadoUrl,
     double? latitud,
     double? longitud,
     DateTime? createdAt,
@@ -159,6 +164,8 @@ class SolicitudRecoleccion {
       telefono: telefono ?? this.telefono,
       estado: estado ?? this.estado,
       fotoUrl: fotoUrl ?? this.fotoUrl,
+      certificadoUrl: certificadoUrl ?? this.certificadoUrl,
+    this.certificadoUrl,
       latitud: latitud ?? this.latitud,
       longitud: longitud ?? this.longitud,
       createdAt: createdAt ?? this.createdAt,
@@ -176,7 +183,7 @@ class SolicitudRecoleccion {
   bool get estaConfirmado => confirmadoAt != null;
   bool get tieneProblema => problemaReportado;
 
-  /// El gestor marcó la recolección y el generador aún no responde.
+  /// El gestor marcÃ³ la recolecciÃ³n y el generador aÃºn no responde.
   bool get pendienteConfirmacion => estado == 'RECOLECTADO' && confirmadoAt == null && !problemaReportado;
 
   @override
@@ -186,3 +193,4 @@ class SolicitudRecoleccion {
   @override
   int get hashCode => id.hashCode;
 }
+

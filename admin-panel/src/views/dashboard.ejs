@@ -16,16 +16,7 @@
         Supervisión en tiempo real de recolecciones, gestión de residuos y certificación de gestores en Santander
       </p>
     </div>
-    <div class="flex items-center gap-3">
-      <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>Servicios en Línea</span>
-      </span>
-      <a href="/gestores" class="btn-primary !h-9 !text-xs">
-        <span class="material-symbols-outlined text-base">domain</span>
-        <span>Auditar Gestores</span>
-      </a>
-    </div>
+    
   </header>
 
   <!-- Tarjetas KPI -->
@@ -138,22 +129,7 @@
   <% if (gestoresPendientes && gestoresPendientes.length > 0) { %>
     <section aria-labelledby="seccion-auditoria" class="m3-surface-container rounded-2xl border border-amber-200 dark:border-amber-800/80 p-6 bg-gradient-to-r from-amber-50/50 via-white to-amber-50/20 dark:from-amber-950/20 dark:via-slate-900 dark:to-amber-950/10">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center">
-            <span class="material-symbols-outlined text-xl">gavel</span>
-          </div>
-          <div>
-            <h2 id="seccion-auditoria" class="text-base font-bold text-slate-900 dark:text-slate-100">
-              Gestores Pendientes de Auditoría y Verificación
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Aprueba o rechaza gestores ambientales que solicitaron certificación oficial</p>
-          </div>
-        </div>
-        <a href="/gestores" class="text-xs font-semibold text-brand dark:text-emerald-400 hover:underline flex items-center gap-1">
-          <span>Ver todos los gestores</span>
-          <span class="material-symbols-outlined text-sm">arrow_forward</span>
-        </a>
-      </div>
+        
 
       <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
         <table class="w-full text-left text-xs">
@@ -214,9 +190,9 @@
   <% } %>
 
   <!-- Panel de dos columnas: Solicitudes Recientes y Accesos Rápidos -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 gap-6">
     <!-- Ãšltimas Solicitudes Registradas (2 Cols) -->
-    <div class="lg:col-span-2 m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6">
+    <div class="m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6">
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -279,71 +255,6 @@
       <% } %>
     </div>
 
-    <!-- Accesos Rápidos y Modos de Configuración (1 Col) -->
-    <div class="space-y-6">
-      <!-- Tarjeta Accesos Directos -->
-      <div class="m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <span class="material-symbols-outlined text-brand dark:text-emerald-400">tune</span>
-          <span>Módulos de Administración</span>
-        </h3>
-
-        <div class="space-y-2.5">
-          <a href="/gestores" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">domain</span>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Gestores Ambientales</p>
-                <p class="text-[11px] text-slate-500">Auditoría y asignación de materiales</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
-          </a>
-
-          <a href="/materiales" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">category</span>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Catálogo de Materiales</p>
-                <p class="text-[11px] text-slate-500">RESPEL, RCD, RAEE y aprovechables</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
-          </a>
-
-          <a href="/autoridades" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition group">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#1E4620]/10 text-[#1E4620] dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">account_balance</span>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand dark:group-hover:text-emerald-400">Autoridades Ambientales</p>
-                <p class="text-[11px] text-slate-500">CDMB, AMB, CAS y normatividad</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Resumen Jurisdiccional Santander -->
-      <div class="p-5 rounded-2xl bg-[#1E4620] text-white space-y-3 shadow-sm">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-emerald-300 text-xl">map</span>
-          <span class="text-xs font-bold tracking-wide uppercase text-emerald-200">Jurisdicción Santander</span>
-        </div>
-        <p class="text-xs text-emerald-100 leading-relaxed">
-          Monitoreo articulado con la <strong>CDMB</strong> (Ãrea Metropolitana y Soto Norte), <strong>AMB</strong> (Bucaramanga, Floridablanca, Girón, Piedecuesta) y la <strong>CAS</strong> (Provincias de Santander).
-        </p>
-        <div class="pt-2 border-t border-emerald-800/80 flex items-center justify-between text-[11px] text-emerald-200">
-          <span>SSOT Supabase Activo</span>
-          <span class="font-mono text-emerald-300 font-bold">v1.0.0</span>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -431,6 +342,8 @@
   });
 </script>
 <%- include('partials/footer') %>
+
+
 
 
 

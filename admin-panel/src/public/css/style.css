@@ -1249,12 +1249,12 @@ input[type="checkbox"]:checked,
   display: inline-flex;
 }
 
-.table {
-  display: table;
-}
-
 .\!table {
   display: table !important;
+}
+
+.table {
+  display: table;
 }
 
 .grid {
@@ -1321,6 +1321,10 @@ input[type="checkbox"]:checked,
   height: 1.5rem;
 }
 
+.h-64 {
+  height: 16rem;
+}
+
 .h-7 {
   height: 1.75rem;
 }
@@ -1339,10 +1343,6 @@ input[type="checkbox"]:checked,
 
 .h-screen {
   height: 100vh;
-}
-
-.h-64 {
-  height: 16rem;
 }
 
 .max-h-52 {
@@ -2148,6 +2148,10 @@ input[type="checkbox"]:checked,
   padding-top: 1.5rem;
 }
 
+.pr-10 {
+  padding-right: 2.5rem;
+}
+
 .text-left {
   text-align: left;
 }
@@ -2235,6 +2239,10 @@ input[type="checkbox"]:checked,
 .text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.text-\[18px\] {
+  font-size: 18px;
 }
 
 .font-black {
@@ -2998,6 +3006,10 @@ input[type="checkbox"]:checked,
     grid-column: span 2 / span 2;
   }
 
+  .sm\:w-auto {
+    width: auto;
+  }
+
   .sm\:max-w-md {
     max-width: 28rem;
   }
@@ -3085,16 +3097,16 @@ input[type="checkbox"]:checked,
     grid-column: span 2 / span 2;
   }
 
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lg\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .lg\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .lg\:p-8 {

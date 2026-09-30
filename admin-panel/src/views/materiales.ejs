@@ -47,14 +47,19 @@
         <input type="text" id="buscadorMateriales" placeholder="Buscar por código, residuo o categoría..." class="input-ui !pl-10">
       </div>
       <div class="flex items-center gap-2">
-        <select id="filtroCategoria" class="input-ui !w-auto">
-          <option value="">Todas las categorías</option>
-          <option value="PELIGROSO">Peligrosos (Convenio Basilea)</option>
-          <option value="RIESGO_BIOLOGICO">Riesgo Biológico / Hospitalarios</option>
-          <option value="RAEE">RAEE / Eléctricos y Electrónicos</option>
-          <option value="APROVECHABLE">Aprovechables / Orgánicos</option>
-          <option value="RCD">RCD / Construcción y Demolición</option>
+        <div class="relative inline-block w-full sm:w-auto">
+        <select id="filtroCategoria" class="appearance-none w-full bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand cursor-pointer shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
+          <option value="" class="bg-white dark:bg-slate-800 font-medium">Todas las categorías</option>
+          <option value="PELIGROSO" class="bg-white dark:bg-slate-800 font-medium">Peligrosos (Convenio Basilea)</option>
+          <option value="RIESGO_BIOLOGICO" class="bg-white dark:bg-slate-800 font-medium">Riesgo Biológico / Hospitalarios</option>
+          <option value="RAEE" class="bg-white dark:bg-slate-800 font-medium">RAEE / Eléctricos y Electrónicos</option>
+          <option value="APROVECHABLE" class="bg-white dark:bg-slate-800 font-medium">Aprovechables / Orgánicos</option>
+          <option value="RCD" class="bg-white dark:bg-slate-800 font-medium">RCD / Construcción y Demolición</option>
         </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 dark:text-slate-400">
+          <span class="material-symbols-outlined text-[18px]">expand_more</span>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -302,4 +307,5 @@
 </script>
 
 <%- include('partials/footer') %>
+
 
