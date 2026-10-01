@@ -114,21 +114,30 @@ class ResumenPostulaciones {
   final String? gestorAceptado;
 }
 
-/// Materiales declarados por un gestor y su avance de verificación.
+/// Materiales declarados por un gestor, su avance de verificación y el estado
+/// de la empresa: sin la empresa aprobada no ve solicitudes aunque tenga
+/// materiales verificados.
 class EstadoMaterialesGestor {
   const EstadoMaterialesGestor({
     this.categoriasDeclaradas = const [],
     this.totalDeclarados = 0,
     this.totalVerificados = 0,
+    this.estadoEmpresa = 'APROBADO',
   });
 
   final List<String> categoriasDeclaradas;
   final int totalDeclarados;
   final int totalVerificados;
 
+  /// `estado_verificacion` de la empresa: PENDIENTE, APROBADO, RECHAZADO o SUSPENDIDO.
+  final String estadoEmpresa;
+
+  bool get empresaPendiente => estadoEmpresa == 'PENDIENTE';
+  bool get empresaRechazada => estadoEmpresa == 'RECHAZADO';
+  bool get empresaSuspendida => estadoEmpresa == 'SUSPENDIDO';
   bool get sinDeclarar => totalDeclarados == 0;
   bool get enVerificacion => totalDeclarados > 0 && totalVerificados == 0;
-  bool get verificado => totalVerificados > 0;
+  bool get verificado => estadoEmpresa == 'APROBADO' && totalVerificados > 0;
 }
 
 /// Implementación del repositorio de solicitudes respaldada por Supabase.
@@ -258,13 +267,20 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
     final client = _supabase;
     if (client == null) return const EstadoMaterialesGestor();
 
-    final gestorId = await getGestorId();
-    if (gestorId == null) return const EstadoMaterialesGestor();
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return const EstadoMaterialesGestor();
+
+    final perfil = await client
+        .from('perfiles_gestor')
+        .select('id, estado_verificacion')
+        .eq('usuario_id', userId)
+        .maybeSingle();
+    if (perfil == null) return const EstadoMaterialesGestor();
 
     final List<dynamic> filas = await client
         .from('gestor_material')
         .select('verificado, materiales_residuos(categoria)')
-        .eq('gestor_id', gestorId);
+        .eq('gestor_id', (perfil['id'] as num).toInt());
 
     final categorias = <String>{};
     var verificados = 0;
@@ -278,6 +294,7 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
       categoriasDeclaradas: categorias.toList(),
       totalDeclarados: filas.length,
       totalVerificados: verificados,
+      estadoEmpresa: (perfil['estado_verificacion'] ?? 'APROBADO').toString().toUpperCase(),
     );
   }
 

@@ -1,0 +1,212 @@
+<%- include('partials/header', { activeTab: 'solicitudes', titulo: 'Solicitud ' + solicitud.id }) %>
+<%
+  const mat = material || {};
+  const nombreMat = mat.nombre_comun || 'Material sin nombre';
+  const foto = f.urlSegura(solicitud.foto_url);
+  const certificado = f.urlSegura(solicitud.certificado_url);
+  const cancelable = estadosCancelables.includes(solicitud.estado);
+  const abiertas = (postulaciones || []).filter(function (p) { return p.estado === 'PROPUESTA'; }).length;
+%>
+
+<div class="flex flex-col gap-6">
+  <nav aria-label="Ruta de navegación" class="no-imprimir text-body-m">
+    <ol class="flex flex-wrap items-center gap-1" role="list">
+      <li><a class="enlace" href="/solicitudes">Solicitudes</a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" class="text-on-surface-variant">Solicitud <%= solicitud.id %></li>
+    </ol>
+  </nav>
+
+  <p class="solo-impresion text-body-s">Panel EcoResiduos · Detalle generado el <%= f.fechaHora(new Date()) %> (hora de Colombia).</p>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="flex flex-col gap-2">
+      <h1 class="titulo-pagina"><%= nombreMat %> · Solicitud <%= solicitud.id %></h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <%- include('partials/componentes/chip-estado', { estado: solicitud.estado, tipo: 'solicitud' }) %>
+        <%- include('partials/componentes/chip-categoria', { categoria: mat.categoria }) %>
+        <span class="text-body-m text-on-surface-variant">Publicada el <%= f.fechaHora(solicitud.created_at) %></span>
+      </div>
+    </div>
+    <div class="no-imprimir flex flex-wrap gap-2">
+      <button type="button" class="btn-outlined" onclick="window.print()">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">print</span>
+        Imprimir
+      </button>
+      <% if (cancelable) { %>
+        <form action="/solicitudes/<%= solicitud.id %>/cancelar" method="POST" class="m-0"
+              data-confirmar-titulo="Cancelar solicitud"
+              data-confirmar="Cancelar la solicitud de <%= f.finFrase(nombreMat) %> <%= abiertas === 0 ? '' : (abiertas === 1 ? 'La propuesta abierta se rechaza. ' : 'Las ' + abiertas + ' propuestas abiertas se rechazan. ') %>Avisaremos al generador y a los gestores (con propuesta o asignado) que EcoResiduos canceló la solicitud. No se puede deshacer."
+              data-confirmar-accion="Cancelar solicitud"
+              data-confirmar-peligro>
+          <button type="submit" class="btn-peligro-outlined">
+            <span class="material-symbols-outlined icono-20" aria-hidden="true">block</span>
+            Cancelar solicitud
+          </button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (solicitud.problema_reportado) { %>
+    <section aria-labelledby="tituloProblema" class="nota nota-error">
+      <span class="material-symbols-outlined" aria-hidden="true">report</span>
+      <div class="flex flex-1 flex-col gap-2">
+        <h2 id="tituloProblema" class="text-title-m text-on-error-container">Problema reportado por el generador · sin resolver</h2>
+        <p><%= solicitud.problema_detalle || 'El generador no escribió el detalle.' %></p>
+        <% if (problemaResoluble(solicitud)) { %>
+          <form action="/solicitudes/<%= solicitud.id %>/problema/no-recogido" method="POST" class="no-imprimir m-0"
+                data-confirmar-titulo="Resuelto: no se recogió"
+                data-confirmar="La solicitud vuelve a En negociación con <%= gestorAsignado ? f.finFrase(gestorAsignado.razon_social) : 'el mismo gestor.' %> El gestor podrá marcarla de nuevo como recolectada. Avisaremos al generador y al gestor; si escribes una nota, va al final del aviso."
+                data-confirmar-accion="Marcar como no recogido"
+                data-confirmar-nota>
+            <button type="submit" class="btn-filled">
+              <span class="material-symbols-outlined icono-20" aria-hidden="true">assignment_return</span>
+              Resuelto: no se recogió
+            </button>
+          </form>
+        <% } else { %>
+          <p class="text-body-s">Solo se puede resolver mientras la recolección esté marcada como recolectada y sin confirmar.</p>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+  <% if (solicitud.problema_resuelto_at) { %>
+    <section aria-labelledby="tituloProblemaResuelto" class="nota nota-info">
+      <span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+      <div class="flex flex-col gap-1">
+        <h2 id="tituloProblemaResuelto" class="text-title-m">Problema anterior resuelto</h2>
+        <p>Resuelto el <%= f.fechaHora(solicitud.problema_resuelto_at) %>: <%= solicitud.problema_resolucion === 'NO_RECOGIDO' ? 'el residuo no se recogió y la solicitud volvió a En negociación' : 'resuelto' %>.</p>
+        <% if (solicitud.problema_nota) { %><p><strong>Nota:</strong> <%= solicitud.problema_nota %></p><% } %>
+        <% if (!solicitud.problema_reportado && solicitud.problema_detalle) { %><p class="text-body-s">Lo que reportó el generador: <%= solicitud.problema_detalle %></p><% } %>
+      </div>
+    </section>
+  <% } %>
+
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <section aria-labelledby="tituloResiduo" class="tarjeta flex flex-col gap-4">
+      <h2 id="tituloResiduo" class="tarjeta-titulo">Residuo</h2>
+      <% if (foto) { %>
+        <img src="<%= foto %>" alt="Foto del residuo publicada por el generador: <%= nombreMat %>" class="max-h-72 w-full rounded-sm object-cover">
+      <% } %>
+      <dl class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+        <div><dt class="text-label-l text-on-surface-variant">Material</dt><dd><%= nombreMat %><%= mat.codigo ? ' (' + mat.codigo + ')' : '' %></dd></div>
+        <div><dt class="text-label-l text-on-surface-variant">Categoría</dt><dd><%= f.etiquetaCategoria(mat.categoria) %></dd></div>
+        <div><dt class="text-label-l text-on-surface-variant">Cantidad estimada</dt><dd><%= f.formatoCantidad(solicitud.cantidad_estimada, solicitud.unidad_medida) %></dd></div>
+        <div><dt class="text-label-l text-on-surface-variant">Municipio</dt><dd><%= solicitud.municipio ? f.capitalizar(solicitud.municipio) : 'Sin dato' %></dd></div>
+        <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Dirección de recolección</dt><dd><%= f.textoODato(solicitud.direccion_recoleccion) %></dd></div>
+        <% if (solicitud.descripcion) { %>
+          <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Descripción</dt><dd><%= solicitud.descripcion %></dd></div>
+        <% } %>
+      </dl>
+    </section>
+
+    <div class="flex flex-col gap-6">
+      <section aria-labelledby="tituloGenerador" class="tarjeta flex flex-col gap-3">
+        <h2 id="tituloGenerador" class="tarjeta-titulo">Generador</h2>
+        <% if (generador) { %>
+          <dl class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+            <div><dt class="text-label-l text-on-surface-variant">Nombre</dt><dd><%= f.textoODato(generador.nombre_completo_o_empresa) %></dd></div>
+            <div><dt class="text-label-l text-on-surface-variant">Teléfono de la solicitud</dt><dd><%= f.textoODato(solicitud.telefono || generador.telefono) %></dd></div>
+            <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Correo</dt><dd class="break-all"><%= f.textoODato(generador.email) %></dd></div>
+          </dl>
+          <p class="no-imprimir"><a class="enlace" href="/solicitudes?generador=<%= generador.id %>">Ver sus solicitudes</a></p>
+        <% } else { %>
+          <p class="text-on-surface-variant">Sin datos del generador.</p>
+        <% } %>
+      </section>
+
+      <section aria-labelledby="tituloAsignado" class="tarjeta flex flex-col gap-3">
+        <h2 id="tituloAsignado" class="tarjeta-titulo">Gestor asignado</h2>
+        <% if (gestorAsignado) { %>
+          <p><a class="enlace" href="/gestores/<%= gestorAsignado.id %>"><%= gestorAsignado.razon_social %></a> · NIT <%= gestorAsignado.nit %></p>
+          <p class="text-body-m text-on-surface-variant"><%= f.textoODato(gestorAsignado.telefono_contacto) %> · <%= f.textoODato(gestorAsignado.email_contacto) %></p>
+        <% } else { %>
+          <p class="text-on-surface-variant">Aún no hay gestor asignado.</p>
+        <% } %>
+      </section>
+
+      <section aria-labelledby="tituloCertificado" class="tarjeta flex flex-col gap-3">
+        <h2 id="tituloCertificado" class="tarjeta-titulo">Certificado</h2>
+        <% if (certificado) { %>
+          <p><%= f.etiquetaCertificado(solicitud.certificado_tipo) %><%= solicitud.certificado_at ? ' · cargado el ' + f.fechaCorta(solicitud.certificado_at) : '' %></p>
+          <p><a class="btn-tonal w-fit" href="<%= certificado %>" target="_blank" rel="noopener noreferrer">
+            <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>Ver PDF<span class="sr-only"> (se abre en una pestaña nueva)</span>
+          </a></p>
+        <% } else { %>
+          <p class="text-on-surface-variant">Pendiente. <%= solicitud.estado === 'RECOLECTADO' ? 'El gestor debe cargar el certificado de disposición final o de aprovechamiento.' : 'Se carga después de la recolección.' %></p>
+        <% } %>
+      </section>
+    </div>
+  </div>
+
+  <section aria-labelledby="tituloPostulaciones" class="flex flex-col gap-3">
+    <h2 id="tituloPostulaciones" class="seccion-titulo">Postulaciones</h2>
+    <% if (postulaciones === null) { %>
+      <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar las postulaciones.', reintentar: '/solicitudes/' + solicitud.id }) %>
+    <% } else if (postulaciones.length === 0) { %>
+      <div class="tarjeta"><%- include('partials/componentes/estado-vacio', { icono: 'person_search', titulo: 'Aún no hay postulaciones', texto: 'Los gestores con este material verificado pueden postularse desde la app.' }) %></div>
+    <% } else { %>
+      <div class="tabla-contenedor" role="region" aria-labelledby="tituloPostulaciones" tabindex="0">
+        <table class="tabla">
+          <caption class="sr-only">Postulaciones de gestores a esta solicitud</caption>
+          <thead>
+            <tr>
+              <th scope="col">Gestor</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Propuesta</th>
+              <th scope="col">Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% postulaciones.forEach(function (p) { const g = p.perfiles_gestor || {}; %>
+              <tr>
+                <th scope="row"><a class="enlace" href="/gestores/<%= p.gestor_id %>"><%= g.razon_social || 'Gestor ' + p.gestor_id %></a></th>
+                <td><%- include('partials/componentes/chip-estado', { estado: p.estado, tipo: 'solicitud' }) %></td>
+                <td>
+                  <% if (p.tipo_valor) { %>
+                    <span class="block whitespace-nowrap font-semibold"><%= f.formatoPesos(p.valor) %></span>
+                    <span class="block text-body-s text-on-surface-variant"><%= f.etiquetaTipoValor(p.tipo_valor) %></span>
+                  <% } else { %>
+                    <span class="text-on-surface-variant">Sin valor (postulación anterior al cobro)</span>
+                  <% } %>
+                </td>
+                <td><%= p.propuesta || 'Sin mensaje' %></td>
+                <td class="whitespace-nowrap"><%= f.fechaCorta(p.created_at) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+
+  <section aria-labelledby="tituloHistorial" class="flex flex-col gap-3">
+    <h2 id="tituloHistorial" class="seccion-titulo">Línea de tiempo</h2>
+    <div class="tarjeta">
+      <% if (historial === null) { %>
+        <p class="text-on-surface-variant">No pudimos cargar el historial de estados.</p>
+      <% } else if (historial.length === 0) { %>
+        <p class="text-on-surface-variant">Sin cambios de estado registrados.</p>
+      <% } else { %>
+        <ol class="flex flex-col gap-4" role="list">
+          <% historial.forEach(function (h) { %>
+            <li class="flex flex-wrap items-center gap-3">
+              <%- include('partials/componentes/chip-estado', { estado: h.estado, tipo: 'solicitud' }) %>
+              <span class="text-body-m"><%= f.fechaHora(h.created_at) %></span>
+            </li>
+          <% }); %>
+          <% if (solicitud.confirmado_at) { %>
+            <li class="flex flex-wrap items-center gap-3">
+              <span class="chip chip-estado-recolectado"><span class="material-symbols-outlined" aria-hidden="true">task_alt</span>Recolección confirmada</span>
+              <span class="text-body-m"><%= f.fechaHora(solicitud.confirmado_at) %></span>
+            </li>
+          <% } %>
+        </ol>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<%- include('partials/footer') %>

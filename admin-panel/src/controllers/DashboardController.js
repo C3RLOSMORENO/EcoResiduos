@@ -1,43 +1,41 @@
-﻿const dashboardService = require('../services/DashboardService');
+const dashboardService = require('../services/DashboardService');
+const reporteService = require('../services/ReporteService');
 
 const dashboardController = {
     async renderDashboard(req, res) {
         try {
-            const data = await dashboardService.getDashboardKpis();
+            const [data, resumen] = await Promise.all([
+                dashboardService.getDashboardKpis(),
+                reporteService.reciclajePorMunicipio({}).catch(() => null)
+            ]);
             res.render('dashboard', {
                 activeTab: 'dashboard',
+                titulo: 'Inicio',
                 kpis: data.kpis,
+                pendientesAccion: data.pendientesAccion,
                 chartData: data.chartData,
                 gestoresPendientes: data.gestoresPendientes,
                 ultimasSolicitudes: data.ultimasSolicitudes,
-                feedback: req.query.msg ? { type: req.query.type || 'success', message: req.query.msg } : null
+                erroresCarga: data.errores,
+                resumenReciclaje: resumen,
+                errorCarga: null
             });
         } catch (err) {
             console.error('Error al renderizar dashboard:', err);
-            res.render('dashboard', {
+            res.status(500).render('dashboard', {
                 activeTab: 'dashboard',
-                chartData: { municipiosLabels: [], municipiosData: [] },
-                kpis: {
-                    totalSolicitudes: 0,
-                    solicitudesRecolectadas: 0,
-                    solicitudesPublicadas: 0,
-                    solicitudesEnProceso: 0,
-                    solicitudesCanceladas: 0,
-                    totalGestores: 0,
-                    gestoresPendientesCount: 0,
-                    gestoresAprobados: 0,
-                    gestoresRechazados: 0,
-                    totalMateriales: 0,
-                    totalAutoridades: 0,
-                    totalPostulaciones: 0
-                },
+                titulo: 'Inicio',
+                kpis: null,
+                pendientesAccion: null,
+                chartData: null,
                 gestoresPendientes: [],
                 ultimasSolicitudes: [],
-                feedback: { type: 'error', message: 'No se pudieron cargar todas las estadÃ­sticas del panel: ' + err.message }
+                erroresCarga: [],
+                resumenReciclaje: null,
+                errorCarga: err.message
             });
         }
     }
 };
 
 module.exports = dashboardController;
-

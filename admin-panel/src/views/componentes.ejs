@@ -1,0 +1,50 @@
+<%- include('partials/header', { activeTab: '', titulo: 'Componentes' }) %>
+
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="titulo-pagina">Componentes</h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">Muestra del sistema de diseño del panel (Material 3 con los tokens de la app), en modo claro y oscuro.</p>
+  </div>
+
+  <section aria-labelledby="tituloInteractivos" class="tarjeta flex flex-col gap-4">
+    <h2 id="tituloInteractivos" class="seccion-titulo">Comportamiento</h2>
+    <p class="text-body-m text-on-surface-variant">El diálogo de confirmación reemplaza a confirm() del navegador; el aviso se anuncia al lector de pantalla.</p>
+    <div class="flex flex-wrap gap-2">
+      <form action="/componentes" method="GET"
+            data-confirmar-titulo="Aprobar gestor"
+            data-confirmar="Aprobar a RECICLAJES DEL ORIENTE S.A.S. Podrá ver solicitudes de sus 4 materiales."
+            data-confirmar-accion="Aprobar">
+        <input type="hidden" name="msg" value="Diálogo confirmado (ejemplo, no cambió nada)">
+        <button type="submit" class="btn-filled">Abrir diálogo de confirmación</button>
+      </form>
+      <form action="/componentes" method="GET"
+            data-confirmar-titulo="Rechazar gestor"
+            data-confirmar="Rechazar a RECICLAJES DEL ORIENTE S.A.S. Recibirá el motivo en su notificación."
+            data-confirmar-accion="Rechazar"
+            data-confirmar-peligro
+            data-confirmar-motivo>
+        <input type="hidden" name="msg" value="Diálogo con motivo confirmado (ejemplo, no cambió nada)">
+        <button type="submit" class="btn-peligro-outlined">Diálogo con motivo</button>
+      </form>
+      <button type="button" class="btn-tonal" id="botonAvisoEjemplo">Mostrar aviso</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="tituloClaro" class="muestra-clara flex flex-col gap-4 rounded-xl bg-surface p-4 text-on-surface md:p-6">
+    <h2 id="tituloClaro" class="seccion-titulo">Modo claro</h2>
+    <%- include('partials/componentes/galeria', { p: 'claro' }) %>
+  </section>
+
+  <section aria-labelledby="tituloOscuro" class="muestra-oscura flex flex-col gap-4 rounded-xl bg-surface p-4 text-on-surface md:p-6">
+    <h2 id="tituloOscuro" class="seccion-titulo">Modo oscuro</h2>
+    <%- include('partials/componentes/galeria', { p: 'oscuro' }) %>
+  </section>
+</div>
+
+<script>
+  document.getElementById('botonAvisoEjemplo').addEventListener('click', function () {
+    window.mostrarNotificacion('Aviso de ejemplo: así se confirma una acción.');
+  });
+</script>
+
+<%- include('partials/footer') %>

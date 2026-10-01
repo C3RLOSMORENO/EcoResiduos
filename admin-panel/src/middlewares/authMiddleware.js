@@ -1,4 +1,18 @@
 const authService = require('../services/authService');
+const { DURACION_SESION_MS, guardarSesion, limpiarSesion } = require('../utils/sesion');
+
+function esPeticionFetch(req) {
+    return req.get('X-Requested-With') === 'fetch';
+}
+
+// Redirige al inicio de sesión recordando la página para volver a ella.
+function aLogin(req, res, mensaje) {
+    if (esPeticionFetch(req)) {
+        return res.status(401).json({ ok: false, mensaje });
+    }
+    const volver = req.method === 'GET' ? `&volver=${encodeURIComponent(req.originalUrl)}` : '';
+    return res.redirect(`/login?msg=${encodeURIComponent(mensaje)}&type=error${volver}`);
+}
 
 const authMiddleware = {
     async requireAuth(req, res, next) {
@@ -9,32 +23,41 @@ const authMiddleware = {
         });
 
         const token = req.cookies && req.cookies.sb_access_token;
-        if (!token) {
-            return res.redirect('/login?msg=Debes+iniciar+sesi%C3%B3n+para+continuar&type=error');
+        const refreshToken = req.cookies && req.cookies.sb_refresh_token;
+        if (!token && !refreshToken) {
+            return aLogin(req, res, 'Debes iniciar sesión para continuar');
         }
 
         try {
-            const user = await authService.getAdmin(token);
+            let user = token ? await authService.getAdmin(token) : null;
 
-            if (!user) {
-                res.clearCookie('sb_access_token');
-                return res.redirect('/login?msg=Sesi%C3%B3n+inv%C3%A1lida,+expirada+o+sin+permisos+de+administrador&type=error');
+            if (user) {
+                guardarSesion(res, { accessToken: token, refreshToken });
+            } else if (refreshToken) {
+                // El token de Supabase dura una hora: con actividad se renueva
+                // con el refresh token en lugar de sacar al administrador.
+                const renovada = await authService.renovar(refreshToken);
+                if (renovada) {
+                    guardarSesion(res, {
+                        accessToken: renovada.session.access_token,
+                        refreshToken: renovada.session.refresh_token
+                    });
+                    user = renovada.user;
+                }
             }
 
-            res.cookie('sb_access_token', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 15 * 60 * 1000
-            });
+            if (!user) {
+                limpiarSesion(res);
+                return aLogin(req, res, 'Sesión inválida, expirada o sin permisos de administrador');
+            }
 
             req.user = user;
             res.locals.user = user;
-            next();
+            res.locals.sesionMs = DURACION_SESION_MS;
+            return next();
         } catch {
-            res.clearCookie('sb_access_token');
-            return res.redirect('/login?msg=Error+de+autenticaci%C3%B3n.+Por+favor+inicia+sesi%C3%B3n&type=error');
+            limpiarSesion(res);
+            return aLogin(req, res, 'Error de autenticación. Por favor inicia sesión');
         }
     }
 };

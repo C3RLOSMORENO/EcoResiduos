@@ -1,0 +1,147 @@
+<%
+  // Esqueletos de carga (skeleton screens). main.js los copia dentro de
+  // <main> mientras el servidor arma la página siguiente; cada uno imita la
+  // forma de un tipo de vista para que el cambio no salte.
+  const filas = [0, 1, 2, 3, 4, 5];
+%>
+<template id="esqueleto-lista">
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-2">
+      <span class="esqueleto esqueleto-titulo w-56"></span>
+      <span class="esqueleto esqueleto-texto w-full max-w-xl"></span>
+    </div>
+    <div class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <% [0, 1, 2, 3].forEach(function () { %>
+        <div class="flex flex-col gap-2">
+          <span class="esqueleto esqueleto-texto w-24"></span>
+          <span class="esqueleto esqueleto-campo"></span>
+        </div>
+      <% }); %>
+    </div>
+    <div class="tabla-contenedor">
+      <div class="esqueleto-tabla-encabezado">
+        <span class="esqueleto esqueleto-texto w-1/4"></span>
+        <span class="esqueleto esqueleto-texto w-1/6"></span>
+        <span class="esqueleto esqueleto-texto w-1/6"></span>
+        <span class="esqueleto esqueleto-texto hidden w-1/6 md:block"></span>
+      </div>
+      <% filas.forEach(function () { %>
+        <div class="esqueleto-tabla-fila">
+          <span class="esqueleto h-12 w-12 shrink-0 rounded-sm"></span>
+          <span class="flex flex-1 flex-col gap-2">
+            <span class="esqueleto esqueleto-texto w-3/5"></span>
+            <span class="esqueleto esqueleto-chip"></span>
+          </span>
+          <span class="esqueleto esqueleto-texto hidden w-24 md:block"></span>
+          <span class="esqueleto esqueleto-chip hidden lg:block"></span>
+          <span class="esqueleto esqueleto-boton"></span>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</template>
+
+<template id="esqueleto-inicio">
+  <div class="flex flex-col gap-8">
+    <div class="flex flex-col gap-2">
+      <span class="esqueleto esqueleto-titulo w-40"></span>
+      <span class="esqueleto esqueleto-texto w-full max-w-lg"></span>
+    </div>
+    <div class="flex flex-col gap-4">
+      <span class="esqueleto esqueleto-subtitulo w-64"></span>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <% [0, 1, 2, 3].forEach(function () { %>
+          <div class="tarjeta-accion">
+            <span class="esqueleto h-6 w-6 shrink-0 rounded-full"></span>
+            <span class="flex flex-1 flex-col gap-2">
+              <span class="esqueleto esqueleto-cifra"></span>
+              <span class="esqueleto esqueleto-texto w-4/5"></span>
+            </span>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+    <div class="flex flex-col gap-4">
+      <span class="esqueleto esqueleto-subtitulo w-48"></span>
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <% [0, 1, 2, 3, 4].forEach(function () { %>
+          <div class="tarjeta-kpi">
+            <span class="esqueleto esqueleto-texto w-20"></span>
+            <span class="esqueleto esqueleto-cifra"></span>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <% [0, 1].forEach(function () { %>
+        <div class="tarjeta flex flex-col gap-3">
+          <span class="esqueleto esqueleto-subtitulo w-56"></span>
+          <span class="esqueleto h-64 w-full rounded-sm"></span>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</template>
+
+<template id="esqueleto-detalle">
+  <div class="flex flex-col gap-6">
+    <span class="esqueleto esqueleto-texto w-48"></span>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex flex-col gap-2">
+        <span class="esqueleto esqueleto-titulo w-72 max-w-full"></span>
+        <span class="flex gap-2">
+          <span class="esqueleto esqueleto-chip"></span>
+          <span class="esqueleto esqueleto-chip"></span>
+        </span>
+      </div>
+      <span class="esqueleto esqueleto-boton w-32"></span>
+    </div>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <% [0, 1].forEach(function () { %>
+        <div class="tarjeta flex flex-col gap-4">
+          <span class="esqueleto esqueleto-subtitulo w-40"></span>
+          <% [0, 1, 2, 3].forEach(function () { %>
+            <div class="flex flex-col gap-2">
+              <span class="esqueleto esqueleto-texto w-24"></span>
+              <span class="esqueleto esqueleto-texto w-3/4"></span>
+            </div>
+          <% }); %>
+        </div>
+      <% }); %>
+    </div>
+    <div class="tarjeta flex flex-col gap-3">
+      <span class="esqueleto esqueleto-subtitulo w-48"></span>
+      <% [0, 1, 2].forEach(function () { %>
+        <span class="esqueleto esqueleto-texto w-full"></span>
+      <% }); %>
+    </div>
+  </div>
+</template>
+
+<template id="esqueleto-formulario">
+  <div class="flex flex-col gap-6">
+    <span class="esqueleto esqueleto-texto w-48"></span>
+    <div class="flex flex-col gap-2">
+      <span class="esqueleto esqueleto-titulo w-64 max-w-full"></span>
+      <span class="esqueleto esqueleto-texto w-full max-w-xl"></span>
+    </div>
+    <div class="tarjeta flex flex-col gap-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <% [0, 1, 2, 3, 4, 5].forEach(function () { %>
+          <div class="flex flex-col gap-2">
+            <span class="esqueleto esqueleto-texto w-28"></span>
+            <span class="esqueleto esqueleto-campo"></span>
+          </div>
+        <% }); %>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="esqueleto esqueleto-texto w-28"></span>
+        <span class="esqueleto h-24 w-full rounded-sm"></span>
+      </div>
+      <div class="flex justify-end gap-2">
+        <span class="esqueleto esqueleto-boton w-24"></span>
+        <span class="esqueleto esqueleto-boton w-28"></span>
+      </div>
+    </div>
+  </div>
+</template>

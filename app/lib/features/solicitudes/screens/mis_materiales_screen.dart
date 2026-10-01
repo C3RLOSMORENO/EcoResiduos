@@ -84,7 +84,9 @@ class _MisMaterialesScreenState extends State<MisMaterialesScreen> {
           if (snapshot.hasError) {
             return EmptyStateWidget.error(
               title: 'No pudimos cargar los materiales',
-              onRetry: () => setState(() => _catalogo = _cargar()),
+              onRetry: () => setState(() {
+                _catalogo = _cargar();
+              }),
             );
           }
           final catalogo = snapshot.data;

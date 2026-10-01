@@ -54,6 +54,20 @@ const authService = {
         return String(data?.rol || '').toUpperCase() === 'ADMIN';
     },
 
+    // Renueva la sesión con el refresh token. Devuelve { session, user } del
+    // administrador o null si el token ya no sirve o la cuenta dejó de ser ADMIN.
+    async renovar(refreshToken) {
+        if (!refreshToken) return null;
+        const { data, error } = await crearClienteAuth().auth.refreshSession({ refresh_token: refreshToken });
+        if (error || !data || !data.session || !data.user) {
+            return null;
+        }
+        if (!(await this.esAdmin(data.user.id))) {
+            return null;
+        }
+        return { session: data.session, user: data.user };
+    },
+
     // Revoca la sesión del token en Supabase Auth
     async logout(accessToken) {
         if (!accessToken) {

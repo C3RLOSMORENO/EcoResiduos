@@ -6,8 +6,8 @@ import '../theme/eco_theme.dart';
 import 'categoria_chip.dart';
 import 'empty_state_widget.dart';
 
-/// Estado 07d / 29f: el gestor declaró materiales que el administrador aún no
-/// aprueba, así que todavía no ve solicitudes.
+/// Estado 07d / 29f: el gestor todavía no ve solicitudes porque su empresa no
+/// está aprobada o porque el administrador aún no verifica sus materiales.
 class MaterialesEnVerificacion extends StatelessWidget {
   const MaterialesEnVerificacion({super.key, required this.estado, this.onMaterialesCambiados, this.repository});
 
@@ -28,6 +28,24 @@ class MaterialesEnVerificacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (estado.empresaRechazada) {
+      return const EmptyStateWidget(
+        icon: Icons.gpp_bad_outlined,
+        title: 'No pudimos aprobar tu empresa',
+        description:
+            'Revisa la notificación con el motivo. Si quieres que revisemos de nuevo tu permiso ambiental, '
+            'comunícate con el administrador de EcoResiduos.',
+      );
+    }
+    if (estado.empresaSuspendida) {
+      return const EmptyStateWidget(
+        icon: Icons.pause_circle_outline,
+        title: 'Tu empresa está suspendida',
+        description:
+            'Mientras esté suspendida no ves solicitudes nuevas. Revisa la notificación con el motivo o '
+            'comunícate con el administrador de EcoResiduos.',
+      );
+    }
     if (estado.sinDeclarar) {
       return EmptyStateWidget(
         icon: Icons.inventory_2_outlined,
@@ -42,10 +60,12 @@ class MaterialesEnVerificacion extends StatelessWidget {
     }
     return EmptyStateWidget(
       icon: Icons.hourglass_top,
-      title: 'Tus materiales están en verificación',
-      description:
-          'El administrador de EcoResiduos está revisando los materiales que declaraste. '
-          'Cuando los apruebe, aquí verás las solicitudes de esos materiales.',
+      title: estado.empresaPendiente ? 'Estamos revisando tu empresa' : 'Tus materiales están en verificación',
+      description: estado.empresaPendiente
+          ? 'El administrador de EcoResiduos está revisando tu permiso ambiental y los materiales que declaraste. '
+                'Cuando apruebe tu empresa, aquí verás las solicitudes.'
+          : 'El administrador de EcoResiduos está revisando los materiales que declaraste. '
+                'Cuando los apruebe, aquí verás las solicitudes de esos materiales.',
       ctaText: 'Editar materiales',
       ctaIcon: Icons.edit_outlined,
       onCtaPressed: () => _editar(context),

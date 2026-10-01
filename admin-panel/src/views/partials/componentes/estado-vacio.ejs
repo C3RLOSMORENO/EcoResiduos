@@ -1,0 +1,8 @@
+<div class="estado-vacio">
+  <span class="material-symbols-outlined" aria-hidden="true"><%= typeof icono !== 'undefined' ? icono : 'inbox' %></span>
+  <p class="text-title-m text-on-surface"><%= titulo %></p>
+  <% if (typeof texto !== 'undefined' && texto) { %><p class="max-w-prose text-body-m"><%= texto %></p><% } %>
+  <% if (typeof accion !== 'undefined' && accion) { %>
+    <a href="<%= accion.href %>" class="btn-tonal mt-2"><%= accion.texto %></a>
+  <% } %>
+</div>

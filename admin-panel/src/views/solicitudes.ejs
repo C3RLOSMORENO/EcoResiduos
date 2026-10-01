@@ -1,115 +1,177 @@
-﻿<%- include('partials/header') %>
+<%- include('partials/header', { activeTab: 'solicitudes', titulo: 'Solicitudes' }) %>
+<%
+  const hayFiltros = filtros.estado || filtros.municipio || filtros.categoria || filtros.desde || filtros.hasta || filtros.q || filtros.problema || filtros.sinCertificado || filtros.generador;
+  const descripcionFiltros = [
+    filtros.problema ? 'con problema reportado' : null,
+    filtros.sinCertificado ? 'recolectadas sin certificado hace más de 7 días' : null,
+    filtros.estado ? f.etiquetaEstado(filtros.estado) : null,
+    filtros.municipio || null,
+    filtros.categoria ? f.etiquetaCategoria(filtros.categoria) : null,
+    filtros.desde ? 'desde ' + f.fechaCorta(filtros.desde + 'T12:00:00-05:00') : null,
+    filtros.hasta ? 'hasta ' + f.fechaCorta(filtros.hasta + 'T12:00:00-05:00') : null,
+    filtros.q ? 'material «' + filtros.q + '»' : null,
+    filtros.generador ? 'de un generador' : null
+  ].filter(Boolean).join(' · ');
+%>
 
-<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-    <div>
-        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Centro de Solicitudes</h2>
-        <p class="mt-2 text-slate-600 dark:text-slate-400">Monitoriza las solicitudes de recolección creadas por los ciudadanos.</p>
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="titulo-pagina">Solicitudes</h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">Residuos publicados por los generadores: estado, postulaciones, valores y certificados.</p>
+  </div>
+
+  <form method="GET" action="/solicitudes" class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" role="search" aria-label="Filtrar solicitudes">
+    <div class="campo xl:col-span-2">
+      <label for="filtroQ" class="campo-etiqueta">Material</label>
+      <input type="search" id="filtroQ" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroQAyuda">
+      <p id="filtroQAyuda" class="campo-ayuda">Nombre o código del material.</p>
     </div>
-</div>
+    <div class="campo">
+      <label for="filtroEstado" class="campo-etiqueta">Estado</label>
+      <select id="filtroEstado" name="estado" class="campo-control">
+        <option value="">Todos los estados</option>
+        <% f.ESTADOS_SOLICITUD.forEach(function (e) { %>
+          <option value="<%= e %>" <%= filtros.estado === e ? 'selected' : '' %>><%= f.etiquetaEstado(e) %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="filtroMunicipio" class="campo-etiqueta">Municipio</label>
+      <select id="filtroMunicipio" name="municipio" class="campo-control">
+        <option value="">Todos los municipios</option>
+        <% MUNICIPIOS.forEach(function (m) { %>
+          <option value="<%= m %>" <%= filtros.municipio === m ? 'selected' : '' %>><%= m %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="filtroCategoria" class="campo-etiqueta">Categoría</label>
+      <select id="filtroCategoria" name="categoria" class="campo-control">
+        <option value="">Todas las categorías</option>
+        <% f.CATEGORIAS_CATALOGO.forEach(function (c) { %>
+          <option value="<%= c %>" <%= filtros.categoria === c ? 'selected' : '' %>><%= f.etiquetaCategoria(c) %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="filtroDesde" class="campo-etiqueta">Publicada desde</label>
+      <input type="date" id="filtroDesde" name="desde" value="<%= filtros.desde %>" class="campo-control">
+    </div>
+    <div class="campo">
+      <label for="filtroHasta" class="campo-etiqueta">Publicada hasta</label>
+      <input type="date" id="filtroHasta" name="hasta" value="<%= filtros.hasta %>" class="campo-control">
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="casilla"><input type="checkbox" name="problema" value="1" <%= filtros.problema ? 'checked' : '' %>> Solo con problema reportado</label>
+      <label class="casilla"><input type="checkbox" name="sin_certificado" value="1" <%= filtros.sinCertificado ? 'checked' : '' %>> Sin certificado (+7 días)</label>
+    </div>
+    <% if (filtros.generador) { %><input type="hidden" name="generador" value="<%= filtros.generador %>"><% } %>
+    <% if (filtros.orden === 'fecha') { %><input type="hidden" name="orden" value="fecha"><% } %>
+    <div class="flex flex-wrap items-center justify-end gap-2 md:col-span-2 xl:col-span-4">
+      <a href="/solicitudes" class="btn-text">Limpiar filtros</a>
+      <button type="submit" class="btn-filled">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">filter_list</span>
+        Filtrar
+      </button>
+    </div>
+  </form>
 
-<% if (locals.error) { %>
-    <%- include('partials/alert', { type: 'error', message: error, title: 'Error' }) %>
-<% } %>
-<% if (locals.success) { %>
-    <%- include('partials/alert', { type: 'success', message: success, title: 'Éxito' }) %>
-<% } %>
-
-<div class="bg-white dark:bg-[#1E293B] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table id="tablaSolicitudes" class="w-full text-left text-sm whitespace-nowrap">
-            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                    <th scope="col" class="px-6 py-4">Material</th>
-                    <th scope="col" class="px-6 py-4">Cantidad</th>
-                    <th scope="col" class="px-6 py-4">Municipio</th>
-                    <th scope="col" class="px-6 py-4">Estado</th>
-                    <th scope="col" class="px-6 py-4">Fecha</th>
-                    <th scope="col" class="px-6 py-4">Certificado</th>
-                    <th scope="col" class="px-6 py-4 text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                <% if (solicitudes && solicitudes.length > 0) { %>
-                    <% solicitudes.forEach(sol => { %>
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                                <div class="flex items-center gap-3">
-                                    <% if (sol.foto_url) { %>
-                                        <img src="<%= sol.foto_url %>" alt="Foto" class="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700" onerror="this.onerror=null; this.outerHTML='<div class=\'w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center\'><span class=\'material-symbols-outlined text-slate-400\'>broken_image</span></div>';">
-                                    <% } else { %>
-                                        <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                            <span class="material-symbols-outlined text-slate-400">image_not_supported</span>
-                                        </div>
-                                    <% } %>
-                                    <span><%= sol.materiales_residuos ? sol.materiales_residuos.nombre_comun : 'Material Desconocido' %></span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
-                                <%= sol.cantidad_estimada %> <%= sol.unidad_medida %>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 uppercase">
-                                <%= sol.municipio %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <% 
-                                    let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-                                    if (sol.estado === 'PUBLICADO') badgeColor = 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
-                                    else if (sol.estado === 'EN_NEGOCIACION') badgeColor = 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
-                                    else if (sol.estado === 'ASIGNADO') badgeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
-                                    else if (sol.estado === 'RECOLECTADO') badgeColor = 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
-                                    else if (sol.estado === 'CANCELADO') badgeColor = 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
-                                %>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wide <%= badgeColor %>">
-                                    <%= sol.estado.replace('_', ' ') %>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">
-                                <%= new Date(sol.created_at).toLocaleDateString('es-CO') %>
-                            </td>
-                                                        <td class="px-6 py-4">
-                                <% if (sol.certificado_url) { %>
-                                    <a href="<%= sol.certificado_url %>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-semibold text-xs border border-rose-200 dark:border-rose-800 transition-colors">
-                                        <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                                        <span>Ver PDF</span>
-                                    </a>
-                                <% } else { %>
-                                    <span class="text-xs font-medium text-slate-400 italic">Pendiente</span>
-                                <% } %>
-                            </td>
-                              <td class="px-6 py-4 text-right">
-                                <form action="/solicitudes/<%= sol.id %>/estado" method="POST" class="inline-flex">
-                                    <div class="relative">
-                                        <select name="estado" onchange="this.form.submit()" class="appearance-none bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand cursor-pointer shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
-                                            <option value="PUBLICADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'PUBLICADO' ? 'selected' : '' %>>Publicado</option>
-                                            <option value="EN_NEGOCIACION" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'EN_NEGOCIACION' ? 'selected' : '' %>>En Negociación</option>
-                                            <option value="ASIGNADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'ASIGNADO' ? 'selected' : '' %>>Asignado</option>
-                                            <option value="RECOLECTADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'RECOLECTADO' ? 'selected' : '' %>>Recolectado</option>
-                                            <option value="CANCELADO" class="bg-white dark:bg-slate-800 font-medium" <%= sol.estado === 'CANCELADO' ? 'selected' : '' %>>Cancelado</option>
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
-                                            <span class="material-symbols-outlined text-[16px]">expand_more</span>
-                                        </div>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                    <% }) %>
+  <% if (errorCarga) { %>
+    <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar las solicitudes.', detalle: errorCarga, reintentar: urlActual }) %>
+  <% } else if (solicitudes.length === 0) { %>
+    <div class="tarjeta">
+      <% if (hayFiltros) { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'search_off', titulo: 'No hay solicitudes con esos filtros', texto: 'Prueba con otros filtros o límpialos para ver todas.', accion: { href: '/solicitudes', texto: 'Limpiar filtros' } }) %>
+      <% } else { %>
+        <%- include('partials/componentes/estado-vacio', { titulo: 'Aún no hay solicitudes', texto: 'Cuando los generadores publiquen residuos desde la app, aparecerán aquí.' }) %>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="tabla-contenedor" role="region" aria-labelledby="captionSolicitudes" tabindex="0">
+      <table class="tabla">
+        <caption id="captionSolicitudes">Solicitudes<%= descripcionFiltros ? ': ' + descripcionFiltros : '' %></caption>
+        <thead>
+          <tr>
+            <th scope="col">Material</th>
+            <th scope="col">Cantidad</th>
+            <th scope="col">Municipio</th>
+            <th scope="col">Estado</th>
+            <%- include('partials/componentes/encabezado-orden', { campo: 'fecha', texto: 'Publicada', ordenActual: filtros.orden, ruta: '/solicitudes' }) %>
+            <th scope="col">Certificado</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% solicitudes.forEach(function (s) {
+            const mat = s.materiales_residuos || {};
+            const foto = f.urlSegura(s.foto_url);
+            const certificado = f.urlSegura(s.certificado_url);
+            const nombreMat = mat.nombre_comun || 'Material sin nombre';
+          %>
+            <tr>
+              <th scope="row">
+                <span class="flex items-start gap-3">
+                  <% if (foto) { %>
+                    <img src="<%= foto %>" alt="" width="48" height="48" loading="lazy" class="h-12 w-12 shrink-0 rounded-sm object-cover">
+                  <% } else { %>
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined" aria-hidden="true">image_not_supported</span></span>
+                  <% } %>
+                  <span class="flex flex-col gap-1">
+                    <a class="enlace" href="/solicitudes/<%= s.id %>"><%= nombreMat %></a>
+                    <%- include('partials/componentes/chip-categoria', { categoria: mat.categoria }) %>
+                  </span>
+                </span>
+              </th>
+              <td class="whitespace-nowrap"><%= f.formatoCantidad(s.cantidad_estimada, s.unidad_medida) %></td>
+              <td><%= s.municipio ? f.capitalizar(s.municipio) : 'Sin dato' %></td>
+              <td>
+                <span class="flex flex-col items-start gap-1">
+                  <%- include('partials/componentes/chip-estado', { estado: s.estado, tipo: 'solicitud' }) %>
+                  <% if (s.problema_reportado) { %><span class="chip chip-estado-error"><span class="material-symbols-outlined" aria-hidden="true">report</span>Problema reportado</span><% } %>
+                </span>
+              </td>
+              <td class="whitespace-nowrap"><%= f.fechaCorta(s.created_at) %></td>
+              <td>
+                <% if (certificado) { %>
+                  <a class="enlace inline-flex items-center gap-1 whitespace-nowrap" href="<%= certificado %>" target="_blank" rel="noopener noreferrer">
+                    <span class="material-symbols-outlined icono-18" aria-hidden="true">picture_as_pdf</span>Ver PDF<span class="sr-only"> del certificado de <%= nombreMat %> (se abre en una pestaña nueva)</span>
+                  </a>
                 <% } else { %>
-                    <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400 empty-state" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                            <span class="material-symbols-outlined text-4xl mb-3 opacity-50 block">inbox</span>
-                            <p class="text-base font-medium">No hay solicitudes registradas</p>
-                            <p class="text-sm mt-1">Cuando los ciudadanos reporten residuos, aparecerán aquí.</p>
-                        </td>
-                    </tr>
+                  <span class="text-on-surface-variant">Pendiente</span>
                 <% } %>
-            </tbody>
-        </table>
+              </td>
+              <td class="text-right">
+                <span class="flex flex-wrap justify-end gap-1">
+                  <a href="/solicitudes/<%= s.id %>" class="btn-tonal btn-sm" aria-label="Ver detalle de <%= nombreMat %>, solicitud <%= s.id %>">Ver detalle</a>
+                  <% if (filtros.problema && problemaResoluble(s)) { %>
+                    <form action="/solicitudes/<%= s.id %>/problema/no-recogido" method="POST" class="m-0"
+                          data-confirmar-titulo="Resuelto: no se recogió"
+                          data-confirmar="La solicitud de <%= nombreMat %> vuelve a En negociación con el mismo gestor, que podrá marcarla de nuevo como recolectada. Avisaremos al generador y al gestor; si escribes una nota, va al final del aviso."
+                          data-confirmar-accion="Marcar como no recogido"
+                          data-confirmar-nota>
+                      <input type="hidden" name="redirectUrl" value="<%= urlActual %>">
+                      <button type="submit" class="btn-tonal btn-sm" aria-label="Resuelto: no se recogió, <%= nombreMat %>, solicitud <%= s.id %>">Resuelto: no se recogió</button>
+                    </form>
+                  <% } %>
+                  <% if (estadosCancelables.includes(s.estado)) { %>
+                    <form action="/solicitudes/<%= s.id %>/cancelar" method="POST" class="m-0"
+                          data-confirmar-titulo="Cancelar solicitud"
+                          data-confirmar="Cancelar la solicitud de <%= nombreMat %> en <%= s.municipio ? f.capitalizar(s.municipio) : 'municipio sin dato' %>. Las propuestas abiertas se rechazan. Avisaremos al generador y a los gestores (con propuesta o asignado) que EcoResiduos canceló la solicitud. No se puede deshacer."
+                          data-confirmar-accion="Cancelar solicitud"
+                          data-confirmar-peligro>
+                      <input type="hidden" name="redirectUrl" value="<%= urlActual %>">
+                      <button type="submit" class="btn-text btn-sm text-error" aria-label="Cancelar solicitud de <%= nombreMat %>, solicitud <%= s.id %>">Cancelar</button>
+                    </form>
+                  <% } %>
+                </span>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
     </div>
+    <%- include('partials/componentes/paginacion', { pag, nombre: 'solicitudes' }) %>
+  <% } %>
 </div>
 
 <%- include('partials/footer') %>
-
-
-
-

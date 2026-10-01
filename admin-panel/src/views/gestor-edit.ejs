@@ -1,316 +1,200 @@
-﻿<%- include('partials/header', { activeTab: 'gestores' }) %>
-
 <%
-  // Función global para obtener clases tonales M3 según categoría y código del residuo
-  function getBadgeClasses(cat, cod) {
-    const c = (cod || '').toUpperCase();
-    const catUpper = (cat || '').toUpperCase();
-    if (c.startsWith('Y1') || c.startsWith('Y2') || c.startsWith('Y3') || catUpper.includes('BIOSANITARIO') || catUpper.includes('RIESGO_BIOLOGICO') || catUpper.includes('HOSPITAL')) {
-      return 'chip-respel-bio';
-    }
-    if (c.startsWith('Y8') || c.startsWith('Y9') || c.startsWith('Y4') || c.startsWith('Y5') || c.startsWith('Y6') || c.startsWith('Y7') || catUpper.includes('PELIGROSO') || catUpper.includes('BASILEA')) {
-      return 'chip-respel-oil';
-    }
-    if (c.startsWith('RAEE') || c.startsWith('RCD') || c.startsWith('Y26') || c.startsWith('Y29') || catUpper.includes('RAEE') || catUpper.includes('INDUSTRIAL') || catUpper.includes('RCD') || catUpper.includes('QUIMIC')) {
-      return 'chip-respel-raee';
-    }
-    if (c.startsWith('REC') || c.startsWith('ORG') || catUpper.includes('APROVECHABLE') || catUpper.includes('ORGAN') || catUpper.includes('RECICL')) {
-      return 'chip-respel-eco';
-    }
-    return 'chip-respel-neutral';
-  }
+  const creando = modo === 'crear';
+  const tituloPagina = creando ? 'Nuevo gestor' : 'Editar ' + (gestor.razon_social || 'gestor');
+  const porVerificar = gestor.material_ids_por_verificar || [];
+  const seleccionados = gestor.material_ids || [];
+  const municipioGuardado = gestor.municipio ? f.capitalizar(gestor.municipio) : '';
+  const municipioEnLista = MUNICIPIOS.find(function (m) { return m.toLowerCase() === String(gestor.municipio || '').toLowerCase() || m.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() === String(gestor.municipio || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); });
+  const accion = creando ? '/gestores/guardar' : '/gestores/edit/' + gestor.id;
 %>
+<%- include('partials/header', { activeTab: 'gestores', titulo: tituloPagina }) %>
 
-<div class="max-w-4xl mx-auto space-y-6">
-    <%- include('partials/alert') %>
+<div class="flex flex-col gap-6">
+  <nav aria-label="Ruta de navegación" class="text-body-m">
+    <ol class="flex flex-wrap items-center gap-1" role="list">
+      <li><a class="enlace" href="/gestores">Gestores</a></li>
+      <% if (!creando) { %>
+        <li aria-hidden="true">/</li>
+        <li><a class="enlace" href="/gestores/<%= gestor.id %>"><%= gestor.razon_social %></a></li>
+      <% } %>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" class="text-on-surface-variant"><%= creando ? 'Nuevo' : 'Editar' %></li>
+    </ol>
+  </nav>
 
-    <!-- Cabecera de edición y botón para retornar al listado -->
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-        <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                <a href="/gestores" class="hover:text-brand dark:hover:text-emerald-400 transition flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    <span>Volver a Gestores</span>
-                </a>
-                <span>/</span>
-                <span class="text-slate-800 dark:text-slate-200">Edición</span>
-            </div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Editar Gestor Ambiental</h1>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Actualiza los datos, residuos autorizados y ubicación del gestor</p>
+  <div>
+    <h1 class="titulo-pagina"><%= tituloPagina %></h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">
+      <%= creando ? 'Registra una empresa autorizada. Queda aprobada y con los materiales que marques verificados.' : 'Corrige los datos, el estado y los materiales del gestor.' %>
+    </p>
+  </div>
+
+  <form action="<%= accion %>" method="POST" class="flex flex-col gap-6" data-validar data-conservar id="formGestor">
+    <section aria-labelledby="tituloDatosForm" class="tarjeta flex flex-col gap-4">
+      <h2 id="tituloDatosForm" class="tarjeta-titulo">Datos de la empresa</h2>
+      <p class="campo-ayuda">Los campos marcados con «obligatorio» se deben llenar.</p>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="campo">
+          <label for="nit" class="campo-etiqueta">NIT <span class="campo-obligatorio">(obligatorio)</span></label>
+          <input type="text" id="nit" name="nit" required value="<%= gestor.nit || '' %>" data-format="nit" inputmode="numeric"
+                 pattern="[0-9]{8,15}(-[0-9])?" data-mensaje-formato="Escribe entre 8 y 15 dígitos; puedes agregar el dígito de verificación con guion."
+                 class="campo-control" aria-describedby="nitAyuda">
+          <p id="nitAyuda" class="campo-ayuda">Sin puntos. Ejemplo: 900396512 o 900396512-1.</p>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                ID: <%= gestor.id %>
-            </span>
+        <div class="campo">
+          <label for="razon_social" class="campo-etiqueta">Razón social <span class="campo-obligatorio">(obligatorio)</span></label>
+          <input type="text" id="razon_social" name="razon_social" required minlength="3" maxlength="200" value="<%= gestor.razon_social || '' %>" autocomplete="organization" class="campo-control">
         </div>
-    </header>
+        <div class="campo">
+          <label for="municipio" class="campo-etiqueta">Municipio <span class="campo-obligatorio">(obligatorio)</span></label>
+          <select id="municipio" name="municipio" required class="campo-control">
+            <option value="">Elige un municipio</option>
+            <% MUNICIPIOS.forEach(function (m) { %>
+              <option value="<%= m %>" <%= municipioEnLista === m ? 'selected' : '' %>><%= m %></option>
+            <% }); %>
+            <% if (!creando && gestor.municipio && !municipioEnLista) { %>
+              <option value="<%= gestor.municipio %>" selected><%= municipioGuardado %> (fuera de la lista)</option>
+            <% } %>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="direccion" class="campo-etiqueta">Dirección <span class="campo-obligatorio">(obligatorio)</span></label>
+          <input type="text" id="direccion" name="direccion" required minlength="5" maxlength="255" value="<%= gestor.direccion || '' %>" autocomplete="street-address" class="campo-control" aria-describedby="direccionAyuda">
+          <p id="direccionAyuda" class="campo-ayuda">Se ubica en el mapa con OpenStreetMap solo si cambia la dirección o el municipio.</p>
+        </div>
+        <div class="campo">
+          <label for="representante_legal" class="campo-etiqueta">Representante o contacto</label>
+          <input type="text" id="representante_legal" name="representante_legal" maxlength="150" value="<%= gestor.representante_legal || '' %>" autocomplete="name" class="campo-control">
+        </div>
+        <div class="campo">
+          <label for="telefono_contacto" class="campo-etiqueta">Teléfono <span class="campo-obligatorio">(obligatorio)</span></label>
+          <input type="tel" id="telefono_contacto" name="telefono_contacto" required maxlength="30" value="<%= gestor.telefono_contacto || '' %>" data-format="phone" autocomplete="tel" class="campo-control">
+        </div>
+        <div class="campo">
+          <label for="email_contacto" class="campo-etiqueta">Correo <span class="campo-obligatorio">(obligatorio)</span></label>
+          <input type="email" id="email_contacto" name="email_contacto" required maxlength="150" value="<%= gestor.email_contacto || '' %>" autocomplete="email" class="campo-control" aria-describedby="emailAyuda">
+          <p id="emailAyuda" class="campo-ayuda">Con este correo la empresa vincula su cuenta en la app.</p>
+        </div>
+        <div class="campo">
+          <label for="horario" class="campo-etiqueta">Horario de atención</label>
+          <input type="text" id="horario" name="horario" maxlength="120" value="<%= gestor.horario || '' %>" class="campo-control" aria-describedby="horarioAyuda">
+          <p id="horarioAyuda" class="campo-ayuda">Ejemplo: lun a vie 7:30 a 17:00 · sáb 8:00 a 12:00. Máximo 120 caracteres.</p>
+        </div>
+      </div>
+    </section>
 
-    <% if (gestor.tiene_permiso && (gestor.estado_verificacion || '').toUpperCase() !== 'APROBADO') { %>
-        <!-- Registro hecho desde la app: el permiso es el soporte para aprobarlo -->
-        <section class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex flex-col sm:flex-row sm:items-center gap-4">
-            <span class="material-symbols-outlined text-rose-600 dark:text-rose-400 text-3xl flex-shrink-0" aria-hidden="true">picture_as_pdf</span>
-            <div class="flex-1 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                <p class="font-bold text-sm text-slate-900 dark:text-slate-100">Empresa registrada desde la app</p>
-                <p>
-                    Revisa que la licencia o permiso ambiental corresponda a esta razón social y NIT, y que autorice los
-                    materiales marcados. Desmarca los que no correspondan, cambia el estado a <strong>APROBADO</strong>
-                    y guarda: los materiales marcados quedan verificados y el gestor recibe el aviso.
-                </p>
-            </div>
-            <a href="/gestores/<%= gestor.id %>/permiso" target="_blank" rel="noopener noreferrer" class="btn-primary whitespace-nowrap">
-                <span class="material-symbols-outlined text-lg" aria-hidden="true">open_in_new</span>
-                <span>Ver permiso</span>
-            </a>
-        </section>
+    <% if (!creando) { %>
+      <section aria-labelledby="tituloEstadoForm" class="tarjeta flex flex-col gap-4">
+        <h2 id="tituloEstadoForm" class="tarjeta-titulo">Estado</h2>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="campo">
+            <label for="estado_verificacion" class="campo-etiqueta">Estado de verificación <span class="campo-obligatorio">(obligatorio)</span></label>
+            <select id="estado_verificacion" name="estado_verificacion" required class="campo-control" aria-describedby="estadoAyuda">
+              <% ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'].forEach(function (e) { %>
+                <option value="<%= e %>" <%= gestor.estado_verificacion === e ? 'selected' : '' %>><%= f.etiquetaVerificacion(e) %></option>
+              <% }); %>
+            </select>
+            <p id="estadoAyuda" class="campo-ayuda">Si lo cambias a Aprobado, los materiales que queden marcados se verifican.</p>
+          </div>
+          <div class="campo">
+            <label for="motivo" class="campo-etiqueta">Motivo, si lo rechazas o suspendes</label>
+            <textarea id="motivo" name="motivo" rows="2" maxlength="300" class="campo-control" aria-describedby="motivoAyuda"></textarea>
+            <p id="motivoAyuda" class="campo-ayuda">El gestor lo recibe en su notificación. Máximo 300 caracteres.</p>
+          </div>
+          <div class="md:col-span-2">
+            <input type="hidden" name="disponible_enviado" value="1">
+            <label class="casilla" for="disponible">
+              <input type="checkbox" id="disponible" name="disponible" value="true" <%= gestor.disponible !== false ? 'checked' : '' %>>
+              Disponible para recolectar
+            </label>
+          </div>
+        </div>
+      </section>
     <% } %>
 
-    <!-- Tarjeta de edición con campos normalizados -->
-    <section aria-labelledby="edit-form-title" class="m3-surface-container p-6 md:p-8">
-        <h2 id="edit-form-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <span class="material-symbols-outlined text-brand dark:text-emerald-400 text-xl" aria-hidden="true">edit_note</span>
-            <span>Modificar Información del Gestor</span>
-        </h2>
+    <section aria-labelledby="tituloMaterialesForm" class="tarjeta flex flex-col gap-4" data-lista-materiales>
+      <h2 id="tituloMaterialesForm" class="tarjeta-titulo">Materiales que recibe</h2>
+      <% if (!creando) { %>
+        <div class="nota nota-info">
+          <span class="material-symbols-outlined" aria-hidden="true">info</span>
+          <p>Guardar no cambia la verificación: los materiales que ya tenía conservan su estado, los que marques nuevos quedan verificados y los que desmarques se quitan. Para verificar los pendientes usa los botones del detalle del gestor.</p>
+        </div>
+      <% } %>
+      <% if (porVerificar.length > 0) { %>
+        <p class="text-body-m"><strong><%= porVerificar.length %></strong> material(es) por verificar: el gestor no ve sus solicitudes hasta que se verifiquen.</p>
+      <% } %>
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="campo min-w-0 flex-1">
+          <label for="filtroMateriales" class="campo-etiqueta">Buscar en la lista</label>
+          <input type="search" id="filtroMateriales" class="campo-control" data-filtro-materiales aria-describedby="filtroMaterialesAyuda">
+          <p id="filtroMaterialesAyuda" class="campo-ayuda">Código, nombre o categoría.</p>
+        </div>
+        <div class="flex gap-2 pb-6">
+          <button type="button" class="btn-outlined btn-sm" data-marcar-todos>Todos</button>
+          <button type="button" class="btn-outlined btn-sm" data-marcar-ninguno>Ninguno</button>
+        </div>
+      </div>
+      <p class="text-label-l" data-contador-materiales aria-live="polite"><%= seleccionados.length %> materiales seleccionados</p>
 
-        <form action="/gestores/edit/<%= gestor.id %>" method="POST" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                    <label for="nit" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">NIT *</label>
-                    <input type="text" id="nit" name="nit" required value="<%= gestor.nit %>"
-                        placeholder="Ej. 900396512-1"
-                        data-format="nit"
-                        class="input-ui font-mono">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label for="razon_social" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Razón Social *</label>
-                    <input type="text" id="razon_social" name="razon_social" required value="<%= gestor.razon_social %>"
-                        placeholder="ALBEDO S.A.S. E.S.P."
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="municipio" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Municipio *</label>
-                    <input type="text" id="municipio" name="municipio" required value="<%= gestor.municipio %>"
-                        placeholder="Bucaramanga"
-                        class="input-ui">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label for="direccion" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Dirección Física *</label>
-                    <input type="text" id="direccion" name="direccion" required value="<%= gestor.direccion %>"
-                        placeholder="Parque Industrial Bodega C-25"
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="representante_legal" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Representante / Contacto</label>
-                    <input type="text" id="representante_legal" name="representante_legal" value="<%= gestor.representante_legal || gestor.contacto || '' %>"
-                        placeholder="Nombre completo"
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="telefono_contacto" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Teléfono Principal *</label>
-                    <input type="text" id="telefono_contacto" name="telefono_contacto" required value="<%= gestor.telefono_contacto || gestor.telefono || '' %>"
-                        placeholder="6076768585"
-                        data-format="phone"
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="email_contacto" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Corporativo *</label>
-                    <input type="email" id="email_contacto" name="email_contacto" required value="<%= gestor.email_contacto || gestor.email || '' %>"
-                        placeholder="contacto@empresa.com"
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="horario" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Horario de Atención</label>
-                    <input type="text" id="horario" name="horario" maxlength="120" value="<%= gestor.horario || '' %>"
-                        placeholder="Lun a vie 7:30 a 17:00 • Sáb 8:00 a 12:00"
-                        class="input-ui">
-                </div>
-
-                <div>
-                    <label for="estado_verificacion" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Estado de Verificación *</label>
-                    <select id="estado_verificacion" name="estado_verificacion" required class="input-ui font-semibold">
-                        <option value="APROBADO" <%= (gestor.estado_verificacion || '').toUpperCase() === 'APROBADO' ? 'selected' : '' %>>APROBADO (Certificado)</option>
-                        <option value="PENDIENTE" <%= (gestor.estado_verificacion || '').toUpperCase() === 'PENDIENTE' ? 'selected' : '' %>>PENDIENTE (En Revisión)</option>
-                        <option value="RECHAZADO" <%= (gestor.estado_verificacion || '').toUpperCase() === 'RECHAZADO' ? 'selected' : '' %>>RECHAZADO</option>
-                        <option value="SUSPENDIDO" <%= (gestor.estado_verificacion || '').toUpperCase() === 'SUSPENDIDO' ? 'selected' : '' %>>SUSPENDIDO</option>
-                    </select>
-                </div>
-
-                <div class="flex items-center gap-3 pt-6">
-                    <input type="checkbox" id="disponible" name="disponible" value="true" <%= gestor.disponible !== false ? 'checked' : '' %> class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand">
-                    <label for="disponible" class="text-xs font-semibold text-slate-700 dark:text-slate-300 select-none cursor-pointer">
-                        Gestor Disponible para Operar
-                    </label>
-                </div>
-            </div>
-
-            <!-- Selección de residuos autorizados -->
-            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Residuos y Materiales Autorizados (Selección Múltiple)
-                    </label>
-                    <div class="flex items-center gap-3">
-                        <span id="contadorSeleccionadosEdit" class="text-xs font-semibold text-brand dark:text-emerald-400">
-                            <%= (gestor.material_ids || []).length %> seleccionados
-                        </span>
-                        <button type="button" onclick="toggleTodosMaterialesEdit(true)" class="text-xs text-slate-500 hover:text-brand dark:hover:text-emerald-400 underline">Todos</button>
-                        <span class="text-slate-300 dark:text-slate-600">|</span>
-                        <button type="button" onclick="toggleTodosMaterialesEdit(false)" class="text-xs text-slate-500 hover:text-rose-600 underline">Ninguno</button>
-                    </div>
-                </div>
-
-                <% const porVerificar = gestor.material_ids_por_verificar || []; %>
-                <% if (porVerificar.length > 0) { %>
-                    <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-                        <span class="material-symbols-outlined text-lg flex-shrink-0" aria-hidden="true">hourglass_top</span>
-                        <p>
-                            El gestor declaró <strong><%= porVerificar.length %></strong> material(es) que están <strong>por verificar</strong>.
-                            Mientras no se aprueben, no ve solicitudes de esos materiales. Al guardar, los materiales marcados
-                            quedan verificados y los desmarcados se retiran.
-                        </p>
-                    </div>
-                <% } %>
-
-                <!-- Buscador dentro de la lista de materiales -->
-                <div class="relative">
-                    <input type="text" id="buscadorMaterialesEdit" placeholder="Filtrar materiales por código, nombre o categoría..." 
-                        class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-brand">
-                    <svg class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-
-                <% if (typeof materialesDisponibles !== 'undefined' && materialesDisponibles && materialesDisponibles.length > 0) { %>
-                    <div id="contenedorMaterialesEdit" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800">
-                        <% materialesDisponibles.forEach(function(mat) { 
-                            const isSelected = gestor.material_ids && gestor.material_ids.includes(mat.id);
-                            const badgeColor = getBadgeClasses(mat.categoria, mat.codigo);
-                        %>
-                            <label for="edit_mat_<%= mat.id %>" class="item-mat-edit flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-900 border <%= isSelected ? 'border-brand dark:border-emerald-500 ring-1 ring-brand/20' : 'border-slate-200/80 dark:border-slate-800' %> hover:border-brand dark:hover:border-emerald-500 transition cursor-pointer select-none"
-                                   data-busqueda="<%= ((mat.codigo || '') + ' ' + (mat.nombre_comun || mat.nombre || '') + ' ' + (mat.categoria || '')).toLowerCase() %>">
-                                <input type="checkbox" id="edit_mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>"
-                                    <%= isSelected ? 'checked' : '' %>
-                                    class="chk-mat-edit mt-0.5 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand">
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-1.5 flex-wrap">
-                                        <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100"><%= mat.codigo %></span>
-                                        <span class="m3-chip !py-0.5 !px-2 !text-[10px] <%= badgeColor %>">
-                                            <%= mat.categoria || 'RESPEL' %>
-                                        </span>
-                                        <% if (porVerificar.includes(mat.id)) { %>
-                                            <span class="m3-chip !py-0.5 !px-2 !text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">Por verificar</span>
-                                        <% } %>
-                                    </div>
-                                    <p class="text-xs text-slate-700 dark:text-slate-300 truncate font-medium mt-0.5" title="<%= mat.nombre_comun || mat.nombre %>">
-                                        <%= mat.nombre_comun || mat.nombre %>
-                                    </p>
-                                </div>
-                            </label>
-                        <% }); %>
-                    </div>
-                <% } else { %>
-                    <p class="text-xs text-slate-400 italic p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">No hay materiales registrados en el catálogo.</p>
-                <% } %>
-            </div>
-
-            <!-- Recálculo de coordenadas en segundo plano -->
-            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300">
-                <span class="material-symbols-outlined text-brand dark:text-emerald-400 text-lg flex-shrink-0 mt-0.5">travel_explore</span>
-                <div class="space-y-1">
-                    <p class="font-bold text-slate-900 dark:text-slate-100">Geocodificación Automática:</p>
-                    <p>Las coordenadas GPS se recalculan automáticamente en segundo plano utilizando la dirección y el municipio ingresados.</p>
-                    <% if (gestor.latitud && gestor.longitud) { %>
-                        <div class="pt-1 flex items-center gap-2">
-                            <span class="font-mono text-[11px] bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/80 dark:border-slate-800">
-                                GPS actual: <%= gestor.latitud %>, <%= gestor.longitud %>
-                            </span>
-                            <a href="https://www.google.com/maps/search/?api=1&query=<%= gestor.latitud %>,<%= gestor.longitud %>"
-                                target="_blank" rel="noopener noreferrer"
-                                class="text-brand dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-0.5">
-                                <span>Ver en Maps</span>
-                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                            </a>
-                        </div>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <a href="/gestores" class="btn-tonal !h-10 !px-5">
-                    <span>Cancelar</span>
-                </a>
-                <button type="submit" class="btn-primary">
-                    <span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
-                    <span>Guardar Cambios</span>
-                </button>
-            </div>
-        </form>
+      <% if (materialesDisponibles && materialesDisponibles.length > 0) { %>
+        <fieldset>
+          <legend class="sr-only">Materiales</legend>
+          <ul class="grid max-h-96 grid-cols-1 gap-2 overflow-y-auto rounded-sm bg-surface-container-low p-2 md:grid-cols-2 xl:grid-cols-3" role="list">
+            <% materialesDisponibles.forEach(function (mat) {
+              const marcado = seleccionados.includes(mat.id);
+              const busqueda = ((mat.codigo || '') + ' ' + (mat.nombre_comun || '') + ' ' + f.etiquetaCategoria(mat.categoria)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            %>
+              <li data-material-item data-busqueda="<%= busqueda %>">
+                <% if (!creando && marcado) { %><input type="hidden" name="materiales_presentes[]" value="<%= mat.id %>"><% } %>
+                <label for="mat_<%= mat.id %>" class="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-sm bg-surface-container-lowest p-3">
+                  <input type="checkbox" id="mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>" <%= marcado ? 'checked' : '' %> class="mt-0.5">
+                  <span class="flex min-w-0 flex-col gap-1">
+                    <span class="font-semibold"><%= mat.nombre_comun %></span>
+                    <span class="flex flex-wrap items-center gap-1">
+                      <span class="text-body-s text-on-surface-variant"><%= mat.codigo %></span>
+                      <%- include('partials/componentes/chip-categoria', { categoria: mat.categoria }) %>
+                      <% if (porVerificar.includes(mat.id)) { %><span class="chip chip-estado-en-negociacion">Por verificar</span><% } %>
+                    </span>
+                  </span>
+                </label>
+              </li>
+            <% }); %>
+          </ul>
+        </fieldset>
+      <% } else { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'category', titulo: 'No hay materiales en el catálogo', texto: 'Crea primero los materiales.', accion: { href: '/materiales/nuevo', texto: 'Nuevo material' } }) %>
+      <% } %>
     </section>
+
+    <div class="flex flex-wrap justify-end gap-2">
+      <a href="<%= creando ? '/gestores' : '/gestores/' + gestor.id %>" class="btn-text">Cancelar</a>
+      <button type="submit" class="btn-filled" data-cargando="Guardando…">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">save</span>
+        <span data-etiqueta><%= creando ? 'Registrar gestor' : 'Guardar cambios' %></span>
+      </button>
+    </div>
+  </form>
+
+  <% if (!creando) { %>
+    <section id="seccionPermiso" aria-labelledby="tituloPermisoForm" class="tarjeta flex flex-col gap-4">
+      <h2 id="tituloPermisoForm" class="tarjeta-titulo">Permiso ambiental (PDF)</h2>
+      <p class="text-body-m text-on-surface-variant">
+        <%= gestor.tiene_permiso ? 'Ya tiene un permiso adjunto. Si subes otro, lo reemplaza.' : 'Este gestor no tiene permiso adjunto.' %>
+        Solo PDF de máximo 10 MB.
+      </p>
+      <form id="formPermiso" action="/gestores/<%= gestor.id %>/permiso" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
+        <div class="campo min-w-0 flex-1">
+          <label for="archivoPermiso" class="campo-etiqueta">Archivo del permiso</label>
+          <input type="file" id="archivoPermiso" name="permiso" accept="application/pdf,.pdf" required class="campo-control py-2">
+        </div>
+        <button type="submit" class="btn-tonal">
+          <span class="material-symbols-outlined icono-20" aria-hidden="true">upload_file</span>
+          <span data-etiqueta><%= gestor.tiene_permiso ? 'Reemplazar permiso' : 'Subir permiso' %></span>
+        </button>
+      </form>
+      <noscript><p class="text-body-s text-error">Para subir el permiso el navegador debe tener JavaScript activo.</p></noscript>
+    </section>
+  <% } %>
 </div>
 
-<script>
-    function toggleTodosMaterialesEdit(check) {
-        const checks = document.querySelectorAll('.chk-mat-edit');
-        checks.forEach(c => {
-            const label = c.closest('.item-mat-edit');
-            if (!label || label.style.display !== 'none') {
-                c.checked = check;
-                if (check) {
-                    label.classList.add('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
-                } else {
-                    label.classList.remove('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
-                }
-            }
-        });
-        actualizarContadorEdit();
-    }
-
-    function actualizarContadorEdit() {
-        const checked = document.querySelectorAll('.chk-mat-edit:checked').length;
-        const contador = document.getElementById('contadorSeleccionadosEdit');
-        if (contador) {
-            contador.textContent = `${checked} seleccionado${checked === 1 ? '' : 's'}`;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const chks = document.querySelectorAll('.chk-mat-edit');
-        chks.forEach(chk => {
-            chk.addEventListener('change', () => {
-                const label = chk.closest('.item-mat-edit');
-                if (label) {
-                    if (chk.checked) {
-                        label.classList.add('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
-                    } else {
-                        label.classList.remove('border-brand', 'dark:border-emerald-500', 'ring-1', 'ring-brand/20');
-                    }
-                }
-                actualizarContadorEdit();
-            });
-        });
-
-        const buscador = document.getElementById('buscadorMaterialesEdit');
-        if (buscador) {
-            buscador.addEventListener('input', (e) => {
-                const query = (e.target.value || '').toLowerCase().trim();
-                const items = document.querySelectorAll('#contenedorMaterialesEdit .item-mat-edit');
-                items.forEach(item => {
-                    const texto = item.getAttribute('data-busqueda') || '';
-                    if (!query || texto.includes(query)) {
-                        item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        }
-    });
-</script>
-
 <%- include('partials/footer') %>
-
-

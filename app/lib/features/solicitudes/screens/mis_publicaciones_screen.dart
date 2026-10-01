@@ -277,7 +277,9 @@ class _EscaneosViewState extends State<_EscaneosView> with AutomaticKeepAliveCli
 
   Future<void> _recargar() async {
     final futuro = widget.cargar();
-    setState(() => _escaneos = futuro);
+    setState(() {
+      _escaneos = futuro;
+    });
     await futuro;
   }
 

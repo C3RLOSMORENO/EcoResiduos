@@ -5,6 +5,7 @@ const materialController = require('../controllers/MaterialController');
 router.get('/', materialController.renderMaterialesPage);
 router.post('/', materialController.handleCreateMaterial);
 router.post('/guardar', materialController.handleCreateMaterial);
+router.get('/nuevo', materialController.renderNuevoMaterial);
 router.get('/edit/:id', materialController.renderEditMaterial);
 router.get('/editar/:id', materialController.renderEditMaterial);
 router.post('/edit/:id', materialController.handleUpdateMaterial);

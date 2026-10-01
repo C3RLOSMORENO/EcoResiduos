@@ -1,77 +1,82 @@
-﻿<%- include('partials/header') %>
+<%- include('partials/header', { activeTab: 'generadores', titulo: 'Ciudadanos' }) %>
 
-<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-    <div>
-        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Ciudadanos Registrados</h2>
-        <p class="mt-2 text-slate-600 dark:text-slate-400">Directorio de usuarios generadores de residuos en la aplicación.</p>
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="titulo-pagina">Ciudadanos</h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">Generadores registrados en la app y cuántos residuos han publicado. Datos personales protegidos por la Ley 1581 de 2012.</p>
+  </div>
+
+  <form method="GET" action="/ciudadanos" class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-3" role="search" aria-label="Filtrar ciudadanos">
+    <div class="campo md:col-span-2">
+      <label for="filtroCiudadano" class="campo-etiqueta">Buscar</label>
+      <input type="search" id="filtroCiudadano" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroCiudadanoAyuda">
+      <p id="filtroCiudadanoAyuda" class="campo-ayuda">Nombre, empresa o documento.</p>
     </div>
-</div>
-
-<% if (locals.error) { %>
-    <%- include('partials/alert', { type: 'error', message: error, title: 'Error' }) %>
-<% } %>
-<% if (locals.success) { %>
-    <%- include('partials/alert', { type: 'success', message: success, title: 'Éxito' }) %>
-<% } %>
-
-<div class="bg-white dark:bg-[#1E293B] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table id="tablaGeneradores" class="w-full text-left text-sm whitespace-nowrap">
-            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                    <th scope="col" class="px-6 py-4">Usuario</th>
-                    <th scope="col" class="px-6 py-4">Documento / NIT</th>
-                    <th scope="col" class="px-6 py-4">Contacto</th>
-                    <th scope="col" class="px-6 py-4">Municipio</th>
-                    <th scope="col" class="px-6 py-4">Fecha Registro</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                <% if (generadores && generadores.length > 0) { %>
-                    <% generadores.forEach(user => { %>
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-brand font-bold text-lg border border-slate-200 dark:border-slate-700">
-                                        <%= user.nombre_completo_o_empresa ? user.nombre_completo_o_empresa.charAt(0).toUpperCase() : 'U' %>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold"><%= user.nombre_completo_o_empresa %></p>
-                                        <p class="text-[11px] text-slate-500 font-mono"><%= user.usuario_id.substring(0, 8) %>...</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">
-                                <%= user.documento_nit %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <p class="text-slate-900 dark:text-slate-200"><%= user.email %></p>
-                                <p class="text-slate-500 dark:text-slate-400 text-xs"><%= user.telefono %></p>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 uppercase text-xs font-semibold">
-                                <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1 bg-slate-50 dark:bg-slate-800">
-                                    <span class="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
-                                    <%= user.municipio %>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">
-                                <%= user.created_at ? new Date(user.created_at).toLocaleDateString('es-CO') : '-' %>
-                            </td>
-                        </tr>
-                    <% }) %>
-                <% } else { %>
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400 empty-state" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                            <span class="material-symbols-outlined text-4xl mb-3 opacity-50 block">group_off</span>
-                            <p class="text-base font-medium">No hay ciudadanos registrados</p>
-                            <p class="text-sm mt-1">Cuando los usuarios se registren en la aplicación móvil, aparecerán en este directorio.</p>
-                        </td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
+    <div class="campo">
+      <label for="filtroMunicipioCiudadano" class="campo-etiqueta">Municipio</label>
+      <select id="filtroMunicipioCiudadano" name="municipio" class="campo-control">
+        <option value="">Todos los municipios</option>
+        <% MUNICIPIOS.forEach(function (m) { %>
+          <option value="<%= m %>" <%= filtros.municipio === m ? 'selected' : '' %>><%= m %></option>
+        <% }); %>
+      </select>
     </div>
+    <div class="flex flex-wrap items-center justify-end gap-2 md:col-span-3">
+      <a href="/ciudadanos" class="btn-text">Limpiar filtros</a>
+      <button type="submit" class="btn-filled">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">filter_list</span>
+        Filtrar
+      </button>
+    </div>
+  </form>
+
+  <% if (errorCarga) { %>
+    <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar los ciudadanos.', detalle: errorCarga, reintentar: urlActual }) %>
+  <% } else if (generadores.length === 0) { %>
+    <div class="tarjeta">
+      <% if (filtros.q || filtros.municipio) { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'search_off', titulo: 'No encontramos ciudadanos con esos filtros', accion: { href: '/ciudadanos', texto: 'Limpiar filtros' } }) %>
+      <% } else { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'group_off', titulo: 'Aún no hay ciudadanos registrados', texto: 'Cuando los generadores se registren en la app, aparecerán aquí.' }) %>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="tabla-contenedor" role="region" aria-labelledby="captionCiudadanos" tabindex="0">
+      <table class="tabla">
+        <caption id="captionCiudadanos">Ciudadanos registrados, del más reciente al más antiguo<%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Documento</th>
+            <th scope="col">Contacto</th>
+            <th scope="col">Municipio</th>
+            <th scope="col">Registro</th>
+            <th scope="col" class="num">Publicaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% generadores.forEach(function (u) { %>
+            <tr>
+              <th scope="row"><%= f.textoODato(u.nombre_completo_o_empresa) %></th>
+              <td><%= f.textoODato(u.documento_nit) %></td>
+              <td>
+                <span class="block break-all"><%= f.textoODato(u.email) %></span>
+                <span class="block text-body-s text-on-surface-variant"><%= u.telefono || '' %></span>
+              </td>
+              <td><%= u.municipio ? f.capitalizar(u.municipio) : 'Sin dato' %></td>
+              <td class="whitespace-nowrap"><%= f.fechaCorta(u.created_at) %></td>
+              <td class="num">
+                <% if (u.publicaciones > 0) { %>
+                  <a class="enlace" href="/solicitudes?generador=<%= u.id %>" aria-label="<%= u.publicaciones %> publicaciones de <%= u.nombre_completo_o_empresa %>"><%= f.formatoNumero(u.publicaciones) %></a>
+                <% } else { %>0<% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('partials/componentes/paginacion', { pag, nombre: 'ciudadanos' }) %>
+  <% } %>
 </div>
 
 <%- include('partials/footer') %>
-

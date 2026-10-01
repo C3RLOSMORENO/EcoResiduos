@@ -1,89 +1,173 @@
+const crypto = require('crypto');
 const supabase = require('../config/supabase');
+const geocodificador = require('./geocodificador');
+const { municipioParaGuardar, variantesMunicipio, municipioAdmitido } = require('../utils/municipios');
+const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
 
-// Centro de Bucaramanga: coordenadas por defecto cuando no se puede geocodificar.
-const LATITUD_DEFECTO = 7.119349;
-const LONGITUD_DEFECTO = -73.122741;
+const ESTADOS_VALIDOS = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'];
+const TAMANO_MAXIMO_PERMISO = 10 * 1024 * 1024;
 
-// Busca la dirección en OpenStreetMap; si falla, devuelve el centro de Bucaramanga.
-async function geocodificar(direccion, municipio) {
-    try {
-        const consulta = encodeURIComponent(`${direccion}, ${municipio}, Santander, Colombia`);
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${consulta}&limit=1`, {
-            headers: { 'User-Agent': 'EcoResiduos-AdminPanel' }
-        });
-        const data = await res.json();
-        if (data && data.length > 0) {
-            return { latitud: parseFloat(data[0].lat), longitud: parseFloat(data[0].lon) };
-        }
-    } catch {
-        // Se usan las coordenadas por defecto
-    }
-    return { latitud: LATITUD_DEFECTO, longitud: LONGITUD_DEFECTO };
+const SELECT_MATERIALES = `
+    gestor_material (
+        material_id,
+        verificado,
+        materiales_residuos (
+            id,
+            codigo,
+            nombre_comun,
+            categoria
+        )
+    )
+`;
+
+function errorConCodigo(mensaje, codigo) {
+    const error = new Error(mensaje);
+    error.codigo = codigo;
+    return error;
 }
 
 // Convierte la lista de IDs recibida en un arreglo de números enteros válidos
+function extraerIds(valor) {
+    const lista = Array.isArray(valor) ? valor : (valor === undefined || valor === null || valor === '' ? [] : [valor]);
+    return [...new Set(lista.map((id) => parseInt(id, 10)).filter((id) => Number.isInteger(id)))];
+}
+
 function extractMaterialIds(dto) {
-    const raw = dto.materiales_ids || dto['materiales_ids[]'] || dto.material_ids || dto.residuos || [];
-    if (Array.isArray(raw)) {
-        return raw.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+    return extraerIds(dto.materiales_ids || dto['materiales_ids[]'] || dto.material_ids || dto.residuos);
+}
+
+function textoOpcional(valor) {
+    const limpio = valor === undefined || valor === null ? '' : String(valor).trim();
+    return limpio || null;
+}
+
+// Nunca se inventa un valor: si falta el dato, la vista muestra «Sin dato».
+function mapearGestor(row) {
+    const relaciones = row.gestor_material || [];
+    const materiales = relaciones
+        .filter((gm) => gm.materiales_residuos)
+        .map((gm) => ({ ...gm.materiales_residuos, verificado: gm.verificado !== false }));
+
+    return {
+        id: row.id,
+        nit: row.nit || '',
+        razon_social: row.razon_social || '',
+        municipio: row.municipio || null,
+        direccion: row.direccion || '',
+        representante_legal: row.representante_legal || null,
+        telefono_contacto: row.telefono_contacto || '',
+        email_contacto: row.email_contacto || '',
+        latitud: row.latitud ?? null,
+        longitud: row.longitud ?? null,
+        estado_verificacion: row.estado_verificacion || null,
+        disponible: row.disponible !== false,
+        horario: row.horario || '',
+        tiene_cuenta: Boolean(row.usuario_id),
+        tiene_permiso: Boolean(row.permiso_path),
+        created_at: row.created_at || null,
+        material_ids: relaciones.map((gm) => gm.material_id),
+        material_ids_por_verificar: relaciones.filter((gm) => gm.verificado === false).map((gm) => gm.material_id),
+        materiales,
+        materiales_por_verificar: relaciones.filter((gm) => gm.verificado === false).length
+    };
+}
+
+function validarDatos(dto, { exigirMunicipioAdmitido }) {
+    const nit = String(dto.nit || '').replace(/[\s.]/g, '').split('-')[0].trim();
+    const razonSocial = String(dto.razon_social || '').trim().toUpperCase();
+    const municipioTexto = String(dto.municipio || '').trim();
+    const direccion = String(dto.direccion || '').trim();
+    const representante = textoOpcional(dto.representante_legal || dto.contacto);
+    const telefono = String(dto.telefono_contacto || dto.telefono || '').trim();
+    const email = String(dto.email_contacto || dto.email || '').trim().toLowerCase();
+
+    if (!/^\d{8,15}$/.test(nit)) {
+        throw new Error('El NIT es obligatorio y debe tener entre 8 y 15 dígitos (sin dígito de verificación, puntos ni guiones).');
     }
-    if (typeof raw === 'string' || typeof raw === 'number') {
-        const parsed = parseInt(raw, 10);
-        return !isNaN(parsed) ? [parsed] : [];
+    if (razonSocial.length < 3) {
+        throw new Error('La razón social es obligatoria y debe tener al menos 3 caracteres.');
     }
-    return [];
+    let municipio = municipioParaGuardar(municipioTexto);
+    if (!municipio) {
+        if (exigirMunicipioAdmitido || !municipioTexto) {
+            throw new Error('Elige uno de los 6 municipios donde opera EcoResiduos.');
+        }
+        // Gestores antiguos con un municipio fuera de la lista: se conserva tal cual.
+        municipio = municipioTexto.toUpperCase();
+    }
+    if (direccion.length < 5) {
+        throw new Error('La dirección es obligatoria y debe tener al menos 5 caracteres.');
+    }
+    if (!telefono) {
+        throw new Error('El teléfono de contacto es obligatorio.');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('El correo de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
+    }
+    return { nit, razonSocial, municipio, direccion, representante, telefono, email };
+}
+
+function leerCasilla(dto, nombre) {
+    const valor = Array.isArray(dto[nombre]) ? dto[nombre][dto[nombre].length - 1] : dto[nombre];
+    return valor === true || valor === 'true' || valor === 'on' || valor === '1';
 }
 
 const gestorService = {
-    // Consulta gestores y sus residuos autorizados mediante la tabla intermedia gestor_material
-    async getAllGestores() {
-        const { data, error } = await supabase
-            .from('perfiles_gestor')
-            .select(`
-                *,
-                gestor_material (
-                    material_id,
-                    verificado,
-                    materiales_residuos (
-                        id,
-                        codigo,
-                        nombre_comun,
-                        categoria
-                    )
-                )
-            `)
-            .order('id', { ascending: true });
+    mapearGestor,
+    extractMaterialIds,
 
-        if (error) {
-            throw new Error(`Error al consultar gestores: ${error.message}`);
+    async listarGestores({ q, municipio, estado, porVerificar, orden, pagina = 1 } = {}) {
+        let consulta = supabase
+            .from('perfiles_gestor')
+            .select(`*, ${SELECT_MATERIALES}`, { count: 'exact' });
+
+        const termino = textoBusqueda(q);
+        if (termino) {
+            const { data: materiales } = await supabase
+                .from('materiales_residuos')
+                .select('id')
+                .or(`codigo.ilike.%${termino}%,nombre_comun.ilike.%${termino}%`);
+            const idsMateriales = (materiales || []).map((m) => m.id);
+            let idsGestores = [];
+            if (idsMateriales.length > 0) {
+                const { data: relaciones } = await supabase
+                    .from('gestor_material')
+                    .select('gestor_id')
+                    .in('material_id', idsMateriales);
+                idsGestores = [...new Set((relaciones || []).map((r) => r.gestor_id))];
+            }
+            const condiciones = [`razon_social.ilike.%${termino}%`, `nit.ilike.%${termino}%`];
+            if (idsGestores.length > 0) condiciones.push(`id.in.(${idsGestores.join(',')})`);
+            consulta = consulta.or(condiciones.join(','));
         }
 
-        return (data || []).map((row) => {
-            const materiales = (row.gestor_material || [])
-                .map((gm) => gm.materiales_residuos)
-                .filter(Boolean);
+        const municipioFiltro = municipioAdmitido(municipio);
+        if (municipioFiltro) consulta = consulta.in('municipio', variantesMunicipio(municipioFiltro));
 
-            const materialesPorVerificar = (row.gestor_material || []).filter((gm) => gm.verificado === false).length;
+        const estadoFiltro = String(estado || '').toUpperCase();
+        if (ESTADOS_VALIDOS.includes(estadoFiltro)) consulta = consulta.eq('estado_verificacion', estadoFiltro);
 
-            return {
-                id: row.id ?? row.ID,
-                nit: row.nit ?? row.NIT ?? '',
-                razon_social: row.razon_social ?? row.RAZON_SOCIAL ?? row.Razon_Social ?? '',
-                municipio: row.municipio ?? row.MUNICIPIO ?? 'BUCARAMANGA',
-                direccion: row.direccion ?? row.DIRECCION ?? '',
-                representante_legal: row.representante_legal ?? row.REPRESENTANTE_LEGAL ?? null,
-                telefono_contacto: row.telefono_contacto ?? row.TELEFONO_CONTACTO ?? '',
-                email_contacto: row.email_contacto ?? row.EMAIL_CONTACTO ?? '',
-                latitud: row.latitud !== undefined && row.latitud !== null ? row.latitud : (row.LATITUD !== undefined ? row.LATITUD : 7.119349),
-                longitud: row.longitud !== undefined && row.longitud !== null ? row.longitud : (row.LONGITUD !== undefined ? row.LONGITUD : -73.122741),
-                estado_verificacion: row.estado_verificacion ?? row.ESTADO_VERIFICACION ?? 'APROBADO',
-                disponible: row.disponible !== undefined ? row.disponible : (row.DISPONIBLE !== undefined ? row.DISPONIBLE : true),
-                // Las empresas que se registraron desde la app (no estaban registradas) traen su permiso.
-                tiene_permiso: Boolean(row.permiso_path),
-                materiales,
-                materiales_por_verificar: materialesPorVerificar
-            };
-        });
+        if (porVerificar) {
+            const { data: relaciones, error: errorRelaciones } = await supabase
+                .from('gestor_material')
+                .select('gestor_id')
+                .eq('verificado', false);
+            if (errorRelaciones) throw new Error(`No pudimos cargar los materiales por verificar: ${errorRelaciones.message}`);
+            const ids = [...new Set((relaciones || []).map((r) => r.gestor_id))];
+            if (ids.length === 0) return { gestores: [], total: 0 };
+            consulta = consulta.in('id', ids);
+        }
+
+        const { desde, hasta } = rango(pagina);
+        const ascendente = orden !== '-razon';
+        const { data, error, count } = await consulta
+            .order('razon_social', { ascending: ascendente })
+            .range(desde, hasta);
+
+        if (error) {
+            throw new Error(`No pudimos cargar los gestores: ${error.message}`);
+        }
+        return { gestores: (data || []).map(mapearGestor), total: count || 0 };
     },
 
     async getGestorById(id) {
@@ -93,320 +177,278 @@ const gestorService = {
 
         const { data, error } = await supabase
             .from('perfiles_gestor')
-            .select(`
-                *,
-                gestor_material (
-                    material_id,
-                    verificado,
-                    materiales_residuos (
-                        id,
-                        codigo,
-                        nombre_comun,
-                        categoria
-                    )
-                )
-            `)
+            .select(`*, ${SELECT_MATERIALES}`)
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
         if (error || !data) {
-            throw new Error(`Error al obtener gestor: ${error ? error.message : 'Registro no encontrado'}`);
+            throw errorConCodigo(`No encontramos el gestor${error ? `: ${error.message}` : '.'}`, 'NO_ENCONTRADO');
         }
-
-        const materialIds = (data.gestor_material || []).map((gm) => gm.material_id);
-        // Materiales que el gestor declaró al registrarse y aún no se han aprobado.
-        const materialIdsPorVerificar = (data.gestor_material || [])
-            .filter((gm) => gm.verificado === false)
-            .map((gm) => gm.material_id);
-        const materiales = (data.gestor_material || [])
-            .map((gm) => gm.materiales_residuos)
-            .filter(Boolean);
-
-        return {
-            id: data.id ?? data.ID,
-            nit: data.nit ?? data.NIT ?? '',
-            razon_social: data.razon_social ?? data.RAZON_SOCIAL ?? data.Razon_Social ?? '',
-            municipio: data.municipio ?? data.MUNICIPIO ?? 'BUCARAMANGA',
-            direccion: data.direccion ?? data.DIRECCION ?? '',
-            representante_legal: data.representante_legal ?? data.REPRESENTANTE_LEGAL ?? '',
-            telefono_contacto: data.telefono_contacto ?? data.TELEFONO_CONTACTO ?? '',
-            email_contacto: data.email_contacto ?? data.EMAIL_CONTACTO ?? '',
-            latitud: data.latitud !== undefined && data.latitud !== null ? data.latitud : (data.LATITUD !== undefined ? data.LATITUD : 7.119349),
-            longitud: data.longitud !== undefined && data.longitud !== null ? data.longitud : (data.LONGITUD !== undefined ? data.LONGITUD : -73.122741),
-            estado_verificacion: data.estado_verificacion ?? data.ESTADO_VERIFICACION ?? 'APROBADO',
-            disponible: data.disponible !== undefined ? data.disponible : (data.DISPONIBLE !== undefined ? data.DISPONIBLE : true),
-            horario: data.horario ?? '',
-            tiene_permiso: Boolean(data.permiso_path),
-            material_ids: materialIds,
-            material_ids_por_verificar: materialIdsPorVerificar,
-            materiales
-        };
+        return mapearGestor(data);
     },
 
-    // Valida datos de entrada y crea el registro con geocodificación pasiva
-    async createGestor(dto = {}) {
-        const nitLimpio = String(dto.nit || '').trim();
-        const razonSocialLimpia = String(dto.razon_social || '').trim().toUpperCase();
-        const municipioLimpio = dto.municipio && String(dto.municipio).trim() !== ''
-            ? String(dto.municipio).trim().toUpperCase()
-            : 'BUCARAMANGA';
-        const direccionLimpia = String(dto.direccion || '').trim();
-        const representanteLegalRaw = dto.representante_legal || dto.contacto;
-        const representanteLegalLimpio = representanteLegalRaw && String(representanteLegalRaw).trim() !== ''
-            ? String(representanteLegalRaw).trim()
-            : null;
-        const telefonoContactoLimpio = String(dto.telefono_contacto || dto.telefono || '').trim();
-        const emailContactoLimpio = String(dto.email_contacto || dto.email || '').trim().toLowerCase();
-        const materialIds = extractMaterialIds(dto);
-
-        // Regla: El NIT debe ser numérico entre 8 y 15 dígitos
-        const nitRegex = /^\d{8,15}$/;
-        if (!nitRegex.test(nitLimpio)) {
-            throw new Error('El NIT es obligatorio y debe ser numérico entre 8 y 15 dígitos (sin guiones ni puntos).');
-        }
-
-        if (!razonSocialLimpia || razonSocialLimpia.length < 3) {
-            throw new Error('La razón social es obligatoria y debe contener al menos 3 caracteres.');
-        }
-
-        if (!direccionLimpia || direccionLimpia.length < 5) {
-            throw new Error('La dirección física es obligatoria y debe contener al menos 5 caracteres descriptivos.');
-        }
-
-        if (!telefonoContactoLimpio) {
-            throw new Error('El teléfono principal de contacto es obligatorio.');
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailContactoLimpio)) {
-            throw new Error('El correo electrónico de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
-        }
-
-        let latitud = 7.119349;
-        let longitud = -73.122741;
-
-        // Intenta obtener coordenadas en OpenStreetMap; si falla, usa el centro de Bucaramanga
-        try {
-            const consulta = encodeURIComponent(`${direccionLimpia}, ${municipioLimpio}, Santander, Colombia`);
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${consulta}&limit=1`, {
-                headers: { 'User-Agent': 'EcoResiduos-AdminPanel' }
-            });
-            const data = await res.json();
-            if (data && data.length > 0) {
-                latitud = parseFloat(data[0].lat);
-                longitud = parseFloat(data[0].lon);
-            }
-        } catch {
-            // Asigna coordenadas por defecto en Bucaramanga
-        }
-
-        const payloadGestor = {
-            nit: nitLimpio,
-            razon_social: razonSocialLimpia,
-            municipio: municipioLimpio,
-            direccion: direccionLimpia,
-            representante_legal: representanteLegalLimpio,
-            telefono_contacto: telefonoContactoLimpio,
-            email_contacto: emailContactoLimpio,
-            latitud,
-            longitud,
-            estado_verificacion: 'APROBADO',
-            disponible: true
+    // Registros que dan historia al gestor: con cualquiera de ellos no se borra.
+    async getDependencias(id) {
+        const [postulaciones, asignadas, perfil] = await Promise.all([
+            supabase.from('postulaciones_recoleccion').select('id', { count: 'exact', head: true }).eq('gestor_id', id),
+            supabase.from('solicitudes_recoleccion').select('id', { count: 'exact', head: true }).eq('gestor_asignado_id', id),
+            supabase.from('perfiles_gestor').select('usuario_id').eq('id', id).maybeSingle()
+        ]);
+        const resultado = {
+            postulaciones: postulaciones.count || 0,
+            solicitudesAsignadas: asignadas.count || 0,
+            tieneCuenta: Boolean(perfil.data && perfil.data.usuario_id)
         };
+        resultado.tieneHistoria = resultado.postulaciones > 0 || resultado.solicitudesAsignadas > 0 || resultado.tieneCuenta;
+        return resultado;
+    },
 
-        const { data: gestorCreado, error: gestorError } = await supabase
+    async createGestor(dto = {}) {
+        const datos = validarDatos(dto, { exigirMunicipioAdmitido: true });
+        const materialIds = extractMaterialIds(dto);
+        const horario = String(dto.horario || '').trim();
+        if (horario.length > 120) {
+            throw new Error('El horario de atención no puede superar los 120 caracteres.');
+        }
+        const coordenadas = await geocodificador.geocodificar(datos.direccion, datos.municipio);
+
+        const { data: creados, error } = await supabase
             .from('perfiles_gestor')
-            .insert([payloadGestor])
+            .insert([{
+                nit: datos.nit,
+                razon_social: datos.razonSocial,
+                municipio: datos.municipio,
+                direccion: datos.direccion,
+                representante_legal: datos.representante,
+                telefono_contacto: datos.telefono,
+                email_contacto: datos.email,
+                horario: horario || null,
+                latitud: coordenadas ? coordenadas.latitud : geocodificador.LATITUD_DEFECTO,
+                longitud: coordenadas ? coordenadas.longitud : geocodificador.LONGITUD_DEFECTO,
+                estado_verificacion: 'APROBADO',
+                disponible: true
+            }])
             .select();
 
-        if (gestorError) {
-            throw new Error(`Error en base de datos al crear gestor: ${gestorError.message}`);
+        if (error) {
+            throw new Error(`No pudimos registrar el gestor: ${error.message}`);
         }
 
-        const nuevoGestor = gestorCreado && gestorCreado[0];
-
-        // Registra los residuos asociados en la tabla intermedia verificados por el administrador
-        if (nuevoGestor && materialIds.length > 0) {
-            const relaciones = materialIds.map((matId) => ({
-                gestor_id: nuevoGestor.id,
-                material_id: matId,
-                verificado: true
-            }));
-
-            await supabase
+        const nuevo = creados && creados[0];
+        // El administrador elige los materiales al crear la empresa: quedan verificados.
+        if (nuevo && materialIds.length > 0) {
+            const { error: errorMateriales } = await supabase
                 .from('gestor_material')
-                .insert(relaciones);
+                .insert(materialIds.map((materialId) => ({ gestor_id: nuevo.id, material_id: materialId, verificado: true })));
+            if (errorMateriales) {
+                throw new Error(`El gestor quedó registrado, pero no se guardaron sus materiales: ${errorMateriales.message}`);
+            }
         }
-
-        return gestorCreado;
+        return nuevo;
     },
 
-    // Actualiza datos del gestor y sincroniza las relaciones con materiales
-    async updateGestor(id, dto = {}) {
+    // Guarda los datos del formulario de edición. El estado de verificación de
+    // cada material se conserva: los que ya tenía siguen como estaban, los que
+    // el administrador marca nuevos quedan verificados (él los eligió) y los
+    // desmarcados se quitan.
+    async updateGestor(id, dto = {}, admin = null) {
         if (!id) {
             throw new Error('El identificador del gestor es obligatorio para la actualización.');
         }
 
-        const nitLimpio = String(dto.nit || '').trim();
-        const razonSocialLimpia = String(dto.razon_social || '').trim().toUpperCase();
-        const municipioLimpio = dto.municipio && String(dto.municipio).trim() !== ''
-            ? String(dto.municipio).trim().toUpperCase()
-            : 'BUCARAMANGA';
-        const direccionLimpia = String(dto.direccion || '').trim();
-        const representanteLegalLimpio = dto.representante_legal && String(dto.representante_legal).trim() !== ''
-            ? String(dto.representante_legal).trim()
-            : null;
-        const telefonoContactoLimpio = String(dto.telefono_contacto || '').trim();
-        const emailContactoLimpio = String(dto.email_contacto || '').trim().toLowerCase();
-        const horarioLimpio = String(dto.horario || '').trim();
-        const materialIds = extractMaterialIds(dto);
+        const { data: actual, error: errorActual } = await supabase
+            .from('perfiles_gestor')
+            .select('id, direccion, municipio, latitud, longitud, estado_verificacion, gestor_material ( material_id, verificado )')
+            .eq('id', id)
+            .maybeSingle();
 
-        const nitRegex = /^\d{8,15}$/;
-        if (!nitRegex.test(nitLimpio)) {
-            throw new Error('El NIT es obligatorio y debe ser numérico entre 8 y 15 dígitos (sin guiones ni puntos).');
+        if (errorActual || !actual) {
+            throw new Error(`No encontramos el gestor${errorActual ? `: ${errorActual.message}` : '.'}`);
         }
 
-        if (!razonSocialLimpia || razonSocialLimpia.length < 3) {
-            throw new Error('La razón social es obligatoria y debe contener al menos 3 caracteres.');
-        }
-
-        if (!direccionLimpia || direccionLimpia.length < 5) {
-            throw new Error('La dirección física es obligatoria y debe contener al menos 5 caracteres descriptivos.');
-        }
-
-        if (!telefonoContactoLimpio) {
-            throw new Error('El teléfono principal de contacto es obligatorio.');
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailContactoLimpio)) {
-            throw new Error('El correo electrónico de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
-        }
-
-        let latitud = 7.119349;
-        let longitud = -73.122741;
-
-        try {
-            const consulta = encodeURIComponent(`${direccionLimpia}, ${municipioLimpio}, Santander, Colombia`);
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${consulta}&limit=1`, {
-                headers: { 'User-Agent': 'EcoResiduos-AdminPanel' }
-            });
-            const data = await res.json();
-            if (data && data.length > 0) {
-                latitud = parseFloat(data[0].lat);
-                longitud = parseFloat(data[0].lon);
-            }
-        } catch {
-            // Asigna coordenadas por defecto en Bucaramanga
-        }
-
-        const payloadUpdate = {
-            nit: nitLimpio,
-            razon_social: razonSocialLimpia,
-            municipio: municipioLimpio,
-            direccion: direccionLimpia,
-            representante_legal: representanteLegalLimpio,
-            telefono_contacto: telefonoContactoLimpio,
-            email_contacto: emailContactoLimpio,
-            horario: horarioLimpio || null,
-            latitud,
-            longitud
-        };
-
-        if (horarioLimpio.length > 120) {
+        const datos = validarDatos(dto, { exigirMunicipioAdmitido: false });
+        const horario = String(dto.horario || '').trim();
+        if (horario.length > 120) {
             throw new Error('El horario de atención no puede superar los 120 caracteres.');
         }
 
-        if (dto.estado_verificacion) {
-            payloadUpdate.estado_verificacion = String(dto.estado_verificacion).trim().toUpperCase();
-        }
-        if (dto.disponible !== undefined) {
-            payloadUpdate.disponible = dto.disponible === true || dto.disponible === 'true' || dto.disponible === 'on' || dto.disponible === '1';
+        const cambios = {
+            nit: datos.nit,
+            razon_social: datos.razonSocial,
+            municipio: datos.municipio,
+            direccion: datos.direccion,
+            representante_legal: datos.representante,
+            telefono_contacto: datos.telefono,
+            email_contacto: datos.email,
+            horario: horario || null
+        };
+
+        if (dto.disponible_enviado !== undefined || dto.disponible !== undefined) {
+            cambios.disponible = leerCasilla(dto, 'disponible');
         }
 
-        const { data: gestorActualizado, error: gestorError } = await supabase
+        // Solo se consulta Nominatim si cambió la ubicación.
+        const cambioUbicacion = datos.direccion !== (actual.direccion || '') || datos.municipio !== (actual.municipio || '');
+        if (cambioUbicacion) {
+            const coordenadas = await geocodificador.geocodificar(datos.direccion, datos.municipio);
+            cambios.latitud = coordenadas ? coordenadas.latitud : geocodificador.LATITUD_DEFECTO;
+            cambios.longitud = coordenadas ? coordenadas.longitud : geocodificador.LONGITUD_DEFECTO;
+        }
+
+        const { error } = await supabase
             .from('perfiles_gestor')
-            .update(payloadUpdate)
-            .eq('id', id)
-            .select();
+            .update(cambios)
+            .eq('id', id);
 
-        if (gestorError) {
-            throw new Error(`Error en base de datos al actualizar gestor: ${gestorError.message}`);
+        if (error) {
+            throw new Error(`No pudimos guardar los cambios del gestor: ${error.message}`);
         }
 
-        // Reemplaza los materiales asignados con la nueva selección
-        await supabase
-            .from('gestor_material')
-            .delete()
-            .eq('gestor_id', id);
+        await this.sincronizarMateriales(id, actual.gestor_material || [], dto);
 
-        if (materialIds.length > 0) {
-            const relaciones = materialIds.map((matId) => ({
-                gestor_id: parseInt(id, 10),
-                material_id: matId,
-                verificado: true
-            }));
-
-            await supabase
-                .from('gestor_material')
-                .insert(relaciones);
+        const estadoNuevo = String(dto.estado_verificacion || '').trim().toUpperCase();
+        if (estadoNuevo && estadoNuevo !== String(actual.estado_verificacion || '').toUpperCase()) {
+            return this.updateEstadoVerificacion(id, estadoNuevo, dto.motivo, admin);
         }
-
-        return gestorActualizado;
+        return { motivoGuardado: true };
     },
 
-    // Actualiza el estado de verificación del gestor (Auditoría Admin)
-    async updateEstadoVerificacion(id, estado) {
-        if (!id) throw new Error('El identificador del gestor es obligatorio');
-        const estadosValidos = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'];
-        const estadoUpper = String(estado).trim().toUpperCase();
-        if (!estadosValidos.includes(estadoUpper)) {
-            throw new Error(`Estado inválido. Debe ser uno de: ${estadosValidos.join(', ')}`);
+    async sincronizarMateriales(id, relacionesActuales, dto) {
+        const marcados = new Set(extractMaterialIds(dto));
+        const existentes = new Set(relacionesActuales.map((gm) => gm.material_id));
+        // Solo se quitan los que el formulario mostró desmarcados: si el gestor
+        // agregó uno desde la app mientras se editaba, no se pierde.
+        const mostrados = dto.materiales_presentes !== undefined
+            ? new Set(extraerIds(dto.materiales_presentes))
+            : existentes;
+
+        const quitar = [...existentes].filter((m) => mostrados.has(m) && !marcados.has(m));
+        const agregar = [...marcados].filter((m) => !existentes.has(m));
+
+        if (quitar.length > 0) {
+            const { error } = await supabase
+                .from('gestor_material')
+                .delete()
+                .eq('gestor_id', id)
+                .in('material_id', quitar);
+            if (error) throw new Error(`No pudimos quitar los materiales desmarcados: ${error.message}`);
         }
 
-        const cambios = { estado_verificacion: estadoUpper };
+        if (agregar.length > 0) {
+            const { error } = await supabase
+                .from('gestor_material')
+                .insert(agregar.map((materialId) => ({ gestor_id: parseInt(id, 10), material_id: materialId, verificado: true })));
+            if (error) throw new Error(`No pudimos agregar los materiales nuevos: ${error.message}`);
+        }
+        return { quitados: quitar.length, agregados: agregar.length };
+    },
 
-        // Los registros desde la app se crean con las coordenadas por defecto:
-        // al aprobarlos se ubican con su dirección para el directorio y las distancias.
+    // Cambia el estado de verificación. Aprobar verifica los materiales que el
+    // gestor declaró y lo ubica en el mapa con su dirección. El estado y el
+    // motivo se guardan con cambiar_verificacion_gestor_admin (migración
+    // 20261003000100), que deja la decisión en gestor_decisiones: el motivo no
+    // va en perfiles_gestor porque esa tabla es de lectura pública.
+    async updateEstadoVerificacion(id, estado, motivo, admin) {
+        if (!id) throw new Error('El identificador del gestor es obligatorio');
+        const estadoUpper = String(estado || '').trim().toUpperCase();
+        if (!ESTADOS_VALIDOS.includes(estadoUpper)) {
+            throw new Error(`Estado inválido. Debe ser uno de: ${ESTADOS_VALIDOS.join(', ')}`);
+        }
+
         if (estadoUpper === 'APROBADO') {
             const { data: actual } = await supabase
                 .from('perfiles_gestor')
                 .select('direccion, municipio, latitud, longitud')
                 .eq('id', id)
-                .single();
-            const sinUbicar = actual
-                && Number(actual.latitud) === LATITUD_DEFECTO
-                && Number(actual.longitud) === LONGITUD_DEFECTO;
-            if (sinUbicar && actual.direccion) {
-                Object.assign(cambios, await geocodificar(actual.direccion, actual.municipio || 'BUCARAMANGA'));
+                .maybeSingle();
+            if (actual && actual.direccion && geocodificador.sinUbicar(actual.latitud, actual.longitud)) {
+                const coordenadas = await geocodificador.geocodificar(actual.direccion, actual.municipio || 'Bucaramanga');
+                if (coordenadas) {
+                    const { error: errorUbicacion } = await supabase.from('perfiles_gestor').update(coordenadas).eq('id', id);
+                    if (errorUbicacion) throw new Error(`No pudimos ubicar al gestor: ${errorUbicacion.message}`);
+                }
             }
-        }
 
-        const { data, error } = await supabase
-            .from('perfiles_gestor')
-            .update(cambios)
-            .eq('id', id)
-            .select();
-
-        if (error) {
-            throw new Error(`Error al actualizar estado del gestor: ${error.message}`);
-        }
-
-        // Aprobar la empresa aprueba también los materiales que declaró: sin
-        // materiales verificados el gestor no ve ninguna solicitud. Los que no
-        // correspondan al permiso se quitan en «Editar entidad».
-        if (estadoUpper === 'APROBADO') {
+            // Se verifican antes de aprobar: así el aviso de materiales
+            // verificados (migración 20261003000100) no se suma al de aprobación.
             const { error: errorMateriales } = await supabase
                 .from('gestor_material')
                 .update({ verificado: true })
                 .eq('gestor_id', id)
                 .eq('verificado', false);
-
             if (errorMateriales) {
-                throw new Error(`El gestor quedó aprobado, pero no se pudieron verificar sus materiales: ${errorMateriales.message}`);
+                throw new Error(`No pudimos verificar los materiales del gestor: ${errorMateriales.message}`);
             }
         }
-        return data;
+
+        const observacion = textoOpcional(String(motivo || '').slice(0, 300));
+        const { error } = await supabase.rpc('cambiar_verificacion_gestor_admin', {
+            p_gestor_id: parseInt(id, 10),
+            p_estado: estadoUpper,
+            p_observacion: observacion,
+            p_admin: admin || null
+        });
+
+        if (!error) return { motivoGuardado: true };
+
+        if (!faltaEnEsquema(error)) {
+            throw new Error(`No pudimos cambiar el estado del gestor: ${error.message}`);
+        }
+
+        // Sin la migración el estado igual se guarda, sin motivo ni historial.
+        const { error: errorDirecto } = await supabase
+            .from('perfiles_gestor')
+            .update({ estado_verificacion: estadoUpper })
+            .eq('id', id);
+        if (errorDirecto) {
+            throw new Error(`No pudimos cambiar el estado del gestor: ${errorDirecto.message}`);
+        }
+        return { motivoGuardado: observacion === null };
+    },
+
+    // Historial de decisiones del administrador; null si falta la migración.
+    async getDecisiones(id) {
+        const { data, error } = await supabase
+            .from('gestor_decisiones')
+            .select('id, estado, observacion, creado_por, created_at')
+            .eq('gestor_id', id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) return null;
+        return data || [];
+    },
+
+    async verificarMaterial(id, materialId) {
+        const { data, error } = await supabase
+            .from('gestor_material')
+            .update({ verificado: true })
+            .eq('gestor_id', id)
+            .eq('material_id', materialId)
+            .select('material_id');
+        if (error) throw new Error(`No pudimos verificar el material: ${error.message}`);
+        if (!data || data.length === 0) throw new Error('El gestor ya no tiene ese material.');
+        return true;
+    },
+
+    async quitarMaterial(id, materialId) {
+        const { error } = await supabase
+            .from('gestor_material')
+            .delete()
+            .eq('gestor_id', id)
+            .eq('material_id', materialId);
+        if (error) throw new Error(`No pudimos quitar el material: ${error.message}`);
+        return true;
+    },
+
+    async verificarTodos(id) {
+        const { data, error } = await supabase
+            .from('gestor_material')
+            .update({ verificado: true })
+            .eq('gestor_id', id)
+            .eq('verificado', false)
+            .select('material_id');
+        if (error) throw new Error(`No pudimos verificar los materiales: ${error.message}`);
+        return (data || []).length;
     },
 
     // Enlace temporal al permiso ambiental. El bucket es privado: el enlace
@@ -416,10 +458,10 @@ const gestorService = {
             .from('perfiles_gestor')
             .select('permiso_path')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
         if (error || !data || !data.permiso_path) {
-            throw new Error('Este gestor no adjuntó un permiso ambiental.');
+            throw new Error('Este gestor no tiene un permiso ambiental adjunto.');
         }
 
         const { data: firmado, error: errorFirma } = await supabase.storage
@@ -427,21 +469,80 @@ const gestorService = {
             .createSignedUrl(data.permiso_path, 600);
 
         if (errorFirma || !firmado) {
-            throw new Error(`No se pudo abrir el permiso: ${errorFirma ? errorFirma.message : 'archivo no encontrado'}`);
+            throw new Error(`No pudimos abrir el permiso: ${errorFirma ? errorFirma.message : 'archivo no encontrado'}`);
         }
         return firmado.signedUrl;
     },
 
-    // Elimina el gestor y sus dependencias en la tabla intermedia
+    // Sube o reemplaza el permiso desde el panel. Se valida en el servidor que
+    // sea un PDF real de máximo 10 MB.
+    async subirPermiso(id, contenido) {
+        if (!Buffer.isBuffer(contenido) || contenido.length === 0) {
+            throw new Error('Adjunta el permiso ambiental en PDF.');
+        }
+        if (contenido.length > TAMANO_MAXIMO_PERMISO) {
+            throw new Error('El PDF supera los 10 MB.');
+        }
+        if (contenido.subarray(0, 5).toString('latin1') !== '%PDF-') {
+            throw new Error('El archivo no es un PDF válido.');
+        }
+
+        const { data: actual, error: errorActual } = await supabase
+            .from('perfiles_gestor')
+            .select('id, permiso_path')
+            .eq('id', id)
+            .maybeSingle();
+        if (errorActual || !actual) {
+            throw new Error('No encontramos el gestor.');
+        }
+
+        const ruta = `admin/${actual.id}/${crypto.randomUUID()}.pdf`;
+        const { error: errorSubida } = await supabase.storage
+            .from('permisos')
+            .upload(ruta, contenido, { contentType: 'application/pdf', upsert: false });
+        if (errorSubida) {
+            throw new Error(`No pudimos subir el permiso: ${errorSubida.message}`);
+        }
+
+        const { error } = await supabase
+            .from('perfiles_gestor')
+            .update({ permiso_path: ruta })
+            .eq('id', id);
+        if (error) {
+            await supabase.storage.from('permisos').remove([ruta]);
+            throw new Error(`No pudimos guardar el permiso: ${error.message}`);
+        }
+
+        // Solo se borra el reemplazado si lo subió el panel: el que adjuntó la
+        // empresa al registrarse queda como soporte de su solicitud.
+        if (actual.permiso_path && actual.permiso_path.startsWith('admin/')) {
+            await supabase.storage.from('permisos').remove([actual.permiso_path]);
+        }
+        return ruta;
+    },
+
+    // Solo se borra una empresa sin historia. Con cuenta en la app,
+    // postulaciones o recolecciones asignadas, se suspende.
     async deleteGestor(id) {
         if (!id) {
             throw new Error('El identificador del gestor es obligatorio para la eliminación.');
         }
 
-        await supabase
+        const dependencias = await this.getDependencias(id);
+        if (dependencias.tieneHistoria) {
+            throw errorConCodigo(
+                'No se puede eliminar: el gestor tiene cuenta en la app, postulaciones o recolecciones. Suspéndelo en su lugar.',
+                'TIENE_HISTORIA'
+            );
+        }
+
+        const { error: errorMateriales } = await supabase
             .from('gestor_material')
             .delete()
             .eq('gestor_id', id);
+        if (errorMateriales) {
+            throw new Error(`No pudimos eliminar los materiales del gestor: ${errorMateriales.message}`);
+        }
 
         const { error } = await supabase
             .from('perfiles_gestor')
@@ -449,9 +550,8 @@ const gestorService = {
             .eq('id', id);
 
         if (error) {
-            throw new Error(`Error en base de datos al eliminar gestor: ${error.message}`);
+            throw new Error(`No pudimos eliminar el gestor: ${error.message}`);
         }
-
         return true;
     }
 };

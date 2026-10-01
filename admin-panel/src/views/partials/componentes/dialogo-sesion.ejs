@@ -1,0 +1,12 @@
+<dialog id="dialogoSesion" class="dialogo" aria-labelledby="dialogoSesionTitulo" aria-describedby="dialogoSesionTexto">
+  <h2 id="dialogoSesionTitulo" class="dialogo-titulo">Tu sesión vence en 2 minutos</h2>
+  <p id="dialogoSesionTexto" class="mt-4 text-body-l text-on-surface-variant">
+    Por seguridad, la sesión se cierra tras 15 minutos sin actividad. Si sigues conectado, no pierdes lo que estás escribiendo.
+  </p>
+  <div class="dialogo-acciones">
+    <form action="/logout" method="POST" class="m-0">
+      <button type="submit" class="btn-text">Cerrar sesión</button>
+    </form>
+    <button type="button" class="btn-filled" id="botonSeguirConectado">Seguir conectado</button>
+  </div>
+</dialog>

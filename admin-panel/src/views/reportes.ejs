@@ -1,0 +1,172 @@
+<%- include('partials/header', { activeTab: 'reportes', titulo: 'Reportes' }) %>
+<%
+  const paramsCsv = new URLSearchParams();
+  if (filtros.desde) paramsCsv.set('desde', filtros.desde);
+  if (filtros.hasta) paramsCsv.set('hasta', filtros.hasta);
+  if (filtros.categoria) paramsCsv.set('categoria', filtros.categoria);
+  const enlaceCsv = '/reportes/csv' + (paramsCsv.toString() ? '?' + paramsCsv.toString() : '');
+%>
+
+<div class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="titulo-pagina">Reciclaje por municipio</h1>
+      <p class="mt-1 text-body-l text-on-surface-variant">Cuánto se recicla en cada municipio, para la dirección y las autoridades ambientales.</p>
+    </div>
+    <div class="no-imprimir flex flex-wrap gap-2">
+      <button type="button" class="btn-outlined" onclick="window.print()">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">print</span>
+        Imprimir o guardar en PDF
+      </button>
+      <a href="<%= enlaceCsv %>" class="btn-filled" download>
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">download</span>
+        Descargar CSV
+      </a>
+    </div>
+  </div>
+
+  <div class="solo-impresion text-body-s">
+    <p>Panel EcoResiduos · Reporte generado el <%= generado %> (hora de Colombia).</p>
+    <p>Filtros aplicados: <%= descripcion %>.</p>
+  </div>
+
+  <form method="GET" action="/reportes" class="no-imprimir tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Filtrar el reporte" data-validar>
+    <div class="campo">
+      <label for="reporteDesde" class="campo-etiqueta">Confirmadas desde</label>
+      <input type="date" id="reporteDesde" name="desde" value="<%= filtros.desde %>" class="campo-control">
+    </div>
+    <div class="campo">
+      <label for="reporteHasta" class="campo-etiqueta">Confirmadas hasta</label>
+      <input type="date" id="reporteHasta" name="hasta" value="<%= filtros.hasta %>" class="campo-control">
+    </div>
+    <div class="campo">
+      <label for="reporteCategoria" class="campo-etiqueta">Categoría</label>
+      <select id="reporteCategoria" name="categoria" class="campo-control">
+        <option value="">Todas las categorías</option>
+        <% f.CATEGORIAS_CATALOGO.forEach(function (c) { %>
+          <option value="<%= c %>" <%= filtros.categoria === c ? 'selected' : '' %>><%= f.etiquetaCategoria(c) %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="flex items-end justify-end gap-2">
+      <a href="/reportes" class="btn-text">Limpiar</a>
+      <button type="submit" class="btn-tonal">Aplicar filtros</button>
+    </div>
+    <p class="campo-ayuda md:col-span-2 xl:col-span-4">Las fechas son de Colombia (hora de Bogotá) y se filtran por la fecha de confirmación de la recolección.</p>
+  </form>
+
+  <% if (errorCarga) { %>
+    <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar el reporte.', detalle: errorCarga, reintentar: urlActual }) %>
+  <% } else { %>
+    <p class="text-body-m text-on-surface-variant"><strong>Filtros:</strong> <%= descripcion %>.</p>
+
+    <div class="tabla-contenedor" role="region" aria-labelledby="captionReporte" tabindex="0">
+      <table class="tabla">
+        <caption id="captionReporte">Número de recolecciones confirmadas por municipio y categoría</caption>
+        <thead>
+          <tr>
+            <th scope="col">Municipio</th>
+            <% reporte.categorias.forEach(function (c) { %>
+              <th scope="col" class="num"><%= c.etiqueta %></th>
+            <% }); %>
+            <th scope="col" class="num">Total confirmadas</th>
+            <th scope="col" class="num">Recolectadas sin confirmar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reporte.filas.forEach(function (fila) { %>
+            <tr>
+              <th scope="row"><%= fila.municipio %></th>
+              <% reporte.categorias.forEach(function (c) { %>
+                <td class="num"><%= f.formatoNumero(fila.porCategoria[c.clave]) %></td>
+              <% }); %>
+              <td class="num font-semibold"><%= f.formatoNumero(fila.confirmadas) %></td>
+              <td class="num"><%= f.formatoNumero(fila.sinConfirmar) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Total</th>
+            <% reporte.categorias.forEach(function (c) { %>
+              <td class="num"><%= f.formatoNumero(reporte.total.porCategoria[c.clave]) %></td>
+            <% }); %>
+            <td class="num"><%= f.formatoNumero(reporte.total.confirmadas) %></td>
+            <td class="num"><%= f.formatoNumero(reporte.total.sinConfirmar) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="nota nota-info">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      <div class="flex flex-col gap-1 text-body-m">
+        <p>Se cuentan las recolecciones confirmadas por el generador o confirmadas solas a las 72 horas. Las que tienen un problema reportado sin confirmar no se cuentan.</p>
+        <p>«Recolectadas sin confirmar» muestra las que el gestor marcó como recolectadas y aún no se confirman: si la confirmación automática (pg_cron) no está activa, aquí se acumulan.</p>
+        <% if (reporte.hayOtro) { %><p>«Otro / sin dato» agrupa las solicitudes cuyo municipio no es uno de los 6 donde opera EcoResiduos.</p><% } %>
+      </div>
+    </div>
+
+    <section aria-labelledby="tituloUnidades" class="flex flex-col gap-3">
+      <h2 id="tituloUnidades" class="seccion-titulo">Cantidades declaradas por unidad</h2>
+      <% if (reporte.unidades.length === 0) { %>
+        <p class="text-body-m text-on-surface-variant">No hay recolecciones confirmadas con estos filtros.</p>
+      <% } else { %>
+        <p class="text-body-m text-on-surface-variant">Cada columna suma solo las cantidades declaradas en esa unidad: no se convierten ni se mezclan unidades.</p>
+        <div class="tabla-contenedor" role="region" aria-labelledby="captionUnidades" tabindex="0">
+          <table class="tabla">
+            <caption id="captionUnidades">Cantidades estimadas por los generadores, en la unidad que cada uno declaró</caption>
+            <thead>
+              <tr>
+                <th scope="col">Municipio</th>
+                <% reporte.unidades.forEach(function (u) { %>
+                  <th scope="col" class="num"><%= u.etiqueta %></th>
+                <% }); %>
+              </tr>
+            </thead>
+            <tbody>
+              <% reporte.filas.forEach(function (fila) { %>
+                <tr>
+                  <th scope="row"><%= fila.municipio %></th>
+                  <% reporte.unidades.forEach(function (u) { %>
+                    <td class="num"><%= f.formatoNumero(fila.porUnidad[u.clave]) %></td>
+                  <% }); %>
+                </tr>
+              <% }); %>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Total</th>
+                <% reporte.unidades.forEach(function (u) { %>
+                  <td class="num"><%= f.formatoNumero(reporte.total.porUnidad[u.clave]) %></td>
+                <% }); %>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      <% } %>
+    </section>
+
+    <figure class="tarjeta flex flex-col gap-3">
+      <figcaption id="tituloGraficoReporte" class="tarjeta-titulo">Recolecciones confirmadas por municipio</figcaption>
+      <p id="descGraficoReporte" class="text-body-m text-on-surface-variant">
+        Mismos datos de la columna «Total confirmadas» de la tabla:
+        <%= reporte.filas.map(function (fila) { return fila.municipio + ' ' + f.formatoNumero(fila.confirmadas); }).join('; ') %>.
+      </p>
+      <div class="relative h-72">
+        <canvas data-grafico="datosReporte" role="img" aria-labelledby="tituloGraficoReporte" aria-describedby="descGraficoReporte"></canvas>
+      </div>
+    </figure>
+
+    <script type="application/json" id="datosReporte"><%- jsonParaScript({
+      tipo: 'bar',
+      serie: 'Recolecciones confirmadas',
+      etiquetas: reporte.filas.map(function (fila) { return fila.municipio; }),
+      valores: reporte.filas.map(function (fila) { return fila.confirmadas; }),
+      colores: ['--md-sys-color-primary']
+    }) %></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

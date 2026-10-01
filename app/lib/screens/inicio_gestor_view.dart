@@ -51,7 +51,10 @@ class _InicioGestorViewState extends State<InicioGestorView> {
   Future<void> _actualizarEnSilencio() async {
     try {
       final resumen = await _cargar();
-      if (mounted) setState(() => _resumen = Future.value(resumen));
+      if (!mounted) return;
+      setState(() {
+        _resumen = Future.value(resumen);
+      });
     } catch (e) {
       debugPrint('No se pudo actualizar el inicio del gestor: $e');
     }
@@ -74,7 +77,9 @@ class _InicioGestorViewState extends State<InicioGestorView> {
 
   Future<void> _recargar() async {
     final futuro = _cargar();
-    setState(() => _resumen = futuro);
+    setState(() {
+      _resumen = futuro;
+    });
     await futuro;
   }
 

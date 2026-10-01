@@ -42,3 +42,18 @@ supabase/.env
 *.sqlite
 *.sqlite3
 *.db
+
+# Asistentes de IA, prompts y agentes
+*PROMPT*
+*prompt*
+PROMPT*
+prompt*
+*.prompt
+*.prompt.md
+.claude/
+.gemini/
+.agents/
+.cursor/
+.windsurf/
+.antigravity/
+.system_generated/

@@ -1,0 +1,17 @@
+<%
+  // Encabezado de columna ordenable: anuncia el orden con aria-sort y el
+  // enlace cambia el orden en la URL (el servidor ordena la consulta).
+  const asc = ordenActual === campo;
+  const desc = ordenActual === '-' + campo;
+  const siguiente = asc ? '-' + campo : campo;
+  const params = new URLSearchParams();
+  Object.entries(query || {}).forEach(function (par) {
+    if (!['orden', 'pagina', 'msg', 'type', 'success', 'error'].includes(par[0]) && par[1]) params.set(par[0], String(par[1]));
+  });
+  params.set('orden', siguiente);
+%><th scope="col" aria-sort="<%= asc ? 'ascending' : (desc ? 'descending' : 'none') %>"<%- typeof clase !== 'undefined' ? ' class="' + clase + '"' : '' %>>
+  <a class="orden-enlace" href="<%= ruta %>?<%= params.toString() %>">
+    <%= texto %>
+    <span class="material-symbols-outlined icono-18" aria-hidden="true"><%= asc ? 'arrow_upward' : (desc ? 'arrow_downward' : 'unfold_more') %></span>
+  </a>
+</th>

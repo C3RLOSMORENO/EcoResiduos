@@ -1,4 +1,3 @@
-/// Entidad inmutable que representa a un gestor ambiental registrado en el padrón oficial.
 class GestorPadron {
   final int id;
   final String nit;
@@ -9,8 +8,6 @@ class GestorPadron {
   final String? telefono;
   final String? direccion;
   final String? municipio;
-
-  /// Materiales que la empresa ya tiene registrados en el padrón.
   final List<int> materialIds;
 
   const GestorPadron({
@@ -26,16 +23,10 @@ class GestorPadron {
     this.materialIds = const [],
   });
 
-  /// Indica si la entidad gestora ya cuenta con una cuenta de usuario vinculada.
   bool get tieneCuentaActiva => usuarioId != null && usuarioId!.isNotEmpty;
-
-  /// Indica si el registro se encuentra aprobado en el padrón ambiental.
   bool get estaAprobado => estadoVerificacion.toUpperCase() == 'APROBADO';
-
-  /// Sin correo en el padrón no hay a dónde enviar el enlace de activación.
   bool get tieneCorreo => emailOficial?.isNotEmpty ?? false;
 
-  /// Construye una instancia a partir de la respuesta relacional de la base de datos.
   factory GestorPadron.fromMap(Map<String, dynamic> map) {
     String? texto(String clave) {
       final valor = map[clave]?.toString().trim();
@@ -59,7 +50,6 @@ class GestorPadron {
     );
   }
 
-  /// Serializa la entidad a formato mapa.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -71,3 +61,4 @@ class GestorPadron {
     };
   }
 }
+

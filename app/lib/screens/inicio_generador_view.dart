@@ -34,7 +34,9 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
 
   Future<void> _recargar() async {
     final futuro = _cargar();
-    setState(() => _resumen = futuro);
+    setState(() {
+      _resumen = futuro;
+    });
     await futuro;
   }
 

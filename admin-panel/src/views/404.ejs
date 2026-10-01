@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <%- include('partials/head', { titulo: typeof titulo !== 'undefined' ? titulo : 'Página no encontrada' }) %>
+</head>
+<body class="flex min-h-screen flex-col">
+  <a href="#contenido" class="saltar">Saltar al contenido</a>
+  <main id="contenido" tabindex="-1" class="flex flex-1 items-center justify-center px-4 py-12">
+    <div class="flex w-full max-w-lg flex-col items-center gap-4 rounded-xl bg-surface-container-low p-6 text-center md:p-10">
+      <span class="material-symbols-outlined text-[48px] text-on-surface-variant" aria-hidden="true"><%= typeof icono !== 'undefined' ? icono : 'travel_explore' %></span>
+      <h1 class="font-display text-headline-l text-on-surface"><%= typeof titulo !== 'undefined' ? titulo : 'Página no encontrada' %></h1>
+      <p class="text-body-l text-on-surface-variant"><%= typeof mensaje !== 'undefined' ? mensaje : 'La página que buscas no existe o cambió de dirección.' %></p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <a href="/dashboard" class="btn-filled">Ir al inicio</a>
+        <a href="/login" class="btn-text">Iniciar sesión</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

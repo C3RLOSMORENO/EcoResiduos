@@ -1,0 +1,21 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= typeof titulo !== 'undefined' && titulo ? titulo + ' · Panel EcoResiduos' : 'Panel EcoResiduos' %></title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<script>
+  // Antes de pintar: tema guardado (o el del sistema) y marca de JavaScript activo.
+  (function () {
+    var raiz = document.documentElement;
+    raiz.classList.add('js');
+    var tema = null;
+    try { tema = localStorage.getItem('theme'); } catch (e) {}
+    if (tema === 'dark') raiz.setAttribute('data-tema', 'oscuro');
+    if (tema === 'light') raiz.setAttribute('data-tema', 'claro');
+  })();
+</script>
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/main.js" defer></script>

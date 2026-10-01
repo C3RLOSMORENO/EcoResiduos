@@ -1,0 +1,32 @@
+<% if (pag && pag.total > 0) { %>
+  <nav class="paginacion no-imprimir" aria-label="Paginación de <%= nombre %>">
+    <p>Mostrando <%= pag.desde %>–<%= pag.hasta %> de <%= f.formatoNumero(pag.total) %> <%= nombre %></p>
+    <% if (pag.totalPaginas > 1) { %>
+      <ul class="flex flex-wrap items-center gap-2" role="list">
+        <li>
+          <% if (pag.anterior) { %>
+            <a class="btn-outlined btn-sm" href="<%= pag.anterior %>">
+              <span class="material-symbols-outlined icono-20" aria-hidden="true">chevron_left</span>Anterior
+            </a>
+          <% } else { %>
+            <span class="btn-outlined btn-sm" aria-disabled="true">
+              <span class="material-symbols-outlined icono-20" aria-hidden="true">chevron_left</span>Anterior
+            </span>
+          <% } %>
+        </li>
+        <li><span aria-current="page" class="px-2 text-label-l text-on-surface">Página <%= pag.pagina %> de <%= pag.totalPaginas %></span></li>
+        <li>
+          <% if (pag.siguiente) { %>
+            <a class="btn-outlined btn-sm" href="<%= pag.siguiente %>">
+              Siguiente<span class="material-symbols-outlined icono-20" aria-hidden="true">chevron_right</span>
+            </a>
+          <% } else { %>
+            <span class="btn-outlined btn-sm" aria-disabled="true">
+              Siguiente<span class="material-symbols-outlined icono-20" aria-hidden="true">chevron_right</span>
+            </span>
+          <% } %>
+        </li>
+      </ul>
+    <% } %>
+  </nav>
+<% } %>
