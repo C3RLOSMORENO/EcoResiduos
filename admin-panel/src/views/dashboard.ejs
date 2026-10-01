@@ -1,349 +1,275 @@
-﻿<%- include('partials/header', { activeTab: 'dashboard' }) %>
+<%- include('partials/header', { activeTab: 'dashboard', titulo: 'Inicio' }) %>
 
-<div class="max-w-7xl mx-auto space-y-8">
-  <%- include('partials/alert') %>
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="titulo-pagina">Inicio</h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">Lo que necesita tu atención hoy y cómo va el reciclaje en Santander.</p>
+  </div>
 
-  <!-- Cabecera del Dashboard -->
-  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-    <div>
-      <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
-        <span>EcoManager Santander</span>
-        <span>/</span>
-        <span class="text-slate-800 dark:text-slate-200 font-bold">Panel Principal</span>
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Panel de Control Ambiental</h1>
-      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-        Supervisión en tiempo real de recolecciones, gestión de residuos y certificación de gestores en Santander
-      </p>
-    </div>
-    
-  </header>
+  <% if (errorCarga) { %>
+    <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar el inicio.', detalle: errorCarga, reintentar: '/dashboard' }) %>
+  <% } else { %>
 
-  <!-- Tarjetas KPI -->
-  <section aria-label="Métricas Principales" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <!-- Total Solicitudes -->
-    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Solicitudes</span>
-        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-2xl">receipt_long</span>
-        </div>
-      </div>
-      <div class="mt-4 flex items-baseline gap-2">
-        <span class="text-3xl font-bold text-slate-900 dark:text-slate-100"><%= kpis.totalSolicitudes %></span>
-        <span class="text-xs text-slate-500">publicadas</span>
-      </div>
-      <div class="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-        <span class="font-medium text-emerald-600 dark:text-emerald-400"><%= kpis.solicitudesPublicadas %> activas</span>
-        <span>•</span>
-        <span><%= kpis.solicitudesEnProceso %> en negociación</span>
-      </div>
+  <% if (erroresCarga && erroresCarga.length > 0) { %>
+    <div class="nota nota-advertencia" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+      <p>Algunas cifras no se pudieron cargar (<%= erroresCarga.join(', ') %>) y aparecen en 0. <a class="enlace text-on-tertiary-container" href="/dashboard">Reintentar</a></p>
     </div>
+  <% } %>
 
-    <!-- Solicitudes Recolectadas -->
-    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recolectadas</span>
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-2xl">check_circle</span>
-        </div>
-      </div>
-      <div class="mt-4 flex items-baseline gap-2">
-        <span class="text-3xl font-bold text-emerald-700 dark:text-emerald-400"><%= kpis.solicitudesRecolectadas %></span>
-        <span class="text-xs text-slate-500">completadas</span>
-      </div>
-      <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        <% const tasa = kpis.totalSolicitudes > 0 ? Math.round((kpis.solicitudesRecolectadas / kpis.totalSolicitudes) * 100) : 0; %>
-        <span class="font-semibold text-emerald-600 dark:text-emerald-400"><%= tasa %>%</span> tasa de efectividad
-      </div>
-    </div>
-
-    <!-- Gestores Pendientes de Verificación -->
-    <div class="m3-surface-container p-5 rounded-2xl border <%= kpis.gestoresPendientesCount > 0 ? 'border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/10' : 'border-slate-200/80 dark:border-slate-800' %> hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gestores Pendientes</span>
-        <div class="w-10 h-10 rounded-xl <%= kpis.gestoresPendientesCount > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600' %> flex items-center justify-center">
-          <span class="material-symbols-outlined text-2xl">pending_actions</span>
-        </div>
-      </div>
-      <div class="mt-4 flex items-baseline gap-2">
-        <span class="text-3xl font-bold <%= kpis.gestoresPendientesCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100' %>">
-          <%= kpis.gestoresPendientesCount %>
-        </span>
-        <span class="text-xs text-slate-500">por auditar</span>
-      </div>
-      <div class="mt-3 text-xs">
-        <% if (kpis.gestoresPendientesCount > 0) { %>
-          <span class="text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
-            <span class="material-symbols-outlined text-sm">priority_high</span> Requieren revisión inmediata
-          </span>
-        <% } else { %>
-          <span class="text-slate-500 dark:text-slate-400 font-medium">Al día sin pendientes</span>
-        <% } %>
-      </div>
-    </div>
-
-    <!-- Red de Gestores y Catálogo -->
-    <div class="m3-surface-container p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Red Certificada</span>
-        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-2xl">verified</span>
-        </div>
-      </div>
-      <div class="mt-4 flex items-baseline gap-2">
-        <span class="text-3xl font-bold text-slate-900 dark:text-slate-100"><%= kpis.gestoresAprobados %></span>
-        <span class="text-xs text-slate-500">gestores certificados</span>
-      </div>
-      <div class="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-        <span><%= kpis.totalMateriales %> tipos de residuos</span>
-        <span>•</span>
-        <span><%= kpis.totalAutoridades %> autoridades</span>
-      </div>
-    </div>
-  </section>
-  <!-- Panel de Gráficos (Añadido) -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-8">
-    <div class="m3-surface-container p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-      <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-brand dark:text-emerald-400">pie_chart</span>
-        Estado de las Solicitudes
-      </h3>
-      <div class="relative h-64 w-full">
-        <canvas id="estadoSolicitudesChart"></canvas>
-      </div>
-    </div>
-    
-    <div class="m3-surface-container p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-      <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-brand dark:text-emerald-400">bar_chart</span>
-        Solicitudes por Municipio
-      </h3>
-      <div class="relative h-64 w-full">
-        <canvas id="municipiosChart"></canvas>
-      </div>
-    </div>
+  <section aria-labelledby="tituloPendientes" class="flex flex-col gap-4">
+    <h2 id="tituloPendientes" class="seccion-titulo">Pendientes de acción</h2>
+    <%
+      const tarjetasPendientes = [
+        { cifra: pendientesAccion.gestoresPorRevisar, titulo: 'Gestores por revisar', texto: 'Empresas registradas desde la app que esperan aprobación.', href: '/gestores?estado=PENDIENTE', icono: 'how_to_reg' },
+        { cifra: pendientesAccion.materialesPorVerificar, titulo: 'Materiales por verificar', texto: 'Materiales nuevos de gestores ya aprobados.', href: '/gestores?estado=APROBADO&por_verificar=1', icono: 'fact_check' },
+        { cifra: pendientesAccion.problemasReportados, titulo: 'Problemas reportados', texto: 'Recolecciones que el generador reportó con problemas.', href: '/solicitudes?problema=1', icono: 'report' },
+        { cifra: pendientesAccion.sinCertificado, titulo: 'Sin certificado hace más de 7 días', texto: 'Recolecciones sin certificado de disposición o aprovechamiento.', href: '/solicitudes?sin_certificado=1', icono: 'description' }
+      ];
+    %>
+    <ul class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" role="list">
+      <% tarjetasPendientes.forEach(function (t) { %>
+        <li>
+          <a href="<%= t.href %>" class="tarjeta-accion h-full <%= t.cifra > 0 ? 'tarjeta-accion-activa' : '' %>">
+            <span class="material-symbols-outlined" aria-hidden="true"><%= t.icono %></span>
+            <span class="flex flex-1 flex-col">
+              <span class="kpi-cifra text-inherit"><%= f.formatoNumero(t.cifra) %></span>
+              <span class="text-title-s"><%= t.titulo %></span>
+              <span class="text-body-s"><%= t.texto %></span>
+            </span>
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </a>
+        </li>
+      <% }); %>
+    </ul>
   </section>
 
-  <!-- Sección de Auditoría Urgente de Gestores -->
-  <% if (gestoresPendientes && gestoresPendientes.length > 0) { %>
-    <section aria-labelledby="seccion-auditoria" class="m3-surface-container rounded-2xl border border-amber-200 dark:border-amber-800/80 p-6 bg-gradient-to-r from-amber-50/50 via-white to-amber-50/20 dark:from-amber-950/20 dark:via-slate-900 dark:to-amber-950/10">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        
-
-      <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 uppercase font-semibold">
+  <section aria-labelledby="tituloPorRevisar" class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="tituloPorRevisar" class="seccion-titulo">Gestores por revisar</h2>
+      <a href="/gestores?estado=PENDIENTE" class="btn-text">Ver todos</a>
+    </div>
+    <% if (gestoresPendientes.length > 0) { %>
+      <div class="tabla-contenedor" role="region" aria-labelledby="tituloPorRevisar" tabindex="0">
+        <table class="tabla">
+          <caption class="sr-only">Gestores por revisar, del más antiguo al más reciente</caption>
+          <thead>
             <tr>
-              <th class="py-3 px-4">Razón Social / NIT</th>
-              <th class="py-3 px-4">Municipio</th>
-              <th class="py-3 px-4">Contacto</th>
-              <th class="py-3 px-4">Estado</th>
-              <th class="py-3 px-4 text-right">Acción de Auditoría</th>
+              <th scope="col">Empresa</th>
+              <th scope="col">Municipio</th>
+              <th scope="col">Registro</th>
+              <th scope="col"><span class="sr-only">Acción</span></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <% gestoresPendientes.forEach(g => { %>
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                <td class="py-3 px-4">
-                  <div class="font-bold text-slate-900 dark:text-slate-100"><%= g.razon_social %></div>
-                  <div class="text-[11px] font-mono text-slate-500">NIT: <%= g.nit %></div>
+          <tbody>
+            <% gestoresPendientes.forEach(function (g) { %>
+              <tr>
+                <th scope="row">
+                  <%= g.razon_social || 'Sin razón social' %>
+                  <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
+                </th>
+                <td><%= g.municipio ? f.capitalizar(g.municipio) : 'Sin dato' %></td>
+                <td>
+                  <%= f.fechaCorta(g.created_at) %>
+                  <% if (g.permiso_path) { %><span class="block text-body-s text-on-surface-variant">Registrado desde la app, con permiso</span><% } %>
                 </td>
-                <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
-                  <%= g.municipio || 'Bucaramanga' %>
-                </td>
-                <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
-                  <div><%= g.email_contacto %></div>
-                  <div class="text-[11px]"><%= g.telefono_contacto %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-                    PENDIENTE
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <form action="/gestores/estado/<%= g.id %>" method="POST" onsubmit="return confirm('¿Confirmas la APROBACIÃ“N formal de este gestor ambiental para operar en Santander?');" class="inline">
-                      <input type="hidden" name="estado" value="APROBADO">
-                      <input type="hidden" name="redirectUrl" value="/dashboard">
-                      <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">check</span>
-                        <span>Aprobar</span>
-                      </button>
-                    </form>
-                    <form action="/gestores/estado/<%= g.id %>" method="POST" onsubmit="return confirm('¿Confirmas el RECHAZO formal de esta solicitud de gestor ambiental?');" class="inline">
-                      <input type="hidden" name="estado" value="RECHAZADO">
-                      <input type="hidden" name="redirectUrl" value="/dashboard">
-                      <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                        <span>Rechazar</span>
-                      </button>
-                    </form>
-                  </div>
+                <td class="text-right">
+                  <a href="/gestores/<%= g.id %>" class="btn-tonal btn-sm" aria-label="Revisar <%= g.razon_social %>">Revisar</a>
                 </td>
               </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
-    </section>
-  <% } %>
-
-  <!-- Panel de dos columnas: Solicitudes Recientes y Accesos Rápidos -->
-  <div class="grid grid-cols-1 gap-6">
-    <!-- Ãšltimas Solicitudes Registradas (2 Cols) -->
-    <div class="m3-surface-container rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <span class="material-symbols-outlined text-brand dark:text-emerald-400">history</span>
-            <span>Solicitudes Recientes en Santander</span>
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ãšltimos residuos reportados por generadores en la plataforma</p>
-        </div>
+    <% } else { %>
+      <div class="tarjeta">
+        <%- include('partials/componentes/estado-vacio', { icono: 'task_alt', titulo: 'Aún no hay gestores por revisar', texto: 'Cuando una empresa se registre desde la app, aparecerá aquí para revisar su permiso y sus materiales.' }) %>
       </div>
+    <% } %>
+  </section>
 
-      <% if (ultimasSolicitudes && ultimasSolicitudes.length > 0) { %>
-        <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 uppercase font-semibold">
-              <tr>
-                <th class="py-3 px-4">Residuo</th>
-                <th class="py-3 px-4">Cantidad</th>
-                <th class="py-3 px-4">Municipio</th>
-                <th class="py-3 px-4">Estado</th>
-                <th class="py-3 px-4">Fecha</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-              <% ultimasSolicitudes.forEach(s => { 
-                const mat = s.materiales_residuos || {};
-                let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-                if (s.estado === 'RECOLECTADO') badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-                else if (s.estado === 'EN_NEGOCIACION') badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
-                else if (s.estado === 'PUBLICADO') badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
-                else if (s.estado === 'CANCELADO') badgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
-              %>
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                  <td class="py-3 px-4">
-                    <div class="font-bold text-slate-900 dark:text-slate-100"><%= mat.nombre_comun || 'Residuo #' + s.id %></div>
-                    <div class="text-[11px] text-slate-500 font-mono"><%= mat.codigo || 'S/' + s.id %></div>
-                  </td>
-                  <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
-                    <%= s.cantidad_estimada %> <span class="text-xs font-normal text-slate-500"><%= s.unidad_medida %></span>
-                  </td>
-                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400 capitalize">
-                    <%= (s.municipio || 'Bucaramanga').toLowerCase() %>
-                  </td>
-                  <td class="py-3 px-4">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase <%= badgeClass %>">
-                      <%= s.estado %>
-                    </span>
-                  </td>
-                  <td class="py-3 px-4 text-slate-500 text-[11px]">
-                    <%= s.created_at ? new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }) : '-' %>
-                  </td>
-                </tr>
+  <section aria-labelledby="tituloCifras" class="flex flex-col gap-4">
+    <h2 id="tituloCifras" class="seccion-titulo">Cifras generales</h2>
+    <dl class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <% [
+        ['Solicitudes', kpis.totalSolicitudes],
+        ['Publicadas', kpis.solicitudesPublicadas],
+        ['En negociación', kpis.solicitudesEnProceso],
+        ['Recolectadas', kpis.solicitudesRecolectadas],
+        ['Canceladas', kpis.solicitudesCanceladas],
+        ['Gestores', kpis.totalGestores],
+        ['Gestores por revisar', kpis.gestoresPendientesCount],
+        ['Gestores aprobados', kpis.gestoresAprobados],
+        ['Gestores rechazados', kpis.gestoresRechazados],
+        ['Postulaciones', kpis.totalPostulaciones]
+      ].forEach(function (kpi) { %>
+        <div class="tarjeta-kpi">
+          <dt class="text-label-l text-on-surface-variant"><%= kpi[0] %></dt>
+          <dd class="kpi-cifra"><%= f.formatoNumero(kpi[1]) %></dd>
+        </div>
+      <% }); %>
+    </dl>
+    <p class="text-body-m text-on-surface-variant">
+      Catálogo: <a class="enlace" href="/materiales"><%= f.formatoNumero(kpis.totalMateriales) %> materiales</a>
+      · <a class="enlace" href="/autoridades"><%= f.formatoNumero(kpis.totalAutoridades) %> autoridades ambientales</a>
+      <% if (kpis.gestoresSuspendidos > 0) { %> · <%= f.formatoNumero(kpis.gestoresSuspendidos) %> gestores suspendidos<% } %>
+    </p>
+  </section>
+
+  <%
+    const estadosGrafico = [
+      { etiqueta: 'Publicadas', valor: kpis.solicitudesPublicadas, color: '--eco-estado-publicado-color' },
+      { etiqueta: 'En negociación', valor: kpis.solicitudesEnProceso, color: '--eco-estado-en-negociacion-color' },
+      { etiqueta: 'Recolectadas', valor: kpis.solicitudesRecolectadas, color: '--eco-estado-recolectado-color' },
+      { etiqueta: 'Canceladas', valor: kpis.solicitudesCanceladas, color: '--eco-estado-cancelado-color' }
+    ];
+  %>
+  <section aria-labelledby="tituloGraficos" class="flex flex-col gap-4">
+    <h2 id="tituloGraficos" class="seccion-titulo">Solicitudes en gráficos</h2>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <figure class="tarjeta flex flex-col gap-3">
+        <figcaption id="tituloGraficoEstados" class="tarjeta-titulo">Estado de las solicitudes</figcaption>
+        <p id="descGraficoEstados" class="text-body-m text-on-surface-variant">
+          <%= estadosGrafico.map(function (e) { return e.etiqueta + ': ' + f.formatoNumero(e.valor); }).join('; ') %>.
+        </p>
+        <div class="relative h-64">
+          <canvas data-grafico="datosEstados" role="img" aria-labelledby="tituloGraficoEstados" aria-describedby="descGraficoEstados"></canvas>
+        </div>
+        <details>
+          <summary class="btn-text w-fit">Ver como tabla</summary>
+          <table class="tabla mt-2">
+            <caption class="sr-only">Estado de las solicitudes</caption>
+            <thead><tr><th scope="col">Estado</th><th scope="col" class="num">Solicitudes</th></tr></thead>
+            <tbody>
+              <% estadosGrafico.forEach(function (e) { %>
+                <tr><th scope="row"><%= e.etiqueta %></th><td class="num"><%= f.formatoNumero(e.valor) %></td></tr>
               <% }); %>
             </tbody>
           </table>
-        </div>
-      <% } else { %>
-        <div class="py-12 text-center text-xs text-slate-400 italic">
-          No hay solicitudes de recolección registradas aún.
-        </div>
-      <% } %>
-    </div>
+        </details>
+      </figure>
 
+      <figure class="tarjeta flex flex-col gap-3">
+        <figcaption id="tituloGraficoMunicipios" class="tarjeta-titulo">Solicitudes por municipio</figcaption>
+        <p id="descGraficoMunicipios" class="text-body-m text-on-surface-variant">
+          <%= chartData.municipiosLabels.map(function (m, i) { return m + ': ' + f.formatoNumero(chartData.municipiosData[i]); }).join('; ') %>.
+        </p>
+        <div class="relative h-64">
+          <canvas data-grafico="datosMunicipios" role="img" aria-labelledby="tituloGraficoMunicipios" aria-describedby="descGraficoMunicipios"></canvas>
+        </div>
+        <details>
+          <summary class="btn-text w-fit">Ver como tabla</summary>
+          <table class="tabla mt-2">
+            <caption class="sr-only">Solicitudes por municipio</caption>
+            <thead><tr><th scope="col">Municipio</th><th scope="col" class="num">Solicitudes</th></tr></thead>
+            <tbody>
+              <% chartData.municipiosLabels.forEach(function (m, i) { %>
+                <tr><th scope="row"><%= m %></th><td class="num"><%= f.formatoNumero(chartData.municipiosData[i]) %></td></tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </details>
+      </figure>
     </div>
-  </div>
+  </section>
+
+  <% if (resumenReciclaje) { %>
+    <section aria-labelledby="tituloResumenReciclaje" class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="tituloResumenReciclaje" class="seccion-titulo">Reciclaje por municipio</h2>
+        <a href="/reportes" class="btn-filled">Ver reporte completo</a>
+      </div>
+      <div class="tabla-contenedor" role="region" aria-labelledby="tituloResumenReciclaje" tabindex="0">
+        <table class="tabla">
+          <caption>Número de recolecciones confirmadas desde el inicio, por municipio</caption>
+          <thead>
+            <tr>
+              <th scope="col">Municipio</th>
+              <th scope="col" class="num">Recolecciones confirmadas</th>
+              <th scope="col" class="num">Recolectadas sin confirmar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% resumenReciclaje.filas.forEach(function (fila) { %>
+              <tr>
+                <th scope="row"><%= fila.municipio %></th>
+                <td class="num"><%= f.formatoNumero(fila.confirmadas) %></td>
+                <td class="num"><%= f.formatoNumero(fila.sinConfirmar) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td class="num"><%= f.formatoNumero(resumenReciclaje.total.confirmadas) %></td>
+              <td class="num"><%= f.formatoNumero(resumenReciclaje.total.sinConfirmar) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <section aria-labelledby="tituloUltimas" class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="tituloUltimas" class="seccion-titulo">Últimas solicitudes</h2>
+      <a href="/solicitudes" class="btn-text">Ver todas</a>
+    </div>
+    <% if (ultimasSolicitudes.length > 0) { %>
+      <div class="tabla-contenedor" role="region" aria-labelledby="tituloUltimas" tabindex="0">
+        <table class="tabla">
+          <caption class="sr-only">Las 8 solicitudes más recientes</caption>
+          <thead>
+            <tr>
+              <th scope="col">Material</th>
+              <th scope="col">Cantidad</th>
+              <th scope="col">Municipio</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% ultimasSolicitudes.forEach(function (s) { const mat = s.materiales_residuos || {}; %>
+              <tr>
+                <th scope="row">
+                  <a class="enlace" href="/solicitudes/<%= s.id %>"><%= mat.nombre_comun || 'Solicitud ' + s.id %></a>
+                  <span class="mt-1 block"><%- include('partials/componentes/chip-categoria', { categoria: mat.categoria }) %></span>
+                </th>
+                <td class="whitespace-nowrap"><%= f.formatoCantidad(s.cantidad_estimada, s.unidad_medida) %></td>
+                <td><%= s.municipio ? f.capitalizar(s.municipio) : 'Sin dato' %></td>
+                <td>
+                  <%- include('partials/componentes/chip-estado', { estado: s.estado, tipo: 'solicitud' }) %>
+                  <% if (s.problema_reportado) { %><span class="chip chip-estado-error mt-1"><span class="material-symbols-outlined" aria-hidden="true">report</span>Problema reportado</span><% } %>
+                </td>
+                <td class="whitespace-nowrap"><%= f.fechaCorta(s.created_at) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="tarjeta">
+        <%- include('partials/componentes/estado-vacio', { titulo: 'Aún no hay solicitudes', texto: 'Cuando los generadores publiquen residuos desde la app, aparecerán aquí.' }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <script type="application/json" id="datosEstados"><%- jsonParaScript({
+    tipo: 'doughnut',
+    serie: 'Solicitudes',
+    etiquetas: estadosGrafico.map(function (e) { return e.etiqueta; }),
+    valores: estadosGrafico.map(function (e) { return e.valor; }),
+    colores: estadosGrafico.map(function (e) { return e.color; })
+  }) %></script>
+  <script type="application/json" id="datosMunicipios"><%- jsonParaScript({
+    tipo: 'bar',
+    serie: 'Solicitudes',
+    etiquetas: chartData.municipiosLabels,
+    valores: chartData.municipiosData,
+    colores: ['--md-sys-color-primary']
+  }) %></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <% } %>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Datos inyectados desde el Controller
-    const kpis = <%- JSON.stringify(kpis || {}) %>;
-    const chartData = <%- JSON.stringify(chartData || {municipiosLabels:[], municipiosData:[]}) %>;
-    
-    // Variables de color para Dark Mode (Opcional, pero se ve mejor)
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const textColor = isDarkMode ? '#cbd5e1' : '#475569';
-    const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
-
-    Chart.defaults.color = textColor;
-    Chart.defaults.font.family = "'Roboto', sans-serif";
-
-    // 1. Gráfico de Dona: Estado de Solicitudes
-    const ctxEstado = document.getElementById('estadoSolicitudesChart').getContext('2d');
-    new Chart(ctxEstado, {
-      type: 'doughnut',
-      data: {
-        labels: ['Recolectadas', 'En Negociación', 'Publicadas', 'Canceladas'],
-        datasets: [{
-          data: [
-            kpis.solicitudesRecolectadas || 0, 
-            kpis.solicitudesEnProceso || 0, 
-            kpis.solicitudesPublicadas || 0, 
-            kpis.solicitudesCanceladas || 0
-          ],
-          backgroundColor: [
-            '#10B981', // Emerald 500
-            '#3B82F6', // Blue 500
-            '#F59E0B', // Amber 500
-            '#EF4444'  // Red 500
-          ],
-          borderWidth: 0,
-          hoverOffset: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right' }
-        },
-        cutout: '70%'
-      }
-    });
-
-    // 2. Gráfico de Barras: Municipios
-    const ctxMuni = document.getElementById('municipiosChart').getContext('2d');
-    new Chart(ctxMuni, {
-      type: 'bar',
-      data: {
-        labels: chartData.municipiosLabels.length ? chartData.municipiosLabels : ['Bucaramanga', 'Floridablanca'],
-        datasets: [{
-          label: 'Total Reportes',
-          data: chartData.municipiosData.length ? chartData.municipiosData : [0, 0],
-          backgroundColor: '#16A34A', // Brand
-          borderRadius: 6,
-          barThickness: 32
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: { 
-            beginAtZero: true,
-            ticks: { precision: 0 },
-            grid: { color: gridColor }
-          },
-          x: {
-            grid: { display: false }
-          }
-        }
-      }
-    });
-  });
-</script>
 <%- include('partials/footer') %>
-
-
-
-
-

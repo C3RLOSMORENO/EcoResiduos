@@ -1,0 +1,8 @@
+<div class="nota nota-error" role="alert">
+  <span class="material-symbols-outlined" aria-hidden="true">cloud_off</span>
+  <div class="flex flex-1 flex-col gap-2">
+    <p class="text-title-s"><%= titulo %></p>
+    <% if (typeof detalle !== 'undefined' && detalle) { %><p class="text-body-s"><%= detalle %></p><% } %>
+    <p><a href="<%= reintentar %>" class="enlace text-on-error-container">Reintentar</a></p>
+  </div>
+</div>

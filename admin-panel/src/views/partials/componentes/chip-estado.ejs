@@ -1,0 +1,6 @@
+<%
+  // tipo: 'solicitud' (también postulaciones) o 'verificacion' (gestores).
+  const esVerificacion = typeof tipo !== 'undefined' && tipo === 'verificacion';
+  const claseChip = esVerificacion ? f.claseVerificacion(estado) : f.claseEstado(estado);
+  const textoChip = esVerificacion ? f.etiquetaVerificacion(estado) : f.etiquetaEstado(estado);
+%><span class="chip chip-estado-<%= claseChip %>"><span class="material-symbols-outlined" aria-hidden="true"><%= f.iconoEstado(estado) %></span><%= textoChip %></span>

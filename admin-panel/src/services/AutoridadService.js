@@ -1,6 +1,29 @@
 const supabase = require('../config/supabase');
 
+const { rango, textoBusqueda } = require('../utils/web');
+
 const autoridadService = {
+    async listarAutoridades({ q, pagina = 1 } = {}) {
+        let consulta = supabase
+            .from('autoridades_ambientales')
+            .select('*', { count: 'exact' });
+
+        const termino = textoBusqueda(q);
+        if (termino) {
+            consulta = consulta.or(`nombre.ilike.%${termino}%,sigla.ilike.%${termino}%,jurisdiccion.ilike.%${termino}%`);
+        }
+
+        const { desde, hasta } = rango(pagina);
+        const { data, error, count } = await consulta
+            .order('nombre', { ascending: true })
+            .range(desde, hasta);
+
+        if (error) {
+            throw new Error(`No pudimos cargar las autoridades: ${error.message}`);
+        }
+        return { autoridades: data || [], total: count || 0 };
+    },
+
     // Consulta autoridades ambientales registradas en el departamento de Santander
     async getAllAutoridades() {
         const { data, error } = await supabase

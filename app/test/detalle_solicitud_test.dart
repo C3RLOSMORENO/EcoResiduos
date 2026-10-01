@@ -151,7 +151,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Cancelar publicación'));
       await tester.pumpAndSettle();
       expect(repo.llamadas, ['cancelar:10']);
-      expect(find.text('Cancelaste esta publicación'), findsOneWidget);
+      expect(find.text('Publicación cancelada'), findsOneWidget);
       expect(find.text('Publicar de nuevo'), findsOneWidget);
     });
   });

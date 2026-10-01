@@ -1,78 +1,76 @@
-﻿const supabase = require('../config/supabase');
+const supabase = require('../config/supabase');
+const solicitudService = require('./SolicitudService');
+const { MUNICIPIOS, variantesMunicipio } = require('../utils/municipios');
+const { haceDias } = require('../utils/fechas');
+
+const contar = (tabla) => supabase.from(tabla).select('id', { count: 'exact', head: true });
+
+// Conteo que no tumba el tablero: si una consulta falla se muestra 0 y se
+// avisa una sola vez arriba.
+async function conteo(promesa, errores, nombre) {
+    const { count, error } = await promesa;
+    if (error) {
+        errores.push(nombre);
+        return 0;
+    }
+    return count || 0;
+}
 
 const dashboardService = {
     async getDashboardKpis() {
-        // 1. EstadÃ­sticas de solicitudes
-        const { data: solicitudes, error: errSol } = await supabase
-            .from('solicitudes_recoleccion')
-            .select(`
-                id,
-                material_id,
-                cantidad_estimada,
-                unidad_medida,
-                estado,
-                municipio,
-                created_at,
-                materiales_residuos (
-                    codigo,
-                    nombre_comun,
-                    categoria
-                )
-            `)
-            .order('created_at', { ascending: false });
+        const errores = [];
+        const c = (promesa, nombre) => conteo(promesa, errores, nombre);
 
-        if (errSol) {
-            console.error('Error al consultar solicitudes para dashboard:', errSol.message);
-        }
+        const [
+            totalSolicitudes, solicitudesPublicadas, solicitudesEnProceso, solicitudesRecolectadas, solicitudesCanceladas,
+            totalGestores, gestoresPendientesCount, gestoresAprobados, gestoresRechazados, gestoresSuspendidos,
+            totalMateriales, totalAutoridades, totalPostulaciones,
+            materialesPorVerificar, problemasReportados, sinCertificado,
+            porMunicipio
+        ] = await Promise.all([
+            c(contar('solicitudes_recoleccion'), 'solicitudes'),
+            c(contar('solicitudes_recoleccion').eq('estado', 'PUBLICADO'), 'solicitudes'),
+            c(contar('solicitudes_recoleccion').eq('estado', 'EN_NEGOCIACION'), 'solicitudes'),
+            c(contar('solicitudes_recoleccion').eq('estado', 'RECOLECTADO'), 'solicitudes'),
+            c(contar('solicitudes_recoleccion').eq('estado', 'CANCELADO'), 'solicitudes'),
+            c(contar('perfiles_gestor'), 'gestores'),
+            c(contar('perfiles_gestor').eq('estado_verificacion', 'PENDIENTE'), 'gestores'),
+            c(contar('perfiles_gestor').eq('estado_verificacion', 'APROBADO'), 'gestores'),
+            c(contar('perfiles_gestor').eq('estado_verificacion', 'RECHAZADO'), 'gestores'),
+            c(contar('perfiles_gestor').eq('estado_verificacion', 'SUSPENDIDO'), 'gestores'),
+            c(contar('materiales_residuos'), 'materiales'),
+            c(contar('autoridades_ambientales'), 'autoridades'),
+            c(contar('postulaciones_recoleccion'), 'postulaciones'),
+            c(supabase.from('gestor_material')
+                .select('material_id, perfiles_gestor!inner(estado_verificacion)', { count: 'exact', head: true })
+                .eq('verificado', false)
+                .eq('perfiles_gestor.estado_verificacion', 'APROBADO'), 'materiales por verificar'),
+            c(contar('solicitudes_recoleccion').eq('problema_reportado', true), 'problemas reportados'),
+            c(contar('solicitudes_recoleccion')
+                .eq('estado', 'RECOLECTADO')
+                .or('certificado_url.is.null,certificado_url.eq.')
+                .lt('recolectado_at', haceDias(solicitudService.DIAS_SIN_CERTIFICADO)), 'certificados'),
+            Promise.all(MUNICIPIOS.map((m) => c(
+                contar('solicitudes_recoleccion').in('municipio', variantesMunicipio(m)), 'municipios'
+            )))
+        ]);
 
-        // 2. EstadÃ­sticas de gestores
-        const { data: gestores, error: errGest } = await supabase
-            .from('perfiles_gestor')
-            .select(`
-                id,
-                nit,
-                razon_social,
-                municipio,
-                email_contacto,
-                telefono_contacto,
-                estado_verificacion,
-                disponible,
-                created_at
-            `)
-            .order('created_at', { ascending: false });
+        const [pendientes, ultimas] = await Promise.all([
+            supabase.from('perfiles_gestor')
+                .select('id, nit, razon_social, municipio, estado_verificacion, permiso_path, created_at')
+                .eq('estado_verificacion', 'PENDIENTE')
+                .order('created_at', { ascending: true })
+                .limit(6),
+            supabase.from('solicitudes_recoleccion')
+                .select('id, cantidad_estimada, unidad_medida, estado, municipio, created_at, problema_reportado, materiales_residuos(codigo, nombre_comun, categoria)')
+                .order('created_at', { ascending: false })
+                .limit(8)
+        ]);
+        if (pendientes.error) errores.push('gestores por revisar');
+        if (ultimas.error) errores.push('últimas solicitudes');
 
-        if (errGest) {
-            console.error('Error al consultar gestores para dashboard:', errGest.message);
-        }
-
-        // 3. Cantidad de materiales en catÃ¡logo
-        const { count: totalMateriales } = await supabase
-            .from('materiales_residuos')
-            .select('id', { count: 'exact', head: true });
-
-        // 4. Cantidad de autoridades ambientales
-        const { count: totalAutoridades } = await supabase
-            .from('autoridades_ambientales')
-            .select('id', { count: 'exact', head: true });
-
-        // 5. Total postulaciones
-        const { count: totalPostulaciones } = await supabase
-            .from('postulaciones_recoleccion')
-            .select('id', { count: 'exact', head: true });
-
-        const listaSolicitudes = solicitudes || [];
-        const listaGestores = gestores || [];
-
-        const totalSolicitudes = listaSolicitudes.length;
-        const solicitudesRecolectadas = listaSolicitudes.filter(s => s.estado === 'RECOLECTADO').length;
-        const solicitudesPublicadas = listaSolicitudes.filter(s => s.estado === 'PUBLICADO').length;
-        const solicitudesEnProceso = listaSolicitudes.filter(s => s.estado === 'EN_NEGOCIACION').length;
-        const solicitudesCanceladas = listaSolicitudes.filter(s => s.estado === 'CANCELADO').length;
-
-        const totalGestores = listaGestores.length;
-        const gestoresPendientes = listaGestores.filter(g => (g.estado_verificacion || '').toUpperCase() === 'PENDIENTE');
-        const gestoresAprobados = listaGestores.filter(g => (g.estado_verificacion || '').toUpperCase() === 'APROBADO').length;
-        const gestoresRechazados = listaGestores.filter(g => (g.estado_verificacion || '').toUpperCase() === 'RECHAZADO').length;
+        const sumaMunicipios = porMunicipio.reduce((a, b) => a + b, 0);
+        const otros = Math.max(0, totalSolicitudes - sumaMunicipios);
 
         return {
             kpis: {
@@ -82,18 +80,29 @@ const dashboardService = {
                 solicitudesEnProceso,
                 solicitudesCanceladas,
                 totalGestores,
-                gestoresPendientesCount: gestoresPendientes.length,
+                gestoresPendientesCount,
                 gestoresAprobados,
                 gestoresRechazados,
-                totalMateriales: totalMateriales || 0,
-                totalAutoridades: totalAutoridades || 0,
-                totalPostulaciones: totalPostulaciones || 0
+                gestoresSuspendidos,
+                totalMateriales,
+                totalAutoridades,
+                totalPostulaciones
             },
-            gestoresPendientes: gestoresPendientes.slice(0, 6),
-            ultimasSolicitudes: listaSolicitudes.slice(0, 8)
+            pendientesAccion: {
+                gestoresPorRevisar: gestoresPendientesCount,
+                materialesPorVerificar,
+                problemasReportados,
+                sinCertificado
+            },
+            chartData: {
+                municipiosLabels: [...MUNICIPIOS, ...(otros > 0 ? ['Otro / sin dato'] : [])],
+                municipiosData: [...porMunicipio, ...(otros > 0 ? [otros] : [])]
+            },
+            gestoresPendientes: pendientes.data || [],
+            ultimasSolicitudes: ultimas.data || [],
+            errores: [...new Set(errores)]
         };
     }
 };
 
 module.exports = dashboardService;
-

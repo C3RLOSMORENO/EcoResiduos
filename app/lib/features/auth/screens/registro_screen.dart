@@ -502,8 +502,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 icono: Icons.local_shipping_outlined,
                 titulo: 'Soy gestor certificado',
                 texto:
-                    'Empresa autorizada. Recibe solicitudes de los materiales que puedes gestionar. '
-                    'Con tu NIT buscamos tu empresa; si no la encontramos, la registras con tu permiso ambiental.',
+                    'Empresa autorizada. Recibe solicitudes de los materiales que puedes gestionar.',
               ),
             ],
           ),

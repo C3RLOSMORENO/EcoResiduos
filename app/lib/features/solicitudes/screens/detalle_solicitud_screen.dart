@@ -451,7 +451,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
         return const [
           _Aviso(
             icono: Icons.block,
-            titulo: 'Cancelaste esta publicación',
+            titulo: 'Publicación cancelada',
             texto: 'Los gestores ya no la ven. Puedes publicarla de nuevo con los mismos datos.',
           ),
         ];
@@ -492,8 +492,8 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
             const SizedBox(height: EcoSpace.s12),
             Text(
               otros == 1
-                  ? '1 gestor notificado: asignada a otro gestor'
-                  : '$otros gestores notificados: asignada a otro gestor',
+                  ? 'Se notificó a 1 gestor que la recolección fue asignada.'
+                  : 'Se notificó a $otros gestores que la recolección fue asignada.',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],

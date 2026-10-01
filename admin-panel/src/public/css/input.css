@@ -1,118 +1,952 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Reset global de foco para inputs, selects y textareas */
+/*
+ * Sistema de diseño del panel: Material Design 3 con los mismos tokens de la
+ * app (app/lib/theme/eco_colors.dart y eco_theme.dart). Los valores se copian
+ * tal cual; si cambian en la app, cámbialos aquí.
+ */
+
 @layer base {
-  input:not([type="checkbox"]):not([type="radio"]),
-  select,
-  textarea {
-    outline: none !important;
-    font-family: inherit;
+  :root,
+  .muestra-clara {
+    color-scheme: light;
+
+    /* ecoLightColorScheme */
+    --md-sys-color-primary: #1F4A2C;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #B8E6BE;
+    --md-sys-color-on-primary-container: #00210D;
+    --md-sys-color-secondary: #5C6F52;
+    --md-sys-color-on-secondary: #FFFFFF;
+    --md-sys-color-secondary-container: #DDE8D2;
+    --md-sys-color-on-secondary-container: #192313;
+    --md-sys-color-tertiary: #B4552D;
+    --md-sys-color-on-tertiary: #FFFFFF;
+    --md-sys-color-tertiary-container: #FFDBCC;
+    --md-sys-color-on-tertiary-container: #3A0D00;
+    --md-sys-color-error: #BA1A1A;
+    --md-sys-color-on-error: #FFFFFF;
+    --md-sys-color-error-container: #FFDAD6;
+    --md-sys-color-on-error-container: #410002;
+    --md-sys-color-surface: #F8F6EE;
+    --md-sys-color-on-surface: #1A1C18;
+    --md-sys-color-on-surface-variant: #43483E;
+    --md-sys-color-surface-dim: #D9D7CF;
+    --md-sys-color-surface-bright: #F8F6EE;
+    --md-sys-color-surface-container-lowest: #FFFFFF;
+    --md-sys-color-surface-container-low: #F2F0E8;
+    --md-sys-color-surface-container: #ECEAE2;
+    --md-sys-color-surface-container-high: #E6E4DC;
+    --md-sys-color-surface-container-highest: #E0DED6;
+    --md-sys-color-outline: #73796E;
+    --md-sys-color-outline-variant: #C3C8BB;
+    --md-sys-color-inverse-surface: #2F312C;
+    --md-sys-color-inverse-on-surface: #F1F1EA;
+    --md-sys-color-inverse-primary: #9DD3A5;
+    --md-sys-color-scrim: #000000;
+
+    /* ecoColoresLight: categorías */
+    --eco-cat-aprovechable-color: #0A5F7A;
+    --eco-cat-aprovechable-on: #FFFFFF;
+    --eco-cat-aprovechable-container: #CDEBF5;
+    --eco-cat-aprovechable-on-container: #003544;
+    --eco-cat-peligroso-color: #F2B200;
+    --eco-cat-peligroso-on: #1F1600;
+    --eco-cat-peligroso-container: #FFEFC2;
+    --eco-cat-peligroso-on-container: #261A00;
+    --eco-cat-raee-color: #5B3FA0;
+    --eco-cat-raee-on: #FFFFFF;
+    --eco-cat-raee-container: #E8DEFF;
+    --eco-cat-raee-on-container: #1D0B52;
+    --eco-cat-rcd-color: #6D5A4B;
+    --eco-cat-rcd-on: #FFFFFF;
+    --eco-cat-rcd-container: #F0E2D6;
+    --eco-cat-rcd-on-container: #261A10;
+    --eco-cat-riesgo-biologico-color: #B3261E;
+    --eco-cat-riesgo-biologico-on: #FFFFFF;
+    --eco-cat-riesgo-biologico-container: #FFDAD5;
+    --eco-cat-riesgo-biologico-on-container: #410002;
+    --eco-cat-organico-color: #2F6B1F;
+    --eco-cat-organico-on: #FFFFFF;
+    --eco-cat-organico-container: #C9EDB2;
+    --eco-cat-organico-on-container: #082100;
+    --eco-cat-ordinario-color: #2B2F2C;
+    --eco-cat-ordinario-on: #FFFFFF;
+    --eco-cat-ordinario-container: #DFE4DE;
+    --eco-cat-ordinario-on-container: #151A16;
+
+    /* ecoColoresLight: estados */
+    --eco-estado-publicado-color: #1F5FA8;
+    --eco-estado-publicado-on: #FFFFFF;
+    --eco-estado-publicado-container: #D6E3FF;
+    --eco-estado-publicado-on-container: #001B3E;
+    --eco-estado-en-negociacion-color: #8A5100;
+    --eco-estado-en-negociacion-on: #FFFFFF;
+    --eco-estado-en-negociacion-container: #FFDDB8;
+    --eco-estado-en-negociacion-on-container: #2C1600;
+    --eco-estado-propuesta-color: #8A5100;
+    --eco-estado-propuesta-on: #FFFFFF;
+    --eco-estado-propuesta-container: #FFDDB8;
+    --eco-estado-propuesta-on-container: #2C1600;
+    --eco-estado-recolectado-color: #1F6B35;
+    --eco-estado-recolectado-on: #FFFFFF;
+    --eco-estado-recolectado-container: #B7F0C0;
+    --eco-estado-recolectado-on-container: #00210B;
+    --eco-estado-aceptada-color: #1F6B35;
+    --eco-estado-aceptada-on: #FFFFFF;
+    --eco-estado-aceptada-container: #B7F0C0;
+    --eco-estado-aceptada-on-container: #00210B;
+    --eco-estado-cancelado-color: #5D5F5A;
+    --eco-estado-cancelado-on: #FFFFFF;
+    --eco-estado-cancelado-container: #E3E3DC;
+    --eco-estado-cancelado-on-container: #1A1C18;
+    --eco-estado-rechazada-color: #5D5F5A;
+    --eco-estado-rechazada-on: #FFFFFF;
+    --eco-estado-rechazada-container: #E3E3DC;
+    --eco-estado-rechazada-on-container: #1A1C18;
+    --eco-estado-no-seleccionada-color: #5D5F5A;
+    --eco-estado-no-seleccionada-on: #FFFFFF;
+    --eco-estado-no-seleccionada-container: #E3E3DC;
+    --eco-estado-no-seleccionada-on-container: #1A1C18;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):focus,
-  select:focus,
-  textarea:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border-color: #1E4620 !important;
+  /* ecoDarkColorScheme y ecoColoresDark. Se repiten para la preferencia del
+     sistema y para el interruptor manual. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) {
+      color-scheme: dark;
+      --md-sys-color-primary: #9DD3A5;
+      --md-sys-color-on-primary: #00391A;
+      --md-sys-color-primary-container: #0F5230;
+      --md-sys-color-on-primary-container: #B8E6BE;
+      --md-sys-color-secondary: #C1CCB6;
+      --md-sys-color-on-secondary: #2B3525;
+      --md-sys-color-secondary-container: #424E3B;
+      --md-sys-color-on-secondary-container: #DDE8D2;
+      --md-sys-color-tertiary: #FFB596;
+      --md-sys-color-on-tertiary: #5A1C00;
+      --md-sys-color-tertiary-container: #8E3D18;
+      --md-sys-color-on-tertiary-container: #FFDBCC;
+      --md-sys-color-error: #FFB4AB;
+      --md-sys-color-on-error: #690005;
+      --md-sys-color-error-container: #93000A;
+      --md-sys-color-on-error-container: #FFDAD6;
+      --md-sys-color-surface: #121410;
+      --md-sys-color-on-surface: #E3E3DB;
+      --md-sys-color-on-surface-variant: #C3C8BB;
+      --md-sys-color-surface-dim: #121410;
+      --md-sys-color-surface-bright: #383A35;
+      --md-sys-color-surface-container-lowest: #0D0F0B;
+      --md-sys-color-surface-container-low: #1A1C18;
+      --md-sys-color-surface-container: #1E201C;
+      --md-sys-color-surface-container-high: #292B26;
+      --md-sys-color-surface-container-highest: #333530;
+      --md-sys-color-outline: #8D9387;
+      --md-sys-color-outline-variant: #43483E;
+      --md-sys-color-inverse-surface: #E3E3DB;
+      --md-sys-color-inverse-on-surface: #2F312C;
+      --md-sys-color-inverse-primary: #1F4A2C;
+
+      --eco-cat-aprovechable-color: #86D1EC;
+      --eco-cat-aprovechable-on: #003544;
+      --eco-cat-aprovechable-container: #004D63;
+      --eco-cat-aprovechable-on-container: #CDEBF5;
+      --eco-cat-peligroso-color: #F2B200;
+      --eco-cat-peligroso-on: #1F1600;
+      --eco-cat-peligroso-container: #5A4300;
+      --eco-cat-peligroso-on-container: #FFE08A;
+      --eco-cat-raee-color: #CFBDFF;
+      --eco-cat-raee-on: #2F1A75;
+      --eco-cat-raee-container: #44298A;
+      --eco-cat-raee-on-container: #E8DEFF;
+      --eco-cat-rcd-color: #D8C2AF;
+      --eco-cat-rcd-on: #3A2C20;
+      --eco-cat-rcd-container: #54433A;
+      --eco-cat-rcd-on-container: #F0E2D6;
+      --eco-cat-riesgo-biologico-color: #FFB4AA;
+      --eco-cat-riesgo-biologico-on: #690004;
+      --eco-cat-riesgo-biologico-container: #8C1D18;
+      --eco-cat-riesgo-biologico-on-container: #FFDAD5;
+      --eco-cat-organico-color: #A5D889;
+      --eco-cat-organico-on: #0F3900;
+      --eco-cat-organico-container: #1A500A;
+      --eco-cat-organico-on-container: #C9EDB2;
+      --eco-cat-ordinario-color: #C4C8C3;
+      --eco-cat-ordinario-on: #2C312D;
+      --eco-cat-ordinario-container: #444945;
+      --eco-cat-ordinario-on-container: #DFE4DE;
+
+      --eco-estado-publicado-color: #A9C7FF;
+      --eco-estado-publicado-on: #002F65;
+      --eco-estado-publicado-container: #00468C;
+      --eco-estado-publicado-on-container: #D6E3FF;
+      --eco-estado-en-negociacion-color: #FFB95F;
+      --eco-estado-en-negociacion-on: #4A2800;
+      --eco-estado-en-negociacion-container: #693C00;
+      --eco-estado-en-negociacion-on-container: #FFDDB8;
+      --eco-estado-propuesta-color: #FFB95F;
+      --eco-estado-propuesta-on: #4A2800;
+      --eco-estado-propuesta-container: #693C00;
+      --eco-estado-propuesta-on-container: #FFDDB8;
+      --eco-estado-recolectado-color: #8DD9A0;
+      --eco-estado-recolectado-on: #00391A;
+      --eco-estado-recolectado-container: #005226;
+      --eco-estado-recolectado-on-container: #B7F0C0;
+      --eco-estado-aceptada-color: #8DD9A0;
+      --eco-estado-aceptada-on: #00391A;
+      --eco-estado-aceptada-container: #005226;
+      --eco-estado-aceptada-on-container: #B7F0C0;
+      --eco-estado-cancelado-color: #C6C7C0;
+      --eco-estado-cancelado-on: #2F312C;
+      --eco-estado-cancelado-container: #454742;
+      --eco-estado-cancelado-on-container: #E3E3DC;
+      --eco-estado-rechazada-color: #C6C7C0;
+      --eco-estado-rechazada-on: #2F312C;
+      --eco-estado-rechazada-container: #454742;
+      --eco-estado-rechazada-on-container: #E3E3DC;
+      --eco-estado-no-seleccionada-color: #C6C7C0;
+      --eco-estado-no-seleccionada-on: #2F312C;
+      --eco-estado-no-seleccionada-container: #454742;
+      --eco-estado-no-seleccionada-on-container: #E3E3DC;
+    }
   }
 
-  .dark input:not([type="checkbox"]):not([type="radio"]):focus,
-  .dark select:focus,
-  .dark textarea:focus {
-    border-color: #34d399 !important;
+  :root[data-tema="oscuro"],
+  .muestra-oscura {
+    color-scheme: dark;
+    --md-sys-color-primary: #9DD3A5;
+    --md-sys-color-on-primary: #00391A;
+    --md-sys-color-primary-container: #0F5230;
+    --md-sys-color-on-primary-container: #B8E6BE;
+    --md-sys-color-secondary: #C1CCB6;
+    --md-sys-color-on-secondary: #2B3525;
+    --md-sys-color-secondary-container: #424E3B;
+    --md-sys-color-on-secondary-container: #DDE8D2;
+    --md-sys-color-tertiary: #FFB596;
+    --md-sys-color-on-tertiary: #5A1C00;
+    --md-sys-color-tertiary-container: #8E3D18;
+    --md-sys-color-on-tertiary-container: #FFDBCC;
+    --md-sys-color-error: #FFB4AB;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000A;
+    --md-sys-color-on-error-container: #FFDAD6;
+    --md-sys-color-surface: #121410;
+    --md-sys-color-on-surface: #E3E3DB;
+    --md-sys-color-on-surface-variant: #C3C8BB;
+    --md-sys-color-surface-dim: #121410;
+    --md-sys-color-surface-bright: #383A35;
+    --md-sys-color-surface-container-lowest: #0D0F0B;
+    --md-sys-color-surface-container-low: #1A1C18;
+    --md-sys-color-surface-container: #1E201C;
+    --md-sys-color-surface-container-high: #292B26;
+    --md-sys-color-surface-container-highest: #333530;
+    --md-sys-color-outline: #8D9387;
+    --md-sys-color-outline-variant: #43483E;
+    --md-sys-color-inverse-surface: #E3E3DB;
+    --md-sys-color-inverse-on-surface: #2F312C;
+    --md-sys-color-inverse-primary: #1F4A2C;
+
+    --eco-cat-aprovechable-color: #86D1EC;
+    --eco-cat-aprovechable-on: #003544;
+    --eco-cat-aprovechable-container: #004D63;
+    --eco-cat-aprovechable-on-container: #CDEBF5;
+    --eco-cat-peligroso-color: #F2B200;
+    --eco-cat-peligroso-on: #1F1600;
+    --eco-cat-peligroso-container: #5A4300;
+    --eco-cat-peligroso-on-container: #FFE08A;
+    --eco-cat-raee-color: #CFBDFF;
+    --eco-cat-raee-on: #2F1A75;
+    --eco-cat-raee-container: #44298A;
+    --eco-cat-raee-on-container: #E8DEFF;
+    --eco-cat-rcd-color: #D8C2AF;
+    --eco-cat-rcd-on: #3A2C20;
+    --eco-cat-rcd-container: #54433A;
+    --eco-cat-rcd-on-container: #F0E2D6;
+    --eco-cat-riesgo-biologico-color: #FFB4AA;
+    --eco-cat-riesgo-biologico-on: #690004;
+    --eco-cat-riesgo-biologico-container: #8C1D18;
+    --eco-cat-riesgo-biologico-on-container: #FFDAD5;
+    --eco-cat-organico-color: #A5D889;
+    --eco-cat-organico-on: #0F3900;
+    --eco-cat-organico-container: #1A500A;
+    --eco-cat-organico-on-container: #C9EDB2;
+    --eco-cat-ordinario-color: #C4C8C3;
+    --eco-cat-ordinario-on: #2C312D;
+    --eco-cat-ordinario-container: #444945;
+    --eco-cat-ordinario-on-container: #DFE4DE;
+
+    --eco-estado-publicado-color: #A9C7FF;
+    --eco-estado-publicado-on: #002F65;
+    --eco-estado-publicado-container: #00468C;
+    --eco-estado-publicado-on-container: #D6E3FF;
+    --eco-estado-en-negociacion-color: #FFB95F;
+    --eco-estado-en-negociacion-on: #4A2800;
+    --eco-estado-en-negociacion-container: #693C00;
+    --eco-estado-en-negociacion-on-container: #FFDDB8;
+    --eco-estado-propuesta-color: #FFB95F;
+    --eco-estado-propuesta-on: #4A2800;
+    --eco-estado-propuesta-container: #693C00;
+    --eco-estado-propuesta-on-container: #FFDDB8;
+    --eco-estado-recolectado-color: #8DD9A0;
+    --eco-estado-recolectado-on: #00391A;
+    --eco-estado-recolectado-container: #005226;
+    --eco-estado-recolectado-on-container: #B7F0C0;
+    --eco-estado-aceptada-color: #8DD9A0;
+    --eco-estado-aceptada-on: #00391A;
+    --eco-estado-aceptada-container: #005226;
+    --eco-estado-aceptada-on-container: #B7F0C0;
+    --eco-estado-cancelado-color: #C6C7C0;
+    --eco-estado-cancelado-on: #2F312C;
+    --eco-estado-cancelado-container: #454742;
+    --eco-estado-cancelado-on-container: #E3E3DC;
+    --eco-estado-rechazada-color: #C6C7C0;
+    --eco-estado-rechazada-on: #2F312C;
+    --eco-estado-rechazada-container: #454742;
+    --eco-estado-rechazada-on-container: #E3E3DC;
+    --eco-estado-no-seleccionada-color: #C6C7C0;
+    --eco-estado-no-seleccionada-on: #2F312C;
+    --eco-estado-no-seleccionada-container: #454742;
+    --eco-estado-no-seleccionada-on-container: #E3E3DC;
   }
 
-  input[type="password"]::-ms-reveal,
-  input[type="password"]::-webkit-reveal {
+  html {
+    @apply font-sans text-body-m;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply min-h-screen bg-surface text-on-surface antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply text-on-surface;
+  }
+
+  a {
+    color: var(--md-sys-color-primary);
+    text-underline-offset: 3px;
+  }
+
+  /* Foco siempre visible: anillo de 2 px con el color primario y separación. */
+  :focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--md-sys-color-primary);
+    width: 20px;
+    height: 20px;
+  }
+
+  table,
+  .cifras {
+    font-variant-numeric: tabular-nums;
+  }
+
+  [hidden] {
     display: none !important;
   }
 
-  input[type="checkbox"]:checked,
-  input[type="radio"]:checked {
-    background-color: #1E4620 !important;
-    border-color: #1E4620 !important;
+  .material-symbols-outlined {
+    font-size: 24px;
+    line-height: 1;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .icono-18 {
+    font-size: 18px;
+  }
+
+  .icono-20 {
+    font-size: 20px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-/* Componentes globales M3 */
 @layer components {
-  /* Botones */
-  .btn-primary {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand px-5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-hover focus:outline-none shrink-0;
+  /* ---------- Capa de estado M3 (hover 8 %, foco 10 %, presionado 10 %) ---------- */
+  .capa-estado {
+    position: relative;
+    isolation: isolate;
   }
+
+  .capa-estado::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity 150ms ease;
+  }
+
+  .capa-estado:hover::before {
+    opacity: 0.08;
+  }
+
+  .capa-estado:focus-visible::before,
+  .capa-estado:active::before {
+    opacity: 0.1;
+  }
+
+  /* ---------- Botones ---------- */
+  .btn {
+    @apply capa-estado inline-flex items-center justify-center gap-2 rounded-full px-6 text-label-l no-underline;
+    min-height: 44px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .btn-sm {
+    @apply px-4;
+    min-height: 36px;
+  }
+
+  .btn-filled {
+    @apply btn bg-primary text-on-primary;
+  }
+
   .btn-tonal {
-    @apply inline-flex h-8 items-center justify-center rounded-full bg-slate-100 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shrink-0;
-  }
-  .btn-icon {
-    @apply inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition shrink-0;
+    @apply btn bg-secondary-container text-on-secondary-container;
   }
 
-  /* Entradas de formulario */
-  .input-ui {
-    @apply h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-xs text-slate-900 placeholder:text-slate-400 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+  .btn-outlined {
+    @apply btn text-primary;
+    border-color: var(--md-sys-color-outline);
+    background-color: transparent;
   }
 
-  /* Tablas de administraciÃ³n */
-  .tabla-container {
-    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
-  }
-  .tabla-th {
-    @apply py-3.5 px-4 text-xs font-medium tracking-wide text-slate-500 border-b border-slate-200/80 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-400;
-  }
-  .tabla-tr {
-    @apply transition-colors hover:bg-slate-900/[0.02] dark:hover:bg-slate-100/[0.02];
+  .btn-text {
+    @apply btn px-3 text-primary;
+    background-color: transparent;
   }
 
-  /* Modales M3 (3 capas) */
-  .modal-scrim {
-    @apply fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 w-screen h-screen;
-  }
-  .modal-dialog {
-    @apply relative flex flex-col w-full max-w-xl max-h-[85vh] rounded-[28px] bg-white shadow-2xl border border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 overflow-hidden;
-  }
-  .modal-header {
-    @apply flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900;
-  }
-  .modal-body {
-    @apply flex-1 overflow-y-auto px-6 py-4 space-y-4;
-  }
-  .modal-footer {
-    @apply flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900;
+  .btn-peligro {
+    @apply btn bg-error text-on-error;
   }
 
-  /* M3 Chip Base */
-  .m3-chip {
-    @apply inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors;
+  .btn-peligro-outlined {
+    @apply btn text-error;
+    border-color: var(--md-sys-color-error);
+    background-color: transparent;
   }
 
-  /* 1. BiolÃ³gicos e Infecciosos (Y1, Y2, Y3) - Error Tonal Role */
-  .chip-respel-bio {
-    @apply bg-[#FFDAD6] text-[#410002] border-[#FFB4AB] dark:bg-[#93000A]/60 dark:text-[#FFDAD6] dark:border-[#93000A];
+  .btn-icono {
+    @apply capa-estado inline-flex items-center justify-center rounded-full text-on-surface-variant;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
   }
 
-  /* 2. Hidrocarburos y Aceites (Y8, Y9) - Warning Amber Tonal */
-  .chip-respel-oil {
-    @apply bg-[#FFDF9E] text-[#251A00] border-[#E5C158] dark:bg-[#554400]/60 dark:text-[#FFDF9E] dark:border-[#554400];
+  .btn:disabled,
+  .btn[aria-disabled="true"],
+  .btn-icono:disabled {
+    cursor: not-allowed;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+    border-color: transparent;
   }
 
-  /* 3. RAEE y QuÃ­micos Pesados (Y26, Y29, RAEE) - Terracotta Tonal */
-  .chip-respel-raee {
-    @apply bg-[#FFDCC2] text-[#2E1500] border-[#FFB77C] dark:bg-[#6A3800]/60 dark:text-[#FFDCC2] dark:border-[#6A3800];
+  .btn:disabled::before,
+  .btn-icono:disabled::before {
+    display: none;
   }
 
-  /* 4. Aprovechables y OrgÃ¡nicos (REC, ORG) - Success Green Tonal */
-  .chip-respel-eco {
-    @apply bg-[#C2ECCD] text-[#00210E] border-[#85D3A2] dark:bg-[#0C5229]/60 dark:text-[#C2ECCD] dark:border-[#0C5229];
+  .enlace {
+    @apply font-semibold text-primary underline;
   }
 
-  /* 5. General / Administrativo - Surface Variant Tonal */
-  .chip-respel-neutral {
-    @apply bg-[#E2E2E6] text-[#1A1C1E] border-[#C6C6CA] dark:bg-[#43474E]/60 dark:text-[#E2E2E6] dark:border-[#43474E];
+  /* ---------- Campos de formulario ---------- */
+  .campo {
+    @apply flex flex-col gap-1;
+  }
+
+  .campo-etiqueta {
+    @apply text-label-l text-on-surface;
+  }
+
+  .campo-obligatorio {
+    @apply text-body-s font-normal text-on-surface-variant;
+  }
+
+  .campo-control {
+    @apply w-full rounded-sm bg-surface-container-lowest px-3 text-body-l text-on-surface;
+    min-height: 48px;
+    border: 1px solid var(--md-sys-color-outline);
+  }
+
+  textarea.campo-control {
+    @apply py-3;
+  }
+
+  select.campo-control {
+    @apply pr-10;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  .campo-control::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 1;
+  }
+
+  .campo-control:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 0;
+    border-color: var(--md-sys-color-primary);
+  }
+
+  .campo-control[aria-invalid="true"] {
+    border: 2px solid var(--md-sys-color-error);
+  }
+
+  .campo-ayuda {
+    @apply text-body-s text-on-surface-variant;
+  }
+
+  .campo-error {
+    @apply flex items-start gap-1 text-body-s font-semibold text-error;
+  }
+
+  .casilla {
+    @apply flex items-center gap-3 text-body-m text-on-surface;
+    min-height: 44px;
+  }
+
+  /* ---------- Chips de categoría y estado ---------- */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-label-m;
+    min-height: 24px;
+    white-space: nowrap;
+  }
+
+  .chip .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  .chip-cat-aprovechable { background: var(--eco-cat-aprovechable-container); color: var(--eco-cat-aprovechable-on-container); }
+  .chip-cat-peligroso { background: var(--eco-cat-peligroso-container); color: var(--eco-cat-peligroso-on-container); }
+  .chip-cat-raee { background: var(--eco-cat-raee-container); color: var(--eco-cat-raee-on-container); }
+  .chip-cat-rcd { background: var(--eco-cat-rcd-container); color: var(--eco-cat-rcd-on-container); }
+  .chip-cat-riesgo-biologico { background: var(--eco-cat-riesgo-biologico-container); color: var(--eco-cat-riesgo-biologico-on-container); }
+  .chip-cat-organico { background: var(--eco-cat-organico-container); color: var(--eco-cat-organico-on-container); }
+  .chip-cat-ordinario { background: var(--eco-cat-ordinario-container); color: var(--eco-cat-ordinario-on-container); }
+  .chip-cat-neutro { @apply bg-surface-container-high text-on-surface; }
+
+  .chip-estado-publicado { background: var(--eco-estado-publicado-container); color: var(--eco-estado-publicado-on-container); }
+  .chip-estado-en-negociacion { background: var(--eco-estado-en-negociacion-container); color: var(--eco-estado-en-negociacion-on-container); }
+  .chip-estado-propuesta { background: var(--eco-estado-propuesta-container); color: var(--eco-estado-propuesta-on-container); }
+  .chip-estado-recolectado { background: var(--eco-estado-recolectado-container); color: var(--eco-estado-recolectado-on-container); }
+  .chip-estado-aceptada { background: var(--eco-estado-aceptada-container); color: var(--eco-estado-aceptada-on-container); }
+  .chip-estado-cancelado { background: var(--eco-estado-cancelado-container); color: var(--eco-estado-cancelado-on-container); }
+  .chip-estado-rechazada { background: var(--eco-estado-rechazada-container); color: var(--eco-estado-rechazada-on-container); }
+  .chip-estado-no-seleccionada { background: var(--eco-estado-no-seleccionada-container); color: var(--eco-estado-no-seleccionada-on-container); }
+  .chip-estado-error { @apply bg-error-container text-on-error-container; }
+
+  /* ---------- Tarjetas ---------- */
+  .tarjeta {
+    @apply rounded-md bg-surface-container-lowest p-4 md:p-6;
+    border: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .tarjeta-titulo {
+    @apply text-title-l text-on-surface;
+  }
+
+  .tarjeta-kpi {
+    @apply flex flex-col gap-1 rounded-md bg-surface-container-low p-4;
+  }
+
+  .kpi-cifra {
+    @apply font-display text-display-s text-on-surface;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tarjeta-accion {
+    @apply capa-estado flex items-center gap-4 rounded-md p-4 no-underline;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-on-surface);
+    min-height: 88px;
+  }
+
+  .tarjeta-accion-activa {
+    background-color: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    border-color: transparent;
+  }
+
+  /* ---------- Avisos dentro de la página ---------- */
+  .nota {
+    @apply flex items-start gap-3 rounded-md p-4 text-body-m;
+  }
+
+  .nota-info { @apply bg-secondary-container text-on-secondary-container; }
+  .nota-advertencia { @apply bg-tertiary-container text-on-tertiary-container; }
+  .nota-error { @apply bg-error-container text-on-error-container; }
+  .nota-exito { @apply bg-primary-container text-on-primary-container; }
+
+  /* ---------- Tablas (patrón de tabla de la W3C) ---------- */
+  .tabla-contenedor {
+    @apply w-full overflow-x-auto rounded-md bg-surface-container-lowest;
+    border: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .tabla {
+    @apply w-full text-left text-body-m;
+    border-collapse: collapse;
+  }
+
+  .tabla caption {
+    @apply px-4 py-3 text-left text-title-s text-on-surface;
+  }
+
+  .tabla th {
+    @apply bg-surface-container px-4 py-3 text-label-l text-on-surface-variant;
+    vertical-align: bottom;
+  }
+
+  .tabla td,
+  .tabla tbody th {
+    @apply px-4 py-3 align-top;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .tabla tbody th {
+    @apply bg-transparent text-body-m font-semibold text-on-surface;
+  }
+
+  .tabla tbody tr:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+  }
+
+  .tabla tfoot th,
+  .tabla tfoot td {
+    @apply bg-surface-container-low font-semibold text-on-surface;
+    border-top: 2px solid var(--md-sys-color-outline);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .orden-enlace {
+    @apply inline-flex items-center gap-1 text-on-surface-variant no-underline;
+    min-height: 24px;
+  }
+
+  /* ---------- Diálogos ---------- */
+  .dialogo {
+    @apply rounded-xl bg-surface-container-high p-6 text-on-surface;
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    border: 0;
+  }
+
+  .dialogo::backdrop {
+    background-color: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+  }
+
+  .dialogo-titulo {
+    @apply font-display text-headline-s text-on-surface;
+  }
+
+  .dialogo-acciones {
+    @apply mt-6 flex flex-wrap justify-end gap-2;
+  }
+
+  /* ---------- Snackbar ---------- */
+  .avisos-region {
+    @apply pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4;
+  }
+
+  .aviso {
+    @apply pointer-events-auto flex w-full items-center gap-3 rounded-sm bg-inverse-surface px-4 py-3 text-body-m text-inverse-on-surface;
+    max-width: 560px;
+    min-height: 48px;
+  }
+
+  .aviso .btn-icono {
+    color: var(--md-sys-color-inverse-on-surface);
+  }
+
+  /* ---------- Esqueletos de carga (skeleton screens) ---------- */
+  .esqueleto {
+    @apply block rounded-sm;
+    background-color: var(--md-sys-color-surface-container-high);
+    background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 60%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: esqueleto-brillo 1.4s ease-in-out infinite;
+  }
+
+  .esqueleto-titulo { height: 36px; }
+  .esqueleto-subtitulo { height: 24px; }
+  .esqueleto-texto { height: 14px; }
+  .esqueleto-cifra { @apply w-16; height: 32px; }
+  .esqueleto-campo { @apply w-full; height: 48px; }
+  .esqueleto-chip { @apply w-20 rounded-full; height: 24px; }
+  .esqueleto-boton { @apply w-20 shrink-0 rounded-full; height: 32px; }
+
+  .esqueleto-tabla-encabezado {
+    @apply flex items-center gap-6 bg-surface-container px-4 py-4;
+  }
+
+  .esqueleto-tabla-fila {
+    @apply flex items-center gap-4 px-4 py-3;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  /* Mientras carga, el contenido anterior se oculta y solo queda el esqueleto. */
+  .app-main[aria-busy="true"] > :not([data-esqueleto]) {
+    display: none;
+  }
+
+  @keyframes esqueleto-brillo {
+    from { background-position: 150% 0; }
+    to { background-position: -50% 0; }
+  }
+
+  /* ---------- Estados vacío y de error ---------- */
+  .estado-vacio {
+    @apply flex flex-col items-center gap-2 px-4 py-10 text-center text-on-surface-variant;
+  }
+
+  .estado-vacio .material-symbols-outlined {
+    font-size: 40px;
+  }
+
+  /* ---------- Paginación ---------- */
+  .paginacion {
+    @apply flex flex-wrap items-center justify-between gap-3 pt-4 text-body-m text-on-surface-variant;
+  }
+
+  /* ---------- Estructura y navegación ---------- */
+  .saltar {
+    @apply fixed left-4 top-4 z-50 rounded-sm bg-primary px-4 py-3 text-label-l text-on-primary;
+    transform: translateY(-200%);
+  }
+
+  .saltar:focus {
+    transform: none;
+  }
+
+  .app-nav {
+    @apply fixed inset-y-0 left-0 z-40 flex flex-col overflow-y-auto bg-surface-container-low p-3;
+    width: 300px;
+    max-width: calc(100vw - 56px);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 250ms ease, visibility 250ms;
+  }
+
+  .nav-abierta .app-nav {
+    transform: none;
+    visibility: visible;
+  }
+
+  .nav-fondo {
+    @apply fixed inset-0 z-30;
+    background-color: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+  }
+
+  .nav-item {
+    @apply capa-estado flex items-center gap-3 rounded-full px-4 text-label-l text-on-surface-variant no-underline;
+    min-height: 56px;
+  }
+
+  .nav-item[aria-current="page"] {
+    @apply bg-secondary-container text-on-secondary-container;
+  }
+
+  .barra-superior {
+    @apply sticky top-0 z-20 flex items-center gap-2 bg-surface px-2 py-2 md:px-4;
+    min-height: 64px;
+  }
+
+  .app-contenido {
+    @apply flex min-h-screen flex-col;
+  }
+
+  .app-main {
+    @apply mx-auto w-full max-w-contenido flex-1 px-4 pb-12 pt-2 md:px-6 lg:px-8;
+  }
+
+  .titulo-pagina {
+    @apply font-display text-headline-m md:text-headline-l text-on-surface;
+  }
+
+  .seccion-titulo {
+    @apply font-display text-headline-s text-on-surface;
+  }
+
+  .solo-impresion {
+    display: none;
+  }
+
+  .sr-only-foco:not(:focus) {
+    @apply sr-only;
   }
 }
 
+/* Sin JavaScript, en ventana compacta la navegación se muestra arriba. */
+html:not(.js) .app-nav {
+  position: static;
+  transform: none;
+  visibility: visible;
+  width: auto;
+  max-width: none;
+}
 
+html:not(.js) .boton-menu {
+  display: none;
+}
 
+/* Ventana media (600–839 px): navigation rail. */
+@media (min-width: 600px) {
+  .app-nav,
+  html:not(.js) .app-nav {
+    position: fixed;
+    width: 88px;
+    max-width: none;
+    transform: none;
+    visibility: visible;
+    padding: 12px 4px;
+    align-items: center;
+  }
+
+  .app-contenido {
+    margin-left: 88px;
+  }
+
+  .boton-menu,
+  .nav-fondo {
+    display: none !important;
+  }
+
+  .nav-marca-texto {
+    display: none;
+  }
+
+  .nav-etiqueta {
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+  }
+
+  .nav-item {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 80px;
+    min-height: 64px;
+    padding: 4px;
+    border-radius: 16px;
+  }
+}
+
+/* Ventana expandida (≥ 840 px): navigation drawer fijo. */
+@media (min-width: 840px) {
+  .app-nav,
+  html:not(.js) .app-nav {
+    width: 280px;
+    padding: 12px;
+    align-items: stretch;
+  }
+
+  .app-contenido {
+    margin-left: 280px;
+  }
+
+  .nav-marca-texto {
+    display: inline;
+  }
+
+  .nav-etiqueta {
+    font-size: 14px;
+    line-height: 20px;
+    text-align: left;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    width: auto;
+    min-height: 56px;
+    padding: 0 16px;
+    border-radius: 9999px;
+  }
+}
+
+@media print {
+  .app-nav,
+  .barra-superior,
+  .avisos-region,
+  [data-esqueleto],
+  .no-imprimir,
+  .saltar,
+  dialog {
+    display: none !important;
+  }
+
+  .app-contenido {
+    margin-left: 0 !important;
+  }
+
+  .solo-impresion {
+    display: block !important;
+  }
+
+  html,
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  .tarjeta,
+  .tabla-contenedor {
+    border-color: #999999 !important;
+    break-inside: avoid;
+    overflow: visible !important;
+  }
+
+  .tabla th,
+  .tabla tfoot td,
+  .tabla tfoot th {
+    background: #EEEEEE !important;
+    color: #000000 !important;
+  }
+
+  a {
+    color: #000000 !important;
+  }
+}

@@ -1,4 +1,3 @@
-/// Modelo de dominio para la tabla 'public.perfiles_gestor'.
 class PerfilGestor {
   final int id;
   final String? usuarioId;
@@ -34,7 +33,6 @@ class PerfilGestor {
     this.materialIds,
   });
 
-  /// Instancia un perfil de gestor desde la base de datos.
   factory PerfilGestor.fromMap(Map<String, dynamic> map) {
     List<int>? ids;
     if (map['gestor_material'] != null && map['gestor_material'] is List) {
@@ -65,7 +63,6 @@ class PerfilGestor {
     );
   }
 
-  /// Serializa a mapa para persistencia.
   Map<String, dynamic> toMap({bool forInsert = false}) {
     final map = <String, dynamic>{
       if (usuarioId != null) 'usuario_id': usuarioId,
@@ -87,7 +84,6 @@ class PerfilGestor {
     return map;
   }
 
-  /// Retorna una copia con campos modificados.
   PerfilGestor copyWith({
     int? id,
     String? usuarioId,

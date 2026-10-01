@@ -1,17 +1,45 @@
-﻿const supabase = require('../config/supabase');
+const supabase = require('../config/supabase');
+const { municipioAdmitido, variantesMunicipio } = require('../utils/municipios');
+const { rango, textoBusqueda } = require('../utils/web');
 
 class GeneradorService {
-    async listarTodos() {
-        const { data, error } = await supabase
+    // Listado paginado. Solo los datos que necesita la lista (Ley 1581 de 2012).
+    async listar({ q, municipio, pagina = 1 } = {}) {
+        let consulta = supabase
             .from('perfiles_generador')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('id, usuario_id, nombre_completo_o_empresa, documento_nit, email, telefono, municipio, created_at', { count: 'exact' });
+
+        const termino = textoBusqueda(q);
+        if (termino) {
+            consulta = consulta.or(`nombre_completo_o_empresa.ilike.%${termino}%,documento_nit.ilike.%${termino}%`);
+        }
+        const municipioFiltro = municipioAdmitido(municipio);
+        if (municipioFiltro) consulta = consulta.in('municipio', variantesMunicipio(municipioFiltro));
+
+        const { desde, hasta } = rango(pagina);
+        const { data, error, count } = await consulta
+            .order('created_at', { ascending: false })
+            .range(desde, hasta);
 
         if (error) {
-            console.error('Error al listar ciudadanos (generadores):', error.message);
-            throw error;
+            throw new Error(`No pudimos cargar los ciudadanos: ${error.message}`);
         }
-        return data;
+
+        const generadores = data || [];
+        const publicaciones = await this.contarPublicaciones(generadores.map((g) => g.id));
+        return {
+            generadores: generadores.map((g) => ({ ...g, publicaciones: publicaciones.get(g.id) || 0 })),
+            total: count || 0
+        };
+    }
+
+    // Un conteo por generador de la página (máximo 25 consultas pequeñas).
+    async contarPublicaciones(ids) {
+        const conteos = await Promise.all(ids.map((id) => supabase
+            .from('solicitudes_recoleccion')
+            .select('id', { count: 'exact', head: true })
+            .eq('generador_id', id)));
+        return new Map(ids.map((id, i) => [id, conteos[i].count || 0]));
     }
 }
 

@@ -1,0 +1,22 @@
+<%# Diálogo único de confirmación. main.js lo llena con los data-confirmar-* del formulario que se envía. %>
+<dialog id="dialogoConfirmar" class="dialogo" aria-labelledby="dialogoConfirmarTitulo" aria-describedby="dialogoConfirmarTexto">
+  <form method="dialog" id="dialogoConfirmarForm" novalidate>
+    <h2 id="dialogoConfirmarTitulo" class="dialogo-titulo">Confirmar</h2>
+    <p id="dialogoConfirmarTexto" class="mt-4 text-body-l text-on-surface-variant"></p>
+    <div id="dialogoConfirmarMotivo" class="campo mt-4" hidden>
+      <label for="dialogoConfirmarMotivoCampo" class="campo-etiqueta">
+        <span id="dialogoConfirmarMotivoEtiqueta">Motivo</span> <span id="dialogoConfirmarMotivoRequisito" class="campo-obligatorio">(obligatorio)</span>
+      </label>
+      <textarea id="dialogoConfirmarMotivoCampo" class="campo-control" rows="3" maxlength="300" aria-describedby="dialogoConfirmarMotivoAyuda"></textarea>
+      <p id="dialogoConfirmarMotivoAyuda" class="campo-ayuda">El gestor lo recibe en su notificación. Máximo 300 caracteres.</p>
+      <p id="dialogoConfirmarMotivoError" class="campo-error" hidden>
+        <span class="material-symbols-outlined icono-18" aria-hidden="true">error</span>
+        <span>Escribe el motivo para continuar.</span>
+      </p>
+    </div>
+    <div class="dialogo-acciones">
+      <button type="button" class="btn-text" value="cancelar" data-dialogo-cancelar>Cancelar</button>
+      <button type="submit" class="btn-filled" value="confirmar" id="dialogoConfirmarAceptar">Confirmar</button>
+    </div>
+  </form>
+</dialog>

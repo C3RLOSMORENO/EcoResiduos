@@ -1,325 +1,76 @@
-﻿<%- include('partials/header', { activeTab: 'autoridades' }) %>
+<%- include('partials/header', { activeTab: 'autoridades', titulo: 'Autoridades ambientales' }) %>
 
-<div class="max-w-7xl mx-auto space-y-6">
-  <%- include('partials/alert') %>
-
-  <!-- Encabezado y barra de acciones -->
-  <div class="mb-6 space-y-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Autoridades Ambientales</h1>
-        <span class="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
-          <%= autoridades ? autoridades.length : 0 %>
-        </span>
-      </div>
-      <button type="button" onclick="abrirModalNuevaAutoridad()" class="btn-primary">
-        <svg class="h-4 w-4 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        <span>Nueva autoridad</span>
-      </button>
+<div class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="titulo-pagina">Autoridades ambientales</h1>
+      <p class="mt-1 text-body-l text-on-surface-variant">Directorio de entidades de control que la app muestra a generadores y gestores.</p>
     </div>
-
-    <!-- Barra de búsqueda rápida -->
-    <div class="relative w-full max-w-md">
-      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-        <svg class="h-4 w-4 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      </div>
-      <input type="text" id="buscadorAutoridades" placeholder="Buscar por sigla, nombre o jurisdicción..." class="input-ui !pl-10">
-    </div>
+    <a href="/autoridades/nuevo" class="btn-filled">
+      <span class="material-symbols-outlined icono-20" aria-hidden="true">add</span>
+      Nueva autoridad
+    </a>
   </div>
 
-  <!-- Tabla de datos M3 Surface Container -->
-  <div class="tabla-container">
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-left">
+  <form method="GET" action="/autoridades" class="tarjeta flex flex-wrap items-end gap-4" role="search" aria-label="Buscar autoridades">
+    <div class="campo min-w-0 flex-1">
+      <label for="filtroAutoridad" class="campo-etiqueta">Buscar</label>
+      <input type="search" id="filtroAutoridad" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroAutoridadAyuda">
+      <p id="filtroAutoridadAyuda" class="campo-ayuda">Nombre, sigla o jurisdicción.</p>
+    </div>
+    <div class="flex gap-2 pb-6">
+      <a href="/autoridades" class="btn-text">Limpiar</a>
+      <button type="submit" class="btn-tonal">Buscar</button>
+    </div>
+  </form>
+
+  <% if (errorCarga) { %>
+    <%- include('partials/componentes/estado-error', { titulo: 'No pudimos cargar las autoridades.', detalle: errorCarga, reintentar: urlActual }) %>
+  <% } else if (autoridades.length === 0) { %>
+    <div class="tarjeta">
+      <% if (filtros.q) { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'search_off', titulo: 'No encontramos autoridades con esa búsqueda', accion: { href: '/autoridades', texto: 'Limpiar búsqueda' } }) %>
+      <% } else { %>
+        <%- include('partials/componentes/estado-vacio', { icono: 'account_balance', titulo: 'Aún no hay autoridades en el directorio', accion: { href: '/autoridades/nuevo', texto: 'Nueva autoridad' } }) %>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="tabla-contenedor" role="region" aria-labelledby="captionAutoridades" tabindex="0">
+      <table class="tabla">
+        <caption id="captionAutoridades">Autoridades ambientales, por nombre</caption>
         <thead>
           <tr>
-            <th scope="col" class="tabla-th pl-6">Entidad</th>
-            <th scope="col" class="tabla-th">Jurisdicción y Cobertura</th>
-            <th scope="col" class="tabla-th">Canales Oficiales</th>
-            <th scope="col" class="tabla-th pr-6 text-right"><span class="sr-only">Acciones</span></th>
+            <th scope="col">Entidad</th>
+            <th scope="col">Jurisdicción</th>
+            <th scope="col">Contacto</th>
+            <th scope="col">Horario</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-          <% if (autoridades && autoridades.length > 0) { %>
-            <% autoridades.forEach(a => { 
-                const web = a.sitio_web || '';
-                const webHref = web.startsWith('http') ? web : (web ? 'https://' + web : '#');
-                const webLabel = web ? web.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'Sin sitio web';
-            %>
-              <tr class="tabla-tr">
-                <!-- Entidad: Sigla + Nombre -->
-                <td class="py-3.5 pl-6 pr-4">
-                  <div class="flex items-center gap-2.5">
-                    <span class="inline-flex h-6 items-center rounded-md border border-slate-200 bg-slate-100 px-2 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 shrink-0">
-                      <%= a.sigla || 'SINA' %>
-                    </span>
-                    <span class="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1">
-                      <%= a.nombre %>
-                    </span>
-                  </div>
-                </td>
-
-                <!-- Jurisdicción -->
-                <td class="px-4 py-3.5 max-w-xs">
-                  <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">
-                    <%= a.jurisdiccion || 'Jurisdicción regional' %>
-                  </p>
-                </td>
-
-                <!-- Canales: Web + Teléfono -->
-                <td class="px-4 py-3.5 text-xs">
-                  <div>
-                    <% if (web) { %>
-                      <a href="<%= webHref %>" target="_blank" rel="noopener noreferrer" class="font-medium text-brand hover:underline dark:text-emerald-400">
-                        <%= webLabel %>
-                      </a>
-                    <% } else { %>
-                      <span class="text-slate-400 dark:text-slate-500">Sin portal web</span>
-                    <% } %>
-                  </div>
-                  <div class="text-slate-400 dark:text-slate-500 mt-0.5">
-                    <%= a.telefono || a.email || 'Sin contacto' %>
-                  </div>
-                </td>
-
-                <!-- Botón Detalle -->
-                <td class="py-3.5 pl-4 pr-6 text-right whitespace-nowrap">
-                  <button type="button" onclick='abrirFichaAutoridadBtn(this)' data-autoridad='<%= JSON.stringify(a) %>' class="btn-tonal">
-                    Ver detalle
-                  </button>
-                </td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr><td colspan="4" class="py-10 text-center text-xs text-slate-500">No hay autoridades ambientales registradas.</td></tr>
-          <% } %>
+        <tbody>
+          <% autoridades.forEach(function (a) { const web = f.urlSegura(a.sitio_web); %>
+            <tr>
+              <th scope="row">
+                <span class="block font-semibold"><%= a.sigla || 'Sin sigla' %></span>
+                <span class="block text-body-s font-normal text-on-surface-variant"><%= a.nombre %></span>
+              </th>
+              <td><%= f.textoODato(a.jurisdiccion) %></td>
+              <td>
+                <% if (web) { %><a class="enlace block break-all" href="<%= web %>" target="_blank" rel="noopener noreferrer"><%= web.replace(/^https?:\/\//, '').replace(/\/$/, '') %><span class="sr-only"> (se abre en una pestaña nueva)</span></a><% } %>
+                <span class="block"><%= a.telefono || '' %></span>
+                <span class="block break-all text-body-s text-on-surface-variant"><%= a.email || '' %></span>
+              </td>
+              <td><%= f.textoODato(a.horario) %></td>
+              <td class="text-right">
+                <a href="/autoridades/edit/<%= a.id %>" class="btn-tonal btn-sm" aria-label="Editar <%= a.sigla || a.nombre %>">Editar</a>
+              </td>
+            </tr>
+          <% }); %>
         </tbody>
       </table>
     </div>
-  </div>
+    <%- include('partials/componentes/paginacion', { pag, nombre: 'autoridades' }) %>
+  <% } %>
 </div>
-
-<!-- Modal: Detalle Institucional (3 Capas) -->
-<div id="modalFichaAutoridad" role="dialog" aria-modal="true" class="modal-scrim">
-  <div class="modal-dialog">
-    <!-- Header -->
-    <div class="modal-header">
-      <div class="flex items-center gap-3">
-        <span id="fichaAutSigla" class="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-slate-100 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 shrink-0"></span>
-        <h2 id="fichaAutNombre" class="text-base font-semibold text-slate-900 dark:text-slate-100 leading-tight"></h2>
-      </div>
-      <button type="button" onclick="cerrarFichaAutoridad()" aria-label="Cerrar" class="btn-icon">
-        <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-
-    <!-- Body: Lista de 2 líneas M3 -->
-    <div class="modal-body divide-y divide-slate-100 dark:divide-slate-800">
-      <!-- Jurisdicción -->
-      <div class="flex items-start gap-4 py-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 mt-0.5">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Jurisdicción y Cobertura</p>
-          <p id="fichaAutJurisdiccion" class="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5"></p>
-        </div>
-      </div>
-
-      <!-- Portal Web -->
-      <div class="flex items-center justify-between gap-4 py-3">
-        <div class="flex items-center gap-4">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-            <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-          </div>
-          <div>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Portal Web Institucional</p>
-            <a id="fichaAutWeb" href="#" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-brand hover:underline dark:text-emerald-400 mt-0.5 block truncate max-w-xs sm:max-w-sm"></a>
-          </div>
-        </div>
-        <a id="fichaAutWebIcon" href="#" target="_blank" rel="noopener noreferrer" aria-label="Visitar sitio web oficial" class="btn-icon text-brand dark:text-emerald-400">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-        </a>
-      </div>
-
-      <!-- Teléfono -->
-      <div class="flex items-center gap-4 py-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Teléfono / Línea de Atención</p>
-          <p id="fichaAutTelefono" class="text-sm text-slate-800 dark:text-slate-200 mt-0.5"></p>
-        </div>
-      </div>
-
-      <!-- Correo Electrónico -->
-      <div class="flex items-center gap-4 py-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Correo Electrónico / PQRS</p>
-          <p id="fichaAutEmail" class="text-sm text-slate-800 dark:text-slate-200 mt-0.5"></p>
-        </div>
-      </div>
-
-      <!-- Dirección de Sede -->
-      <div class="flex items-center gap-4 py-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Sede Principal</p>
-          <p id="fichaAutDireccion" class="text-sm text-slate-800 dark:text-slate-200 mt-0.5"></p>
-        </div>
-      </div>
-
-      <!-- Horario de Atención -->
-      <div class="flex items-center gap-4 py-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Horario de Atención al Ciudadano</p>
-          <p id="fichaAutHorario" class="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5"></p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="modal-footer">
-      <form id="formEliminarAutoridad" action="" method="POST" onsubmit="return confirm('¿Confirmas eliminar el registro de esta autoridad?');">
-        <button type="submit" class="h-10 rounded-full px-4 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">Eliminar autoridad</button>
-      </form>
-      <a id="btnEditarAut" href="#" class="btn-primary">Editar entidad</a>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Registrar Nueva Autoridad -->
-<div id="modalNuevaAutoridad" role="dialog" aria-modal="true" class="modal-scrim">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nueva Autoridad Ambiental</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ingresa los datos oficiales de la entidad</p>
-      </div>
-      <button type="button" onclick="cerrarModalNuevaAutoridad()" aria-label="Cerrar" class="btn-icon">
-        <svg class="h-5 w-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-
-    <div class="modal-body">
-      <form id="formAutoridad" action="/autoridades/guardar" method="POST" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Nombre Oficial de la Entidad *</label>
-            <input type="text" name="nombre" required maxlength="150" placeholder="Ej. Corporación Autónoma Regional de Santander" class="input-ui">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Sigla *</label>
-            <input type="text" name="sigla" required maxlength="20" data-format="uppercase" placeholder="Ej. CAS" class="input-ui">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Jurisdicción y Cobertura *</label>
-          <textarea name="jurisdiccion" required rows="2" placeholder="Ej. 74 municipios del departamento de Santander..." class="input-ui !h-auto py-2.5"></textarea>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Sitio Web Oficial *</label>
-            <input type="text" name="sitio_web" required maxlength="255" placeholder="https://www.cas.gov.co" class="input-ui">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Correo Electrónico / PQRS *</label>
-            <input type="email" name="email" required maxlength="100" placeholder="contactenos@cas.gov.co" class="input-ui">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Teléfono Institucional *</label>
-            <input type="tel" name="telefono" required maxlength="50" data-format="phone" placeholder="Ej. 6077242100" class="input-ui">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Dirección Sede Principal *</label>
-            <input type="text" name="direccion" required maxlength="255" placeholder="Ej. Carrera 12 No. 9-06, San Gil" class="input-ui">
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div class="modal-footer">
-      <button type="button" onclick="cerrarModalNuevaAutoridad()" class="btn-tonal">Cancelar</button>
-      <button type="submit" form="formAutoridad" class="btn-primary">Guardar autoridad</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  function abrirModalNuevaAutoridad() {
-    window.abrirModalUI ? window.abrirModalUI('modalNuevaAutoridad') : document.getElementById('modalNuevaAutoridad').classList.remove('hidden');
-  }
-
-  function cerrarModalNuevaAutoridad() {
-    window.cerrarModalUI ? window.cerrarModalUI('modalNuevaAutoridad') : document.getElementById('modalNuevaAutoridad').classList.add('hidden');
-  }
-
-  function abrirFichaAutoridadBtn(btn) {
-    try {
-      const a = JSON.parse(btn.getAttribute('data-autoridad'));
-      document.getElementById('fichaAutSigla').textContent = a.sigla || 'SINA';
-      document.getElementById('fichaAutNombre').textContent = a.nombre || 'Sin nombre';
-      document.getElementById('fichaAutJurisdiccion').textContent = a.jurisdiccion || 'Jurisdicción regional';
-      document.getElementById('fichaAutTelefono').textContent = a.telefono || 'Sin registrar';
-      document.getElementById('fichaAutEmail').textContent = a.email || 'Sin registrar';
-      document.getElementById('fichaAutDireccion').textContent = a.direccion || 'Sede principal no especificada';
-      document.getElementById('fichaAutHorario').textContent = a.horario || 'Lunes a Viernes: 8:00 a.m. - 5:00 p.m.';
-
-      const sitio = a.sitio_web || '';
-      const webUrl = sitio.startsWith('http') ? sitio : (sitio ? `https://${sitio}` : '#');
-      const webText = document.getElementById('fichaAutWeb');
-      const webIcon = document.getElementById('fichaAutWebIcon');
-
-      if (sitio) {
-        webText.textContent = sitio.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
-        webText.href = webUrl;
-        webIcon.href = webUrl;
-        webIcon.classList.remove('opacity-50', 'pointer-events-none');
-      } else {
-        webText.textContent = 'Sin portal web registrado';
-        webText.href = '#';
-        webIcon.href = '#';
-        webIcon.classList.add('opacity-50', 'pointer-events-none');
-      }
-
-      document.getElementById('btnEditarAut').href = `/autoridades/editar/${a.id}`;
-      document.getElementById('formEliminarAutoridad').action = `/autoridades/eliminar/${a.id}`;
-
-      window.abrirModalUI ? window.abrirModalUI('modalFichaAutoridad') : document.getElementById('modalFichaAutoridad').classList.remove('hidden');
-    } catch (e) {
-      console.error('Error al abrir detalle de autoridad:', e);
-    }
-  }
-
-  function cerrarFichaAutoridad() {
-    window.cerrarModalUI ? window.cerrarModalUI('modalFichaAutoridad') : document.getElementById('modalFichaAutoridad').classList.add('hidden');
-  }
-
-  // Buscador en vivo
-  document.getElementById('buscadorAutoridades').addEventListener('input', function(e) {
-    const term = e.target.value.toLowerCase().trim();
-    const rows = document.querySelectorAll('tbody tr.tabla-tr');
-
-    rows.forEach(row => {
-      const texto = row.textContent.toLowerCase();
-      row.style.display = texto.includes(term) ? '' : 'none';
-    });
-  });
-</script>
 
 <%- include('partials/footer') %>
-

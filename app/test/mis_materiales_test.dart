@@ -77,5 +77,23 @@ void main() {
       expect(recargo, isTrue);
       expect(find.textContaining('Los nuevos quedan en verificación'), findsOneWidget);
     });
+
+    testWidgets('el gestor ve si su empresa está en revisión, rechazada o suspendida', (tester) async {
+      Future<void> mostrar(EstadoMaterialesGestor estado) =>
+          tester.pumpWidget(app(Scaffold(body: MaterialesEnVerificacion(estado: estado))));
+
+      await mostrar(const EstadoMaterialesGestor(totalDeclarados: 2, estadoEmpresa: 'PENDIENTE'));
+      expect(find.text('Estamos revisando tu empresa'), findsOneWidget);
+
+      await mostrar(const EstadoMaterialesGestor(totalDeclarados: 2, estadoEmpresa: 'RECHAZADO'));
+      expect(find.text('No pudimos aprobar tu empresa'), findsOneWidget);
+
+      await mostrar(const EstadoMaterialesGestor(totalDeclarados: 2, totalVerificados: 2, estadoEmpresa: 'SUSPENDIDO'));
+      expect(find.text('Tu empresa está suspendida'), findsOneWidget);
+      expect(
+        const EstadoMaterialesGestor(totalDeclarados: 2, totalVerificados: 2, estadoEmpresa: 'SUSPENDIDO').verificado,
+        isFalse,
+      );
+    });
   });
 }
