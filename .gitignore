@@ -43,7 +43,7 @@ supabase/.env
 *.sqlite3
 *.db
 
-# Asistentes de IA, prompts y agentes
+# Depuración, notas de trabajo y archivos temporales de desarrollo
 *PROMPT*
 *prompt*
 PROMPT*
@@ -57,3 +57,6 @@ prompt*
 .windsurf/
 .antigravity/
 .system_generated/
+*reporte_auditoria*
+docs/diseno/
+
