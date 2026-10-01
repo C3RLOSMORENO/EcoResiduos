@@ -12,6 +12,9 @@ if sys.stdout.encoding != 'utf-8':
 DOWNLOADS_DATASET_DIR = Path(r"C:\Users\janerbustillo\Downloads\U_2026B\Proyecto\datasets")
 TARGET_DATASET_DIR = Path(__file__).parent / "dataset"
 
+# Tope de fotos de WaRP-C para no desbalancear APROVECHABLE.
+MAX_WARP = 600
+
 # Mapeo de subcarpetas del dataset 'organic/images/images' (Garbage 30 classes)
 ORGANIC_DATASET_MAPPING = {
     # ORGANICO
@@ -20,24 +23,24 @@ ORGANIC_DATASET_MAPPING = {
     "food_waste": "ORGANICO",
     "tea_bags": "ORGANICO",
 
-    # RECICLABLE
-    "aluminum_food_cans": "RECICLABLE",
-    "aluminum_soda_cans": "RECICLABLE",
-    "steel_food_cans": "RECICLABLE",
-    "glass_beverage_bottles": "RECICLABLE",
-    "glass_cosmetic_containers": "RECICLABLE",
-    "glass_food_jars": "RECICLABLE",
-    "cardboard_boxes": "RECICLABLE",
-    "cardboard_packaging": "RECICLABLE",
-    "newspaper": "RECICLABLE",
-    "magazines": "RECICLABLE",
-    "office_paper": "RECICLABLE",
-    "plastic_water_bottles": "RECICLABLE",
-    "plastic_soda_bottles": "RECICLABLE",
-    "plastic_detergent_bottles": "RECICLABLE",
-    "plastic_food_containers": "RECICLABLE",
-    "plastic_cup_lids": "RECICLABLE",
-    "plastic_shopping_bags": "RECICLABLE",
+    # APROVECHABLE
+    "aluminum_food_cans": "APROVECHABLE",
+    "aluminum_soda_cans": "APROVECHABLE",
+    "steel_food_cans": "APROVECHABLE",
+    "glass_beverage_bottles": "APROVECHABLE",
+    "glass_cosmetic_containers": "APROVECHABLE",
+    "glass_food_jars": "APROVECHABLE",
+    "cardboard_boxes": "APROVECHABLE",
+    "cardboard_packaging": "APROVECHABLE",
+    "newspaper": "APROVECHABLE",
+    "magazines": "APROVECHABLE",
+    "office_paper": "APROVECHABLE",
+    "plastic_water_bottles": "APROVECHABLE",
+    "plastic_soda_bottles": "APROVECHABLE",
+    "plastic_detergent_bottles": "APROVECHABLE",
+    "plastic_food_containers": "APROVECHABLE",
+    "plastic_cup_lids": "APROVECHABLE",
+    "plastic_shopping_bags": "APROVECHABLE",
 
     # ORDINARIO
     "styrofoam_food_containers": "ORDINARIO",
@@ -54,7 +57,7 @@ ORGANIC_DATASET_MAPPING = {
 }
 
 def ensure_target_dirs():
-    categories = ["ORGANICO", "RECICLABLE", "ORDINARIO", "PELIGROSO", "BIOSANITARIO", "RAEE", "INDUSTRIAL"]
+    categories = ["ORGANICO", "APROVECHABLE", "ORDINARIO", "PELIGROSO", "RIESGO_BIOLOGICO", "RAEE", "RCD"]
     for cat in categories:
         (TARGET_DATASET_DIR / cat).mkdir(parents=True, exist_ok=True)
 
@@ -120,38 +123,40 @@ def copy_electronica_images():
     print(f"  ✅ Agregado a PELIGROSO (Baterías): {peligroso_count} fotos")
 
 def copy_industry_images():
-    print("\n📦 3. Procesando dataset 'industry' (INDUSTRIAL)...")
+    # WaRP-C son botellas, latas, cartón y envases de una planta de reciclaje:
+    # según la norma son aprovechables, no escombros (RCD).
+    print("\n📦 3. Procesando dataset 'industry' (WaRP-C → APROVECHABLE)...")
     source_dir = DOWNLOADS_DATASET_DIR / "industry" / "Warp-C" / "train_crops"
     if not source_dir.exists():
         print(f"⚠️ No se encontró: {source_dir}")
         return
 
-    industrial_dir = TARGET_DATASET_DIR / "INDUSTRIAL"
+    aprovechable_dir = TARGET_DATASET_DIR / "APROVECHABLE"
     count = 0
     for root, _, files in os.walk(source_dir):
         category_name = Path(root).name
         for file in files:
             if file.lower().endswith(('.jpg', '.jpeg', '.png')):
                 src_file = Path(root) / file
-                dst_file = industrial_dir / f"ind_{category_name}_{count}_{file}"
+                dst_file = aprovechable_dir / f"warp_{category_name}_{count}_{file}"
                 if not dst_file.exists():
                     shutil.copy2(src_file, dst_file)
                     count += 1
-                if count >= 2000:
+                if count >= MAX_WARP:
                     break
-        if count >= 2000:
+        if count >= MAX_WARP:
             break
 
-    print(f"  ✅ Agregado a INDUSTRIAL: {count} fotos")
+    print(f"  ✅ Agregado a APROVECHABLE: {count} fotos")
 
 def extract_medico_images():
-    print("\n📦 4. Extrayendo dataset 'medico.zip' (BIOSANITARIO y PELIGROSO)...")
+    print("\n📦 4. Extrayendo dataset 'medico.zip' (RIESGO_BIOLOGICO y PELIGROSO)...")
     zip_path = DOWNLOADS_DATASET_DIR / "medico.zip"
     if not zip_path.exists():
         print(f"⚠️ No se encontró: {zip_path}")
         return
 
-    biosanitario_dir = TARGET_DATASET_DIR / "BIOSANITARIO"
+    riesgo_biologico_dir = TARGET_DATASET_DIR / "RIESGO_BIOLOGICO"
     peligroso_dir = TARGET_DATASET_DIR / "PELIGROSO"
 
     bio_classes = ["used_masks", "used_medical_gloves", "used_syringes", "blood_soaked_bandages", "human_organs"]
@@ -170,7 +175,7 @@ def extract_medico_images():
                 subfolder = parts[-2] if len(parts) >= 2 else ""
 
                 if subfolder in bio_classes:
-                    dst_file = biosanitario_dir / f"med_{subfolder}_{bio_count}.jpg"
+                    dst_file = riesgo_biologico_dir / f"med_{subfolder}_{bio_count}.jpg"
                     if not dst_file.exists():
                         with z.open(filename) as src, open(dst_file, 'wb') as dst:
                             dst.write(src.read())
@@ -182,7 +187,7 @@ def extract_medico_images():
                             dst.write(src.read())
                         peligro_count += 1
 
-    print(f"  ✅ Agregado a BIOSANITARIO: {bio_count} fotos")
+    print(f"  ✅ Agregado a RIESGO_BIOLOGICO: {bio_count} fotos")
     print(f"  ✅ Agregado a PELIGROSO (Medicamentos/Ampollas): {peligro_count} fotos")
 
 def print_final_summary():

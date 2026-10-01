@@ -5,7 +5,7 @@ EcoResiduos es una aplicación móvil desarrollada en Flutter diseñada para fac
 ## Características Principales ✨
 
 - **Identificación con IA:** Usa la cámara de tu dispositivo para identificar automáticamente el tipo de residuo y recibir instrucciones claras sobre cómo manejarlo.
-- **Búsqueda Inteligente:** Un directorio de residuos con información sobre categorías (PELIGROSO, INDUSTRIAL, RAEE, BIOSANITARIO) y guías de manejo conectadas en tiempo real.
+- **Búsqueda Inteligente:** Un directorio de residuos con información sobre categorías (APROVECHABLE, ORGANICO, ORDINARIO, PELIGROSO, RAEE, RCD, RIESGO_BIOLOGICO) y guías de manejo conectadas en tiempo real.
 - **Directorio de Gestores:** Encuentra empresas y gestores certificados cercanos a tu ubicación para la disposición adecuada de materiales especiales.
 - **Autoridades Ambientales:** Acceso rápido al contacto y ubicación de entidades oficiales encargadas del control ambiental.
 

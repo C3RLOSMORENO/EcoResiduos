@@ -42,6 +42,7 @@ class _ProcesandoScreenState extends State<ProcesandoScreen> {
         imagePath: widget.imagePath,
         confianza: e.confianza,
         sinResiduo: e.sinResiduo,
+        alternativas: e.alternativas,
       );
     } catch (e) {
       debugPrint('Falló el análisis de la foto: $e');

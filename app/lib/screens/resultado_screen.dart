@@ -61,6 +61,16 @@ class ResultadoScreen extends StatelessWidget {
                           _Confianza(valor: item.confianza),
                           const SizedBox(height: EcoSpace.s16),
                           Text(guia.consejoResultado, style: theme.textTheme.bodyLarge),
+                          if (item.confianza < IdentificacionService.confianzaAlta && item.alternativas.isNotEmpty) ...[
+                            const SizedBox(height: EcoSpace.s16),
+                            OpcionesIa(
+                              titulo: '¿No es correcto? También podría ser:',
+                              opciones: item.alternativas,
+                              imagePath: imagePath,
+                              descartada: Alternativa(categoria: item.categoria, confianza: item.confianza),
+                              gestoresRepository: gestoresRepository,
+                            ),
+                          ],
                           if (categoria == Categoria.peligroso) ...[
                             const SizedBox(height: EcoSpace.s12),
                             const AvisoAdvertencia(
@@ -182,6 +192,84 @@ class _Confianza extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Categorías que la IA también consideró. Al elegir una se abre su resultado,
+/// y la categoría que se deja pasa a ser una opción más.
+class OpcionesIa extends StatelessWidget {
+  const OpcionesIa({
+    super.key,
+    required this.titulo,
+    required this.opciones,
+    required this.imagePath,
+    this.descartada,
+    this.gestoresRepository,
+  });
+
+  final String titulo;
+  final List<Alternativa> opciones;
+  final String imagePath;
+  final Alternativa? descartada;
+  final GestoresRepository? gestoresRepository;
+
+  void _elegir(BuildContext context, Alternativa opcion) {
+    final restantes = [
+      ?descartada,
+      for (final otra in opciones)
+        if (otra.categoria != opcion.categoria) otra,
+    ]..sort((a, b) => b.confianza.compareTo(a.confianza));
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultadoScreen(
+          item: WasteItem(
+            nombre: IdentificacionService.nombreDe(opcion.categoria),
+            categoria: opcion.categoria,
+            confianza: opcion.confianza,
+            imagenPath: imagePath,
+            alternativas: restantes,
+          ),
+          imagePath: imagePath,
+          gestoresRepository: gestoresRepository,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(titulo, style: theme.textTheme.titleSmall),
+        const SizedBox(height: EcoSpace.s8),
+        for (final opcion in opciones)
+          Padding(
+            padding: const EdgeInsets.only(bottom: EcoSpace.s8),
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(EcoRadius.medium)),
+              ),
+              onPressed: () => _elegir(context, opcion),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Align(alignment: Alignment.centerLeft, child: CategoriaChip.fromString(opcion.categoria)),
+                  ),
+                  Text('${opcion.confianza} %', style: theme.textTheme.labelLarge),
+                  const SizedBox(width: EcoSpace.s4),
+                  const Icon(Icons.chevron_right, size: 20),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

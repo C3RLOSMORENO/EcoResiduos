@@ -21,30 +21,34 @@ def get_api_key():
     env_paths = [
         SCRIPT_DIR.parent / ".env",
         SCRIPT_DIR.parent.parent / "app" / ".env",
+        SCRIPT_DIR.parent.parent / ".env",
         SCRIPT_DIR / ".env"
     ]
     for p in env_paths:
         if p.exists():
             for line in p.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
                 if line.startswith("GEMINI_API_KEY="):
-                    key = line.split("=", 1)[1].strip()
+                    key = line.split("=", 1)[1].strip().strip('"').strip("'")
                     if key:
                         return key
     return os.environ.get("GEMINI_API_KEY")
 
 CATEGORIES = [
-    "BIOSANITARIO",
-    "INDUSTRIAL",
-    "ORDINARIO",
+    "APROVECHABLE",
     "ORGANICO",
+    "ORDINARIO",
     "PELIGROSO",
     "RAEE",
-    "RECICLABLE"
+    "RCD",
+    "RIESGO_BIOLOGICO",
+    "FONDO"
 ]
 
 CANDIDATE_MODELS = [
-    "gemini-3.6-flash",
-    "gemini-3.1-flash-lite"
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash"
 ]
 
 def audit_image_with_gemini(api_key, img_path, max_retries=3):
@@ -64,13 +68,20 @@ def audit_image_with_gemini(api_key, img_path, max_retries=3):
 
     prompt = f"""
 Eres un auditor ambiental experto bajo la normativa colombiana de gestion de residuos (Resolucion 2184 de 2019).
-Analiza esta imagen y clasificala ESTRICTAMENTE en una de estas 7 categorias:
-{', '.join(CATEGORIES)}
+Analiza esta imagen y clasificala ESTRICTAMENTE en una de estas 8 categorias:
+- APROVECHABLE: Plastico limpio, vidrio, metal/latas, carton, papel limpio.
+- ORGANICO: Restos de comida cruda, cascaras de frutas/huevos, borra de cafe, hojas/pasto.
+- ORDINARIO: Servilletas sucias, papel higienico, paquetes metalizados de snacks, colillas, icopor sucio.
+- PELIGROSO: Pilas, baterias, aerosoles, envases de quimicos/solventes/pinturas, bombillos ahorradores, medicamentos.
+- RAEE: Celulares, computadores, cables, cargadores, perifericos, electrodomesticos, placas electronicas.
+- RCD: Escombros de construccion, ladrillo roto, concreto, tejas, ceramica/baldosa rota, arena, drywall.
+- RIESGO_BIOLOGICO: Jeringas, agujas, guantes usados, gasas/algodones contaminados, tapabocas, material hospitalario.
+- FONDO: Imagenes SIN ningun residuo (pisos limpios, paredes, mesas vacias, textura de andenes/superficies sin basura).
 
 Responde UNICAMENTE con un objeto JSON valido en este formato exacto:
 {{
-  "categoria_sugerida": "UNA DE LAS 7 CATEGORIAS",
-  "objeto_detectado": "Nombre comun del objeto principal",
+  "categoria_sugerida": "UNA DE LAS 8 CATEGORIAS",
+  "objeto_detectado": "Nombre comun del objeto principal o superficie",
   "confianza": 90,
   "justificacion": "Explicacion breve de por que pertenece a esta categoria"
 }}
@@ -256,5 +267,5 @@ Las siguientes imágenes fueron marcadas por el modelo maestro como potencialmen
     print(f"\n📄 Reporte generado exitosamente en:\n   {REPORT_FILE}")
 
 if __name__ == "__main__":
-    # Parámetros por defecto: 3 fotos por categoría para una prueba rápida (21 fotos total)
-    main(samples_per_cat=3, auto_clean=False)
+    # 20 muestras por categoría según los requisitos del protocolo de auditoría
+    main(samples_per_cat=20, auto_clean=False)
