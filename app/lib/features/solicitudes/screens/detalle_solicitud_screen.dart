@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../models/postulacion_recoleccion.dart';
+import '../../../services/archivo_pdf.dart';
 import '../../../theme/eco_theme.dart';
 import '../../../utils/enlaces.dart';
 import '../../../utils/formato.dart';
@@ -14,7 +16,8 @@ import '../repositories/solicitudes_repository.dart';
 import 'publicar_residuo_screen.dart';
 
 /// Detalle de una solicitud. El generador (28) ve la línea de tiempo y decide
-/// sobre las postulaciones; el gestor (30) ve los datos y envía su propuesta.
+/// sobre las postulaciones; el gestor (30) ve los datos, envía su propuesta
+/// con el valor y, tras recoger, carga el certificado en PDF.
 ///
 /// Devuelve `true` al cerrar si algo cambió, para que la lista se recargue.
 class DetalleSolicitudScreen extends StatefulWidget {
@@ -56,6 +59,11 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
   PostulacionRecoleccion? _miPostulacion;
   bool _cargandoMiPostulacion = true;
   final _propuesta = TextEditingController();
+  final _valor = TextEditingController();
+  late TipoValor _tipoValor = _seAprovecha(widget.solicitud)
+      ? TipoValor.pagoAprovechamiento
+      : TipoValor.cobroRecoleccion;
+  String? _errorValor;
 
   bool get _esGestor => _rol == 'GESTOR';
 
@@ -71,6 +79,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
   @override
   void dispose() {
     _propuesta.dispose();
+    _valor.dispose();
     super.dispose();
   }
 
@@ -152,11 +161,12 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
   Future<void> _aceptar(PostulacionRecoleccion p) async {
     final otros = (_postulaciones ?? []).where((o) => o.esPropuesta && o.id != p.id).length;
     final nombre = p.gestorRazonSocial ?? 'este gestor';
+    final acuerdo = p.tieneValor ? '${p.tipoValor!.etiqueta}: ${formatoPesos(p.valor!)}.\n\n' : '';
     final confirmado = await _confirmar(
       icono: Icons.handshake_outlined,
       titulo: '¿Aceptar a $nombre?',
       texto:
-          'Le compartiremos tu teléfono y la dirección para coordinar la recogida.'
+          '${acuerdo}Le compartiremos tu teléfono y la dirección para coordinar la recogida.'
           '${otros > 0 ? ' A ${otros == 1 ? 'el otro gestor' : 'los otros $otros gestores'} les avisaremos que la solicitud se asignó a otro gestor.' : ''}',
       accion: 'Aceptar',
     );
@@ -262,11 +272,62 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
   }
 
   Future<void> _postularme() async {
+    final valor = int.tryParse(_valor.text.replaceAll('.', ''));
+    if (valor == null || valor > _valorMaximo) {
+      setState(
+        () => _errorValor = valor == null
+            ? 'Escribe el valor. Si no cobras ni pagas, escribe 0.'
+            : 'El valor máximo es ${formatoPesos(_valorMaximo)}.',
+      );
+      return;
+    }
     final texto = _propuesta.text.trim();
     await _ejecutar(
-      () => _repository.postularASolicitud(solicitudId: _solicitud.id!, propuesta: texto.isEmpty ? null : texto),
+      () => _repository.postularASolicitud(
+        solicitudId: _solicitud.id!,
+        tipoValor: _tipoValor,
+        valor: valor,
+        propuesta: texto.isEmpty ? null : texto,
+      ),
       exito: 'Te postulaste. Te avisamos si te eligen.',
     );
+  }
+
+  Future<void> _cargarCertificado() async {
+    final tipo = await showModalBottomSheet<TipoCertificado>(
+      context: context,
+      builder: (_) => _HojaTipoCertificado(sugerido: _certificadoSugerido()),
+    );
+    if (tipo == null || !mounted) return;
+
+    final pdf = await _elegirPdf();
+    if (pdf == null) return;
+    await _ejecutar(
+      () => _repository.cargarCertificado(solicitudId: _solicitud.id!, pdf: pdf, tipo: tipo),
+      exito: 'Cargaste el certificado. Le avisamos al generador.',
+    );
+  }
+
+  Future<ArchivoPdf?> _elegirPdf() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      return await elegirPdf();
+    } on PdfInvalido catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.mensaje)));
+    } catch (e) {
+      debugPrint('No se pudo leer el PDF: $e');
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos abrir ese archivo. Elige otro PDF.')));
+    }
+    return null;
+  }
+
+  /// El tipo ya cargado; si no hay, el que corresponde a lo acordado o al material.
+  TipoCertificado _certificadoSugerido() {
+    if (_solicitud.certificadoTipo != null) return _solicitud.certificadoTipo!;
+    if (_miPostulacion?.tipoValor == TipoValor.pagoAprovechamiento || _seAprovecha(_solicitud)) {
+      return TipoCertificado.aprovechamiento;
+    }
+    return TipoCertificado.disposicionFinal;
   }
 
   Future<void> _marcarRecolectado() async {
@@ -395,35 +456,14 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
           ),
         ];
       case 'RECOLECTADO':
-        final gestor = _aceptada?.gestorRazonSocial ?? 'El gestor';
-        if (s.tieneProblema) {
-          return [
-            _Aviso(
-              icono: Icons.report_problem_outlined,
-              titulo: 'Reportaste un problema',
-              texto: '${s.problemaDetalle ?? ''}\nLo estamos revisando con $gestor.'.trim(),
-              tono: TonoEstado.error,
-            ),
-          ];
-        }
-        if (s.estaConfirmado) {
-          return [
-            _Aviso(
-              icono: Icons.task_alt,
-              titulo: 'Recolección confirmada',
-              texto:
-                  '$gestor la marcó ${s.recolectadoAt != null ? 'el ${fechaCorta(s.recolectadoAt!)}' : ''} '
-                  'y quedó confirmada. Gracias por separar bien tu residuo.',
-              tono: TonoEstado.exito,
-            ),
-          ];
-        }
+        final aceptada = _aceptada;
         return [
-          _Aviso(
-            icono: Icons.local_shipping_outlined,
-            titulo: '$gestor marcó tu residuo como recolectado',
-            texto: '${tiempoRelativo(s.recolectadoAt)}. ¿Lo recogieron?',
-          ),
+          _avisoRecoleccion(aceptada?.gestorRazonSocial ?? 'El gestor'),
+          if (aceptada?.tieneValor ?? false) _FilaValor(postulacion: aceptada!),
+          const SizedBox(height: EcoSpace.s16),
+          Text('Certificado', style: theme.textTheme.titleMedium),
+          const SizedBox(height: EcoSpace.s12),
+          _Certificado(solicitud: s, esGestor: false),
         ];
       case 'EN_NEGOCIACION':
         final aceptada = _aceptada;
@@ -461,6 +501,33 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
       default:
         return _listaPostulaciones();
     }
+  }
+
+  Widget _avisoRecoleccion(String gestor) {
+    final s = _solicitud;
+    if (s.tieneProblema) {
+      return _Aviso(
+        icono: Icons.report_problem_outlined,
+        titulo: 'Reportaste un problema',
+        texto: '${s.problemaDetalle ?? ''}\nLo estamos revisando con $gestor.'.trim(),
+        tono: TonoEstado.error,
+      );
+    }
+    if (s.estaConfirmado) {
+      return _Aviso(
+        icono: Icons.task_alt,
+        titulo: 'Recolección confirmada',
+        texto:
+            '$gestor la marcó ${s.recolectadoAt != null ? 'el ${fechaCorta(s.recolectadoAt!)}' : ''} '
+            'y quedó confirmada. Gracias por separar bien tu residuo.',
+        tono: TonoEstado.exito,
+      );
+    }
+    return _Aviso(
+      icono: Icons.local_shipping_outlined,
+      titulo: '$gestor marcó tu residuo como recolectado',
+      texto: '${tiempoRelativo(s.recolectadoAt)}. ¿Lo recogieron?',
+    );
   }
 
   PostulacionRecoleccion? get _aceptada {
@@ -651,6 +718,40 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
         ];
       }
       return [
+        Text('Valor de tu propuesta', style: theme.textTheme.titleMedium),
+        const SizedBox(height: EcoSpace.s12),
+        SegmentedButton<TipoValor>(
+          segments: const [
+            ButtonSegment(value: TipoValor.cobroRecoleccion, label: Text('Cobro por recoger')),
+            ButtonSegment(value: TipoValor.pagoAprovechamiento, label: Text('Pago por el material')),
+          ],
+          selected: {_tipoValor},
+          showSelectedIcon: false,
+          onSelectionChanged: (seleccion) => setState(() => _tipoValor = seleccion.first),
+        ),
+        const SizedBox(height: EcoSpace.s16),
+        TextField(
+          controller: _valor,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+            const _FormatoMiles(),
+          ],
+          onChanged: (_) {
+            if (_errorValor != null) setState(() => _errorValor = null);
+          },
+          decoration: InputDecoration(
+            labelText: _tipoValor.etiqueta,
+            prefixText: '\$ ',
+            suffixText: 'COP',
+            helperText: _tipoValor == TipoValor.cobroRecoleccion
+                ? 'Lo que le cobras al generador. Escribe 0 si es gratis.'
+                : 'Lo que le pagas al generador por el material.',
+            errorText: _errorValor,
+          ),
+        ),
+        const SizedBox(height: EcoSpace.s24),
         Text('Tu propuesta', style: theme.textTheme.titleMedium),
         const SizedBox(height: EcoSpace.s8),
         TextField(
@@ -692,8 +793,15 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
               : 'Coordina la recogida con el generador.',
           tono: TonoEstado.exito,
         ),
+        if (p.tieneValor) _FilaValor(postulacion: p),
         if (!recolectado && _solicitud.telefono.isNotEmpty)
           _FilaDato(icono: Icons.call_outlined, etiqueta: 'Teléfono del generador', valor: _solicitud.telefono),
+        if (recolectado) ...[
+          const SizedBox(height: EcoSpace.s16),
+          Text('Certificado', style: theme.textTheme.titleMedium),
+          const SizedBox(height: EcoSpace.s12),
+          _Certificado(solicitud: _solicitud, esGestor: true, onReemplazar: _ocupado ? null : _cargarCertificado),
+        ],
       ];
     }
 
@@ -706,6 +814,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
           titulo: 'Propuesta enviada',
           texto: p.propuesta?.trim().isNotEmpty ?? false ? p.propuesta!.trim() : 'Sin mensaje.',
         ),
+        if (p.tieneValor) _FilaValor(postulacion: p),
       ];
     }
 
@@ -735,6 +844,18 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
     }
     if (p != null && p.esPropuesta) {
       return const _BarraInferior(children: [FilledButton(onPressed: null, child: Text('Ya te postulaste'))]);
+    }
+    if (p != null && p.esAceptada && _solicitud.estado == 'RECOLECTADO' && !_solicitud.tieneCertificado) {
+      return _BarraInferior(
+        nota: 'Disposición final o aprovechamiento. Máximo 10 MB.',
+        children: [
+          FilledButton.icon(
+            onPressed: _ocupado ? null : _cargarCertificado,
+            icon: const Icon(Icons.upload_file),
+            label: const Text('Cargar certificado (PDF)'),
+          ),
+        ],
+      );
     }
     if (p != null && p.esAceptada && _solicitud.estado == 'EN_NEGOCIACION') {
       return _BarraInferior(
@@ -838,6 +959,100 @@ class _FilaDato extends StatelessWidget {
   }
 }
 
+/// Valor que propuso el gestor, con el nombre que le da la norma.
+class _FilaValor extends StatelessWidget {
+  const _FilaValor({required this.postulacion});
+
+  final PostulacionRecoleccion postulacion;
+
+  @override
+  Widget build(BuildContext context) => _FilaDato(
+    icono: Icons.payments_outlined,
+    etiqueta: postulacion.tipoValor!.etiqueta,
+    valor: formatoPesos(postulacion.valor!),
+  );
+}
+
+/// Certificado PDF del gestor. Mientras no exista, explica qué falta.
+class _Certificado extends StatelessWidget {
+  const _Certificado({required this.solicitud, required this.esGestor, this.onReemplazar});
+
+  final SolicitudRecoleccion solicitud;
+  final bool esGestor;
+
+  /// Solo el gestor puede reemplazarlo.
+  final VoidCallback? onReemplazar;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = solicitud;
+    if (!s.tieneCertificado) {
+      return _Aviso(
+        icono: Icons.description_outlined,
+        titulo: esGestor ? 'Falta cargar el certificado' : 'Certificado pendiente',
+        texto: esGestor
+            ? 'Carga en PDF el certificado de disposición final o de aprovechamiento. El generador lo recibirá en la app.'
+            : 'Te avisaremos cuando el gestor cargue el certificado de disposición final o de aprovechamiento.',
+      );
+    }
+
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Material(
+      color: scheme.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.medium))),
+      child: Padding(
+        padding: const EdgeInsets.all(EcoSpace.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(EcoRadius.small),
+                  ),
+                  child: Icon(Icons.picture_as_pdf_outlined, color: scheme.onTertiaryContainer),
+                ),
+                const SizedBox(width: EcoSpace.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.certificadoTipo?.etiqueta ?? 'Certificado', style: theme.textTheme.titleSmall),
+                      if (s.certificadoAt != null)
+                        Text(
+                          'Cargado ${tiempoRelativo(s.certificadoAt)}',
+                          style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: EcoSpace.s8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (esGestor) TextButton(onPressed: onReemplazar, child: const Text('Reemplazar')),
+                const SizedBox(width: EcoSpace.s8),
+                FilledButton.tonalIcon(
+                  onPressed: () => abrirDocumento(context, s.certificadoUrl!),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Ver PDF'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TarjetaPostulacion extends StatelessWidget {
   const _TarjetaPostulacion({required this.postulacion, required this.pie});
 
@@ -895,6 +1110,7 @@ class _TarjetaPostulacion extends StatelessWidget {
               const SizedBox(height: EcoSpace.s12),
               Text('«${p.propuesta!.trim()}»', style: theme.textTheme.bodyMedium),
             ],
+            if (p.tieneValor) _FilaValor(postulacion: p),
             const SizedBox(height: EcoSpace.s8),
             pie,
           ],
@@ -1059,3 +1275,79 @@ class _HojaReportarProblemaState extends State<_HojaReportarProblema> {
     );
   }
 }
+
+/// El gestor indica qué certificado va a cargar antes de elegir el PDF.
+class _HojaTipoCertificado extends StatefulWidget {
+  const _HojaTipoCertificado({required this.sugerido});
+
+  final TipoCertificado sugerido;
+
+  @override
+  State<_HojaTipoCertificado> createState() => _HojaTipoCertificadoState();
+}
+
+class _HojaTipoCertificadoState extends State<_HojaTipoCertificado> {
+  late TipoCertificado _tipo = widget.sugerido;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('¿Qué certificado vas a cargar?', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: EcoSpace.s8),
+            RadioGroup<TipoCertificado>(
+              groupValue: _tipo,
+              onChanged: (valor) => setState(() => _tipo = valor ?? _tipo),
+              child: Column(
+                children: [
+                  for (final tipo in TipoCertificado.values)
+                    RadioListTile<TipoCertificado>(
+                      value: tipo,
+                      title: Text(tipo.etiqueta),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: EcoSpace.s8),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+              onPressed: () => Navigator.pop(context, _tipo),
+              icon: const Icon(Icons.upload_file),
+              label: const Text('Elegir PDF'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Pone punto de miles mientras se escribe («1250000» → «1.250.000»).
+/// Va después de `digitsOnly`, así que recibe solo dígitos.
+class _FormatoMiles extends TextInputFormatter {
+  const _FormatoMiles();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) return newValue;
+    final texto = separarMiles(int.parse(newValue.text));
+    return TextEditingValue(
+      text: texto,
+      selection: TextSelection.collapsed(offset: texto.length),
+    );
+  }
+}
+
+/// Valor máximo que acepta la base de datos (mil millones de pesos).
+const _valorMaximo = 1000000000;
+
+/// Materiales que se reciclan o compostan: lo usual es que el gestor pague por ellos.
+bool _seAprovecha(SolicitudRecoleccion s) =>
+    const {'APROVECHABLE', 'ORGANICO'}.contains(s.material?.categoria.toUpperCase());

@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/perfil_generador.dart';
 import '../../../models/perfil_gestor.dart';
+import '../../../services/archivo_pdf.dart';
 import '../../../utils/sesion.dart';
 import '../models/gestor_padron.dart';
 
@@ -24,10 +27,11 @@ abstract class AuthRepository {
     required String municipio,
   });
 
-  /// Busca una empresa en el padrón de gestores autorizados por su NIT.
+  /// Busca por su NIT una empresa ya registrada como gestor autorizado, con
+  /// sus datos de contacto y los materiales que ya tiene registrados.
   Future<GestorPadron?> buscarGestorEnPadron(String nit);
 
-  /// Crea la cuenta de un gestor que ya está en el padrón. Los materiales
+  /// Crea la cuenta de un gestor que ya está registrado. Los materiales
   /// declarados quedan pendientes de verificación por el administrador.
   Future<AuthResponse> signUpGestor({
     required String email,
@@ -37,6 +41,27 @@ abstract class AuthRepository {
     required String telefono,
     required String direccion,
     required String municipio,
+    required List<int> materialesDeclarados,
+  });
+
+  /// Sube la licencia o permiso ambiental de un gestor que aún no tiene cuenta
+  /// y devuelve su ruta en el bucket privado `permisos`.
+  Future<String> subirPermisoAmbiental(ArchivoPdf pdf);
+
+  /// Crea la cuenta de una empresa que no está registrada. La empresa se crea
+  /// en el primer inicio de sesión y queda PENDIENTE hasta que el administrador
+  /// revisa el permiso.
+  Future<AuthResponse> signUpGestorNuevo({
+    required String email,
+    required String password,
+    required String nit,
+    required String razonSocial,
+    required String representanteLegal,
+    required String telefono,
+    required String direccion,
+    required String municipio,
+    String? horario,
+    required String permisoPath,
     required List<int> materialesDeclarados,
   });
 
@@ -91,12 +116,12 @@ class SupabaseAuthRepository implements AuthRepository {
   /// Las filas de `usuarios` y `perfiles_generador` las crea el trigger de
   /// `auth.users` al registrarse. La empresa del gestor se vincula en el primer
   /// inicio de sesión, cuando el correo ya está confirmado; la función del
-  /// servidor comprueba que coincida con el del padrón.
+  /// servidor comprueba que coincida con el registrado para la empresa.
   Future<void> _vincularGestor() async {
     try {
       await _client.rpc('vincular_cuenta_gestor');
     } on PostgrestException catch (e) {
-      debugPrint('No se pudo vincular la cuenta con el padrón: ${e.message}');
+      debugPrint('No se pudo vincular la cuenta con la empresa: ${e.message}');
     }
   }
 
@@ -142,7 +167,10 @@ class SupabaseAuthRepository implements AuthRepository {
     if (sinDigitoVerificacion.isEmpty) return null;
     final filas = await _client
         .from('perfiles_gestor')
-        .select('id, nit, razon_social, email_contacto, estado_verificacion, usuario_id')
+        .select(
+          'id, nit, razon_social, email_contacto, estado_verificacion, usuario_id, '
+          'telefono_contacto, direccion, municipio, gestor_material(material_id)',
+        )
         .inFilter('nit', {sinDigitoVerificacion, todosLosDigitos}.toList())
         .limit(1);
     return filas.isEmpty ? null : GestorPadron.fromMap(filas.first);
@@ -171,6 +199,56 @@ class SupabaseAuthRepository implements AuthRepository {
           'telefono': telefono.trim(),
           'direccion': direccion.trim(),
           'municipio': municipio,
+          'materiales_declarados': materialesDeclarados,
+        },
+      );
+    } on AuthException catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<String> subirPermisoAmbiental(ArchivoPdf pdf) async {
+    // Sin sesión no hay carpeta propia: el nombre aleatorio evita que otro
+    // registro adivine la ruta y la reclame como suya.
+    final aleatorio = Random.secure();
+    final nombre = List.generate(16, (_) => aleatorio.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    final ruta = 'registro/$nombre.pdf';
+    await _client.storage
+        .from('permisos')
+        .uploadBinary(ruta, pdf.bytes, fileOptions: const FileOptions(contentType: 'application/pdf'));
+    return ruta;
+  }
+
+  @override
+  Future<AuthResponse> signUpGestorNuevo({
+    required String email,
+    required String password,
+    required String nit,
+    required String razonSocial,
+    required String representanteLegal,
+    required String telefono,
+    required String direccion,
+    required String municipio,
+    String? horario,
+    required String permisoPath,
+    required List<int> materialesDeclarados,
+  }) async {
+    try {
+      return await _client.auth.signUp(
+        email: email.trim().toLowerCase(),
+        password: password,
+        data: {
+          'rol': 'GESTOR',
+          'registro_nuevo': true,
+          'nit': normalizarNit(nit),
+          'razon_social': razonSocial.trim(),
+          'representante_legal': representanteLegal.trim(),
+          'telefono': telefono.trim(),
+          'direccion': direccion.trim(),
+          'municipio': municipio,
+          if (horario != null && horario.trim().isNotEmpty) 'horario': horario.trim(),
+          'permiso_path': permisoPath,
           'materiales_declarados': materialesDeclarados,
         },
       );

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/guia_categorias.dart';
-import '../../../screens/gestores_asociados_screen.dart';
+import '../../../services/archivo_pdf.dart';
 import '../../../theme/eco_theme.dart';
 import '../../../utils/municipios.dart';
 import '../../../widgets/boton_fijo_inferior.dart';
-import '../../../widgets/categoria_chip.dart';
 import '../../../widgets/empty_state_widget.dart';
+import '../../../widgets/grupo_materiales.dart';
 import '../../solicitudes/models/material_residuo.dart';
 import '../../solicitudes/repositories/solicitudes_repository.dart';
 import '../models/gestor_padron.dart';
@@ -15,16 +15,21 @@ import '../repositories/auth_repository.dart';
 import '../widgets/campo_contrasena.dart';
 import 'revisa_correo_screen.dart';
 
-enum _Paso { rol, generador, verificarGestor, gestorNoEncontrado, datosGestor, materiales }
+enum _Paso { rol, generador, verificarGestor, gestorNoEncontrado, datosGestor, registroNuevo, materiales }
 
 /// Registro (03). Primero se elige el rol y después se ven solo los campos
-/// de ese rol. El gestor se verifica en el padrón y declara sus materiales;
-/// el administrador los verifica antes de que vea solicitudes.
+/// de ese rol. El gestor escribe su NIT: si ya está registrado, sus datos y
+/// materiales se llenan solos; si no, registra la empresa con su permiso
+/// ambiental en PDF. En ambos casos el administrador verifica antes de que
+/// vea solicitudes.
 class RegistroScreen extends StatefulWidget {
-  const RegistroScreen({super.key, this.authRepository, this.cargarMateriales});
+  const RegistroScreen({super.key, this.authRepository, this.cargarMateriales, this.elegirPermiso});
 
   final AuthRepository? authRepository;
   final Future<List<MaterialResiduo>> Function()? cargarMateriales;
+
+  /// Selector del PDF del permiso; por defecto, el explorador de archivos.
+  final Future<ArchivoPdf?> Function()? elegirPermiso;
 
   @override
   State<RegistroScreen> createState() => _RegistroScreenState();
@@ -47,23 +52,42 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _nit = TextEditingController();
   final _razonSocial = TextEditingController();
   final _direccion = TextEditingController();
+  final _representante = TextEditingController();
+  final _horario = TextEditingController();
   String? _municipio;
 
   GestorPadron? _padron;
+
+  /// La empresa no está registrada y se registra con su permiso.
+  bool _registroNuevo = false;
+  ArchivoPdf? _permiso;
   Future<List<MaterialResiduo>>? _catalogo;
   final _materialesElegidos = <int>{};
+
+  late final _controladores = [
+    _nombre,
+    _documento,
+    _telefono,
+    _correo,
+    _contrasena,
+    _nit,
+    _razonSocial,
+    _direccion,
+    _representante,
+    _horario,
+  ];
 
   @override
   void initState() {
     super.initState();
-    for (final c in [_nombre, _documento, _telefono, _correo, _contrasena, _nit, _razonSocial, _direccion]) {
+    for (final c in _controladores) {
       c.addListener(() => setState(() {}));
     }
   }
 
   @override
   void dispose() {
-    for (final c in [_nombre, _documento, _telefono, _correo, _contrasena, _nit, _razonSocial, _direccion]) {
+    for (final c in _controladores) {
       c.dispose();
     }
     super.dispose();
@@ -83,8 +107,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _ir(_Paso.rol);
       case _Paso.gestorNoEncontrado || _Paso.datosGestor:
         _ir(_Paso.verificarGestor);
+      case _Paso.registroNuevo:
+        _ir(_Paso.gestorNoEncontrado);
       case _Paso.materiales:
-        _ir(_Paso.datosGestor);
+        _ir(_registroNuevo ? _Paso.registroNuevo : _Paso.datosGestor);
     }
   }
 
@@ -100,11 +126,24 @@ class _RegistroScreenState extends State<RegistroScreen> {
   };
 
   Map<String, bool> get _camposGestor => {
-    'razón social': _lleno(_razonSocial),
     'teléfono': _lleno(_telefono),
     'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+  };
+
+  bool get _nitValido => RegExp(r'^\d{8,15}$').hasMatch(normalizarNit(_nit.text));
+
+  Map<String, bool> get _camposGestorNuevo => {
+    'NIT': _nitValido,
+    'razón social': _lleno(_razonSocial),
+    'representante legal': _lleno(_representante),
+    'teléfono': _lleno(_telefono),
+    'dirección': _lleno(_direccion),
+    'municipio': _municipio != null,
+    'correo': validarCorreo(_correo.text) == null,
+    'contraseña': validarContrasena(_contrasena.text) == null,
+    'permiso en PDF': _permiso != null,
   };
 
   String _mensajeFaltantes(Map<String, bool> campos) {
@@ -134,7 +173,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   Future<void> _verificarPadron() async {
-    if (_nit.text.trim().isEmpty || validarCorreo(_correo.text) != null) {
+    if (_nit.text.trim().isEmpty) {
       setState(() => _mostrarErrores = true);
       return;
     }
@@ -149,27 +188,72 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _ir(_Paso.gestorNoEncontrado);
       } else if (padron.tieneCuentaActiva) {
         setState(() => _error = 'Esta empresa ya tiene una cuenta. Inicia sesión con el correo de la empresa.');
-      } else if ((padron.emailOficial ?? '').toLowerCase() != _correo.text.trim().toLowerCase()) {
+      } else if (!padron.tieneCorreo) {
         setState(
           () => _error =
-              'Ese correo no es el que tiene la empresa en el padrón. Usa el correo oficial o comunícate '
-              'con la autoridad ambiental para actualizarlo.',
+              'Tu empresa no tiene un correo registrado y lo necesitamos para activar la cuenta. Comunícate con '
+              'el administrador de EcoResiduos para actualizarlo.',
         );
       } else {
-        _padron = padron;
-        _razonSocial.text = padron.razonSocial;
+        _llenarDesdePadron(padron);
         _ir(_Paso.datosGestor);
       }
     } catch (e) {
-      debugPrint('Falló la consulta al padrón: $e');
-      if (mounted) setState(() => _error = 'No pudimos consultar el padrón. Revisa tu conexión.');
+      debugPrint('Falló la búsqueda del NIT: $e');
+      if (mounted) setState(() => _error = 'No pudimos buscar tu empresa. Revisa tu conexión.');
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
   }
 
+  /// Con el NIT basta: los datos y materiales registrados quedan llenos y el
+  /// gestor solo corrige lo que haya cambiado.
+  void _llenarDesdePadron(GestorPadron padron) {
+    _padron = padron;
+    _registroNuevo = false;
+    _razonSocial.text = padron.razonSocial;
+    _correo.text = padron.emailOficial!;
+    _telefono.text = padron.telefono ?? '';
+    _direccion.text = padron.direccion ?? '';
+    _municipio = municipioAdmitido(padron.municipio);
+    _materialesElegidos
+      ..clear()
+      ..addAll(padron.materialIds);
+  }
+
+  void _iniciarRegistroNuevo() {
+    if (_padron != null) {
+      _padron = null;
+      for (final c in [_razonSocial, _correo, _telefono, _direccion]) {
+        c.clear();
+      }
+      _municipio = null;
+      _materialesElegidos.clear();
+    }
+    _registroNuevo = true;
+    _ir(_Paso.registroNuevo);
+  }
+
+  Future<void> _elegirPermiso() async {
+    try {
+      final pdf = await (widget.elegirPermiso ?? elegirPdf)();
+      if (pdf != null && mounted) {
+        setState(() {
+          _permiso = pdf;
+          _error = null;
+        });
+      }
+    } on PdfInvalido catch (e) {
+      if (mounted) setState(() => _error = e.mensaje);
+    } catch (e) {
+      debugPrint('No se pudo leer el permiso: $e');
+      if (mounted) setState(() => _error = 'No pudimos abrir ese archivo. Elige otro PDF.');
+    }
+  }
+
   void _continuarAMateriales() {
-    if (_camposGestor.containsValue(false)) {
+    final campos = _registroNuevo ? _camposGestorNuevo : _camposGestor;
+    if (campos.containsValue(false)) {
       setState(() => _mostrarErrores = true);
       return;
     }
@@ -182,12 +266,31 @@ class _RegistroScreenState extends State<RegistroScreen> {
       setState(() => _error = 'Elige al menos un material que tu licencia te permita recibir.');
       return;
     }
+    if (_registroNuevo) {
+      await _enviar(() async {
+        final permisoPath = await _auth.subirPermisoAmbiental(_permiso!);
+        return _auth.signUpGestorNuevo(
+          email: _correo.text,
+          password: _contrasena.text,
+          nit: _nit.text,
+          razonSocial: _razonSocial.text,
+          representanteLegal: _representante.text,
+          telefono: _telefono.text,
+          direccion: _direccion.text,
+          municipio: _municipio!,
+          horario: _horario.text,
+          permisoPath: permisoPath,
+          materialesDeclarados: _materialesElegidos.toList(),
+        );
+      });
+      return;
+    }
     await _enviar(
       () => _auth.signUpGestor(
         email: _correo.text,
         password: _contrasena.text,
         padron: _padron!,
-        razonSocial: _razonSocial.text,
+        razonSocial: _padron!.razonSocial,
         telefono: _telefono.text,
         direccion: _direccion.text,
         municipio: _municipio!,
@@ -213,6 +316,14 @@ class _RegistroScreenState extends State<RegistroScreen> {
       );
     } on AuthException catch (e) {
       if (mounted) setState(() => _error = e.message);
+    } on StorageException catch (e) {
+      // Falla al subir el permiso: la cuenta aún no se creó.
+      debugPrint('Falló la subida del permiso: ${e.statusCode} ${e.message}');
+      if (mounted) {
+        setState(
+          () => _error = 'No pudimos subir tu permiso ambiental, así que aún no creamos la cuenta. Inténtalo de nuevo.',
+        );
+      }
     } catch (e) {
       debugPrint('Falló el registro: $e');
       if (mounted) setState(() => _error = 'No pudimos crear la cuenta. Revisa tu conexión e inténtalo de nuevo.');
@@ -227,6 +338,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       _Paso.rol => '',
       _Paso.generador => 'Tus datos',
       _Paso.verificarGestor || _Paso.gestorNoEncontrado || _Paso.datosGestor => 'Verifica tu empresa',
+      _Paso.registroNuevo => 'Registra tu empresa',
       _Paso.materiales => 'Materiales que recibes',
     };
     return PopScope(
@@ -245,6 +357,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           _Paso.verificarGestor => _pasoVerificar(),
           _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
           _Paso.datosGestor => _pasoDatosGestor(),
+          _Paso.registroNuevo => _pasoRegistroNuevo(),
           _Paso.materiales => _pasoMateriales(),
         },
         bottomNavigationBar: _barra(),
@@ -271,7 +384,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       ),
       _Paso.verificarGestor => _conTeclado(
         BotonFijoInferior(
-          textoBoton: 'Verificar en el padrón',
+          textoBoton: 'Verificar',
           iconoBoton: Icons.verified_outlined,
           isLoading: _enviando,
           textoLoading: 'Buscando…',
@@ -285,6 +398,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
           camposCompletados: _camposGestor.values.where((v) => v).length,
           totalCampos: _camposGestor.length,
           mensajeCamposFaltantes: _mensajeFaltantes(_camposGestor),
+        ),
+      ),
+      _Paso.registroNuevo => _conTeclado(
+        BotonFijoInferior(
+          textoBoton: 'Continuar',
+          onPressed: _continuarAMateriales,
+          camposCompletados: _camposGestorNuevo.values.where((v) => v).length,
+          totalCampos: _camposGestorNuevo.length,
+          mensajeCamposFaltantes: _mensajeFaltantes(_camposGestorNuevo),
         ),
       ),
       _Paso.materiales => BotonFijoInferior(
@@ -320,6 +442,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
     String? error,
     Iterable<String>? autofill,
     int? maxLineas = 1,
+    String? ayuda,
+    int? maxLargo,
+    bool soloLectura = false,
   }) {
     return TextField(
       controller: controller,
@@ -327,8 +452,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
       textInputAction: TextInputAction.next,
       autofillHints: autofill,
       maxLines: maxLineas,
+      maxLength: maxLargo,
+      readOnly: soloLectura,
       textCapitalization: teclado == null ? TextCapitalization.words : TextCapitalization.none,
-      decoration: InputDecoration(labelText: etiqueta, errorText: _mostrarErrores ? error : null),
+      decoration: InputDecoration(
+        labelText: etiqueta,
+        helperText: ayuda,
+        helperMaxLines: 2,
+        errorText: _mostrarErrores ? error : null,
+        suffixIcon: soloLectura ? const Icon(Icons.lock_outline) : null,
+      ),
     );
   }
 
@@ -370,7 +503,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 titulo: 'Soy gestor certificado',
                 texto:
                     'Empresa autorizada. Recibe solicitudes de los materiales que puedes gestionar. '
-                    'Verificamos tu NIT en el padrón oficial.',
+                    'Con tu NIT buscamos tu empresa; si no la encontramos, la registras con tu permiso ambiental.',
               ),
             ],
           ),
@@ -425,16 +558,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
     final theme = Theme.of(context);
     return _formulario([
       Text(
-        'Buscamos tu NIT en el padrón oficial de gestores autorizados. Si apareces, completamos tus datos.',
+        'Escribe el NIT de tu empresa. Si ya está registrada como gestor autorizado, llenamos tus datos.',
         style: theme.textTheme.bodyLarge,
       ),
-      _campo(_nit, 'NIT', teclado: TextInputType.number, error: _lleno(_nit) ? null : 'Escribe el NIT de la empresa'),
       _campo(
-        _correo,
-        'Correo de la empresa',
-        teclado: TextInputType.emailAddress,
-        error: validarCorreo(_correo.text),
-        autofill: const [AutofillHints.email],
+        _nit,
+        'NIT',
+        teclado: TextInputType.number,
+        error: _lleno(_nit) ? null : 'Escribe el NIT de la empresa',
+        ayuda: 'Sin dígito de verificación. Ej.: 900456789',
       ),
     ]);
   }
@@ -442,19 +574,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Widget _pasoNoEncontrado() {
     return EstadoDesplazable(
       child: EmptyStateWidget(
-        icon: Icons.search_off,
-        title: 'No encontramos ese NIT en el padrón',
+        icon: Icons.domain_add_outlined,
+        title: 'No encontramos tu empresa',
         description:
-            'Revisa que esté bien escrito, sin dígito de verificación de más. Si tu licencia está vigente y no '
-            'apareces, comunícate con la autoridad ambiental.',
-        ctaText: 'Corregir NIT',
-        ctaIcon: Icons.edit_outlined,
-        onCtaPressed: () => _ir(_Paso.verificarGestor),
-        secondaryText: 'Ver autoridades ambientales',
-        onSecondaryPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const GestoresAsociadosScreen(segmentoInicial: 1)),
-        ),
+            'No hay un gestor registrado con ese NIT. Revisa que esté bien escrito o registra tu empresa: llena '
+            'sus datos y adjunta en PDF tu licencia o permiso ambiental. '
+            'Lo revisamos antes de que recibas solicitudes.',
+        ctaText: 'Registrar mi empresa',
+        ctaIcon: Icons.app_registration,
+        onCtaPressed: _iniciarRegistroNuevo,
+        secondaryText: 'Corregir NIT',
+        onSecondaryPressed: () => _ir(_Paso.verificarGestor),
       ),
     );
   }
@@ -484,7 +614,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     style: theme.textTheme.titleSmall?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                   Text(
-                    '${padron.razonSocial} · NIT ${padron.nit} · registrada en el padrón de gestores autorizados.',
+                    '${padron.razonSocial} · NIT ${padron.nit} · gestor autorizado.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                 ],
@@ -494,10 +624,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
       ),
       _campo(
-        _razonSocial,
-        'Razón social',
-        error: _lleno(_razonSocial) ? null : 'Escribe la razón social',
-        maxLineas: null,
+        _correo,
+        'Correo de la empresa',
+        teclado: TextInputType.emailAddress,
+        soloLectura: true,
+        ayuda: 'Es el correo registrado de tu empresa. Ahí te llega el enlace para activar la cuenta.',
       ),
       _campo(
         _telefono,
@@ -523,6 +654,75 @@ class _RegistroScreenState extends State<RegistroScreen> {
     ]);
   }
 
+  Widget _pasoRegistroNuevo() {
+    final theme = Theme.of(context);
+    return _formulario([
+      Text(
+        'Escribe los datos como aparecen en tu licencia o permiso ambiental. El administrador los revisa antes de '
+        'que recibas solicitudes.',
+        style: theme.textTheme.bodyLarge,
+      ),
+      _campo(
+        _nit,
+        'NIT',
+        teclado: TextInputType.number,
+        error: _nitValido ? null : 'El NIT debe tener entre 8 y 15 dígitos, sin dígito de verificación',
+      ),
+      _campo(
+        _razonSocial,
+        'Razón social',
+        error: _lleno(_razonSocial) ? null : 'Escribe la razón social',
+        maxLineas: null,
+      ),
+      _campo(
+        _representante,
+        'Representante legal',
+        error: _lleno(_representante) ? null : 'Escribe el nombre del representante legal',
+      ),
+      _campo(
+        _telefono,
+        'Teléfono',
+        teclado: TextInputType.phone,
+        error: _lleno(_telefono) ? null : 'Escribe el teléfono',
+      ),
+      _campo(
+        _direccion,
+        'Dirección',
+        teclado: TextInputType.streetAddress,
+        error: _lleno(_direccion) ? null : 'Escribe la dirección',
+        maxLineas: null,
+      ),
+      _selectorMunicipio(),
+      _campo(
+        _correo,
+        'Correo de la empresa',
+        teclado: TextInputType.emailAddress,
+        error: validarCorreo(_correo.text),
+        autofill: const [AutofillHints.email],
+        ayuda: 'Ahí te llega el enlace para activar la cuenta.',
+      ),
+      _campo(
+        _horario,
+        'Horario de atención (opcional)',
+        teclado: TextInputType.text,
+        maxLargo: 120,
+        ayuda: 'Ej.: Lun a vie 7:30 a 17:00 · Sáb 8:00 a 12:00',
+      ),
+      CampoContrasena(
+        controller: _contrasena,
+        ayuda: 'Mínimo 8 caracteres y un número',
+        autofillHints: const [AutofillHints.newPassword],
+      ),
+      if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
+        _MensajeError(texto: validarContrasena(_contrasena.text)!),
+      _SelectorPermiso(
+        archivo: _permiso,
+        onElegir: _enviando ? null : _elegirPermiso,
+        conError: _mostrarErrores && _permiso == null,
+      ),
+    ]);
+  }
+
   Widget _pasoMateriales() {
     final theme = Theme.of(context);
     return FutureBuilder<List<MaterialResiduo>>(
@@ -543,14 +743,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
           padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, EcoSpace.s24),
           children: [
             Text(
-              'Elige lo que tu licencia te permite recibir. El administrador de EcoResiduos lo verifica antes de '
-              'mostrarte solicitudes.',
+              _padron?.materialIds.isNotEmpty ?? false
+                  ? 'Marcamos los que tu empresa ya tiene registrados. Agrega o quita lo que haga falta: el '
+                        'administrador de EcoResiduos lo verifica antes de mostrarte solicitudes.'
+                  : 'Elige lo que tu licencia te permite recibir. El administrador de EcoResiduos lo verifica antes '
+                        'de mostrarte solicitudes.',
               style: theme.textTheme.bodyLarge,
             ),
             if (_error != null) ...[const SizedBox(height: EcoSpace.s16), _MensajeError(texto: _error!)],
             const SizedBox(height: EcoSpace.s16),
             for (final categoria in categoriasPublicables.keys)
-              _GrupoMateriales(
+              GrupoMateriales(
                 categoria: categoria,
                 materiales: catalogo.where((m) => m.categoria.toUpperCase() == categoria).toList(),
                 elegidos: _materialesElegidos,
@@ -559,6 +762,69 @@ class _RegistroScreenState extends State<RegistroScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Licencia o permiso ambiental en PDF, obligatorio para registrar una empresa.
+class _SelectorPermiso extends StatelessWidget {
+  const _SelectorPermiso({required this.archivo, required this.onElegir, required this.conError});
+
+  final ArchivoPdf? archivo;
+  final VoidCallback? onElegir;
+  final bool conError;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final elegido = archivo != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Material(
+          color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
+          shape: RoundedRectangleBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(EcoRadius.medium)),
+            side: BorderSide(color: conError ? scheme.error : scheme.outlineVariant, width: conError ? 2 : 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(EcoSpace.s16),
+            child: Row(
+              children: [
+                Icon(
+                  elegido ? Icons.picture_as_pdf : Icons.upload_file,
+                  size: 28,
+                  color: conError ? scheme.error : scheme.primary,
+                ),
+                const SizedBox(width: EcoSpace.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Licencia o permiso ambiental', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        archivo?.nombre ?? 'PDF de máximo 10 MB expedido por la autoridad ambiental (CDMB, AMB o CAS).',
+                        style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: EcoSpace.s8),
+                elegido
+                    ? TextButton(onPressed: onElegir, child: const Text('Cambiar'))
+                    : FilledButton.tonal(onPressed: onElegir, child: const Text('Elegir PDF')),
+              ],
+            ),
+          ),
+        ),
+        if (conError) ...[
+          const SizedBox(height: EcoSpace.s4),
+          Text('Adjunta el permiso en PDF', style: theme.textTheme.bodySmall?.copyWith(color: scheme.error)),
+        ],
+      ],
     );
   }
 }
@@ -611,67 +877,6 @@ class _TarjetaRol extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _GrupoMateriales extends StatelessWidget {
-  const _GrupoMateriales({
-    required this.categoria,
-    required this.materiales,
-    required this.elegidos,
-    required this.onCambio,
-  });
-
-  final String categoria;
-  final List<MaterialResiduo> materiales;
-  final Set<int> elegidos;
-  final VoidCallback onCambio;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cantidad = materiales.where((m) => elegidos.contains(m.id)).length;
-    final todos = materiales.isNotEmpty && cantidad == materiales.length;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: EcoSpace.s8),
-      child: ExpansionTile(
-        shape: const Border(),
-        leading: CategoriaTile(categoria: categoriaFromString(categoria)),
-        title: Text(etiquetaDeCategoria(categoriaFromString(categoria)), style: theme.textTheme.titleSmall),
-        subtitle: Text(
-          cantidad == 0
-              ? 'Toca para elegir materiales'
-              : (cantidad == 1 ? '1 material elegido' : '$cantidad materiales elegidos'),
-        ),
-        children: [
-          if (materiales.isEmpty)
-            const ListTile(title: Text('Aún no hay materiales en esta categoría.'))
-          else ...[
-            CheckboxListTile(
-              value: todos,
-              title: const Text('Todos los de esta categoría'),
-              onChanged: (marcar) {
-                for (final m in materiales) {
-                  marcar == true ? elegidos.add(m.id) : elegidos.remove(m.id);
-                }
-                onCambio();
-              },
-            ),
-            for (final m in materiales)
-              CheckboxListTile(
-                value: elegidos.contains(m.id),
-                title: Text(m.nombreComun),
-                subtitle: m.subcategoria?.trim().isNotEmpty ?? false ? Text(m.subcategoria!.trim()) : null,
-                onChanged: (marcar) {
-                  marcar == true ? elegidos.add(m.id) : elegidos.remove(m.id);
-                  onCambio();
-                },
-              ),
-          ],
-        ],
       ),
     );
   }

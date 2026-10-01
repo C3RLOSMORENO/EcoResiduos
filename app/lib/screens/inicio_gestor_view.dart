@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../features/solicitudes/models/solicitud_recoleccion.dart';
 import '../features/solicitudes/repositories/solicitudes_repository.dart';
 import '../models/postulacion_recoleccion.dart';
+import '../services/contador_novedades.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../utils/sesion.dart';
@@ -25,6 +26,36 @@ class InicioGestorView extends StatefulWidget {
 
 class _InicioGestorViewState extends State<InicioGestorView> {
   late Future<_ResumenGestor> _resumen = _cargar();
+
+  // Se vuelve a consultar al volver a la app y cada vez que llega una
+  // notificación: así el gestor pasa a su inicio normal en cuanto el
+  // administrador lo aprueba, sin tener que deslizar para actualizar.
+  late final AppLifecycleListener _ciclo;
+
+  @override
+  void initState() {
+    super.initState();
+    _ciclo = AppLifecycleListener(onResume: _actualizarEnSilencio);
+    ContadorNovedades.llegadas.addListener(_actualizarEnSilencio);
+  }
+
+  @override
+  void dispose() {
+    ContadorNovedades.llegadas.removeListener(_actualizarEnSilencio);
+    _ciclo.dispose();
+    super.dispose();
+  }
+
+  /// Recarga sin mostrar el esqueleto: lo que está en pantalla se queda hasta
+  /// que llegan los datos nuevos. Si falla, se conserva lo anterior.
+  Future<void> _actualizarEnSilencio() async {
+    try {
+      final resumen = await _cargar();
+      if (mounted) setState(() => _resumen = Future.value(resumen));
+    } catch (e) {
+      debugPrint('No se pudo actualizar el inicio del gestor: $e');
+    }
+  }
 
   Future<_ResumenGestor> _cargar() async {
     final materiales = await widget.repository.getEstadoMaterialesGestor();
@@ -70,7 +101,13 @@ class _InicioGestorViewState extends State<InicioGestorView> {
           if (!resumen.materiales.verificado) {
             return RefreshIndicator(
               onRefresh: _recargar,
-              child: EstadoDesplazable(child: MaterialesEnVerificacion(estado: resumen.materiales)),
+              child: EstadoDesplazable(
+                child: MaterialesEnVerificacion(
+                  estado: resumen.materiales,
+                  repository: widget.repository,
+                  onMaterialesCambiados: _recargar,
+                ),
+              ),
             );
           }
           return RefreshIndicator(onRefresh: _recargar, child: _contenido(resumen));

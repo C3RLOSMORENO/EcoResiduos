@@ -36,6 +36,20 @@ String formatoNumero(double valor) {
 /// Cantidad con su propia unidad («120 kg», «3 unidades»).
 String formatoCantidad(double cantidad, String unidad) => '${formatoNumero(cantidad)} ${unidadCorta(unidad)}';
 
+/// Entero con punto de miles («1250000» → «1.250.000»).
+String separarMiles(int valor) {
+  final digitos = valor.abs().toString();
+  final miles = StringBuffer(valor < 0 ? '-' : '');
+  for (var i = 0; i < digitos.length; i++) {
+    if (i > 0 && (digitos.length - i) % 3 == 0) miles.write('.');
+    miles.write(digitos[i]);
+  }
+  return miles.toString();
+}
+
+/// Pesos colombianos («$ 1.250.000»).
+String formatoPesos(int valor) => '\$ ${separarMiles(valor)}';
+
 /// Distancia en kilómetros con un decimal («3,2 km»).
 String formatoDistancia(double km) => '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
 
