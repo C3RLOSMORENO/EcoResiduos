@@ -206,6 +206,9 @@ class _TileAviso extends StatelessWidget {
     'RECOLECCION_MARCADA' => Icons.local_shipping_outlined,
     'RECOLECCION_CONFIRMADA' => Icons.verified_outlined,
     'PROBLEMA_REPORTADO' => Icons.report_problem_outlined,
+    'CERTIFICADO_CARGADO' => Icons.picture_as_pdf_outlined,
+    'GESTOR_APROBADO' => Icons.verified_user_outlined,
+    'GESTOR_RECHAZADO' => Icons.gpp_bad_outlined,
     _ => Icons.notifications_none,
   };
 

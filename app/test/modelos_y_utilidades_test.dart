@@ -1,7 +1,9 @@
 import 'package:ecoresiduos/features/auth/repositories/auth_repository.dart';
 import 'package:ecoresiduos/features/solicitudes/models/material_residuo.dart';
+import 'package:ecoresiduos/features/solicitudes/models/solicitud_recoleccion.dart';
 import 'package:ecoresiduos/models/gestor.dart';
 import 'package:ecoresiduos/models/postulacion_recoleccion.dart';
+import 'package:ecoresiduos/services/certificados_service.dart';
 import 'package:ecoresiduos/services/fotos_service.dart';
 import 'package:ecoresiduos/theme/eco_theme.dart';
 import 'package:ecoresiduos/utils/formato.dart';
@@ -42,12 +44,36 @@ void main() {
       );
       expect(solicitud(estado: 'EN_NEGOCIACION').pendienteConfirmacion, isFalse);
     });
+
+    test('lee el certificado y nunca lo envía desde el generador', () {
+      final s = SolicitudRecoleccion.fromMap({
+        'id': 1,
+        'certificado_url': 'https://x.supabase.co/storage/v1/object/public/certificados/u/1/9.pdf',
+        'certificado_tipo': 'disposicion_final',
+        'certificado_at': '2026-10-01T10:00:00Z',
+      });
+      expect(s.tieneCertificado, isTrue);
+      expect(s.certificadoTipo, TipoCertificado.disposicionFinal);
+      expect(s.toMap().keys, isNot(anyOf(contains('certificado_url'), contains('certificado_tipo'))));
+      expect(CertificadosService.rutaEnBucket(s.certificadoUrl), 'u/1/9.pdf');
+    });
   });
 
   group('Postulación', () {
     test('envía la propuesta solo si tiene texto', () {
       expect(postulacion(id: 1, propuesta: '  Paso el jueves  ').toMap()['propuesta'], 'Paso el jueves');
       expect(postulacion(id: 1, propuesta: '   ').toMap().containsKey('propuesta'), isFalse);
+    });
+
+    test('envía y lee el valor propuesto', () {
+      final mapa = postulacion(id: 1, tipoValor: TipoValor.pagoAprovechamiento, valor: 120000).toMap(forInsert: true);
+      expect(mapa['tipo_valor'], 'PAGO_APROVECHAMIENTO');
+      expect(mapa['valor'], 120000);
+
+      final leida = PostulacionRecoleccion.fromMap({...mapa, 'id': 1});
+      expect(leida.tipoValor, TipoValor.pagoAprovechamiento);
+      expect(leida.valor, 120000);
+      expect(postulacion(id: 2).tieneValor, isFalse);
     });
 
     test('reconoce el estado «Asignada a otro gestor»', () {
@@ -106,6 +132,13 @@ void main() {
   });
 
   group('Formato', () {
+    test('pesos con punto de miles', () {
+      expect(formatoPesos(0), '\$ 0');
+      expect(formatoPesos(950), '\$ 950');
+      expect(formatoPesos(50000), '\$ 50.000');
+      expect(formatoPesos(1250000), '\$ 1.250.000');
+    });
+
     test('cantidad con su propia unidad y sin decimales de más', () {
       expect(formatoCantidad(120, 'KG'), '120 kg');
       expect(formatoCantidad(2.5, 'M3'), '2,5 m³');

@@ -3,6 +3,7 @@ import 'package:ecoresiduos/features/solicitudes/screens/mis_postulaciones_scree
 import 'package:ecoresiduos/features/solicitudes/screens/mis_publicaciones_screen.dart';
 import 'package:ecoresiduos/features/solicitudes/screens/solicitudes_disponibles_screen.dart';
 import 'package:ecoresiduos/screens/inicio_screen.dart';
+import 'package:ecoresiduos/services/contador_novedades.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -174,6 +175,28 @@ void main() {
 
       expect(find.text('Tus materiales están en verificación'), findsOneWidget);
       expect(find.text('Disponibles'), findsNothing);
+    });
+
+    testWidgets('cuando llega la aprobación pasa solo a su inicio normal', (tester) async {
+      final repo = FakeSolicitudesRepository(
+        estadoMateriales: const EstadoMaterialesGestor(categoriasDeclaradas: ['APROVECHABLE'], totalDeclarados: 1),
+        disponibles: [solicitud()],
+      );
+      await tester.pumpWidget(app(InicioScreen(rol: 'GESTOR', repository: repo)));
+      await tester.pumpAndSettle();
+      expect(find.text('Tus materiales están en verificación'), findsOneWidget);
+
+      // El administrador aprueba y llega la notificación en tiempo real.
+      repo.estadoMateriales = const EstadoMaterialesGestor(
+        categoriasDeclaradas: ['APROVECHABLE'],
+        totalDeclarados: 1,
+        totalVerificados: 1,
+      );
+      ContadorNovedades.llegadas.value++;
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tus materiales están en verificación'), findsNothing);
+      expect(find.text('Hay 1 solicitud de tus materiales'), findsOneWidget);
     });
   });
 }

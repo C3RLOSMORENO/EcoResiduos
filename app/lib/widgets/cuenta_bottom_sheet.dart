@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/auth/screens/restablecer_password_screen.dart';
+import '../features/solicitudes/screens/mis_materiales_screen.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../utils/municipios.dart';
@@ -166,6 +167,18 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
           if (_documento?.isNotEmpty ?? false)
             _Dato(etiqueta: _sesion.esGestor ? 'NIT' : 'Documento', valor: _documento!),
           const Divider(height: EcoSpace.s24),
+          if (_sesion.esGestor)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.recycling),
+              title: const Text('Materiales que recibo'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.push(MaterialPageRoute(builder: (_) => const MisMaterialesScreen()));
+              },
+            ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.lock_outline),

@@ -3,6 +3,8 @@ import 'package:ecoresiduos/features/auth/screens/login_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/registro_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/restablecer_password_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/verificar_recuperacion_screen.dart';
+import 'package:ecoresiduos/services/archivo_pdf.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +17,10 @@ const _padron = GestorPadron(
   razonSocial: 'Reciclajes del Oriente S.A.S.',
   emailOficial: 'operaciones@reciclajes.co',
   estadoVerificacion: 'APROBADO',
+  telefono: '6076462210',
+  direccion: 'Cra 15 # 8-42',
+  municipio: 'GIRÓN',
+  materialIds: [1],
 );
 
 void main() {
@@ -62,63 +68,101 @@ void main() {
   });
 
   group('Registro de gestor', () {
-    Future<void> irAVerificacion(WidgetTester tester, FakeAuthRepository auth) async {
-      await tester.pumpWidget(app(RegistroScreen(authRepository: auth, cargarMateriales: () async => [carton])));
+    Future<void> irAVerificacion(WidgetTester tester, FakeAuthRepository auth, {ArchivoPdf? permiso}) async {
+      await tester.pumpWidget(
+        app(
+          RegistroScreen(
+            authRepository: auth,
+            cargarMateriales: () async => [carton],
+            elegirPermiso: () async => permiso,
+          ),
+        ),
+      );
       await tester.tap(find.text('Soy gestor certificado'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('un NIT fuera del padrón no puede registrarse', (tester) async {
-      final auth = FakeAuthRepository();
-      await irAVerificacion(tester, auth);
-
-      await tester.enterText(find.widgetWithText(TextField, 'NIT'), '900.456.789-2');
-      await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'operaciones@reciclajes.co');
-      await tester.tap(find.text('Verificar en el padrón'));
+    Future<void> verificarNit(WidgetTester tester, String nit) async {
+      await tester.enterText(find.widgetWithText(TextField, 'NIT'), nit);
+      await tester.tap(find.text('Verificar'));
       await tester.pumpAndSettle();
+    }
 
-      expect(find.text('No encontramos ese NIT en el padrón'), findsOneWidget);
-    });
-
-    testWidgets('el correo debe ser el que tiene la empresa en el padrón', (tester) async {
-      final auth = FakeAuthRepository()..padron = _padron;
-      await irAVerificacion(tester, auth);
-
-      await tester.enterText(find.widgetWithText(TextField, 'NIT'), '900456789');
-      await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'otro@correo.co');
-      await tester.tap(find.text('Verificar en el padrón'));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Ese correo no es el que tiene la empresa en el padrón'), findsOneWidget);
-    });
-
-    testWidgets('declara materiales y envía la cuenta a verificación', (tester) async {
+    testWidgets('con el NIT de una empresa registrada se llenan los datos y los materiales', (tester) async {
       usarPantallaAlta(tester);
       final auth = FakeAuthRepository()..padron = _padron;
       await irAVerificacion(tester, auth);
-
-      await tester.enterText(find.widgetWithText(TextField, 'NIT'), '900456789');
-      await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'operaciones@reciclajes.co');
-      await tester.tap(find.text('Verificar en el padrón'));
-      await tester.pumpAndSettle();
+      await verificarNit(tester, '900.456.789-2');
 
       expect(find.text('Encontramos tu empresa'), findsOneWidget);
-      await tester.enterText(find.widgetWithText(TextField, 'Teléfono'), '6076462210');
-      await tester.enterText(find.widgetWithText(TextField, 'Dirección'), 'Cra 15 # 8-42');
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Girón').last);
-      await tester.pumpAndSettle();
+      expect(find.text('operaciones@reciclajes.co'), findsOneWidget);
+      expect(find.text('6076462210'), findsOneWidget);
+      expect(find.text('Cra 15 # 8-42'), findsOneWidget);
+      expect(find.text('Girón'), findsOneWidget);
+
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
+      expect(find.textContaining('Marcamos los que tu empresa ya tiene registrados'), findsOneWidget);
 
       await tester.tap(find.text('Enviar para verificación'));
       await tester.pumpAndSettle();
-      expect(find.text('Elige al menos un material que tu licencia te permita recibir.'), findsOneWidget);
 
+      expect(auth.llamadas.last, 'registroGestor:1');
+      expect(find.text('Revisa tu correo'), findsOneWidget);
+    });
+
+    testWidgets('una empresa registrada sin correo no puede activar la cuenta', (tester) async {
+      final auth = FakeAuthRepository()
+        ..padron = const GestorPadron(
+          id: 8,
+          nit: '900111222',
+          razonSocial: 'Sin Correo S.A.S.',
+          estadoVerificacion: 'APROBADO',
+        );
+      await irAVerificacion(tester, auth);
+      await verificarNit(tester, '900111222');
+
+      expect(find.textContaining('no tiene un correo registrado'), findsOneWidget);
+    });
+
+    testWidgets('un NIT que no encontramos registra la empresa con su permiso en PDF', (tester) async {
+      usarPantallaAlta(tester);
+      final auth = FakeAuthRepository();
+      await irAVerificacion(
+        tester,
+        auth,
+        permiso: ArchivoPdf(nombre: 'licencia_cdmb.pdf', bytes: Uint8List.fromList([37, 80, 68, 70])),
+      );
+      await verificarNit(tester, '901234567');
+
+      expect(find.text('No encontramos tu empresa'), findsOneWidget);
+      await tester.tap(find.text('Registrar mi empresa'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.widgetWithText(TextField, 'Razón social'), 'Recuperadora Santander S.A.S.');
+      await tester.enterText(find.widgetWithText(TextField, 'Representante legal'), 'Laura Gómez');
+      await tester.enterText(find.widgetWithText(TextField, 'Teléfono'), '3001234567');
+      await tester.enterText(find.widgetWithText(TextField, 'Dirección'), 'Cl 45 # 12-30');
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bucaramanga').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'gerencia@recuperadora.co');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Adjunta el permiso en PDF'), findsOneWidget);
+
+      await tester.tap(find.text('Elegir PDF'));
+      await tester.pumpAndSettle();
+      expect(find.text('licencia_cdmb.pdf'), findsOneWidget);
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Aprovechable'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cartón corrugado'));
@@ -126,7 +170,10 @@ void main() {
       await tester.tap(find.text('Enviar para verificación'));
       await tester.pumpAndSettle();
 
-      expect(auth.llamadas.last, 'registroGestor:1');
+      expect(
+        auth.llamadas,
+        containsAllInOrder(['permiso:licencia_cdmb.pdf', 'registroGestorNuevo:901234567:registro/abc.pdf:1']),
+      );
       expect(find.text('Revisa tu correo'), findsOneWidget);
     });
   });

@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/postulacion_recoleccion.dart';
+import '../../../services/archivo_pdf.dart';
+import '../../../services/certificados_service.dart';
 import '../../../services/fotos_service.dart';
 import '../../../utils/sesion.dart';
 import '../models/material_residuo.dart';
@@ -42,11 +44,25 @@ abstract class SolicitudesRepository {
   /// Resume los materiales que declaró el gestor y cuántos están verificados.
   Future<EstadoMaterialesGestor> getEstadoMaterialesGestor();
 
+  /// Materiales que el gestor tiene guardados: id → true si ya está verificado.
+  Future<Map<int, bool>> getMisMateriales();
+
+  /// Reemplaza los materiales del gestor por [materialIds]. Los nuevos quedan
+  /// en verificación. Devuelve cuántos materiales nuevos agregó.
+  Future<int> guardarMisMateriales(List<int> materialIds);
+
   /// Obtiene las solicitudes disponibles filtradas por los materiales autorizados del gestor.
   Future<List<SolicitudRecoleccion>> getSolicitudesDisponibles({List<int>? materialesAutorizados});
 
-  /// Registra la postulación de un gestor para atender una solicitud.
-  Future<void> postularASolicitud({required int solicitudId, int? gestorId, String? propuesta});
+  /// Registra la postulación de un gestor con el valor que cobra por recoger
+  /// o que paga por el material.
+  Future<void> postularASolicitud({
+    required int solicitudId,
+    required TipoValor tipoValor,
+    required int valor,
+    int? gestorId,
+    String? propuesta,
+  });
 
   /// Postulación del gestor autenticado a una solicitud, o null si no se ha postulado.
   Future<PostulacionRecoleccion?> getMiPostulacion(int solicitudId);
@@ -75,6 +91,10 @@ abstract class SolicitudesRepository {
 
   /// El gestor ambiental marca la solicitud como recolectada.
   Future<void> marcarRecolectado({required int solicitudId, int? gestorId});
+
+  /// El gestor asignado sube el certificado en PDF y lo deja disponible para
+  /// el generador. Si ya había uno, lo reemplaza.
+  Future<void> cargarCertificado({required int solicitudId, required ArchivoPdf pdf, required TipoCertificado tipo});
 
   /// El generador confirma la recolección completada.
   Future<void> confirmarRecoleccion({required int solicitudId, int? generadorId});
@@ -262,6 +282,30 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
   }
 
   @override
+  Future<Map<int, bool>> getMisMateriales() async {
+    final client = _supabase;
+    if (client == null) return {};
+
+    final gestorId = await getGestorId();
+    if (gestorId == null) return {};
+
+    final List<dynamic> filas = await client
+        .from('gestor_material')
+        .select('material_id, verificado')
+        .eq('gestor_id', gestorId);
+    return {for (final f in filas) (f['material_id'] as num).toInt(): f['verificado'] == true};
+  }
+
+  @override
+  Future<int> guardarMisMateriales(List<int> materialIds) async {
+    final client = _supabase;
+    if (client == null) throw Exception('Cliente de Supabase no disponible.');
+
+    final respuesta = await client.rpc('actualizar_materiales_gestor', params: {'p_materiales': materialIds});
+    return ((respuesta as Map?)?['nuevos'] as num?)?.toInt() ?? 0;
+  }
+
+  @override
   Future<Map<int, ResumenPostulaciones>> getResumenPostulaciones(List<int> solicitudIds) async {
     final client = _supabase;
     if (client == null || solicitudIds.isEmpty) return {};
@@ -328,6 +372,30 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
   }
 
   @override
+  Future<void> cargarCertificado({
+    required int solicitudId,
+    required ArchivoPdf pdf,
+    required TipoCertificado tipo,
+  }) async {
+    final client = _supabase;
+    if (client == null) throw Exception('Cliente de Supabase no disponible.');
+
+    final certificados = CertificadosService(client: client);
+    final url = await certificados.subir(pdf, solicitudId: solicitudId);
+    try {
+      final respuesta = await client.rpc(
+        'cargar_certificado_gestor',
+        params: {'p_solicitud_id': solicitudId, 'p_url': url, 'p_tipo': tipo.valor},
+      );
+      await certificados.eliminar((respuesta as Map?)?['anterior']?.toString());
+    } catch (_) {
+      // Sin el registro en la solicitud el archivo queda huérfano.
+      await certificados.eliminar(url);
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> confirmarRecoleccion({required int solicitudId, int? generadorId}) async {
     final client = _supabase;
     if (client == null) throw Exception('Cliente de Supabase no disponible.');
@@ -372,7 +440,13 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
   }
 
   @override
-  Future<void> postularASolicitud({required int solicitudId, int? gestorId, String? propuesta}) async {
+  Future<void> postularASolicitud({
+    required int solicitudId,
+    required TipoValor tipoValor,
+    required int valor,
+    int? gestorId,
+    String? propuesta,
+  }) async {
     final client = _supabase;
     if (client == null) throw Exception('Cliente de Supabase no disponible.');
 
@@ -385,6 +459,8 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
       solicitudId: solicitudId,
       gestorId: targetGestorId,
       propuesta: propuesta,
+      tipoValor: tipoValor,
+      valor: valor,
     );
     await client.from('postulaciones_recoleccion').insert(postulacion.toMap(forInsert: true));
   }

@@ -1,5 +1,26 @@
 const supabase = require('../config/supabase');
 
+// Centro de Bucaramanga: coordenadas por defecto cuando no se puede geocodificar.
+const LATITUD_DEFECTO = 7.119349;
+const LONGITUD_DEFECTO = -73.122741;
+
+// Busca la dirección en OpenStreetMap; si falla, devuelve el centro de Bucaramanga.
+async function geocodificar(direccion, municipio) {
+    try {
+        const consulta = encodeURIComponent(`${direccion}, ${municipio}, Santander, Colombia`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${consulta}&limit=1`, {
+            headers: { 'User-Agent': 'EcoResiduos-AdminPanel' }
+        });
+        const data = await res.json();
+        if (data && data.length > 0) {
+            return { latitud: parseFloat(data[0].lat), longitud: parseFloat(data[0].lon) };
+        }
+    } catch {
+        // Se usan las coordenadas por defecto
+    }
+    return { latitud: LATITUD_DEFECTO, longitud: LONGITUD_DEFECTO };
+}
+
 // Convierte la lista de IDs recibida en un arreglo de números enteros válidos
 function extractMaterialIds(dto) {
     const raw = dto.materiales_ids || dto['materiales_ids[]'] || dto.material_ids || dto.residuos || [];
@@ -57,6 +78,8 @@ const gestorService = {
                 longitud: row.longitud !== undefined && row.longitud !== null ? row.longitud : (row.LONGITUD !== undefined ? row.LONGITUD : -73.122741),
                 estado_verificacion: row.estado_verificacion ?? row.ESTADO_VERIFICACION ?? 'APROBADO',
                 disponible: row.disponible !== undefined ? row.disponible : (row.DISPONIBLE !== undefined ? row.DISPONIBLE : true),
+                // Las empresas que se registraron desde la app (no estaban registradas) traen su permiso.
+                tiene_permiso: Boolean(row.permiso_path),
                 materiales,
                 materiales_por_verificar: materialesPorVerificar
             };
@@ -113,6 +136,7 @@ const gestorService = {
             estado_verificacion: data.estado_verificacion ?? data.ESTADO_VERIFICACION ?? 'APROBADO',
             disponible: data.disponible !== undefined ? data.disponible : (data.DISPONIBLE !== undefined ? data.DISPONIBLE : true),
             horario: data.horario ?? '',
+            tiene_permiso: Boolean(data.permiso_path),
             material_ids: materialIds,
             material_ids_por_verificar: materialIdsPorVerificar,
             materiales
@@ -340,16 +364,72 @@ const gestorService = {
             throw new Error(`Estado inválido. Debe ser uno de: ${estadosValidos.join(', ')}`);
         }
 
+        const cambios = { estado_verificacion: estadoUpper };
+
+        // Los registros desde la app se crean con las coordenadas por defecto:
+        // al aprobarlos se ubican con su dirección para el directorio y las distancias.
+        if (estadoUpper === 'APROBADO') {
+            const { data: actual } = await supabase
+                .from('perfiles_gestor')
+                .select('direccion, municipio, latitud, longitud')
+                .eq('id', id)
+                .single();
+            const sinUbicar = actual
+                && Number(actual.latitud) === LATITUD_DEFECTO
+                && Number(actual.longitud) === LONGITUD_DEFECTO;
+            if (sinUbicar && actual.direccion) {
+                Object.assign(cambios, await geocodificar(actual.direccion, actual.municipio || 'BUCARAMANGA'));
+            }
+        }
+
         const { data, error } = await supabase
             .from('perfiles_gestor')
-            .update({ estado_verificacion: estadoUpper })
+            .update(cambios)
             .eq('id', id)
             .select();
 
         if (error) {
             throw new Error(`Error al actualizar estado del gestor: ${error.message}`);
         }
+
+        // Aprobar la empresa aprueba también los materiales que declaró: sin
+        // materiales verificados el gestor no ve ninguna solicitud. Los que no
+        // correspondan al permiso se quitan en «Editar entidad».
+        if (estadoUpper === 'APROBADO') {
+            const { error: errorMateriales } = await supabase
+                .from('gestor_material')
+                .update({ verificado: true })
+                .eq('gestor_id', id)
+                .eq('verificado', false);
+
+            if (errorMateriales) {
+                throw new Error(`El gestor quedó aprobado, pero no se pudieron verificar sus materiales: ${errorMateriales.message}`);
+            }
+        }
         return data;
+    },
+
+    // Enlace temporal al permiso ambiental. El bucket es privado: el enlace
+    // vence a los 10 minutos.
+    async getUrlPermiso(id) {
+        const { data, error } = await supabase
+            .from('perfiles_gestor')
+            .select('permiso_path')
+            .eq('id', id)
+            .single();
+
+        if (error || !data || !data.permiso_path) {
+            throw new Error('Este gestor no adjuntó un permiso ambiental.');
+        }
+
+        const { data: firmado, error: errorFirma } = await supabase.storage
+            .from('permisos')
+            .createSignedUrl(data.permiso_path, 600);
+
+        if (errorFirma || !firmado) {
+            throw new Error(`No se pudo abrir el permiso: ${errorFirma ? errorFirma.message : 'archivo no encontrado'}`);
+        }
+        return firmado.signedUrl;
     },
 
     // Elimina el gestor y sus dependencias en la tabla intermedia

@@ -1,4 +1,6 @@
+import 'package:ecoresiduos/features/solicitudes/models/solicitud_recoleccion.dart';
 import 'package:ecoresiduos/features/solicitudes/screens/detalle_solicitud_screen.dart';
+import 'package:ecoresiduos/models/postulacion_recoleccion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -6,6 +8,64 @@ import 'fakes.dart';
 
 void main() {
   group('Detalle · generador', () {
+    testWidgets('muestra el valor que propone cada gestor y lo repite al aceptar', (tester) async {
+      usarPantallaAlta(tester);
+      final repo = FakeSolicitudesRepository(
+        postulaciones: [postulacion(id: 1, tipoValor: TipoValor.cobroRecoleccion, valor: 50000)],
+      );
+      await tester.pumpWidget(app(DetalleSolicitudScreen(solicitud: solicitud(), repository: repo, rol: 'GENERADOR')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Valor cobrado por recolección externa'), findsOneWidget);
+      expect(find.text('\$ 50.000'), findsOneWidget);
+
+      await tester.tap(find.text('Aceptar'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Valor cobrado por recolección externa: \$ 50.000'), findsOneWidget);
+    });
+
+    testWidgets('descarga el certificado cuando el gestor lo carga', (tester) async {
+      usarPantallaAlta(tester);
+      final repo = FakeSolicitudesRepository(postulaciones: [postulacion(id: 1, estado: 'ACEPTADA')]);
+      await tester.pumpWidget(
+        app(
+          DetalleSolicitudScreen(
+            solicitud: solicitud(
+              estado: 'RECOLECTADO',
+              recolectadoAt: DateTime.now().subtract(const Duration(days: 1)),
+              confirmadoAt: DateTime.now(),
+              certificadoUrl: 'https://ejemplo.co/storage/v1/object/public/certificados/u/10/1.pdf',
+              certificadoTipo: TipoCertificado.aprovechamiento,
+            ),
+            repository: repo,
+            rol: 'GENERADOR',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Certificado de aprovechamiento'), findsOneWidget);
+      expect(find.text('Ver PDF'), findsOneWidget);
+      expect(find.text('Reemplazar'), findsNothing);
+    });
+
+    testWidgets('sin certificado le dice al generador que está pendiente', (tester) async {
+      usarPantallaAlta(tester);
+      final repo = FakeSolicitudesRepository(postulaciones: [postulacion(id: 1, estado: 'ACEPTADA')]);
+      await tester.pumpWidget(
+        app(
+          DetalleSolicitudScreen(
+            solicitud: solicitud(estado: 'RECOLECTADO', recolectadoAt: DateTime.now()),
+            repository: repo,
+            rol: 'GENERADOR',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Certificado pendiente'), findsOneWidget);
+    });
+
     testWidgets('acepta una postulación y avisa que las demás quedan asignadas a otro gestor', (tester) async {
       usarPantallaAlta(tester);
       final repo = FakeSolicitudesRepository(
@@ -103,13 +163,67 @@ void main() {
       await tester.pumpWidget(app(DetalleSolicitudScreen(solicitud: solicitud(), repository: repo, rol: 'GESTOR')));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'Paso el jueves con camión');
+      await tester.enterText(find.byType(TextField).first, '1250000');
+      await tester.enterText(find.byType(TextField).last, 'Paso el jueves con camión');
+      await tester.pump();
+      expect(find.text('1.250.000'), findsOneWidget);
+
       await tester.tap(find.text('Postularme para recolección'));
       await tester.pumpAndSettle();
 
       expect(repo.llamadas, ['postular:10']);
+      expect(repo.tipoValorEnviado, TipoValor.pagoAprovechamiento);
+      expect(repo.valorEnviado, 1250000);
       expect(repo.propuestaEnviada, 'Paso el jueves con camión');
       expect(find.text('Ya te postulaste'), findsOneWidget);
+    });
+
+    testWidgets('no se postula sin escribir el valor', (tester) async {
+      usarPantallaAlta(tester);
+      final repo = FakeSolicitudesRepository();
+      await tester.pumpWidget(
+        app(
+          DetalleSolicitudScreen(
+            solicitud: solicitud(material: luminarias),
+            repository: repo,
+            rol: 'GESTOR',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Valor cobrado por recolección externa'), findsOneWidget);
+      await tester.tap(find.text('Postularme para recolección'));
+      await tester.pumpAndSettle();
+
+      expect(repo.llamadas, isEmpty);
+      expect(find.text('Escribe el valor. Si no cobras ni pagas, escribe 0.'), findsOneWidget);
+    });
+
+    testWidgets('después de recoger le pide cargar el certificado', (tester) async {
+      usarPantallaAlta(tester);
+      final repo = FakeSolicitudesRepository(
+        miPostulacion: postulacion(id: 1, estado: 'ACEPTADA', tipoValor: TipoValor.pagoAprovechamiento, valor: 80000),
+      );
+      await tester.pumpWidget(
+        app(
+          DetalleSolicitudScreen(
+            solicitud: solicitud(estado: 'RECOLECTADO', recolectadoAt: DateTime.now()),
+            repository: repo,
+            rol: 'GESTOR',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Valor pagado por aprovechamiento'), findsOneWidget);
+      expect(find.text('Falta cargar el certificado'), findsOneWidget);
+
+      await tester.tap(find.text('Cargar certificado (PDF)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Qué certificado vas a cargar?'), findsOneWidget);
+      expect(find.text('Elegir PDF'), findsOneWidget);
     });
 
     testWidgets('con la postulación aceptada puede marcar la recolección', (tester) async {

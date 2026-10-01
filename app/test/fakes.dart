@@ -6,6 +6,7 @@ import 'package:ecoresiduos/features/solicitudes/repositories/solicitudes_reposi
 import 'package:ecoresiduos/models/perfil_generador.dart';
 import 'package:ecoresiduos/models/perfil_gestor.dart';
 import 'package:ecoresiduos/models/postulacion_recoleccion.dart';
+import 'package:ecoresiduos/services/archivo_pdf.dart';
 import 'package:ecoresiduos/theme/eco_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,8 @@ SolicitudRecoleccion solicitud({
   MaterialResiduo material = carton,
   DateTime? recolectadoAt,
   DateTime? confirmadoAt,
+  String? certificadoUrl,
+  TipoCertificado? certificadoTipo,
 }) => SolicitudRecoleccion(
   id: id,
   generadorId: 1,
@@ -57,6 +60,9 @@ SolicitudRecoleccion solicitud({
   updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
   recolectadoAt: recolectadoAt,
   confirmadoAt: confirmadoAt,
+  certificadoUrl: certificadoUrl,
+  certificadoTipo: certificadoTipo,
+  certificadoAt: certificadoUrl == null ? null : DateTime.now().subtract(const Duration(hours: 2)),
 );
 
 PostulacionRecoleccion postulacion({
@@ -65,6 +71,8 @@ PostulacionRecoleccion postulacion({
   String estado = 'PROPUESTA',
   String gestor = 'Reciclajes del Oriente S.A.S.',
   String? propuesta,
+  TipoValor? tipoValor,
+  int? valor,
   SolicitudRecoleccion? solicitud,
 }) => PostulacionRecoleccion(
   id: id,
@@ -72,6 +80,8 @@ PostulacionRecoleccion postulacion({
   gestorId: id * 100,
   estado: estado,
   propuesta: propuesta,
+  tipoValor: tipoValor,
+  valor: valor,
   gestorRazonSocial: gestor,
   gestorMunicipio: 'Girón',
   createdAt: DateTime.now().subtract(const Duration(hours: 3)),
@@ -110,6 +120,8 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
   final llamadas = <String>[];
   SolicitudRecoleccion? creada;
   String? propuestaEnviada;
+  TipoValor? tipoValorEnviado;
+  int? valorEnviado;
 
   @override
   Future<List<MaterialResiduo>> getMateriales() async => materiales;
@@ -151,13 +163,35 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
   @override
   Future<EstadoMaterialesGestor> getEstadoMaterialesGestor() async => estadoMateriales;
 
+  /// Materiales guardados del gestor: id → verificado.
+  Map<int, bool> misMateriales = {};
+
+  @override
+  Future<Map<int, bool>> getMisMateriales() async => misMateriales;
+
+  @override
+  Future<int> guardarMisMateriales(List<int> materialIds) async {
+    llamadas.add('materiales:${(materialIds.toList()..sort()).join(',')}');
+    final nuevos = materialIds.where((id) => !misMateriales.containsKey(id)).length;
+    misMateriales = {for (final id in materialIds) id: misMateriales[id] ?? false};
+    return nuevos;
+  }
+
   @override
   Future<List<SolicitudRecoleccion>> getSolicitudesDisponibles({List<int>? materialesAutorizados}) async => disponibles;
 
   @override
-  Future<void> postularASolicitud({required int solicitudId, int? gestorId, String? propuesta}) async {
+  Future<void> postularASolicitud({
+    required int solicitudId,
+    required TipoValor tipoValor,
+    required int valor,
+    int? gestorId,
+    String? propuesta,
+  }) async {
     llamadas.add('postular:$solicitudId');
     propuestaEnviada = propuesta;
+    tipoValorEnviado = tipoValor;
+    valorEnviado = valor;
     miPostulacion = postulacion(id: 1, solicitudId: solicitudId, propuesta: propuesta);
   }
 
@@ -190,6 +224,13 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
   @override
   Future<void> marcarRecolectado({required int solicitudId, int? gestorId}) async =>
       llamadas.add('recolectado:$solicitudId');
+
+  @override
+  Future<void> cargarCertificado({
+    required int solicitudId,
+    required ArchivoPdf pdf,
+    required TipoCertificado tipo,
+  }) async => llamadas.add('certificado:$solicitudId:${tipo.valor}');
 
   @override
   Future<void> confirmarRecoleccion({required int solicitudId, int? generadorId}) async =>
@@ -254,6 +295,30 @@ class FakeAuthRepository implements AuthRepository {
     required List<int> materialesDeclarados,
   }) async {
     llamadas.add('registroGestor:${materialesDeclarados.join(',')}');
+    return AuthResponse();
+  }
+
+  @override
+  Future<String> subirPermisoAmbiental(ArchivoPdf pdf) async {
+    llamadas.add('permiso:${pdf.nombre}');
+    return 'registro/abc.pdf';
+  }
+
+  @override
+  Future<AuthResponse> signUpGestorNuevo({
+    required String email,
+    required String password,
+    required String nit,
+    required String razonSocial,
+    required String representanteLegal,
+    required String telefono,
+    required String direccion,
+    required String municipio,
+    String? horario,
+    required String permisoPath,
+    required List<int> materialesDeclarados,
+  }) async {
+    llamadas.add('registroGestorNuevo:$nit:$permisoPath:${materialesDeclarados.join(',')}');
     return AuthResponse();
   }
 

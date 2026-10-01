@@ -1,5 +1,28 @@
 import '../features/solicitudes/models/solicitud_recoleccion.dart';
 
+/// Quién paga a quién en la propuesta del gestor.
+enum TipoValor {
+  /// El generador le paga al gestor por recoger el residuo.
+  cobroRecoleccion('COBRO_RECOLECCION', 'Valor cobrado por recolección externa', 'Cobra por recoger'),
+
+  /// El gestor le paga al generador por el material que aprovecha.
+  pagoAprovechamiento('PAGO_APROVECHAMIENTO', 'Valor pagado por aprovechamiento', 'Paga por el material');
+
+  const TipoValor(this.valor, this.etiqueta, this.etiquetaCorta);
+
+  /// Valor guardado en la base de datos.
+  final String valor;
+  final String etiqueta;
+  final String etiquetaCorta;
+
+  static TipoValor? desde(String? valor) {
+    for (final tipo in values) {
+      if (tipo.valor == valor?.toUpperCase()) return tipo;
+    }
+    return null;
+  }
+}
+
 /// Modelo de dominio para la tabla 'public.postulaciones_recoleccion'.
 class PostulacionRecoleccion {
   final int? id;
@@ -7,6 +30,10 @@ class PostulacionRecoleccion {
   final int gestorId;
   final String estado;
   final String? propuesta;
+  final TipoValor? tipoValor;
+
+  /// Pesos colombianos, sin decimales.
+  final int? valor;
   final DateTime? createdAt;
   final SolicitudRecoleccion? solicitud;
 
@@ -20,6 +47,8 @@ class PostulacionRecoleccion {
     required this.gestorId,
     this.estado = 'PROPUESTA',
     this.propuesta,
+    this.tipoValor,
+    this.valor,
     this.createdAt,
     this.solicitud,
     this.gestorRazonSocial,
@@ -50,6 +79,8 @@ class PostulacionRecoleccion {
       gestorId: (map['gestor_id'] as num?)?.toInt() ?? 0,
       estado: (map['estado'] ?? 'PROPUESTA').toString().toUpperCase(),
       propuesta: map['propuesta']?.toString(),
+      tipoValor: TipoValor.desde(map['tipo_valor']?.toString()),
+      valor: (map['valor'] as num?)?.toInt(),
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
       solicitud: sol,
       gestorRazonSocial: razonSocial,
@@ -65,6 +96,8 @@ class PostulacionRecoleccion {
       'gestor_id': gestorId,
       'estado': estado,
       if (propuesta != null && propuesta!.trim().isNotEmpty) 'propuesta': propuesta!.trim(),
+      if (tipoValor != null) 'tipo_valor': tipoValor!.valor,
+      if (valor != null) 'valor': valor,
     };
     if (!forInsert && id != null) {
       map['id'] = id;
@@ -79,6 +112,8 @@ class PostulacionRecoleccion {
     int? gestorId,
     String? estado,
     String? propuesta,
+    TipoValor? tipoValor,
+    int? valor,
     DateTime? createdAt,
     SolicitudRecoleccion? solicitud,
     String? gestorRazonSocial,
@@ -91,6 +126,8 @@ class PostulacionRecoleccion {
       gestorId: gestorId ?? this.gestorId,
       estado: estado ?? this.estado,
       propuesta: propuesta ?? this.propuesta,
+      tipoValor: tipoValor ?? this.tipoValor,
+      valor: valor ?? this.valor,
       createdAt: createdAt ?? this.createdAt,
       solicitud: solicitud ?? this.solicitud,
       gestorRazonSocial: gestorRazonSocial ?? this.gestorRazonSocial,
@@ -98,6 +135,8 @@ class PostulacionRecoleccion {
       gestorTelefono: gestorTelefono ?? this.gestorTelefono,
     );
   }
+
+  bool get tieneValor => tipoValor != null && valor != null;
 
   bool get esPropuesta => estado == 'PROPUESTA';
   bool get esAceptada => estado == 'ACEPTADA';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../services/contador_novedades.dart';
 import '../../../services/ubicacion_service.dart';
 import '../../../theme/eco_theme.dart';
 import '../../../utils/formato.dart';
@@ -14,6 +15,7 @@ import '../../../widgets/solicitud_card.dart';
 import '../models/solicitud_recoleccion.dart';
 import '../repositories/solicitudes_repository.dart';
 import 'detalle_solicitud_screen.dart';
+import 'mis_materiales_screen.dart';
 
 /// Solicitudes disponibles para el gestor (29): solo las PUBLICADO de los
 /// materiales que el administrador le verificó, de la más cercana a la más lejana.
@@ -55,6 +57,23 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
     } else {
       _cargar();
     }
+    // Una notificación (p. ej. la aprobación de sus materiales) puede cambiar
+    // lo que el gestor ve: se vuelve a consultar sin que tenga que deslizar.
+    ContadorNovedades.llegadas.addListener(_cargar);
+  }
+
+  @override
+  void dispose() {
+    ContadorNovedades.llegadas.removeListener(_cargar);
+    super.dispose();
+  }
+
+  Future<void> _editarMateriales() async {
+    final guardo = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => MisMaterialesScreen(repository: _repository)),
+    );
+    if (guardo == true) await _cargar();
   }
 
   Future<void> _cargar() async {
@@ -161,7 +180,11 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
     }
     final materiales = _materiales;
     if (materiales == null) return const SkeletonList();
-    if (!materiales.verificado) return EstadoDesplazable(child: MaterialesEnVerificacion(estado: materiales));
+    if (!materiales.verificado) {
+      return EstadoDesplazable(
+        child: MaterialesEnVerificacion(estado: materiales, repository: _repository, onMaterialesCambiados: _cargar),
+      );
+    }
     if (_solicitudes == null) return const SkeletonList();
 
     final theme = Theme.of(context);
@@ -183,6 +206,7 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
                 style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
               ),
             ),
+            TextButton(onPressed: _editarMateriales, child: const Text('Editar')),
           ],
         ),
         const SizedBox(height: EcoSpace.s12),

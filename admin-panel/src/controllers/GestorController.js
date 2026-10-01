@@ -73,6 +73,15 @@ const gestorController = {
         }
     },
 
+    async handleVerPermiso(req, res) {
+        try {
+            const url = await gestorService.getUrlPermiso(req.params.id);
+            res.redirect(url);
+        } catch (err) {
+            res.redirect(`/gestores?msg=${encodeURIComponent(err.message)}&type=error`);
+        }
+    },
+
     async handleUpdateEstado(req, res) {
         const { id } = req.params;
         const { estado, redirectUrl } = req.body;

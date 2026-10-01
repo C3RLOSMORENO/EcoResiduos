@@ -27,6 +27,11 @@ Future<void> escribirCorreo(BuildContext context, String correo) async {
   await _abrir(context, Uri(scheme: 'mailto', path: correo), 'No pudimos abrir tu app de correo.');
 }
 
+/// Abre un PDF en el visor del teléfono, desde donde se puede descargar.
+Future<void> abrirDocumento(BuildContext context, String url) async {
+  await _abrir(context, Uri.parse(url), 'No pudimos abrir el documento.');
+}
+
 Future<void> _abrir(BuildContext context, Uri uri, String mensajeError) async {
   final messenger = ScaffoldMessenger.of(context);
   final abierto = await launchUrl(uri, mode: LaunchMode.externalApplication).catchError((_) => false);

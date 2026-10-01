@@ -190,7 +190,9 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
       return FilaEstado(
         estado: 'RECOLECTADO',
         label: solicitud.estaConfirmado ? 'Recolección confirmada' : 'Recolectado · por confirmar',
-        texto: solicitud.estaConfirmado ? null : 'Esperando confirmación del generador',
+        texto: !solicitud.tieneCertificado
+            ? 'Falta cargar el certificado'
+            : (solicitud.estaConfirmado ? null : 'Esperando confirmación del generador'),
       );
     }
     if (p.esAceptada) {
