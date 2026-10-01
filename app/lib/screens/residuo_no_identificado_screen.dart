@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../features/solicitudes/screens/publicar_residuo_screen.dart';
+import '../models/waste_item.dart';
 import '../theme/eco_theme.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/foto_capturada.dart';
 import 'flujo_identificacion.dart';
 import 'residuos_screen.dart';
+import 'resultado_screen.dart';
 
 /// Confianza bajo el umbral (23): tono tranquilo y tres salidas con pesos distintos.
 class ResiduoNoIdentificadoScreen extends StatelessWidget {
@@ -14,6 +16,7 @@ class ResiduoNoIdentificadoScreen extends StatelessWidget {
     required this.imagePath,
     required this.confianza,
     this.sinResiduo = false,
+    this.alternativas = const [],
   });
 
   final String imagePath;
@@ -21,6 +24,9 @@ class ResiduoNoIdentificadoScreen extends StatelessWidget {
 
   /// La IA reconoció que la foto no muestra un residuo.
   final bool sinResiduo;
+
+  /// Categorías más probables según la IA, para elegir sin repetir la foto.
+  final List<Alternativa> alternativas;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +47,10 @@ class ResiduoNoIdentificadoScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (!sinResiduo && alternativas.isNotEmpty) ...[
+                  OpcionesIa(titulo: '¿Es alguno de estos?', opciones: alternativas, imagePath: imagePath),
+                  const SizedBox(height: EcoSpace.s8),
+                ],
                 FilledButton.icon(
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                   onPressed: () => abrirIdentificacion(context, reemplazarActual: true),

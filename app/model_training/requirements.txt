@@ -2,3 +2,8 @@ tensorflow
 matplotlib
 scikit-learn
 pillow
+numpy
+opencv-python
+ddgs
+imagehash
+requests

@@ -9,13 +9,16 @@ import '../models/waste_item.dart';
 /// Se lanza cuando el modelo no alcanza el umbral de confianza o cuando
 /// reconoce que la foto no muestra un residuo.
 class ResiduoNoIdentificadoException implements Exception {
-  ResiduoNoIdentificadoException(this.confianza, {this.sinResiduo = false});
+  ResiduoNoIdentificadoException(this.confianza, {this.sinResiduo = false, this.alternativas = const []});
 
   /// Confianza obtenida, en %.
   final int confianza;
 
   /// El modelo eligió la clase FONDO: la foto no muestra un residuo.
   final bool sinResiduo;
+
+  /// Categorías más probables, para que la persona elija la correcta.
+  final List<Alternativa> alternativas;
 
   @override
   String toString() => 'Confianza insuficiente ($confianza %)';
@@ -34,7 +37,7 @@ class ErrorProcesamientoException implements Exception {
 /// utilizando el modelo MobileNetV3 entrenado (ecoresiduos_model.tflite).
 class IdentificacionService {
   /// Confianza mínima (en %) para aceptar la categoría que detecta el modelo.
-  static const umbralConfianza = 30;
+  static const umbralConfianza = 40;
 
   /// Desde esta confianza (en %) el resultado se muestra como «Muy probable».
   static const confianzaAlta = 85;
@@ -59,7 +62,11 @@ class IdentificacionService {
     }
   }
 
-  /// Identifica el residuo en la imagen de forma 100% offline
+  /// Identifica el residuo en la imagen de forma 100% offline.
+  ///
+  /// Promedia la predicción de varias vistas de la misma foto (recorte central,
+  /// espejo, foto completa y acercamiento): un encuadre o una luz desfavorable
+  /// en una sola vista ya no cambia el resultado.
   Future<WasteItem> identificar({required String imagePath}) async {
     try {
       await _inicializar();
@@ -69,70 +76,46 @@ class IdentificacionService {
         throw ErrorProcesamientoException('El archivo de imagen no existe.');
       }
 
-      final imageBytes = await file.readAsBytes();
-      final decodedImage = img.decodeImage(imageBytes);
-
+      final decodedImage = img.decodeImage(await file.readAsBytes());
       if (decodedImage == null) {
         throw ErrorProcesamientoException('No se pudo decodificar la imagen.');
       }
 
-      // 1. Corregir orientación EXIF (crítico para fotos tomadas con el celular)
-      final orientedImage = img.bakeOrientation(decodedImage);
+      // La orientación EXIF se corrige antes de recortar: las fotos del celular
+      // llegan giradas.
+      final probabilidades = _promedio([
+        for (final vista in _vistas(img.bakeOrientation(decodedImage))) _inferir(vista),
+      ]);
 
-      // 2. Recortar al centro para hacer la imagen cuadrada antes de redimensionar.
-      // Esto evita que las fotos 16:9 se aplasten/deformen al forzarlas a 224x224.
-      final size = orientedImage.width < orientedImage.height ? orientedImage.width : orientedImage.height;
-      final x = (orientedImage.width - size) ~/ 2;
-      final y = (orientedImage.height - size) ~/ 2;
-      final croppedImage = img.copyCrop(orientedImage, x: x, y: y, width: size, height: size);
+      final ranking = List.generate(probabilidades.length, (i) => i)
+        ..sort((a, b) => probabilidades[b].compareTo(probabilidades[a]));
+      final categoria = _labels![ranking.first].toUpperCase();
+      final confianza = _porcentaje(probabilidades[ranking.first]);
+      final alternativas = [
+        for (final i in ranking.skip(1))
+          if (_labels![i].toUpperCase() != _claseFondo && _porcentaje(probabilidades[i]) >= _minimoAlternativa)
+            Alternativa(categoria: _labels![i].toUpperCase(), confianza: _porcentaje(probabilidades[i])),
+      ].take(_maxAlternativas).toList();
 
-      // 3. Preprocesamiento: redimensionar a 224x224 (tamaño de entrada del modelo)
-      final resizedImage = img.copyResize(croppedImage, width: 224, height: 224);
-
-      // Tensor [1, 224, 224, 3] en rango [0, 255]: el modelo trae su propia capa de reescalado.
-      final input = List.generate(
-        1,
-        (_) => List.generate(
-          224,
-          (y) => List.generate(224, (x) {
-            final pixel = resizedImage.getPixel(x, y);
-            return [pixel.r.toDouble(), pixel.g.toDouble(), pixel.b.toDouble()];
-          }),
-        ),
-      );
-
-      final numClasses = _labels!.length;
-      // Salida: [1, numClasses] con las probabilidades softmax
-      final output = List.filled(1 * numClasses, 0.0).reshape([1, numClasses]);
-
-      _interpreter!.run(input, output);
-
-      final probabilities = (output[0] as List).map((e) => (e as num).toDouble()).toList();
-
-      int maxIndex = 0;
-      double maxProb = probabilities[0];
-      for (int i = 1; i < probabilities.length; i++) {
-        if (probabilities[i] > maxProb) {
-          maxProb = probabilities[i];
-          maxIndex = i;
-        }
-      }
-
-      final confidencePercent = (maxProb * 100).clamp(0, 100).round();
-
-      final categoria = _labels![maxIndex].toUpperCase();
       if (categoria == _claseFondo) {
-        throw ResiduoNoIdentificadoException(confidencePercent, sinResiduo: true);
+        throw ResiduoNoIdentificadoException(confianza, sinResiduo: true);
       }
-      if (confidencePercent < umbralConfianza) {
-        throw ResiduoNoIdentificadoException(confidencePercent);
+      if (confianza < umbralConfianza) {
+        throw ResiduoNoIdentificadoException(
+          confianza,
+          alternativas: [
+            Alternativa(categoria: categoria, confianza: confianza),
+            ...alternativas,
+          ],
+        );
       }
 
       return WasteItem(
-        nombre: _nombres[categoria] ?? 'Residuo identificado',
+        nombre: nombreDe(categoria),
         categoria: categoria,
-        confianza: confidencePercent,
+        confianza: confianza,
         imagenPath: imagePath,
+        alternativas: alternativas,
       );
     } catch (e) {
       if (e is ResiduoNoIdentificadoException || e is ErrorProcesamientoException) {
@@ -141,6 +124,65 @@ class IdentificacionService {
       throw ErrorProcesamientoException('Fallo al analizar el residuo: $e');
     }
   }
+
+  /// Nombre descriptivo de un código de categoría del modelo.
+  static String nombreDe(String categoria) => _nombres[categoria.toUpperCase()] ?? 'Residuo identificado';
+
+  /// Probabilidad mínima (en %) para ofrecer una categoría como alternativa.
+  static const _minimoAlternativa = 10;
+  static const _maxAlternativas = 2;
+
+  static int _porcentaje(double p) => (p * 100).clamp(0, 100).round();
+
+  /// Vistas de 224×224 de la misma foto.
+  static List<img.Image> _vistas(img.Image foto) {
+    const lado = 224;
+    final corto = foto.width < foto.height ? foto.width : foto.height;
+
+    img.Image recorte(double fraccion) {
+      final tam = (corto * fraccion).round();
+      final recortada = img.copyCrop(
+        foto,
+        x: (foto.width - tam) ~/ 2,
+        y: (foto.height - tam) ~/ 2,
+        width: tam,
+        height: tam,
+      );
+      return img.copyResize(recortada, width: lado, height: lado, interpolation: img.Interpolation.average);
+    }
+
+    final central = recorte(1);
+    return [
+      central,
+      img.flipHorizontal(img.Image.from(central)),
+      // La foto completa, como en el entrenamiento, por si el recorte deja
+      // fuera parte del residuo.
+      img.copyResize(foto, width: lado, height: lado, interpolation: img.Interpolation.average),
+      recorte(0.75),
+    ];
+  }
+
+  /// Probabilidades softmax de una vista. El modelo trae su propia capa de
+  /// reescalado, así que recibe los píxeles en [0, 255].
+  List<double> _inferir(img.Image vista) {
+    final input = [
+      List.generate(
+        vista.height,
+        (y) => List.generate(vista.width, (x) {
+          final pixel = vista.getPixel(x, y);
+          return [pixel.r.toDouble(), pixel.g.toDouble(), pixel.b.toDouble()];
+        }),
+      ),
+    ];
+    final output = [List.filled(_labels!.length, 0.0)];
+    _interpreter!.run(input, output);
+    return [for (final p in output[0]) (p as num).toDouble()];
+  }
+
+  static List<double> _promedio(List<List<double>> predicciones) => [
+    for (var i = 0; i < predicciones.first.length; i++)
+      predicciones.map((p) => p[i]).reduce((a, b) => a + b) / predicciones.length,
+  ];
 
   static const _nombres = {
     'APROVECHABLE': 'Residuo aprovechable',

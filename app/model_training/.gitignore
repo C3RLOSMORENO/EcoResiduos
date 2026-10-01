@@ -1,4 +1,12 @@
-﻿dataset/
+dataset/
+dataset_prueba/
+videos/
 *.tflite
 *.h5
-
+matriz_confusion.png
+descargas_crudas/
+revision/
+__pycache__/
+rechazadas/
+ecoresiduos_colab.zip
+modelo_guardado/

@@ -74,7 +74,12 @@ void main() {
     ),
     'Ficha de autoridad': const AutoridadDetalleScreen(autoridad: _autoridad),
     'Resultado publicable': ResultadoScreen(
-      item: const WasteItem(nombre: 'Residuo peligroso', categoria: 'PELIGROSO', confianza: 78),
+      item: const WasteItem(
+        nombre: 'Residuo peligroso',
+        categoria: 'PELIGROSO',
+        confianza: 78,
+        alternativas: [Alternativa(categoria: 'RAEE', confianza: 15)],
+      ),
       imagePath: 'foto.jpg',
       gestoresRepository: gestores,
     ),
@@ -83,7 +88,15 @@ void main() {
       imagePath: 'foto.jpg',
       gestoresRepository: gestores,
     ),
-    'No identificado': const ResiduoNoIdentificadoScreen(imagePath: 'foto.jpg', confianza: 41),
+    'No identificado': const ResiduoNoIdentificadoScreen(imagePath: 'foto.jpg', confianza: 32),
+    'No identificado con opciones': const ResiduoNoIdentificadoScreen(
+      imagePath: 'foto.jpg',
+      confianza: 32,
+      alternativas: [
+        Alternativa(categoria: 'APROVECHABLE', confianza: 32),
+        Alternativa(categoria: 'ORDINARIO', confianza: 28),
+      ],
+    ),
     'Error de análisis': const ErrorProcesamientoScreen(imagePath: 'foto.jpg'),
     'Splash': const SplashScreen(),
   };
@@ -101,6 +114,53 @@ void main() {
       });
     }
   }
+
+  testWidgets('elegir otra opción de la IA abre su resultado y deja la anterior como opción', (tester) async {
+    usarPantallaAlta(tester);
+    await tester.pumpWidget(
+      app(
+        ResultadoScreen(
+          item: const WasteItem(
+            nombre: 'Residuo aprovechable',
+            categoria: 'APROVECHABLE',
+            confianza: 55,
+            alternativas: [Alternativa(categoria: 'ORDINARIO', confianza: 30)],
+          ),
+          imagePath: 'foto.jpg',
+          gestoresRepository: gestores,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('¿No es correcto? También podría ser:'), findsOneWidget);
+    await tester.tap(find.text('30 %'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('55 %'), findsOneWidget);
+    expect(find.text('Publicar para recolección'), findsNothing);
+  });
+
+  testWidgets('con confianza alta no se ofrecen otras opciones', (tester) async {
+    usarPantallaAlta(tester);
+    await tester.pumpWidget(
+      app(
+        ResultadoScreen(
+          item: const WasteItem(
+            nombre: 'Residuo orgánico',
+            categoria: 'ORGANICO',
+            confianza: 92,
+            alternativas: [Alternativa(categoria: 'ORDINARIO', confianza: 12)],
+          ),
+          imagePath: 'foto.jpg',
+          gestoresRepository: gestores,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('¿No es correcto? También podría ser:'), findsNothing);
+  });
 
   testWidgets('el directorio filtra gestores por texto', (tester) async {
     usarPantallaAlta(tester);
