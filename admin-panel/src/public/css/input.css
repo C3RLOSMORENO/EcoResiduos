@@ -1,15 +1,17 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
- * Sistema de diseño del panel: Material Design 3 con los mismos tokens de la
+ * Sistema de diseÃ±o del panel: Material Design 3 con los mismos tokens de la
  * app (app/lib/theme/eco_colors.dart y eco_theme.dart). Los valores se copian
- * tal cual; si cambian en la app, cámbialos aquí.
+ * tal cual; si cambian en la app, cÃ¡mbialos aquÃ­.
  */
 
 @layer base {
-  /* Tokens de M3 que no cambian con el tema. Valores de la especificación
+  @view-transition { navigation: auto; }
+
+  /* Tokens de M3 que no cambian con el tema. Valores de la especificaciÃ³n
      (m3.material.io: Shape, Motion, States y Elevation). */
   :root {
     --md-sys-shape-corner-extra-small: 4px;
@@ -73,7 +75,7 @@
     --md-sys-color-inverse-primary: #9DD3A5;
     --md-sys-color-scrim: #000000;
 
-    /* ecoColoresLight: categorías */
+    /* ecoColoresLight: categorÃ­as */
     --eco-cat-aprovechable-color: #0A5F7A;
     --eco-cat-aprovechable-on: #FFFFFF;
     --eco-cat-aprovechable-container: #CDEBF5;
@@ -364,7 +366,7 @@
     text-underline-offset: 3px;
   }
 
-  /* Foco siempre visible: anillo de 2 px con el color primario y separación. */
+  /* Foco siempre visible: anillo de 2 px con el color primario y separaciÃ³n. */
   :focus-visible {
     outline: 2px solid var(--md-sys-color-primary);
     outline-offset: 2px;
@@ -450,9 +452,9 @@
   }
 
   /* ---------- Botones ----------
-     M3: el botón mide 40 px de alto. Con el dedo (pointer: coarse) sube a
-     48 px, el área táctil mínima de M3. La versión compacta (-2 de densidad,
-     32 px) es para las filas de tabla y la paginación; sigue muy por encima
+     M3: el botÃ³n mide 40 px de alto. Con el dedo (pointer: coarse) sube a
+     48 px, el Ã¡rea tÃ¡ctil mÃ­nima de M3. La versiÃ³n compacta (-2 de densidad,
+     32 px) es para las filas de tabla y la paginaciÃ³n; sigue muy por encima
      de los 24 px que pide WCAG 2.5.8. */
   .btn {
     @apply capa-estado inline-flex items-center justify-center gap-2 rounded-full px-6 text-label-l no-underline;
@@ -497,13 +499,13 @@
     background-color: transparent;
   }
 
-  /* La versión compacta va después de las variantes: cada variante copia
-     .btn con @apply y, si estuviera antes, le devolvería los 40 px. */
+  /* La versiÃ³n compacta va despuÃ©s de las variantes: cada variante copia
+     .btn con @apply y, si estuviera antes, le devolverÃ­a los 40 px. */
   .btn-sm {
     min-height: 32px;
   }
 
-  /* El botón de texto conserva sus 12 px de M3 a los lados. */
+  /* El botÃ³n de texto conserva sus 12 px de M3 a los lados. */
   .btn-sm:not(.btn-text) {
     @apply px-4;
   }
@@ -514,7 +516,7 @@
     }
   }
 
-  /* M3: botón de ícono de 40 px; 48 px con el dedo. */
+  /* M3: botÃ³n de Ã­cono de 40 px; 48 px con el dedo. */
   .btn-icono {
     @apply capa-estado inline-flex items-center justify-center rounded-full text-on-surface-variant;
     width: 40px;
@@ -541,7 +543,7 @@
     border-color: transparent;
   }
 
-  /* M3: el botón de ícono desactivado no lleva contenedor, solo el ícono atenuado. */
+  /* M3: el botÃ³n de Ã­cono desactivado no lleva contenedor, solo el Ã­cono atenuado. */
   .btn-icono:disabled,
   .btn-icono[aria-disabled="true"] {
     background-color: transparent;
@@ -617,7 +619,7 @@
     min-height: 44px;
   }
 
-  /* ---------- Chips de categoría y estado ---------- */
+  /* ---------- Chips de categorÃ­a y estado ---------- */
   .chip {
     @apply inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-label-m;
     min-height: 24px;
@@ -672,7 +674,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Ícono y cifra arriba, en la misma línea en todas las tarjetas aunque el
+  /* Ãcono y cifra arriba, en la misma lÃ­nea en todas las tarjetas aunque el
      texto de cada una tenga distinto largo; la flecha queda al centro. */
   .tarjeta-accion {
     @apply capa-estado flex items-start gap-4 rounded-md p-4 no-underline;
@@ -697,7 +699,7 @@
   }
 
   /* ---------- Datos de un detalle ----------
-     La etiqueta va pequeña y en el color secundario; el dato, más grande y
+     La etiqueta va pequeÃ±a y en el color secundario; el dato, mÃ¡s grande y
      en el color principal: se lee primero lo que importa. */
   .dato-etiqueta {
     @apply text-label-m text-on-surface-variant;
@@ -707,7 +709,7 @@
     @apply mt-0.5 text-body-l text-on-surface;
   }
 
-  /* ---------- Avisos dentro de la página ---------- */
+  /* ---------- Avisos dentro de la pÃ¡gina ---------- */
   .nota {
     @apply flex items-start gap-3 rounded-md p-4 text-body-m;
   }
@@ -717,9 +719,9 @@
   .nota-error { @apply bg-error-container text-on-error-container; }
   .nota-exito { @apply bg-primary-container text-on-primary-container; }
 
-  /* ---------- Tablas (patrón de tabla de la W3C) ---------- */
+  /* ---------- Tablas (patrÃ³n de tabla de la W3C) ---------- */
   /* position: relative hace que los textos sr-only de las celdas (absolutos)
-     se recorten dentro del contenedor; sin ella se salían y la página entera
+     se recorten dentro del contenedor; sin ella se salÃ­an y la pÃ¡gina entera
      se desplazaba hacia el lado en el celular. */
   .tabla-contenedor {
     @apply relative w-full overflow-x-auto rounded-md bg-surface-container-lowest;
@@ -734,7 +736,7 @@
   /* Medidas de la tabla de datos de Material (m2.material.io/components/
      data-tables): encabezado de 56 px, filas de al menos 52 px, 16 px a los
      lados, contenido centrado en vertical y cifras alineadas a la derecha
-     (clase .num), también en su encabezado. */
+     (clase .num), tambiÃ©n en su encabezado. */
   .tabla caption {
     @apply px-4 pb-3 pt-4 text-left text-title-m text-on-surface;
   }
@@ -749,7 +751,7 @@
     height: 56px;
   }
 
-  /* La línea que separa el título visible del encabezado; si el título es
+  /* La lÃ­nea que separa el tÃ­tulo visible del encabezado; si el tÃ­tulo es
      solo para lector de pantalla, el borde del contenedor basta. */
   .tabla caption:not(.sr-only) + thead th {
     border-top: 1px solid var(--md-sys-color-outline-variant);
@@ -774,8 +776,8 @@
     background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
   }
 
-  /* Dentro de la tabla el subrayado de los enlaces es más suave, para que
-     la columna no se vuelva una franja de líneas; al pasar el puntero o con
+  /* Dentro de la tabla el subrayado de los enlaces es mÃ¡s suave, para que
+     la columna no se vuelva una franja de lÃ­neas; al pasar el puntero o con
      el foco vuelve a su color. Sigue habiendo subrayado (WCAG 1.4.1). */
   .tabla .enlace {
     text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
@@ -796,7 +798,7 @@
   }
 
 
-  /* La paginación se pega al pie de la tabla que pagina, como en la tabla
+  /* La paginaciÃ³n se pega al pie de la tabla que pagina, como en la tabla
      de datos de Material. */
   .tabla-contenedor:has(+ .paginacion) {
     border-bottom-left-radius: 0;
@@ -832,14 +834,14 @@
     @apply underline;
   }
 
-  /* La columna por la que está ordenada la tabla se marca con el color del
-     texto principal además de la flecha. */
+  /* La columna por la que estÃ¡ ordenada la tabla se marca con el color del
+     texto principal ademÃ¡s de la flecha. */
   .tabla th[aria-sort="ascending"],
   .tabla th[aria-sort="descending"] {
     @apply text-on-surface;
   }
 
-  /* ---------- Diálogos ---------- */
+  /* ---------- DiÃ¡logos ---------- */
   .dialogo {
     @apply rounded-xl bg-surface-container-high p-6 text-on-surface;
     width: min(560px, calc(100vw - 32px));
@@ -850,6 +852,7 @@
 
   .dialogo::backdrop {
     background-color: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+    backdrop-filter: blur(4px);
   }
 
   .dialogo-titulo {
@@ -1080,7 +1083,7 @@
   }
 
   /* ---------- Tablas que no caben: cada fila pasa a ser una tarjeta ----------
-     main.js agrega .tabla-apilada cuando la tabla es más ancha que su
+     main.js agrega .tabla-apilada cuando la tabla es mÃ¡s ancha que su
      contenedor y le pone a cada celda la etiqueta de su columna
      (data-etiqueta). Sin JavaScript la tabla se desplaza hacia el lado. */
   @media screen {
@@ -1118,8 +1121,8 @@
       overflow-wrap: anywhere;
     }
 
-    /* En una tarjeta angosta, un chip largo («Problema reportado») o una
-       fecha pueden partirse en dos líneas en vez de salirse. */
+    /* En una tarjeta angosta, un chip largo (Â«Problema reportadoÂ») o una
+       fecha pueden partirse en dos lÃ­neas en vez de salirse. */
     .tabla-apilada .chip,
     .tabla-apilada .num,
     .tabla-apilada .whitespace-nowrap {
@@ -1127,7 +1130,7 @@
       white-space: normal;
     }
 
-    /* La celda que nombra la fila (material, empresa…) va arriba, a todo lo ancho. */
+    /* La celda que nombra la fila (material, empresaâ€¦) va arriba, a todo lo ancho. */
     .tabla-apilada tbody th,
     .tabla-apilada tfoot th,
     .tabla-apilada [data-celda-acciones] {
@@ -1177,7 +1180,7 @@
   }
 
   /* Tablas de datos anchas (el reporte): se desplazan hacia el lado y la
-     primera columna se queda fija para no perder de qué fila se trata. */
+     primera columna se queda fija para no perder de quÃ© fila se trata. */
   .tabla-primera-fija tr > :first-child {
     position: sticky;
     left: 0;
@@ -1194,7 +1197,7 @@
     background-color: var(--md-sys-color-surface-container-low);
   }
 
-  /* ---------- Estados vacío y de error ---------- */
+  /* ---------- Estados vacÃ­o y de error ---------- */
   .estado-vacio {
     @apply flex flex-col items-center gap-2 px-4 py-10 text-center text-on-surface-variant;
   }
@@ -1203,12 +1206,12 @@
     font-size: 40px;
   }
 
-  /* ---------- Paginación ---------- */
+  /* ---------- PaginaciÃ³n ---------- */
   .paginacion {
     @apply flex flex-wrap items-center justify-between gap-3 pt-4 text-body-m text-on-surface-variant;
   }
 
-  /* ---------- Estructura y navegación ---------- */
+  /* ---------- Estructura y navegaciÃ³n ---------- */
   .saltar {
     @apply fixed left-4 top-4 z-50 rounded-sm bg-primary px-4 py-3 text-label-l text-on-primary;
     transform: translateY(-200%);
@@ -1276,7 +1279,7 @@
   }
 }
 
-/* Sin JavaScript, en ventana compacta la navegación se muestra arriba. */
+/* Sin JavaScript, en ventana compacta la navegaciÃ³n se muestra arriba. */
 html:not(.js) .app-nav {
   position: static;
   transform: none;
@@ -1289,7 +1292,7 @@ html:not(.js) .boton-menu {
   display: none;
 }
 
-/* Ventana media (600–839 px): navigation rail. */
+/* Ventana media (600â€“839 px): navigation rail. */
 @media (min-width: 600px) {
   .app-nav,
   html:not(.js) .app-nav {
@@ -1332,7 +1335,7 @@ html:not(.js) .boton-menu {
   }
 }
 
-/* Ventana expandida (≥ 840 px): navigation drawer fijo. */
+/* Ventana expandida (â‰¥ 840 px): navigation drawer fijo. */
 @media (min-width: 840px) {
   .app-nav,
   html:not(.js) .app-nav {
@@ -1367,6 +1370,9 @@ html:not(.js) .boton-menu {
 }
 
 @media print {
+  * { box-shadow: none !important; }
+  body { background-color: white !important; color: black !important; }
+
   .app-nav,
   .barra-superior,
   .avisos-region,
@@ -1409,3 +1415,4 @@ html:not(.js) .boton-menu {
     color: #000000 !important;
   }
 }
+
