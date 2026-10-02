@@ -50,9 +50,9 @@
       <a href="/gestores?estado=PENDIENTE" class="btn-text">Ver todos</a>
     </div>
     <% if (gestoresPendientes.length > 0) { %>
-      <div class="tabla-contenedor" role="region" aria-labelledby="tituloPorRevisar" tabindex="0">
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionPorRevisar" tabindex="0">
         <table class="tabla">
-          <caption class="sr-only">Gestores por revisar, del más antiguo al más reciente</caption>
+          <caption id="captionPorRevisar" class="sr-only">Gestores por revisar, del más antiguo al más reciente</caption>
           <thead>
             <tr>
               <th scope="col">Empresa</th>
@@ -74,7 +74,7 @@
                   <% if (g.permiso_path) { %><span class="block text-body-s text-on-surface-variant">Registrado desde la app, con permiso</span><% } %>
                 </td>
                 <td class="text-right">
-                  <a href="/gestores/<%= g.id %>" class="btn-tonal btn-sm" aria-label="Revisar <%= g.razon_social %>">Revisar</a>
+                  <a href="/gestores/<%= g.id %>" class="btn-outlined btn-sm" aria-label="Revisar <%= g.razon_social %>">Revisar</a>
                 </td>
               </tr>
             <% }); %>
@@ -179,9 +179,9 @@
         <h2 id="tituloResumenReciclaje" class="seccion-titulo">Reciclaje por municipio</h2>
         <a href="/reportes" class="btn-filled">Ver reporte completo</a>
       </div>
-      <div class="tabla-contenedor" role="region" aria-labelledby="tituloResumenReciclaje" tabindex="0">
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionResumenReciclaje" tabindex="0">
         <table class="tabla">
-          <caption>Número de recolecciones confirmadas desde el inicio, por municipio</caption>
+          <caption id="captionResumenReciclaje">Número de recolecciones confirmadas desde el inicio, por municipio</caption>
           <thead>
             <tr>
               <th scope="col">Municipio</th>
@@ -216,13 +216,13 @@
       <a href="/solicitudes" class="btn-text">Ver todas</a>
     </div>
     <% if (ultimasSolicitudes.length > 0) { %>
-      <div class="tabla-contenedor" role="region" aria-labelledby="tituloUltimas" tabindex="0">
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionUltimas" tabindex="0">
         <table class="tabla">
-          <caption class="sr-only">Las 8 solicitudes más recientes</caption>
+          <caption id="captionUltimas" class="sr-only">Las 8 solicitudes más recientes</caption>
           <thead>
             <tr>
               <th scope="col">Material</th>
-              <th scope="col">Cantidad</th>
+              <th scope="col" class="num">Cantidad</th>
               <th scope="col">Municipio</th>
               <th scope="col">Estado</th>
               <th scope="col">Fecha</th>
@@ -235,7 +235,7 @@
                   <a class="enlace" href="/solicitudes/<%= s.id %>"><%= mat.nombre_comun || 'Solicitud ' + s.id %></a>
                   <span class="mt-1 block"><%- include('partials/componentes/chip-categoria', { categoria: mat.categoria }) %></span>
                 </th>
-                <td class="whitespace-nowrap"><%= f.formatoCantidad(s.cantidad_estimada, s.unidad_medida) %></td>
+                <td class="num"><%= f.formatoCantidad(s.cantidad_estimada, s.unidad_medida) %></td>
                 <td><%= s.municipio ? f.capitalizar(s.municipio) : 'Sin dato' %></td>
                 <td>
                   <%- include('partials/componentes/chip-estado', { estado: s.estado, tipo: 'solicitud' }) %>
@@ -268,7 +268,7 @@
     valores: chartData.municipiosData,
     colores: ['--md-sys-color-primary']
   }) %></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
   <% } %>
 </div>
 

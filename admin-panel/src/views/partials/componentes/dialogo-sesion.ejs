@@ -5,6 +5,7 @@
   </p>
   <div class="dialogo-acciones">
     <form action="/logout" method="POST" class="m-0">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <button type="submit" class="btn-text">Cerrar sesión</button>
     </form>
     <button type="button" class="btn-filled" id="botonSeguirConectado">Seguir conectado</button>

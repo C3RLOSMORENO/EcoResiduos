@@ -1,0 +1,19 @@
+<%# Una pantalla de detalle o edición que no se pudo cargar. Se queda en la
+    misma dirección: «Reintentar» vuelve a pedirla, sin perder dónde estabas. %>
+<%- include('partials/header', { activeTab: activeTab, titulo: titulo }) %>
+
+<div class="flex flex-col gap-6">
+  <nav aria-label="Ruta de navegación" class="text-body-m">
+    <ol class="flex flex-wrap items-center gap-1" role="list">
+      <li><a class="enlace" href="<%= volver.href %>"><%= volver.texto %></a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" class="text-on-surface-variant">Error al cargar</li>
+    </ol>
+  </nav>
+
+  <h1 class="titulo-pagina"><%= titulo %></h1>
+
+  <%- include('partials/componentes/estado-error', { titulo: 'Puede ser una falla momentánea de la conexión con la base de datos. Vuelve a intentarlo.', detalle: detalle, reintentar: urlActual }) %>
+</div>
+
+<%- include('partials/footer') %>

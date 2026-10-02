@@ -1,5 +1,6 @@
 const authService = require('../services/authService');
 const { DURACION_SESION_MS, guardarSesion, limpiarSesion } = require('../utils/sesion');
+const { conAviso } = require('../utils/web');
 
 function esPeticionFetch(req) {
     return req.get('X-Requested-With') === 'fetch';
@@ -11,7 +12,7 @@ function aLogin(req, res, mensaje) {
         return res.status(401).json({ ok: false, mensaje });
     }
     const volver = req.method === 'GET' ? `&volver=${encodeURIComponent(req.originalUrl)}` : '';
-    return res.redirect(`/login?msg=${encodeURIComponent(mensaje)}&type=error${volver}`);
+    return res.redirect(conAviso('/login', mensaje, 'error') + volver);
 }
 
 const authMiddleware = {
@@ -55,9 +56,21 @@ const authMiddleware = {
             res.locals.user = user;
             res.locals.sesionMs = DURACION_SESION_MS;
             return next();
-        } catch {
-            limpiarSesion(res);
-            return aLogin(req, res, 'Error de autenticación. Por favor inicia sesión');
+        } catch (err) {
+            // Supabase no respondió: la sesión puede estar bien, así que no se
+            // cierra. Antes se borraba y una caída de un minuto sacaba al
+            // administrador del panel a mitad de trabajo.
+            console.error('No se pudo comprobar la sesión:', err.message);
+            const mensaje = 'No pudimos comprobar tu sesión porque el servicio no respondió. Tu sesión sigue abierta: vuelve a intentarlo en unos segundos.';
+            if (esPeticionFetch(req)) {
+                return res.status(503).json({ ok: false, mensaje });
+            }
+            return res.status(503).render('404', {
+                titulo: 'El servicio no respondió',
+                mensaje,
+                icono: 'cloud_off',
+                reintentar: req.method === 'GET' ? req.originalUrl : null
+            });
         }
     }
 };

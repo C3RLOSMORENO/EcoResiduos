@@ -12,7 +12,7 @@
     </a>
   </div>
 
-  <form method="GET" action="/materiales" class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-3" role="search" aria-label="Filtrar materiales">
+  <form method="GET" action="/materiales" class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-3" role="search" aria-label="Filtrar materiales">
     <div class="campo md:col-span-2">
       <label for="filtroMaterial" class="campo-etiqueta">Buscar</label>
       <input type="search" id="filtroMaterial" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroMaterialAyuda">
@@ -47,38 +47,40 @@
       <% } %>
     </div>
   <% } else { %>
-    <div class="tabla-contenedor" role="region" aria-labelledby="captionMateriales" tabindex="0">
-      <table class="tabla">
-        <caption id="captionMateriales">Catálogo de materiales<%= filtros.categoria ? ' · ' + f.etiquetaCategoria(filtros.categoria) : '' %></caption>
-        <thead>
-          <tr>
-            <%- include('partials/componentes/encabezado-orden', { campo: 'codigo', texto: 'Código', ordenActual: filtros.orden, ruta: '/materiales' }) %>
-            <%- include('partials/componentes/encabezado-orden', { campo: 'nombre', texto: 'Nombre común', ordenActual: filtros.orden, ruta: '/materiales' }) %>
-            <th scope="col">Categoría</th>
-            <th scope="col"><span class="sr-only">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% materiales.forEach(function (m) { %>
+    <div>
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionMateriales" tabindex="0">
+        <table class="tabla">
+          <caption id="captionMateriales">Catálogo de materiales<%= filtros.categoria ? ' · ' + f.etiquetaCategoria(filtros.categoria) : '' %></caption>
+          <thead>
             <tr>
-              <td class="whitespace-nowrap font-semibold"><%= m.codigo %></td>
-              <th scope="row">
-                <%= m.nombre_comun %>
-                <% if (m.descripcion) { %><span class="block max-w-prose text-body-s font-normal text-on-surface-variant"><%= m.descripcion.length > 140 ? m.descripcion.slice(0, 140) + '…' : m.descripcion %></span><% } %>
-              </th>
-              <td>
-                <%- include('partials/componentes/chip-categoria', { categoria: m.categoria }) %>
-                <% if (m.subcategoria) { %><span class="block text-body-s text-on-surface-variant"><%= m.subcategoria %></span><% } %>
-              </td>
-              <td class="text-right">
-                <a href="/materiales/edit/<%= m.id %>" class="btn-tonal btn-sm" aria-label="Editar <%= m.nombre_comun %>">Editar</a>
-              </td>
+              <%- include('partials/componentes/encabezado-orden', { campo: 'codigo', texto: 'Código', ordenActual: filtros.orden, ruta: '/materiales' }) %>
+              <%- include('partials/componentes/encabezado-orden', { campo: 'nombre', texto: 'Nombre común', ordenActual: filtros.orden, ruta: '/materiales' }) %>
+              <th scope="col">Categoría</th>
+              <th scope="col"><span class="sr-only">Acciones</span></th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% materiales.forEach(function (m) { %>
+              <tr>
+                <td class="whitespace-nowrap font-semibold"><%= m.codigo %></td>
+                <th scope="row">
+                  <%= m.nombre_comun %>
+                  <% if (m.descripcion) { %><span class="block max-w-prose text-body-s font-normal text-on-surface-variant"><%= m.descripcion.length > 140 ? m.descripcion.slice(0, 140) + '…' : m.descripcion %></span><% } %>
+                </th>
+                <td>
+                  <%- include('partials/componentes/chip-categoria', { categoria: m.categoria }) %>
+                  <% if (m.subcategoria) { %><span class="block text-body-s text-on-surface-variant"><%= m.subcategoria %></span><% } %>
+                </td>
+                <td class="text-right">
+                  <a href="/materiales/edit/<%= m.id %>" class="btn-outlined btn-sm" aria-label="Editar <%= m.nombre_comun %>">Editar</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('partials/componentes/paginacion', { pag, nombre: 'materiales' }) %>
     </div>
-    <%- include('partials/componentes/paginacion', { pag, nombre: 'materiales' }) %>
   <% } %>
 </div>
 

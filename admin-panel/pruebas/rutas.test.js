@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { instalarSupabaseFalso } = require('./apoyo/supabaseFalso');
-const { responderConDatos, XSS } = require('./apoyo/datos');
+const { responderConDatos, XSS, solicitud } = require('./apoyo/datos');
 
 const supabase = instalarSupabaseFalso();
 const geocodificador = require('../src/services/geocodificador');
@@ -10,7 +10,10 @@ geocodificador.geocodificar = async () => null;
 const request = require('supertest');
 const app = require('../src/crearApp')();
 
-const SESION = 'sb_access_token=token-admin';
+const { TOKEN_CSRF, COOKIE_CSRF } = require('./apoyo/csrf');
+const { conAviso } = require('../src/utils/web');
+
+const SESION = `sb_access_token=token-admin; ${COOKIE_CSRF}`;
 
 // Rutas GET del inventario (sección 4) y las nuevas de la sección 6.
 const RUTAS_GET = [
@@ -69,7 +72,7 @@ test('sin sesión, cada ruta GET protegida redirige a /login recordando la pági
 
 test('sin sesión, cada ruta POST protegida redirige a /login', async () => {
     for (const ruta of RUTAS_POST) {
-        const res = await request(app).post(ruta).type('form').send({});
+        const res = await request(app).post(ruta).set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form').send({});
         assert.equal(res.status, 302, ruta);
         assert.match(res.headers.location, /^\/login\?/, ruta);
     }
@@ -97,24 +100,29 @@ test('pantallas públicas: login, restablecer contraseña y 404', async () => {
     assert.equal((await request(app).get('/login')).status, 200);
     const restablecer = await request(app).get('/restablecer-password');
     assert.equal(restablecer.status, 200);
-    assert.match(restablecer.text, /esm\.sh\/@supabase\/supabase-js@\d+\.\d+\.\d+/);
+    assert.match(restablecer.text, /<script src="\/vendor\/supabase\.js" defer><\/script>/);
+    assert.ok(!restablecer.text.includes('esm.sh'), 'supabase-js no debe venir de un CDN');
     const noExiste = await request(app).get('/no-existe');
     assert.equal(noExiste.status, 404);
     assert.match(noExiste.text, /Página no encontrada/);
 });
 
-test('cerrar sesión por GET y por POST limpia las cookies', async () => {
-    for (const metodo of ['get', 'post']) {
-        const res = await request(app)[metodo]('/logout').set('Cookie', SESION);
-        assert.equal(res.status, 302);
-        assert.match(res.headers.location, /^\/login/);
-        assert.ok(res.headers['set-cookie'].some((c) => c.startsWith('sb_access_token=;')));
-    }
+test('cerrar sesión: por POST limpia las cookies; por GET no hace nada', async () => {
+    const post = await request(app).post('/logout').set('Cookie', SESION).set('X-CSRF-Token', TOKEN_CSRF);
+    assert.equal(post.status, 302);
+    assert.match(post.headers.location, /^\/login\?msg=Cerraste%20sesi%C3%B3n\./);
+    assert.ok(post.headers['set-cookie'].some((c) => c.startsWith('sb_access_token=;')));
+
+    // Por GET bastaría un enlace o una imagen en otro sitio para cerrar la sesión.
+    const get = await request(app).get('/logout').set('Cookie', SESION);
+    assert.equal(get.status, 302);
+    assert.equal(get.headers.location, '/');
+    assert.ok(!(get.headers['set-cookie'] || []).some((c) => c.startsWith('sb_access_token=;')));
 });
 
 test('iniciar sesión guarda el token y el refresh token y vuelve a la página pedida', async () => {
     for (const ruta of ['/login', '/auth/login']) {
-        const res = await request(app).post(ruta).type('form')
+        const res = await request(app).post(ruta).set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
             .send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta', volver: '/gestores/1' });
         assert.equal(res.status, 302);
         assert.match(res.headers.location, /^\/gestores\/1\?msg=/);
@@ -122,11 +130,11 @@ test('iniciar sesión guarda el token y el refresh token y vuelve a la página p
         assert.match(cookies, /sb_access_token=token-admin/);
         assert.match(cookies, /sb_refresh_token=refresco-1/);
     }
-    const externo = await request(app).post('/login').type('form')
+    const externo = await request(app).post('/login').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
         .send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta', volver: '//sitio-malo.test' });
     assert.match(externo.headers.location, /^\/dashboard/);
-    const mala = await request(app).post('/login').type('form').send({ email: 'admin@ecoresiduos.test', password: 'mala' });
-    assert.match(mala.headers.location, /^\/login\?msg=/);
+    const mala = await request(app).post('/login').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form').send({ email: 'admin@ecoresiduos.test', password: 'mala' });
+    assert.match(mala.headers.location, /^\/login\?msg=Correo%20o%20contrase%C3%B1a%20incorrectos\.&type=error&firma=/);
 });
 
 test('con el token vencido, la sesión se renueva con el refresh token', async () => {
@@ -138,10 +146,10 @@ test('con el token vencido, la sesión se renueva con el refresh token', async (
 });
 
 test('renovar la sesión desde el aviso responde JSON, y 401 si ya venció', async () => {
-    const ok = await request(app).post('/sesion/renovar').set('Cookie', SESION).set('X-Requested-With', 'fetch');
+    const ok = await request(app).post('/sesion/renovar').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', SESION).set('X-Requested-With', 'fetch');
     assert.equal(ok.status, 200);
     assert.equal(ok.body.ok, true);
-    const vencida = await request(app).post('/sesion/renovar').set('X-Requested-With', 'fetch');
+    const vencida = await request(app).post('/sesion/renovar').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).set('X-Requested-With', 'fetch');
     assert.equal(vencida.status, 401);
 });
 
@@ -163,6 +171,31 @@ test('los datos de la base no se imprimen sin escapar (XSS)', async () => {
     assert.ok(json, 'el dashboard pasa los datos del gráfico en un script JSON');
     assert.ok(!json[1].includes('<'), 'el JSON escapa «<»');
     assert.doesNotThrow(() => JSON.parse(json[1]));
+});
+
+test('las fotos de las solicitudes abren el visor y una URL insegura no se enlaza', async () => {
+    const FOTO = 'https://proyecto.supabase.co/storage/v1/object/public/escaneos_ia/u1/solicitudes/1.jpg';
+    supabase.manejador = (consulta) => {
+        if (consulta.tabla === 'solicitudes_recoleccion') {
+            const fila = { ...solicitud, municipio: 'GIRÓN', foto_url: FOTO };
+            return consulta.modo === 'lista' ? { data: [fila], count: 1 } : { data: fila };
+        }
+        return responderConDatos(consulta);
+    };
+    for (const ruta of ['/solicitudes', '/solicitudes/7']) {
+        const res = await request(app).get(ruta).set('Cookie', SESION);
+        assert.match(res.text, new RegExp(`<a href="${FOTO}" class="foto-ampliable[^"]*" data-visor`), `${ruta}: la foto no abre el visor`);
+        assert.match(res.text, /aria-label="Ampliar[^"]*Aceite usado/, `${ruta}: el enlace no dice qué foto amplía`);
+        assert.match(res.text, /<dialog id="visorImagen"/, `${ruta}: falta el visor en la página`);
+    }
+
+    // Con los datos de ejemplo la foto es «javascript:alert(1)»: no se enlaza.
+    supabase.manejador = responderConDatos;
+    for (const ruta of ['/solicitudes', '/solicitudes/7']) {
+        const res = await request(app).get(ruta).set('Cookie', SESION);
+        assert.ok(!res.text.includes('href="javascript:'), `${ruta} enlaza una URL javascript:`);
+        assert.ok(!/data-visor\s/.test(res.text.replace(/<dialog id="visorImagen"[\s\S]*?<\/dialog>/, '')), `${ruta} abre el visor con una URL insegura`);
+    }
 });
 
 test('las listas se paginan en el servidor con 25 filas y conteo exacto', async () => {
@@ -189,11 +222,9 @@ test('el CSV del reporte tiene BOM, separador «;» y solo cifras agregadas', as
     assert.doesNotMatch(res.body, /laura@correo\.test|1098000000/);
 });
 
-test('los avisos de ?msg, ?success y ?error se anuncian en regiones status o alert', async () => {
-    const exito = await request(app).get('/gestores?msg=Gestor%20aprobado&type=success').set('Cookie', SESION);
+test('los avisos firmados se anuncian en regiones status o alert', async () => {
+    const exito = await request(app).get(conAviso('/gestores', 'Gestor aprobado')).set('Cookie', SESION);
     assert.match(exito.text, /role="status"[^>]*>\s*<div class="aviso" data-aviso>[\s\S]*?Gestor aprobado/);
-    const success = await request(app).get('/solicitudes?success=Listo').set('Cookie', SESION);
-    assert.match(success.text, /data-aviso>[\s\S]*?Listo/);
-    const error = await request(app).get('/materiales?error=%3Cb%3EFall%C3%B3%3C%2Fb%3E').set('Cookie', SESION);
+    const error = await request(app).get(conAviso('/materiales', '<b>Falló</b>', 'error')).set('Cookie', SESION);
     assert.match(error.text, /role="alert"[\s\S]*?data-aviso-error[\s\S]*?&lt;b&gt;Falló&lt;\/b&gt;/);
 });

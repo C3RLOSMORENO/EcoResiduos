@@ -6,7 +6,7 @@
   const siguiente = asc ? '-' + campo : campo;
   const params = new URLSearchParams();
   Object.entries(query || {}).forEach(function (par) {
-    if (!['orden', 'pagina', 'msg', 'type', 'success', 'error'].includes(par[0]) && par[1]) params.set(par[0], String(par[1]));
+    if (!['orden', 'pagina', 'msg', 'type', 'firma', 'aviso'].includes(par[0]) && par[1]) params.set(par[0], String(par[1]));
   });
   params.set('orden', siguiente);
 %><th scope="col" aria-sort="<%= asc ? 'ascending' : (desc ? 'descending' : 'none') %>"<%- typeof clase !== 'undefined' ? ' class="' + clase + '"' : '' %>>

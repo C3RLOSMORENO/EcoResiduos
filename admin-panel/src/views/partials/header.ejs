@@ -20,8 +20,8 @@
   <div id="navFondo" class="nav-fondo" hidden></div>
 
   <nav id="navPrincipal" class="app-nav" aria-label="Navegación principal">
-    <a href="/dashboard" class="mb-4 flex items-center gap-3 rounded-sm px-3 py-2 no-underline" aria-label="EcoResiduos, ir al inicio">
-      <img src="/images/isotipo-192.png" alt="" width="40" height="40" class="h-10 w-10 object-contain">
+    <a href="/dashboard" class="mb-4 flex items-center gap-3 rounded-sm px-3 py-2 no-underline" aria-label="EcoResiduos, Panel de administración: ir al inicio">
+      <img src="<%= recurso('/images/isotipo-192.png') %>" alt="" width="40" height="40" class="h-10 w-10 object-contain">
       <span class="nav-marca-texto">
         <span class="block font-display text-title-l text-on-surface">EcoResiduos</span>
         <span class="block text-label-m text-on-surface-variant">Panel de administración</span>
@@ -50,6 +50,7 @@
           <span class="material-symbols-outlined" aria-hidden="true" data-icono-tema>dark_mode</span>
         </button>
         <form action="/logout" method="POST" class="m-0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="btn-text">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">logout</span>
             <span class="sr-only md:not-sr-only">Cerrar sesión</span>

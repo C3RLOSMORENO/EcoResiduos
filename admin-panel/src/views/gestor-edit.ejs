@@ -4,7 +4,6 @@
   const porVerificar = gestor.material_ids_por_verificar || [];
   const seleccionados = gestor.material_ids || [];
   const municipioGuardado = gestor.municipio ? f.capitalizar(gestor.municipio) : '';
-  const municipioEnLista = MUNICIPIOS.find(function (m) { return m.toLowerCase() === String(gestor.municipio || '').toLowerCase() || m.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() === String(gestor.municipio || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); });
   const accion = creando ? '/gestores/guardar' : '/gestores/edit/' + gestor.id;
 %>
 <%- include('partials/header', { activeTab: 'gestores', titulo: tituloPagina }) %>
@@ -30,6 +29,7 @@
   </div>
 
   <form action="<%= accion %>" method="POST" class="flex flex-col gap-6" data-validar data-conservar id="formGestor">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <section aria-labelledby="tituloDatosForm" class="tarjeta flex flex-col gap-4">
       <h2 id="tituloDatosForm" class="tarjeta-titulo">Datos de la empresa</h2>
       <p class="campo-ayuda">Los campos marcados con «obligatorio» se deben llenar.</p>
@@ -90,7 +90,7 @@
           <div class="campo">
             <label for="estado_verificacion" class="campo-etiqueta">Estado de verificación <span class="campo-obligatorio">(obligatorio)</span></label>
             <select id="estado_verificacion" name="estado_verificacion" required class="campo-control" aria-describedby="estadoAyuda">
-              <% ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'].forEach(function (e) { %>
+              <% f.ESTADOS_GESTOR.forEach(function (e) { %>
                 <option value="<%= e %>" <%= gestor.estado_verificacion === e ? 'selected' : '' %>><%= f.etiquetaVerificacion(e) %></option>
               <% }); %>
             </select>
@@ -142,11 +142,10 @@
           <ul class="grid max-h-96 grid-cols-1 gap-2 overflow-y-auto rounded-sm bg-surface-container-low p-2 md:grid-cols-2 xl:grid-cols-3" role="list">
             <% materialesDisponibles.forEach(function (mat) {
               const marcado = seleccionados.includes(mat.id);
-              const busqueda = ((mat.codigo || '') + ' ' + (mat.nombre_comun || '') + ' ' + f.etiquetaCategoria(mat.categoria)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
             %>
-              <li data-material-item data-busqueda="<%= busqueda %>">
+              <li data-material-item data-busqueda="<%= mat.busqueda %>">
                 <% if (!creando && marcado) { %><input type="hidden" name="materiales_presentes[]" value="<%= mat.id %>"><% } %>
-                <label for="mat_<%= mat.id %>" class="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-sm bg-surface-container-lowest p-3">
+                <label for="mat_<%= mat.id %>" class="flex min-h-11 cursor-pointer items-start gap-3 rounded-sm bg-surface-container-lowest p-3">
                   <input type="checkbox" id="mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>" <%= marcado ? 'checked' : '' %> class="mt-0.5">
                   <span class="flex min-w-0 flex-col gap-1">
                     <span class="font-semibold"><%= mat.nombre_comun %></span>
@@ -183,6 +182,7 @@
         Solo PDF de máximo 10 MB.
       </p>
       <form id="formPermiso" action="/gestores/<%= gestor.id %>/permiso" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="campo min-w-0 flex-1">
           <label for="archivoPermiso" class="campo-etiqueta">Archivo del permiso</label>
           <input type="file" id="archivoPermiso" name="permiso" accept="application/pdf,.pdf" required class="campo-control py-2">

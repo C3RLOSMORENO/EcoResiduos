@@ -1,33 +1,26 @@
 const SolicitudService = require('../services/SolicitudService');
 const { leerPagina, paginacion, conAviso, rutaInterna } = require('../utils/web');
+const { responderErrorCarga, renderLista } = require('../utils/errores');
+const { filtrosSolicitudes, describirFiltrosSolicitudes } = require('../utils/filtros');
 
-exports.listarSolicitudes = async (req, res) => {
-    const filtros = SolicitudService.leerFiltros(req.query);
+exports.listarSolicitudes = (req, res) => {
+    const filtros = filtrosSolicitudes(req.query);
     const pagina = leerPagina(req.query);
-    try {
-        const { solicitudes, total } = await SolicitudService.listar(filtros, pagina);
-        res.render('solicitudes', {
+    return renderLista(res, 'solicitudes', {
+        comunes: {
             titulo: 'Solicitudes',
             activeTab: 'solicitudes',
-            solicitudes,
             filtros,
-            pag: paginacion({ total, pagina, ruta: '/solicitudes', query: req.query }),
+            descripcionFiltros: describirFiltrosSolicitudes(filtros),
             estadosCancelables: SolicitudService.ESTADOS_CANCELABLES,
-            problemaResoluble: SolicitudService.problemaResoluble,
-            errorCarga: null
-        });
-    } catch (error) {
-        res.status(500).render('solicitudes', {
-            titulo: 'Solicitudes',
-            activeTab: 'solicitudes',
-            solicitudes: [],
-            filtros,
-            pag: null,
-            estadosCancelables: SolicitudService.ESTADOS_CANCELABLES,
-            problemaResoluble: SolicitudService.problemaResoluble,
-            errorCarga: error.message
-        });
-    }
+            problemaResoluble: SolicitudService.problemaResoluble
+        },
+        cargar: async () => {
+            const { solicitudes, total } = await SolicitudService.listar(filtros, pagina);
+            return { solicitudes, pag: paginacion({ total, pagina, ruta: '/solicitudes', query: req.query }) };
+        },
+        vacio: { solicitudes: [], pag: null }
+    });
 };
 
 exports.verSolicitud = async (req, res, next) => {
@@ -42,7 +35,7 @@ exports.verSolicitud = async (req, res, next) => {
             problemaResoluble: SolicitudService.problemaResoluble
         });
     } catch (error) {
-        res.redirect(conAviso('/solicitudes', error.message, 'error'));
+        responderErrorCarga(res, next, error, { activeTab: 'solicitudes', que: `la solicitud ${req.params.id}`, volver: { href: '/solicitudes', texto: 'Solicitudes' } });
     }
 };
 

@@ -1,5 +1,8 @@
 const express = require('express');
+const { validarIds } = require('../middlewares/validarId');
+
 const router = express.Router();
+validarIds(router, 'id');
 const autoridadController = require('../controllers/AutoridadController');
 
 router.get('/', autoridadController.renderAutoridadesPage);

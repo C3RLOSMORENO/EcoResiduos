@@ -31,9 +31,9 @@
     </defs>
     <% etiquetas.forEach(function (e) { %>
       <g transform="translate(<%= e.x %> <%= e.y %>) rotate(<%= e.giro %> 130 32)">
-        <use href="#formaEtiqueta" style="fill: var(--eco-cat-<%= e.cat %>-color)"/>
+        <use href="#formaEtiqueta" class="etiqueta-fondo-<%= e.cat %>"/>
         <text x="44" y="40" font-family="Public Sans, sans-serif" font-size="20" font-weight="600"
-              style="fill: var(--eco-cat-<%= e.cat %>-on)"><%= e.texto %></text>
+              class="etiqueta-texto-<%= e.cat %>"><%= e.texto %></text>
       </g>
     <% }); %>
   </svg>

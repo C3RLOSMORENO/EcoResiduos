@@ -1,6 +1,6 @@
 <%
-  // Acepta los avisos de ?msg=&type=, ?success= y ?error= (middleware de
-  // avisos) y los que pasa el controlador como feedback o message/type.
+  // Muestra el aviso firmado de la URL (?msg=&type=&firma=, ver
+  // vistaMiddleware) o el que pasa el controlador como feedback o message/type.
   let avisoMostrar = null;
   if (typeof feedback !== 'undefined' && feedback && feedback.message) {
     avisoMostrar = { tipo: feedback.type === 'error' ? 'error' : 'exito', mensaje: feedback.message };

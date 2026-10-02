@@ -12,7 +12,7 @@
     </a>
   </div>
 
-  <form method="GET" action="/gestores" class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" role="search" aria-label="Filtrar gestores">
+  <form method="GET" action="/gestores" class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" role="search" aria-label="Filtrar gestores">
     <div class="campo xl:col-span-2">
       <label for="filtroBusqueda" class="campo-etiqueta">Buscar</label>
       <input type="search" id="filtroBusqueda" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroBusquedaAyuda">
@@ -31,7 +31,7 @@
       <label for="filtroEstado" class="campo-etiqueta">Estado de verificación</label>
       <select id="filtroEstado" name="estado" class="campo-control">
         <option value="">Todos los estados</option>
-        <% ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'].forEach(function (e) { %>
+        <% f.ESTADOS_GESTOR.forEach(function (e) { %>
           <option value="<%= e %>" <%= filtros.estado === e ? 'selected' : '' %>><%= f.etiquetaVerificacion(e) %></option>
         <% }); %>
       </select>
@@ -60,57 +60,59 @@
       <% } %>
     </div>
   <% } else { %>
-    <div class="tabla-contenedor" role="region" aria-labelledby="captionGestores" tabindex="0">
-      <table class="tabla">
-        <caption id="captionGestores">Gestores registrados<%= filtros.estado ? ' · ' + f.etiquetaVerificacion(filtros.estado) : '' %><%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>
-        <thead>
-          <tr>
-            <%- include('partials/componentes/encabezado-orden', { campo: 'razon', texto: 'Gestor', ordenActual: filtros.orden, ruta: '/gestores' }) %>
-            <th scope="col">Municipio</th>
-            <th scope="col">Verificación</th>
-            <th scope="col">Materiales</th>
-            <th scope="col"><span class="sr-only">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% gestores.forEach(function (g) { %>
+    <div>
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionGestores" tabindex="0">
+        <table class="tabla">
+          <caption id="captionGestores">Gestores registrados<%= filtros.estado ? ' · ' + f.etiquetaVerificacion(filtros.estado) : '' %><%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>
+          <thead>
             <tr>
-              <th scope="row">
-                <a class="enlace" href="/gestores/<%= g.id %>"><%= g.razon_social || 'Sin razón social' %></a>
-                <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
-                <% if (g.estado_verificacion === 'PENDIENTE' && g.tiene_permiso) { %>
-                  <span class="mt-1 flex flex-wrap items-center gap-2">
-                    <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
-                    <a class="enlace text-body-s font-normal" href="/gestores/<%= g.id %>/permiso" target="_blank" rel="noopener noreferrer">Ver permiso<span class="sr-only"> de <%= g.razon_social %> (PDF, se abre en una pestaña nueva)</span></a>
-                  </span>
-                <% } %>
-              </th>
-              <td><%= g.municipio ? f.capitalizar(g.municipio) : 'Sin dato' %></td>
-              <td><%- include('partials/componentes/chip-estado', { estado: g.estado_verificacion, tipo: 'verificacion' }) %></td>
-              <td>
-                <% if (g.materiales.length === 0) { %>
-                  <span class="text-on-surface-variant">Sin materiales</span>
-                <% } else { %>
-                  <ul class="flex flex-wrap gap-1" role="list" aria-label="Materiales de <%= g.razon_social %>">
-                    <% g.materiales.slice(0, 4).forEach(function (m) { %>
-                      <li><span class="chip chip-cat-<%= f.claseCategoria(m.categoria) %>" title="<%= m.nombre_comun %> · <%= f.etiquetaCategoria(m.categoria) %>"><%= m.codigo || m.nombre_comun %></span></li>
-                    <% }); %>
-                    <% if (g.materiales.length > 4) { %><li class="self-center text-body-s text-on-surface-variant">y <%= g.materiales.length - 4 %> más</li><% } %>
-                  </ul>
-                <% } %>
-                <% if (g.materiales_por_verificar > 0) { %>
-                  <span class="chip chip-estado-en-negociacion mt-1"><span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span><%= g.materiales_por_verificar %> por verificar</span>
-                <% } %>
-              </td>
-              <td class="text-right">
-                <a href="/gestores/<%= g.id %>" class="btn-tonal btn-sm" aria-label="Ver detalle de <%= g.razon_social %>">Ver detalle</a>
-              </td>
+              <%- include('partials/componentes/encabezado-orden', { campo: 'razon', texto: 'Gestor', ordenActual: filtros.orden, ruta: '/gestores' }) %>
+              <th scope="col">Municipio</th>
+              <th scope="col">Verificación</th>
+              <th scope="col">Materiales</th>
+              <th scope="col"><span class="sr-only">Acciones</span></th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% gestores.forEach(function (g) { %>
+              <tr>
+                <th scope="row">
+                  <a class="enlace" href="/gestores/<%= g.id %>"><%= g.razon_social || 'Sin razón social' %></a>
+                  <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
+                  <% if (g.estado_verificacion === 'PENDIENTE' && g.tiene_permiso) { %>
+                    <span class="mt-1 flex flex-wrap items-center gap-2">
+                      <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
+                      <a class="enlace text-body-s font-normal" href="/gestores/<%= g.id %>/permiso" target="_blank" rel="noopener noreferrer">Ver permiso<span class="sr-only"> de <%= g.razon_social %> (PDF, se abre en una pestaña nueva)</span></a>
+                    </span>
+                  <% } %>
+                </th>
+                <td><%= g.municipio ? f.capitalizar(g.municipio) : 'Sin dato' %></td>
+                <td><%- include('partials/componentes/chip-estado', { estado: g.estado_verificacion, tipo: 'verificacion' }) %></td>
+                <td>
+                  <% if (g.materiales.length === 0) { %>
+                    <span class="text-on-surface-variant">Sin materiales</span>
+                  <% } else { %>
+                    <ul class="flex flex-wrap gap-1" role="list" aria-label="Materiales de <%= g.razon_social %>">
+                      <% g.materiales.slice(0, 4).forEach(function (m) { %>
+                        <li><span class="chip chip-cat-<%= f.claseCategoria(m.categoria) %>" title="<%= m.nombre_comun %> · <%= f.etiquetaCategoria(m.categoria) %>"><%= m.codigo || m.nombre_comun %></span></li>
+                      <% }); %>
+                      <% if (g.materiales.length > 4) { %><li class="self-center text-body-s text-on-surface-variant">y <%= g.materiales.length - 4 %> más</li><% } %>
+                    </ul>
+                  <% } %>
+                  <% if (g.materiales_por_verificar > 0) { %>
+                    <span class="chip chip-estado-en-negociacion mt-1"><span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span><%= g.materiales_por_verificar %> por verificar</span>
+                  <% } %>
+                </td>
+                <td class="text-right">
+                  <a href="/gestores/<%= g.id %>" class="btn-outlined btn-sm" aria-label="Ver detalle de <%= g.razon_social %>">Ver detalle</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('partials/componentes/paginacion', { pag, nombre: 'gestores' }) %>
     </div>
-    <%- include('partials/componentes/paginacion', { pag, nombre: 'gestores' }) %>
   <% } %>
 </div>
 

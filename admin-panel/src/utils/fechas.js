@@ -31,4 +31,4 @@ function haceDias(dias, ahora = new Date()) {
     return new Date(ahora.getTime() - dias * 24 * 60 * 60 * 1000).toISOString();
 }
 
-module.exports = { fechaValida, rangoBogota, haceDias };
+module.exports = { rangoBogota, haceDias };

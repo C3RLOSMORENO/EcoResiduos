@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { CATEGORIAS_CATALOGO } = require('../utils/formato');
 const { rango, textoBusqueda } = require('../utils/web');
+const { errorDeBase, noEncontrado } = require('../utils/errores');
 
 const textoOpcional = (valor) => (valor && String(valor).trim() !== '' ? String(valor).trim() : null);
 
@@ -29,7 +30,7 @@ const materialService = {
             .range(desde, hasta);
 
         if (error) {
-            throw new Error(`No pudimos cargar los materiales: ${error.message}`);
+            throw errorDeBase('No pudimos cargar los materiales.', error);
         }
         return { materiales: data || [], total: count || 0 };
     },
@@ -41,7 +42,7 @@ const materialService = {
             supabase.from('gestor_material').select('material_id', { count: 'exact', head: true }).eq('material_id', id)
         ]);
         if (solicitudes.error) {
-            throw new Error(`No pudimos revisar las solicitudes del material: ${solicitudes.error.message}`);
+            throw errorDeBase('No pudimos revisar las solicitudes del material.', solicitudes.error);
         }
         return {
             solicitudes: solicitudes.count || 0,
@@ -58,7 +59,7 @@ const materialService = {
             .order('id', { ascending: true });
 
         if (error) {
-            throw new Error(`Error en base de datos al listar materiales: ${error.message}`);
+            throw errorDeBase('No pudimos cargar los materiales.', error);
         }
 
         return data || [];
@@ -73,10 +74,11 @@ const materialService = {
             .from('materiales_residuos')
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
-        if (error || !data) {
-            throw new Error(`Error al obtener material: ${error ? error.message : 'Material no encontrado'}`);
+        if (error) throw errorDeBase('No pudimos cargar el material.', error);
+        if (!data) {
+            throw noEncontrado('No encontramos el material.');
         }
 
         return {
@@ -134,7 +136,7 @@ const materialService = {
             .select();
 
         if (error) {
-            throw new Error(`Error en base de datos al crear material: ${error.message}`);
+            throw errorDeBase('No pudimos guardar el material.', error);
         }
 
         return data;
@@ -187,7 +189,7 @@ const materialService = {
             .select();
 
         if (error) {
-            throw new Error(`Error en base de datos al actualizar material: ${error.message}`);
+            throw errorDeBase('No pudimos guardar los cambios del material.', error);
         }
 
         return data;
@@ -219,7 +221,7 @@ const materialService = {
             .eq('id', id);
 
         if (error) {
-            throw new Error(`Error en base de datos al eliminar material: ${error.message}`);
+            throw errorDeBase('No pudimos eliminar el material.', error);
         }
 
         return true;

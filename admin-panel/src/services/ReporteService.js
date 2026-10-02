@@ -1,29 +1,20 @@
 const supabase = require('../config/supabase');
 const { MUNICIPIOS, municipioAdmitido } = require('../utils/municipios');
-const { CATEGORIAS, CATEGORIAS_CATALOGO, UNIDADES, etiquetaCategoria, unidadCorta } = require('../utils/formato');
+const { CATEGORIAS_CATALOGO, UNIDADES, etiquetaCategoria, unidadCorta } = require('../utils/formato');
 const { rangoBogota } = require('../utils/fechas');
+const { errorDeBase } = require('../utils/errores');
 
 const OTRO = 'Otro / sin dato';
 const LOTE = 1000;
 // Orden de las columnas de unidades; las desconocidas van al final.
 const ORDEN_UNIDADES = Object.keys(UNIDADES);
 
-function leerFiltros(query = {}) {
-    const fechas = rangoBogota(query.desde, query.hasta);
-    const categoria = String(query.categoria || '').toUpperCase();
-    return {
-        desde: fechas.desde || '',
-        hasta: fechas.hasta || '',
-        categoria: CATEGORIAS[categoria] ? categoria : ''
-    };
-}
-
 // PostgREST devuelve máximo 1000 filas por consulta: se lee por lotes.
 async function leerTodo(construir) {
     const filas = [];
     for (let desde = 0; ; desde += LOTE) {
         const { data, error } = await construir().range(desde, desde + LOTE - 1);
-        if (error) throw new Error(error.message);
+        if (error) throw errorDeBase('No pudimos armar el reporte.', error);
         filas.push(...(data || []));
         if (!data || data.length < LOTE) return filas;
     }
@@ -90,7 +81,6 @@ function agregar(confirmadas, sinConfirmar) {
 }
 
 const reporteService = {
-    leerFiltros,
     agregar,
     OTRO,
 

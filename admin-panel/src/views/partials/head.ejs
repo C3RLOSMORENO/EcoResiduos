@@ -1,12 +1,18 @@
+<%
+  // URL con versión para la caché larga (utils/recursos.js). Si la página se
+  // pinta antes de vistaMiddleware (un error temprano), va sin versión.
+  const conVersion = typeof recurso === 'function' ? recurso : function (ruta) { return ruta; };
+%>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
 <title><%= typeof titulo !== 'undefined' && titulo ? titulo + ' · Panel EcoResiduos' : 'Panel EcoResiduos' %></title>
-<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="icon" type="image/png" href="<%= conVersion('/favicon.png') %>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Public+Sans:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
-<script>
+<link rel="stylesheet" href="<%= typeof urlIconos !== 'undefined' ? urlIconos : 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block' %>">
+<script nonce="<%= nonce %>">
   // Antes de pintar: tema guardado (o el del sistema) y marca de JavaScript activo.
   (function () {
     var raiz = document.documentElement;
@@ -17,5 +23,5 @@
     if (tema === 'light') raiz.setAttribute('data-tema', 'claro');
   })();
 </script>
-<link rel="stylesheet" href="/css/style.css">
-<script src="/js/main.js" defer></script>
+<link rel="stylesheet" href="<%= conVersion('/css/style.css') %>">
+<script src="<%= conVersion('/js/main.js') %>" defer></script>

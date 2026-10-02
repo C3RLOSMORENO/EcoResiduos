@@ -12,7 +12,7 @@
     </a>
   </div>
 
-  <form method="GET" action="/autoridades" class="tarjeta flex flex-wrap items-end gap-4" role="search" aria-label="Buscar autoridades">
+  <form method="GET" action="/autoridades" class="panel-filtros flex flex-wrap items-end gap-4" role="search" aria-label="Buscar autoridades">
     <div class="campo min-w-0 flex-1">
       <label for="filtroAutoridad" class="campo-etiqueta">Buscar</label>
       <input type="search" id="filtroAutoridad" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroAutoridadAyuda">
@@ -35,41 +35,43 @@
       <% } %>
     </div>
   <% } else { %>
-    <div class="tabla-contenedor" role="region" aria-labelledby="captionAutoridades" tabindex="0">
-      <table class="tabla">
-        <caption id="captionAutoridades">Autoridades ambientales, por nombre</caption>
-        <thead>
-          <tr>
-            <th scope="col">Entidad</th>
-            <th scope="col">Jurisdicción</th>
-            <th scope="col">Contacto</th>
-            <th scope="col">Horario</th>
-            <th scope="col"><span class="sr-only">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% autoridades.forEach(function (a) { const web = f.urlSegura(a.sitio_web); %>
+    <div>
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionAutoridades" tabindex="0">
+        <table class="tabla">
+          <caption id="captionAutoridades">Autoridades ambientales, por nombre</caption>
+          <thead>
             <tr>
-              <th scope="row">
-                <span class="block font-semibold"><%= a.sigla || 'Sin sigla' %></span>
-                <span class="block text-body-s font-normal text-on-surface-variant"><%= a.nombre %></span>
-              </th>
-              <td><%= f.textoODato(a.jurisdiccion) %></td>
-              <td>
-                <% if (web) { %><a class="enlace block break-all" href="<%= web %>" target="_blank" rel="noopener noreferrer"><%= web.replace(/^https?:\/\//, '').replace(/\/$/, '') %><span class="sr-only"> (se abre en una pestaña nueva)</span></a><% } %>
-                <span class="block"><%= a.telefono || '' %></span>
-                <span class="block break-all text-body-s text-on-surface-variant"><%= a.email || '' %></span>
-              </td>
-              <td><%= f.textoODato(a.horario) %></td>
-              <td class="text-right">
-                <a href="/autoridades/edit/<%= a.id %>" class="btn-tonal btn-sm" aria-label="Editar <%= a.sigla || a.nombre %>">Editar</a>
-              </td>
+              <th scope="col">Entidad</th>
+              <th scope="col">Jurisdicción</th>
+              <th scope="col">Contacto</th>
+              <th scope="col">Horario</th>
+              <th scope="col"><span class="sr-only">Acciones</span></th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% autoridades.forEach(function (a) { const web = f.urlSegura(a.sitio_web); %>
+              <tr>
+                <th scope="row">
+                  <span class="block font-semibold"><%= a.sigla || 'Sin sigla' %></span>
+                  <span class="block text-body-s font-normal text-on-surface-variant"><%= a.nombre %></span>
+                </th>
+                <td><%= f.textoODato(a.jurisdiccion) %></td>
+                <td>
+                  <% if (web) { %><a class="enlace block break-all" href="<%= web %>" target="_blank" rel="noopener noreferrer"><%= web.replace(/^https?:\/\//, '').replace(/\/$/, '') %><span class="sr-only"> (se abre en una pestaña nueva)</span></a><% } %>
+                  <span class="block"><%= a.telefono || '' %></span>
+                  <span class="block break-all text-body-s text-on-surface-variant"><%= a.email || '' %></span>
+                </td>
+                <td><%= f.textoODato(a.horario) %></td>
+                <td class="text-right">
+                  <a href="/autoridades/edit/<%= a.id %>" class="btn-outlined btn-sm" aria-label="Editar <%= a.sigla || a.nombre %>">Editar</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('partials/componentes/paginacion', { pag, nombre: 'autoridades' }) %>
     </div>
-    <%- include('partials/componentes/paginacion', { pag, nombre: 'autoridades' }) %>
   <% } %>
 </div>
 

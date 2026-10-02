@@ -21,6 +21,20 @@ const dashboardService = {
         const errores = [];
         const c = (promesa, nombre) => conteo(promesa, errores, nombre);
 
+        // Las dos listas salen junto con los conteos, no después: no dependen
+        // de ellos y así el inicio espera una sola ronda de consultas.
+        const listas = Promise.all([
+            supabase.from('perfiles_gestor')
+                .select('id, nit, razon_social, municipio, estado_verificacion, permiso_path, created_at')
+                .eq('estado_verificacion', 'PENDIENTE')
+                .order('created_at', { ascending: true })
+                .limit(6),
+            supabase.from('solicitudes_recoleccion')
+                .select('id, cantidad_estimada, unidad_medida, estado, municipio, created_at, problema_reportado, materiales_residuos(codigo, nombre_comun, categoria)')
+                .order('created_at', { ascending: false })
+                .limit(8)
+        ]);
+
         const [
             totalSolicitudes, solicitudesPublicadas, solicitudesEnProceso, solicitudesRecolectadas, solicitudesCanceladas,
             totalGestores, gestoresPendientesCount, gestoresAprobados, gestoresRechazados, gestoresSuspendidos,
@@ -55,17 +69,7 @@ const dashboardService = {
             )))
         ]);
 
-        const [pendientes, ultimas] = await Promise.all([
-            supabase.from('perfiles_gestor')
-                .select('id, nit, razon_social, municipio, estado_verificacion, permiso_path, created_at')
-                .eq('estado_verificacion', 'PENDIENTE')
-                .order('created_at', { ascending: true })
-                .limit(6),
-            supabase.from('solicitudes_recoleccion')
-                .select('id, cantidad_estimada, unidad_medida, estado, municipio, created_at, problema_reportado, materiales_residuos(codigo, nombre_comun, categoria)')
-                .order('created_at', { ascending: false })
-                .limit(8)
-        ]);
+        const [pendientes, ultimas] = await listas;
         if (pendientes.error) errores.push('gestores por revisar');
         if (ultimas.error) errores.push('últimas solicitudes');
 

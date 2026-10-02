@@ -20,6 +20,7 @@
   </div>
 
   <form action="<%= accion %>" method="POST" class="tarjeta flex flex-col gap-4" data-validar data-conservar>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <p class="campo-ayuda">Los campos marcados con «obligatorio» se deben llenar.</p>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div class="campo">
@@ -89,6 +90,7 @@
               data-confirmar="Eliminar <%= material.nombre_comun %> del catálogo.<%= dependencias.gestores > 0 ? ' Se quitará de ' + dependencias.gestores + ' gestor(es).' : '' %> Esta acción no se puede deshacer."
               data-confirmar-accion="Eliminar"
               data-confirmar-peligro>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="btn-peligro-outlined">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">delete</span>
             Eliminar material

@@ -1,30 +1,20 @@
 const autoridadService = require('../services/AutoridadService');
 const { leerPagina, paginacion, conAviso } = require('../utils/web');
+const { responderErrorCarga, renderLista } = require('../utils/errores');
+const { filtrosAutoridades } = require('../utils/filtros');
 
 const autoridadController = {
-    async renderAutoridadesPage(req, res) {
+    renderAutoridadesPage(req, res) {
         const pagina = leerPagina(req.query);
-        const filtros = { q: String(req.query.q || '').trim() };
-        try {
-            const { autoridades, total } = await autoridadService.listarAutoridades({ ...filtros, pagina });
-            res.render('autoridades', {
-                titulo: 'Autoridades ambientales',
-                activeTab: 'autoridades',
-                autoridades,
-                filtros,
-                pag: paginacion({ total, pagina, ruta: '/autoridades', query: req.query }),
-                errorCarga: null
-            });
-        } catch (err) {
-            res.status(500).render('autoridades', {
-                titulo: 'Autoridades ambientales',
-                activeTab: 'autoridades',
-                autoridades: [],
-                filtros,
-                pag: null,
-                errorCarga: err.message
-            });
-        }
+        const filtros = filtrosAutoridades(req.query);
+        return renderLista(res, 'autoridades', {
+            comunes: { titulo: 'Autoridades ambientales', activeTab: 'autoridades', filtros },
+            cargar: async () => {
+                const { autoridades, total } = await autoridadService.listarAutoridades({ ...filtros, pagina });
+                return { autoridades, pag: paginacion({ total, pagina, ruta: '/autoridades', query: req.query }) };
+            },
+            vacio: { autoridades: [], pag: null }
+        });
     },
 
     renderNuevaAutoridad(req, res) {
@@ -45,7 +35,7 @@ const autoridadController = {
         }
     },
 
-    async renderEditAutoridad(req, res) {
+    async renderEditAutoridad(req, res, next) {
         try {
             const autoridad = await autoridadService.getAutoridadById(req.params.id);
             res.render('autoridad-edit', {
@@ -55,7 +45,7 @@ const autoridadController = {
                 autoridad
             });
         } catch (err) {
-            res.redirect(conAviso('/autoridades', err.message, 'error'));
+            responderErrorCarga(res, next, err, { activeTab: 'autoridades', que: 'la autoridad ambiental', volver: { href: '/autoridades', texto: 'Autoridades' } });
         }
     },
 

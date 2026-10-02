@@ -29,7 +29,7 @@
       </div>
     </div>
     <div class="no-imprimir flex flex-wrap gap-2">
-      <button type="button" class="btn-outlined" onclick="window.print()">
+      <button type="button" class="btn-outlined" data-imprimir>
         <span class="material-symbols-outlined icono-20" aria-hidden="true">print</span>
         Imprimir
       </button>
@@ -39,6 +39,7 @@
               data-confirmar="Cancelar la solicitud de <%= f.finFrase(nombreMat) %> <%= abiertas === 0 ? '' : (abiertas === 1 ? 'La propuesta abierta se rechaza. ' : 'Las ' + abiertas + ' propuestas abiertas se rechazan. ') %>Avisaremos al generador y a los gestores (con propuesta o asignado) que EcoResiduos canceló la solicitud. No se puede deshacer."
               data-confirmar-accion="Cancelar solicitud"
               data-confirmar-peligro>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="btn-peligro-outlined">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">block</span>
             Cancelar solicitud
@@ -60,6 +61,7 @@
                 data-confirmar="La solicitud vuelve a En negociación con <%= gestorAsignado ? f.finFrase(gestorAsignado.razon_social) : 'el mismo gestor.' %> El gestor podrá marcarla de nuevo como recolectada. Avisaremos al generador y al gestor; si escribes una nota, va al final del aviso."
                 data-confirmar-accion="Marcar como no recogido"
                 data-confirmar-nota>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit" class="btn-filled">
               <span class="material-symbols-outlined icono-20" aria-hidden="true">assignment_return</span>
               Resuelto: no se recogió
@@ -87,16 +89,21 @@
     <section aria-labelledby="tituloResiduo" class="tarjeta flex flex-col gap-4">
       <h2 id="tituloResiduo" class="tarjeta-titulo">Residuo</h2>
       <% if (foto) { %>
-        <img src="<%= foto %>" alt="Foto del residuo publicada por el generador: <%= nombreMat %>" class="max-h-72 w-full rounded-sm object-cover">
+        <a href="<%= foto %>" class="foto-ampliable foto-detalle" data-visor
+           data-visor-titulo="Foto del residuo publicada por el generador: <%= nombreMat %>"
+           aria-label="Ampliar la foto del residuo publicada por el generador: <%= nombreMat %>">
+          <img src="<%= foto %>" alt="" decoding="async" data-respaldo="detalle">
+          <span class="foto-ampliable-pista no-imprimir" aria-hidden="true"><span class="material-symbols-outlined icono-18">zoom_in</span>Ampliar</span>
+        </a>
       <% } %>
       <dl class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
-        <div><dt class="text-label-l text-on-surface-variant">Material</dt><dd><%= nombreMat %><%= mat.codigo ? ' (' + mat.codigo + ')' : '' %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Categoría</dt><dd><%= f.etiquetaCategoria(mat.categoria) %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Cantidad estimada</dt><dd><%= f.formatoCantidad(solicitud.cantidad_estimada, solicitud.unidad_medida) %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Municipio</dt><dd><%= solicitud.municipio ? f.capitalizar(solicitud.municipio) : 'Sin dato' %></dd></div>
-        <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Dirección de recolección</dt><dd><%= f.textoODato(solicitud.direccion_recoleccion) %></dd></div>
+        <div><dt class="dato-etiqueta">Material</dt><dd><%= nombreMat %><%= mat.codigo ? ' (' + mat.codigo + ')' : '' %></dd></div>
+        <div><dt class="dato-etiqueta">Categoría</dt><dd><%= f.etiquetaCategoria(mat.categoria) %></dd></div>
+        <div><dt class="dato-etiqueta">Cantidad estimada</dt><dd><%= f.formatoCantidad(solicitud.cantidad_estimada, solicitud.unidad_medida) %></dd></div>
+        <div><dt class="dato-etiqueta">Municipio</dt><dd><%= solicitud.municipio ? f.capitalizar(solicitud.municipio) : 'Sin dato' %></dd></div>
+        <div class="md:col-span-2"><dt class="dato-etiqueta">Dirección de recolección</dt><dd><%= f.textoODato(solicitud.direccion_recoleccion) %></dd></div>
         <% if (solicitud.descripcion) { %>
-          <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Descripción</dt><dd><%= solicitud.descripcion %></dd></div>
+          <div class="md:col-span-2"><dt class="dato-etiqueta">Descripción</dt><dd><%= solicitud.descripcion %></dd></div>
         <% } %>
       </dl>
     </section>
@@ -106,9 +113,9 @@
         <h2 id="tituloGenerador" class="tarjeta-titulo">Generador</h2>
         <% if (generador) { %>
           <dl class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
-            <div><dt class="text-label-l text-on-surface-variant">Nombre</dt><dd><%= f.textoODato(generador.nombre_completo_o_empresa) %></dd></div>
-            <div><dt class="text-label-l text-on-surface-variant">Teléfono de la solicitud</dt><dd><%= f.textoODato(solicitud.telefono || generador.telefono) %></dd></div>
-            <div class="md:col-span-2"><dt class="text-label-l text-on-surface-variant">Correo</dt><dd class="break-all"><%= f.textoODato(generador.email) %></dd></div>
+            <div><dt class="dato-etiqueta">Nombre</dt><dd><%= f.textoODato(generador.nombre_completo_o_empresa) %></dd></div>
+            <div><dt class="dato-etiqueta">Teléfono de la solicitud</dt><dd><%= f.textoODato(solicitud.telefono || generador.telefono) %></dd></div>
+            <div class="md:col-span-2"><dt class="dato-etiqueta">Correo</dt><dd class="break-all"><%= f.textoODato(generador.email) %></dd></div>
           </dl>
           <p class="no-imprimir"><a class="enlace" href="/solicitudes?generador=<%= generador.id %>">Ver sus solicitudes</a></p>
         <% } else { %>
@@ -147,14 +154,14 @@
     <% } else if (postulaciones.length === 0) { %>
       <div class="tarjeta"><%- include('partials/componentes/estado-vacio', { icono: 'person_search', titulo: 'Aún no hay postulaciones', texto: 'Los gestores con este material verificado pueden postularse desde la app.' }) %></div>
     <% } else { %>
-      <div class="tabla-contenedor" role="region" aria-labelledby="tituloPostulaciones" tabindex="0">
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionPostulaciones" tabindex="0">
         <table class="tabla">
-          <caption class="sr-only">Postulaciones de gestores a esta solicitud</caption>
+          <caption id="captionPostulaciones" class="sr-only">Postulaciones de gestores a esta solicitud</caption>
           <thead>
             <tr>
               <th scope="col">Gestor</th>
               <th scope="col">Estado</th>
-              <th scope="col">Valor</th>
+              <th scope="col" class="text-right">Valor</th>
               <th scope="col">Propuesta</th>
               <th scope="col">Fecha</th>
             </tr>
@@ -164,7 +171,7 @@
               <tr>
                 <th scope="row"><a class="enlace" href="/gestores/<%= p.gestor_id %>"><%= g.razon_social || 'Gestor ' + p.gestor_id %></a></th>
                 <td><%- include('partials/componentes/chip-estado', { estado: p.estado, tipo: 'solicitud' }) %></td>
-                <td>
+                <td class="text-right">
                   <% if (p.tipo_valor) { %>
                     <span class="block whitespace-nowrap font-semibold"><%= f.formatoPesos(p.valor) %></span>
                     <span class="block text-body-s text-on-surface-variant"><%= f.etiquetaTipoValor(p.tipo_valor) %></span>
