@@ -1,0 +1,42 @@
+<%#
+  Visor de fotos a pantalla completa. Lo abre cualquier enlace con data-visor
+  (su href es la foto y data-visor-titulo la describe). Sin JavaScript, ese
+  mismo enlace abre la foto directamente en el navegador.
+%>
+<dialog id="visorImagen" class="visor" aria-labelledby="visorTitulo" aria-describedby="visorAyuda">
+  <div class="visor-barra">
+    <h2 id="visorTitulo" class="visor-titulo">Foto</h2>
+    <div class="visor-controles">
+      <button type="button" class="btn-icono" data-visor-alejar aria-label="Alejar" aria-controls="visorLienzo">
+        <span class="material-symbols-outlined" aria-hidden="true">zoom_out</span>
+      </button>
+      <output id="visorNivel" class="visor-nivel" aria-live="polite" aria-label="Nivel de acercamiento">100 %</output>
+      <button type="button" class="btn-icono" data-visor-acercar aria-label="Acercar" aria-controls="visorLienzo">
+        <span class="material-symbols-outlined" aria-hidden="true">zoom_in</span>
+      </button>
+      <button type="button" class="btn-icono" data-visor-ajustar aria-label="Ver la foto completa" aria-controls="visorLienzo">
+        <span class="material-symbols-outlined" aria-hidden="true">fit_screen</span>
+      </button>
+      <a class="btn-icono" data-visor-original href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir la foto en una pestaña nueva">
+        <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+      </a>
+      <button type="button" class="btn-icono" data-visor-cerrar aria-label="Cerrar visor">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="visorLienzo" class="visor-lienzo" data-visor-lienzo>
+    <span class="esqueleto visor-cargando" data-visor-cargando aria-hidden="true"></span>
+    <img class="visor-imagen" data-visor-foto alt="" draggable="false" hidden>
+    <div class="visor-fallo" data-visor-fallo hidden>
+      <span class="material-symbols-outlined" aria-hidden="true">broken_image</span>
+      <p class="text-title-m">No pudimos cargar la foto.</p>
+      <p class="text-body-m">Ábrela en una pestaña nueva con el botón de arriba o intenta más tarde.</p>
+    </div>
+  </div>
+
+  <p class="visor-ayuda" id="visorAyuda">
+    Para acercar: doble clic, doble toque, pellizco o las teclas + y −. Para moverte: arrastra o usa las flechas. Esc cierra.
+  </p>
+</dialog>

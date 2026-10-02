@@ -26,7 +26,36 @@
         <input type="hidden" name="msg" value="Diálogo con motivo confirmado (ejemplo, no cambió nada)">
         <button type="submit" class="btn-peligro-outlined">Diálogo con motivo</button>
       </form>
-      <button type="button" class="btn-tonal" id="botonAvisoEjemplo">Mostrar aviso</button>
+      <button type="button" class="btn-tonal" id="botonAvisoEjemplo" data-aviso-ejemplo="Aviso de ejemplo: así se confirma una acción.">Mostrar aviso</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="tituloFotos" class="tarjeta flex flex-col gap-4">
+    <h2 id="tituloFotos" class="seccion-titulo">Fotos</h2>
+    <p class="text-body-m text-on-surface-variant">Toda foto de contenido abre el visor: se puede acercar, alejar y mover con mouse, teclado o toque. Si la foto no carga, se muestra un recuadro en su lugar.</p>
+    <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-[auto_1fr]">
+      <div class="flex flex-col gap-2">
+        <p class="text-label-l text-on-surface-variant">Miniatura de la lista</p>
+        <div class="flex gap-3">
+          <a href="/images/isotipo.webp" class="foto-ampliable foto-miniatura" data-visor
+             data-visor-titulo="Isotipo de EcoResiduos (ejemplo)" aria-label="Ampliar el isotipo de EcoResiduos (ejemplo)">
+            <img src="/images/isotipo-192.png" alt="" width="48" height="48" decoding="async" data-respaldo="miniatura">
+            <span class="foto-miniatura-lupa" aria-hidden="true"><span class="material-symbols-outlined icono-20">zoom_in</span></span>
+          </a>
+          <a href="/images/no-existe.png" class="foto-ampliable foto-miniatura" data-visor
+             data-visor-titulo="Foto que no carga (ejemplo)" aria-label="Ampliar una foto que no carga (ejemplo)">
+            <img src="/images/no-existe.png" alt="" width="48" height="48" decoding="async" data-respaldo="miniatura">
+          </a>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-label-l text-on-surface-variant">Foto del detalle</p>
+        <a href="/images/isotipo.webp" class="foto-ampliable foto-detalle" data-visor
+           data-visor-titulo="Isotipo de EcoResiduos en alta resolución (ejemplo)" aria-label="Ampliar el isotipo de EcoResiduos en alta resolución (ejemplo)">
+          <img src="/images/isotipo-192.png" alt="" decoding="async" data-respaldo="detalle">
+          <span class="foto-ampliable-pista" aria-hidden="true"><span class="material-symbols-outlined icono-18">zoom_in</span>Ampliar</span>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -40,11 +69,5 @@
     <%- include('partials/componentes/galeria', { p: 'oscuro' }) %>
   </section>
 </div>
-
-<script>
-  document.getElementById('botonAvisoEjemplo').addEventListener('click', function () {
-    window.mostrarNotificacion('Aviso de ejemplo: así se confirma una acción.');
-  });
-</script>
 
 <%- include('partials/footer') %>

@@ -49,3 +49,7 @@ build/
 .DS_Store?
 ._*
 Thumbs.db
+
+# Resultados de Playwright (npm run test:e2e)
+test-results/
+playwright-report/

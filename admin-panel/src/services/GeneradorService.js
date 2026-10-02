@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { municipioAdmitido, variantesMunicipio } = require('../utils/municipios');
 const { rango, textoBusqueda } = require('../utils/web');
+const { errorDeBase } = require('../utils/errores');
 
 class GeneradorService {
     // Listado paginado. Solo los datos que necesita la lista (Ley 1581 de 2012).
@@ -22,7 +23,7 @@ class GeneradorService {
             .range(desde, hasta);
 
         if (error) {
-            throw new Error(`No pudimos cargar los ciudadanos: ${error.message}`);
+            throw errorDeBase('No pudimos cargar los ciudadanos.', error);
         }
 
         const generadores = data || [];

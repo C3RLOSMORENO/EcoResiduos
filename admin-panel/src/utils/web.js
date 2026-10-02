@@ -1,4 +1,27 @@
+const crypto = require('crypto');
+
 const TAM_PAGINA = 25;
+
+// Parámetros de la URL que son avisos y no filtros: no se copian al paginar
+// ni al volver a la página después de una acción.
+const PARAMETROS_AVISO = ['msg', 'type', 'firma', 'aviso'];
+
+// Los avisos viajan en la URL (?msg=…) y van firmados con este secreto: así
+// nadie puede armar un enlace al panel que muestre un mensaje falso («tu
+// cuenta fue bloqueada, llama a…»). Sin SECRETO_PANEL se usa uno al azar que
+// dura lo que dure el proceso, suficiente porque el aviso se lee enseguida.
+const SECRETO_AVISOS = process.env.SECRETO_PANEL || crypto.randomBytes(32).toString('hex');
+
+function firmaAviso(mensaje, tipo) {
+    return crypto.createHmac('sha256', SECRETO_AVISOS).update(`${tipo}
+${mensaje}`).digest('base64url').slice(0, 32);
+}
+
+function avisoAutentico(mensaje, tipo, firma) {
+    const esperada = Buffer.from(firmaAviso(String(mensaje), String(tipo)));
+    const recibida = Buffer.from(String(firma || ''));
+    return esperada.length === recibida.length && crypto.timingSafeEqual(esperada, recibida);
+}
 
 // JSON para un <script type="application/json">: escapar «<» impide que un
 // valor como «</script><script>…» cierre la etiqueta y ejecute código.
@@ -28,7 +51,7 @@ function paginacion({ total, pagina, ruta, query, tam = TAM_PAGINA }) {
     const enlace = (n) => {
         const params = new URLSearchParams();
         Object.entries(query || {}).forEach(([k, v]) => {
-            if (k !== 'pagina' && v !== undefined && v !== null && String(v) !== '' && !['msg', 'type', 'success', 'error'].includes(k)) {
+            if (k !== 'pagina' && v !== undefined && v !== null && String(v) !== '' && !PARAMETROS_AVISO.includes(k)) {
                 params.set(k, String(v));
             }
         });
@@ -77,11 +100,11 @@ function faltaEnEsquema(error) {
 
 function conAviso(ruta, mensaje, tipo = 'success') {
     const separador = ruta.includes('?') ? '&' : '?';
-    return `${ruta}${separador}msg=${encodeURIComponent(mensaje)}&type=${tipo}`;
+    return `${ruta}${separador}msg=${encodeURIComponent(mensaje)}&type=${tipo}&firma=${firmaAviso(mensaje, tipo)}`;
 }
 
 module.exports = {
-    TAM_PAGINA,
+    PARAMETROS_AVISO,
     jsonParaScript,
     leerPagina,
     rango,
@@ -89,5 +112,6 @@ module.exports = {
     textoBusqueda,
     rutaInterna,
     faltaEnEsquema,
-    conAviso
+    conAviso,
+    avisoAutentico
 };

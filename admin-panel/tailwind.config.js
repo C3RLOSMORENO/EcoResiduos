@@ -39,10 +39,12 @@ module.exports = {
     './src/views/**/*.ejs',
     './src/public/**/*.js'
   ],
-  // Los chips se arman con la categoría o el estado real (chip-cat-<x>):
-  // Tailwind no los ve escritos completos en las vistas.
+  // Los chips y las etiquetas del panel de acceso se arman con la categoría
+  // o el estado real (chip-cat-<x>, etiqueta-fondo-<x>): Tailwind no los ve
+  // escritos completos en las vistas.
   safelist: [
-    { pattern: /^chip-(cat|estado)-/ }
+    { pattern: /^chip-(cat|estado)-/ },
+    { pattern: /^etiqueta-(fondo|texto)-/ }
   ],
   theme: {
     // Tamaños de ventana de M3: compacta (< 600), media (600–839),
@@ -62,12 +64,15 @@ module.exports = {
       sans: ['"Public Sans"', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
       display: ['"Barlow Condensed"', '"Arial Narrow"', 'system-ui', 'sans-serif']
     },
-    // EcoRadius: small 8, medium 12, extraLarge 28, full.
+    // EcoRadius y la escala de esquinas de M3: extra-small 4, small 8,
+    // medium 12, large 16, extra-large 28, full.
     borderRadius: {
       none: '0',
+      xs: '4px',
       sm: '8px',
       DEFAULT: '12px',
       md: '12px',
+      lg: '16px',
       xl: '28px',
       full: '9999px'
     },

@@ -9,6 +9,32 @@
  */
 
 @layer base {
+  /* Tokens de M3 que no cambian con el tema. Valores de la especificación
+     (m3.material.io: Shape, Motion, States y Elevation). */
+  :root {
+    --md-sys-shape-corner-extra-small: 4px;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+
+    --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-sys-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --md-sys-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+    --md-sys-motion-duration-short2: 100ms;
+    --md-sys-motion-duration-short4: 200ms;
+    --md-sys-motion-duration-medium2: 300ms;
+
+    --md-sys-state-hover-state-layer-opacity: 0.08;
+    --md-sys-state-focus-state-layer-opacity: 0.1;
+    --md-sys-state-pressed-state-layer-opacity: 0.1;
+
+    /* Sombras de los niveles 1 a 3, las mismas de Material Web. */
+    --md-sys-elevation-level1: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+    --md-sys-elevation-level2: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+    --md-sys-elevation-level3: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 4px 8px 3px rgb(0 0 0 / 0.15);
+  }
+
   :root,
   .muestra-clara {
     color-scheme: light;
@@ -318,6 +344,13 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* La barra superior queda fija al desplazarse: sin este margen, al subir
+     con Shift+Tab el campo enfocado quedaba debajo de ella (WCAG 2.4.11). */
+  html {
+    scroll-padding-top: 88px;
+    scroll-padding-bottom: 16px;
+  }
+
   body {
     @apply min-h-screen bg-surface text-on-surface antialiased;
   }
@@ -369,6 +402,10 @@
     font-size: 20px;
   }
 
+  .icono-48 {
+    font-size: 48px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -397,30 +434,38 @@
     opacity: 0;
     pointer-events: none;
     z-index: -1;
-    transition: opacity 150ms ease;
+    transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
   }
 
   .capa-estado:hover::before {
-    opacity: 0.08;
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
   }
 
-  .capa-estado:focus-visible::before,
+  .capa-estado:focus-visible::before {
+    opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+
   .capa-estado:active::before {
-    opacity: 0.1;
+    opacity: var(--md-sys-state-pressed-state-layer-opacity);
   }
 
-  /* ---------- Botones ---------- */
+  /* ---------- Botones ----------
+     M3: el botón mide 40 px de alto. Con el dedo (pointer: coarse) sube a
+     48 px, el área táctil mínima de M3. La versión compacta (-2 de densidad,
+     32 px) es para las filas de tabla y la paginación; sigue muy por encima
+     de los 24 px que pide WCAG 2.5.8. */
   .btn {
     @apply capa-estado inline-flex items-center justify-center gap-2 rounded-full px-6 text-label-l no-underline;
-    min-height: 44px;
+    min-height: 40px;
     cursor: pointer;
     border: 1px solid transparent;
     white-space: nowrap;
   }
 
-  .btn-sm {
-    @apply px-4;
-    min-height: 36px;
+  @media (pointer: coarse) {
+    .btn {
+      min-height: 48px;
+    }
   }
 
   .btn-filled {
@@ -452,26 +497,59 @@
     background-color: transparent;
   }
 
+  /* La versión compacta va después de las variantes: cada variante copia
+     .btn con @apply y, si estuviera antes, le devolvería los 40 px. */
+  .btn-sm {
+    min-height: 32px;
+  }
+
+  /* El botón de texto conserva sus 12 px de M3 a los lados. */
+  .btn-sm:not(.btn-text) {
+    @apply px-4;
+  }
+
+  @media (pointer: coarse) {
+    .btn-sm {
+      min-height: 40px;
+    }
+  }
+
+  /* M3: botón de ícono de 40 px; 48 px con el dedo. */
   .btn-icono {
     @apply capa-estado inline-flex items-center justify-center rounded-full text-on-surface-variant;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
     background: transparent;
     border: 0;
   }
 
+  @media (pointer: coarse) {
+    .btn-icono {
+      width: 48px;
+      height: 48px;
+    }
+  }
+
   .btn:disabled,
   .btn[aria-disabled="true"],
-  .btn-icono:disabled {
+  .btn-icono:disabled,
+  .btn-icono[aria-disabled="true"] {
     cursor: not-allowed;
     color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
     background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
     border-color: transparent;
   }
 
+  /* M3: el botón de ícono desactivado no lleva contenedor, solo el ícono atenuado. */
+  .btn-icono:disabled,
+  .btn-icono[aria-disabled="true"] {
+    background-color: transparent;
+  }
+
   .btn:disabled::before,
-  .btn-icono:disabled::before {
+  .btn-icono:disabled::before,
+  .btn-icono[aria-disabled="true"]::before {
     display: none;
   }
 
@@ -575,6 +653,12 @@
     border: 1px solid var(--md-sys-color-outline-variant);
   }
 
+  /* Los filtros van sobre una superficie tonal sin borde: se distinguen de
+     las tarjetas con datos y no compiten con la tabla que filtran. */
+  .panel-filtros {
+    @apply rounded-md bg-surface-container-low p-4 md:p-6;
+  }
+
   .tarjeta-titulo {
     @apply text-title-l text-on-surface;
   }
@@ -588,18 +672,39 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Ícono y cifra arriba, en la misma línea en todas las tarjetas aunque el
+     texto de cada una tenga distinto largo; la flecha queda al centro. */
   .tarjeta-accion {
-    @apply capa-estado flex items-center gap-4 rounded-md p-4 no-underline;
+    @apply capa-estado flex items-start gap-4 rounded-md p-4 no-underline;
     border: 1px solid var(--md-sys-color-outline-variant);
     background-color: var(--md-sys-color-surface-container-lowest);
     color: var(--md-sys-color-on-surface);
     min-height: 88px;
   }
 
+  .tarjeta-accion > .material-symbols-outlined:first-child {
+    margin-top: 8px;
+  }
+
+  .tarjeta-accion > .material-symbols-outlined:last-child {
+    align-self: center;
+  }
+
   .tarjeta-accion-activa {
     background-color: var(--md-sys-color-tertiary-container);
     color: var(--md-sys-color-on-tertiary-container);
     border-color: transparent;
+  }
+
+  /* ---------- Datos de un detalle ----------
+     La etiqueta va pequeña y en el color secundario; el dato, más grande y
+     en el color principal: se lee primero lo que importa. */
+  .dato-etiqueta {
+    @apply text-label-m text-on-surface-variant;
+  }
+
+  .dato-etiqueta + dd {
+    @apply mt-0.5 text-body-l text-on-surface;
   }
 
   /* ---------- Avisos dentro de la página ---------- */
@@ -613,8 +718,11 @@
   .nota-exito { @apply bg-primary-container text-on-primary-container; }
 
   /* ---------- Tablas (patrón de tabla de la W3C) ---------- */
+  /* position: relative hace que los textos sr-only de las celdas (absolutos)
+     se recorten dentro del contenedor; sin ella se salían y la página entera
+     se desplazaba hacia el lado en el celular. */
   .tabla-contenedor {
-    @apply w-full overflow-x-auto rounded-md bg-surface-container-lowest;
+    @apply relative w-full overflow-x-auto rounded-md bg-surface-container-lowest;
     border: 1px solid var(--md-sys-color-outline-variant);
   }
 
@@ -623,18 +731,37 @@
     border-collapse: collapse;
   }
 
+  /* Medidas de la tabla de datos de Material (m2.material.io/components/
+     data-tables): encabezado de 56 px, filas de al menos 52 px, 16 px a los
+     lados, contenido centrado en vertical y cifras alineadas a la derecha
+     (clase .num), también en su encabezado. */
   .tabla caption {
-    @apply px-4 py-3 text-left text-title-s text-on-surface;
+    @apply px-4 pb-3 pt-4 text-left text-title-m text-on-surface;
   }
 
   .tabla th {
-    @apply bg-surface-container px-4 py-3 text-label-l text-on-surface-variant;
-    vertical-align: bottom;
+    @apply px-4 py-2 text-label-l text-on-surface-variant;
+    vertical-align: middle;
+  }
+
+  .tabla thead th {
+    @apply bg-surface-container-low;
+    height: 56px;
+  }
+
+  /* La línea que separa el título visible del encabezado; si el título es
+     solo para lector de pantalla, el borde del contenedor basta. */
+  .tabla caption:not(.sr-only) + thead th {
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .tabla tbody tr {
+    height: 52px;
   }
 
   .tabla td,
   .tabla tbody th {
-    @apply px-4 py-3 align-top;
+    @apply px-4 py-2 align-middle;
     border-top: 1px solid var(--md-sys-color-outline-variant);
   }
 
@@ -642,8 +769,45 @@
     @apply bg-transparent text-body-m font-semibold text-on-surface;
   }
 
+  /* Capa de estado de M3 al pasar el puntero (8 %). */
   .tabla tbody tr:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  }
+
+  /* Dentro de la tabla el subrayado de los enlaces es más suave, para que
+     la columna no se vuelva una franja de líneas; al pasar el puntero o con
+     el foco vuelve a su color. Sigue habiendo subrayado (WCAG 1.4.1). */
+  .tabla .enlace {
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  .tabla .enlace:hover,
+  .tabla .enlace:focus-visible {
+    text-decoration-color: currentColor;
+  }
+
+  .miniatura-vacia {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-surface-container text-on-surface-variant;
+  }
+
+  .tabla .foto-miniatura,
+  .tabla .miniatura-vacia {
+    @apply h-10 w-10;
+  }
+
+
+  /* La paginación se pega al pie de la tabla que pagina, como en la tabla
+     de datos de Material. */
+  .tabla-contenedor:has(+ .paginacion) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .tabla-contenedor + .paginacion {
+    @apply rounded-b-md bg-surface-container-lowest px-4 py-2;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-top: 0;
+    min-height: 52px;
   }
 
   .tabla tfoot th,
@@ -659,8 +823,20 @@
   }
 
   .orden-enlace {
-    @apply inline-flex items-center gap-1 text-on-surface-variant no-underline;
+    @apply inline-flex items-center gap-1 no-underline;
+    color: inherit;
     min-height: 24px;
+  }
+
+  .orden-enlace:hover {
+    @apply underline;
+  }
+
+  /* La columna por la que está ordenada la tabla se marca con el color del
+     texto principal además de la flecha. */
+  .tabla th[aria-sort="ascending"],
+  .tabla th[aria-sort="descending"] {
+    @apply text-on-surface;
   }
 
   /* ---------- Diálogos ---------- */
@@ -669,6 +845,7 @@
     width: min(560px, calc(100vw - 32px));
     max-height: calc(100vh - 32px);
     border: 0;
+    box-shadow: var(--md-sys-elevation-level3);
   }
 
   .dialogo::backdrop {
@@ -683,6 +860,172 @@
     @apply mt-6 flex flex-wrap justify-end gap-2;
   }
 
+  /* ---------- Etiquetas de residuo del panel de acceso (SVG) ---------- */
+  .etiqueta-fondo-aprovechable { fill: var(--eco-cat-aprovechable-color); }
+  .etiqueta-texto-aprovechable { fill: var(--eco-cat-aprovechable-on); }
+  .etiqueta-fondo-peligroso { fill: var(--eco-cat-peligroso-color); }
+  .etiqueta-texto-peligroso { fill: var(--eco-cat-peligroso-on); }
+  .etiqueta-fondo-raee { fill: var(--eco-cat-raee-color); }
+  .etiqueta-texto-raee { fill: var(--eco-cat-raee-on); }
+  .etiqueta-fondo-rcd { fill: var(--eco-cat-rcd-color); }
+  .etiqueta-texto-rcd { fill: var(--eco-cat-rcd-on); }
+  .etiqueta-fondo-riesgo-biologico { fill: var(--eco-cat-riesgo-biologico-color); }
+  .etiqueta-texto-riesgo-biologico { fill: var(--eco-cat-riesgo-biologico-on); }
+
+  /* ---------- Fotos que se pueden ampliar ---------- */
+  .foto-ampliable {
+    @apply relative block overflow-hidden rounded-sm bg-surface-container;
+    cursor: zoom-in;
+  }
+
+  .foto-ampliable img {
+    @apply h-full w-full;
+  }
+
+  .foto-miniatura {
+    @apply h-12 w-12 shrink-0;
+  }
+
+  .foto-miniatura img {
+    object-fit: cover;
+  }
+
+  /* La lupa aparece al pasar el puntero o al llegar con el teclado. */
+  .foto-miniatura-lupa {
+    @apply absolute inset-0 flex items-center justify-center text-inverse-on-surface;
+    background-color: color-mix(in srgb, var(--md-sys-color-inverse-surface) 55%, transparent);
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+  }
+
+  .foto-miniatura:hover .foto-miniatura-lupa,
+  .foto-miniatura:focus-visible .foto-miniatura-lupa {
+    opacity: 1;
+  }
+
+  /* En el detalle la foto se ve completa, sin recortes. */
+  .foto-detalle {
+    @apply h-72 w-full;
+  }
+
+  .foto-detalle img {
+    object-fit: contain;
+  }
+
+  .foto-ampliable-pista {
+    @apply absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-inverse-surface px-3 py-1 text-label-m text-inverse-on-surface;
+  }
+
+  .foto-no-disponible {
+    @apply flex shrink-0 flex-col items-center justify-center gap-1 rounded-sm bg-surface-container text-center text-body-s text-on-surface-variant;
+  }
+
+  /* ---------- Visor de fotos ---------- */
+  .visor {
+    @apply m-0 p-0 text-on-surface;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    background-color: color-mix(in srgb, var(--md-sys-color-scrim) 94%, transparent);
+  }
+
+  .visor[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .visor::backdrop {
+    background-color: transparent;
+  }
+
+  .visor [hidden] {
+    display: none !important;
+  }
+
+  .visor-barra {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-1 bg-surface-container-high px-2 py-2 md:px-4;
+  }
+
+  .visor-titulo {
+    @apply min-w-0 px-2 text-title-m text-on-surface;
+    flex: 1 1 12rem;
+  }
+
+  .visor-controles {
+    @apply flex items-center gap-1;
+  }
+
+  .visor-controles .btn-icono {
+    @apply text-on-surface;
+    width: 48px;
+    height: 48px;
+  }
+
+  .visor-controles .btn-icono[aria-disabled="true"] {
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+    cursor: not-allowed;
+  }
+
+  .visor-nivel {
+    @apply text-center text-label-l text-on-surface-variant;
+    min-width: 5ch;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .visor-lienzo {
+    @apply relative flex flex-1 items-center justify-center overflow-hidden p-4;
+    touch-action: none;
+    cursor: zoom-in;
+  }
+
+  .visor-lienzo[data-ampliado] {
+    cursor: grab;
+  }
+
+  .visor-lienzo[data-arrastrando] {
+    cursor: grabbing;
+  }
+
+  .visor-imagen {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-select: none;
+    transform-origin: center center;
+    transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  }
+
+  .visor-lienzo[data-arrastrando] .visor-imagen {
+    transition: none;
+  }
+
+  .visor-cargando {
+    position: absolute;
+    width: min(480px, 70vw);
+    height: min(320px, 50vh);
+    border-radius: 12px;
+  }
+
+  .visor-fallo {
+    @apply flex max-w-sm flex-col items-center gap-2 rounded-md bg-surface-container-high p-6 text-center text-on-surface;
+  }
+
+  .visor-fallo .material-symbols-outlined {
+    font-size: 40px;
+  }
+
+  .visor-ayuda {
+    @apply bg-surface-container-high px-4 py-2 text-center text-body-s text-on-surface-variant;
+  }
+
+  html.visor-abierto {
+    overflow: hidden;
+  }
+
   /* ---------- Snackbar ---------- */
   .avisos-region {
     @apply pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4;
@@ -692,6 +1035,7 @@
     @apply pointer-events-auto flex w-full items-center gap-3 rounded-sm bg-inverse-surface px-4 py-3 text-body-m text-inverse-on-surface;
     max-width: 560px;
     min-height: 48px;
+    box-shadow: var(--md-sys-elevation-level3);
   }
 
   .aviso .btn-icono {
@@ -735,6 +1079,121 @@
     to { background-position: -50% 0; }
   }
 
+  /* ---------- Tablas que no caben: cada fila pasa a ser una tarjeta ----------
+     main.js agrega .tabla-apilada cuando la tabla es más ancha que su
+     contenedor y le pone a cada celda la etiqueta de su columna
+     (data-etiqueta). Sin JavaScript la tabla se desplaza hacia el lado. */
+  @media screen {
+    .tabla-apilada,
+    .tabla-apilada tbody,
+    .tabla-apilada tfoot,
+    .tabla-apilada caption {
+      display: block;
+    }
+
+    .tabla.tabla-apilada tr {
+      height: auto;
+    }
+
+    .tabla.tabla-apilada thead th[aria-sort] {
+      height: auto;
+      border-top: 0;
+    }
+
+    .tabla-apilada tr {
+      @apply grid gap-x-4 gap-y-3 px-4 py-4;
+      grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .tabla-apilada tbody th,
+    .tabla-apilada tbody td,
+    .tabla-apilada tfoot th,
+    .tabla-apilada tfoot td {
+      display: block;
+      min-width: 0;
+      padding: 0;
+      border-top: 0;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    /* En una tarjeta angosta, un chip largo («Problema reportado») o una
+       fecha pueden partirse en dos líneas en vez de salirse. */
+    .tabla-apilada .chip,
+    .tabla-apilada .num,
+    .tabla-apilada .whitespace-nowrap {
+      max-width: 100%;
+      white-space: normal;
+    }
+
+    /* La celda que nombra la fila (material, empresa…) va arriba, a todo lo ancho. */
+    .tabla-apilada tbody th,
+    .tabla-apilada tfoot th,
+    .tabla-apilada [data-celda-acciones] {
+      grid-column: 1 / -1;
+    }
+
+    .tabla-apilada td[data-etiqueta]::before {
+      @apply mb-1 block text-label-m text-on-surface-variant;
+      content: attr(data-etiqueta);
+    }
+
+    .tabla-apilada [data-celda-acciones] > * {
+      justify-content: flex-start;
+    }
+
+    .tabla-apilada tfoot tr {
+      @apply bg-surface-container-low;
+      border-top: 2px solid var(--md-sys-color-outline);
+    }
+
+    .tabla-apilada tfoot th,
+    .tabla-apilada tfoot td {
+      background: transparent;
+    }
+
+    /* Del encabezado solo quedan las columnas ordenables, como botones de orden. */
+    .tabla-apilada thead {
+      display: block;
+    }
+
+    .tabla-apilada thead tr {
+      @apply flex flex-wrap items-center gap-2 bg-surface-container px-4 py-2;
+      border-top: 0;
+    }
+
+    .tabla-apilada thead th {
+      display: none;
+    }
+
+    .tabla-apilada thead th[aria-sort] {
+      @apply block p-0;
+    }
+
+    .tabla-apilada thead:not(:has(th[aria-sort])) {
+      display: none;
+    }
+  }
+
+  /* Tablas de datos anchas (el reporte): se desplazan hacia el lado y la
+     primera columna se queda fija para no perder de qué fila se trata. */
+  .tabla-primera-fija tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: var(--md-sys-color-surface-container-lowest);
+    box-shadow: 1px 0 0 var(--md-sys-color-outline-variant);
+  }
+
+  .tabla-primera-fija thead tr > :first-child {
+    background-color: var(--md-sys-color-surface-container);
+  }
+
+  .tabla-primera-fija tfoot tr > :first-child {
+    background-color: var(--md-sys-color-surface-container-low);
+  }
+
   /* ---------- Estados vacío y de error ---------- */
   .estado-vacio {
     @apply flex flex-col items-center gap-2 px-4 py-10 text-center text-on-surface-variant;
@@ -765,7 +1224,7 @@
     max-width: calc(100vw - 56px);
     transform: translateX(-105%);
     visibility: hidden;
-    transition: transform 250ms ease, visibility 250ms;
+    transition: transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate), visibility var(--md-sys-motion-duration-medium2);
   }
 
   .nav-abierta .app-nav {
@@ -869,7 +1328,7 @@ html:not(.js) .boton-menu {
     width: 80px;
     min-height: 64px;
     padding: 4px;
-    border-radius: 16px;
+    border-radius: var(--md-sys-shape-corner-large);
   }
 }
 

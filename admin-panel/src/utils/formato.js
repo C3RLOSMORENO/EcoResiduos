@@ -37,6 +37,9 @@ const ESTADOS_VERIFICACION = {
     SUSPENDIDO: 'Suspendido'
 };
 
+// Estados de verificación de un gestor, en el orden de los selectores.
+const ESTADOS_GESTOR = Object.keys(ESTADOS_VERIFICACION);
+
 const TIPOS_VALOR = {
     COBRO_RECOLECCION: 'Valor cobrado por recolección externa',
     PAGO_APROVECHAMIENTO: 'Valor pagado por aprovechamiento'
@@ -270,14 +273,12 @@ function urlSegura(url) {
 }
 
 module.exports = {
-    ZONA_HORARIA,
     CATEGORIAS,
     CATEGORIAS_CATALOGO,
     ESTADOS,
     ESTADOS_SOLICITUD,
     ESTADOS_VERIFICACION,
-    TIPOS_VALOR,
-    TIPOS_CERTIFICADO,
+    ESTADOS_GESTOR,
     UNIDADES,
     etiquetaCategoria,
     etiquetaEstado,
@@ -291,7 +292,6 @@ module.exports = {
     unidadCorta,
     formatoNumero,
     formatoCantidad,
-    separarMiles,
     formatoPesos,
     fechaCorta,
     fechaHora,

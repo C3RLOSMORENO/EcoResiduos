@@ -3,8 +3,10 @@ const supabase = require('../config/supabase');
 const geocodificador = require('./geocodificador');
 const { municipioParaGuardar, variantesMunicipio, municipioAdmitido } = require('../utils/municipios');
 const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
+const { errorDeBase } = require('../utils/errores');
+const { ESTADOS_GESTOR } = require('../utils/formato');
 
-const ESTADOS_VALIDOS = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'];
+const ESTADOS_VALIDOS = ESTADOS_GESTOR;
 const TAMANO_MAXIMO_PERMISO = 10 * 1024 * 1024;
 
 const SELECT_MATERIALES = `
@@ -152,7 +154,7 @@ const gestorService = {
                 .from('gestor_material')
                 .select('gestor_id')
                 .eq('verificado', false);
-            if (errorRelaciones) throw new Error(`No pudimos cargar los materiales por verificar: ${errorRelaciones.message}`);
+            if (errorRelaciones) throw errorDeBase('No pudimos cargar los materiales por verificar.', errorRelaciones);
             const ids = [...new Set((relaciones || []).map((r) => r.gestor_id))];
             if (ids.length === 0) return { gestores: [], total: 0 };
             consulta = consulta.in('id', ids);
@@ -165,7 +167,7 @@ const gestorService = {
             .range(desde, hasta);
 
         if (error) {
-            throw new Error(`No pudimos cargar los gestores: ${error.message}`);
+            throw errorDeBase('No pudimos cargar los gestores.', error);
         }
         return { gestores: (data || []).map(mapearGestor), total: count || 0 };
     },
@@ -182,7 +184,8 @@ const gestorService = {
             .maybeSingle();
 
         if (error || !data) {
-            throw errorConCodigo(`No encontramos el gestor${error ? `: ${error.message}` : '.'}`, 'NO_ENCONTRADO');
+            if (error) throw errorDeBase('No pudimos cargar el gestor.', error);
+            throw errorConCodigo('No encontramos el gestor.', 'NO_ENCONTRADO');
         }
         return mapearGestor(data);
     },
@@ -231,7 +234,7 @@ const gestorService = {
             .select();
 
         if (error) {
-            throw new Error(`No pudimos registrar el gestor: ${error.message}`);
+            throw errorDeBase('No pudimos registrar el gestor.', error);
         }
 
         const nuevo = creados && creados[0];
@@ -241,7 +244,7 @@ const gestorService = {
                 .from('gestor_material')
                 .insert(materialIds.map((materialId) => ({ gestor_id: nuevo.id, material_id: materialId, verificado: true })));
             if (errorMateriales) {
-                throw new Error(`El gestor quedó registrado, pero no se guardaron sus materiales: ${errorMateriales.message}`);
+                throw errorDeBase('El gestor quedó registrado, pero no se guardaron sus materiales.', errorMateriales);
             }
         }
         return nuevo;
@@ -263,7 +266,7 @@ const gestorService = {
             .maybeSingle();
 
         if (errorActual || !actual) {
-            throw new Error(`No encontramos el gestor${errorActual ? `: ${errorActual.message}` : '.'}`);
+            throw errorActual ? errorDeBase('No pudimos cargar el gestor.', errorActual) : new Error('No encontramos el gestor.');
         }
 
         const datos = validarDatos(dto, { exigirMunicipioAdmitido: false });
@@ -301,7 +304,7 @@ const gestorService = {
             .eq('id', id);
 
         if (error) {
-            throw new Error(`No pudimos guardar los cambios del gestor: ${error.message}`);
+            throw errorDeBase('No pudimos guardar los cambios del gestor.', error);
         }
 
         await this.sincronizarMateriales(id, actual.gestor_material || [], dto);
@@ -331,14 +334,14 @@ const gestorService = {
                 .delete()
                 .eq('gestor_id', id)
                 .in('material_id', quitar);
-            if (error) throw new Error(`No pudimos quitar los materiales desmarcados: ${error.message}`);
+            if (error) throw errorDeBase('No pudimos quitar los materiales desmarcados.', error);
         }
 
         if (agregar.length > 0) {
             const { error } = await supabase
                 .from('gestor_material')
                 .insert(agregar.map((materialId) => ({ gestor_id: parseInt(id, 10), material_id: materialId, verificado: true })));
-            if (error) throw new Error(`No pudimos agregar los materiales nuevos: ${error.message}`);
+            if (error) throw errorDeBase('No pudimos agregar los materiales nuevos.', error);
         }
         return { quitados: quitar.length, agregados: agregar.length };
     },
@@ -365,7 +368,7 @@ const gestorService = {
                 const coordenadas = await geocodificador.geocodificar(actual.direccion, actual.municipio || 'Bucaramanga');
                 if (coordenadas) {
                     const { error: errorUbicacion } = await supabase.from('perfiles_gestor').update(coordenadas).eq('id', id);
-                    if (errorUbicacion) throw new Error(`No pudimos ubicar al gestor: ${errorUbicacion.message}`);
+                    if (errorUbicacion) throw errorDeBase('No pudimos ubicar al gestor.', errorUbicacion);
                 }
             }
 
@@ -377,7 +380,7 @@ const gestorService = {
                 .eq('gestor_id', id)
                 .eq('verificado', false);
             if (errorMateriales) {
-                throw new Error(`No pudimos verificar los materiales del gestor: ${errorMateriales.message}`);
+                throw errorDeBase('No pudimos verificar los materiales del gestor.', errorMateriales);
             }
         }
 
@@ -392,7 +395,7 @@ const gestorService = {
         if (!error) return { motivoGuardado: true };
 
         if (!faltaEnEsquema(error)) {
-            throw new Error(`No pudimos cambiar el estado del gestor: ${error.message}`);
+            throw errorDeBase('No pudimos cambiar el estado del gestor.', error);
         }
 
         // Sin la migración el estado igual se guarda, sin motivo ni historial.
@@ -401,7 +404,7 @@ const gestorService = {
             .update({ estado_verificacion: estadoUpper })
             .eq('id', id);
         if (errorDirecto) {
-            throw new Error(`No pudimos cambiar el estado del gestor: ${errorDirecto.message}`);
+            throw errorDeBase('No pudimos cambiar el estado del gestor.', errorDirecto);
         }
         return { motivoGuardado: observacion === null };
     },
@@ -425,7 +428,7 @@ const gestorService = {
             .eq('gestor_id', id)
             .eq('material_id', materialId)
             .select('material_id');
-        if (error) throw new Error(`No pudimos verificar el material: ${error.message}`);
+        if (error) throw errorDeBase('No pudimos verificar el material.', error);
         if (!data || data.length === 0) throw new Error('El gestor ya no tiene ese material.');
         return true;
     },
@@ -436,7 +439,7 @@ const gestorService = {
             .delete()
             .eq('gestor_id', id)
             .eq('material_id', materialId);
-        if (error) throw new Error(`No pudimos quitar el material: ${error.message}`);
+        if (error) throw errorDeBase('No pudimos quitar el material.', error);
         return true;
     },
 
@@ -447,7 +450,7 @@ const gestorService = {
             .eq('gestor_id', id)
             .eq('verificado', false)
             .select('material_id');
-        if (error) throw new Error(`No pudimos verificar los materiales: ${error.message}`);
+        if (error) throw errorDeBase('No pudimos verificar los materiales.', error);
         return (data || []).length;
     },
 
@@ -469,7 +472,7 @@ const gestorService = {
             .createSignedUrl(data.permiso_path, 600);
 
         if (errorFirma || !firmado) {
-            throw new Error(`No pudimos abrir el permiso: ${errorFirma ? errorFirma.message : 'archivo no encontrado'}`);
+            throw errorFirma ? errorDeBase('No pudimos abrir el permiso.', errorFirma) : new Error('No encontramos el archivo del permiso.');
         }
         return firmado.signedUrl;
     },
@@ -501,7 +504,7 @@ const gestorService = {
             .from('permisos')
             .upload(ruta, contenido, { contentType: 'application/pdf', upsert: false });
         if (errorSubida) {
-            throw new Error(`No pudimos subir el permiso: ${errorSubida.message}`);
+            throw errorDeBase('No pudimos subir el permiso.', errorSubida);
         }
 
         const { error } = await supabase
@@ -510,7 +513,7 @@ const gestorService = {
             .eq('id', id);
         if (error) {
             await supabase.storage.from('permisos').remove([ruta]);
-            throw new Error(`No pudimos guardar el permiso: ${error.message}`);
+            throw errorDeBase('No pudimos guardar el permiso.', error);
         }
 
         // Solo se borra el reemplazado si lo subió el panel: el que adjuntó la
@@ -541,7 +544,7 @@ const gestorService = {
             .delete()
             .eq('gestor_id', id);
         if (errorMateriales) {
-            throw new Error(`No pudimos eliminar los materiales del gestor: ${errorMateriales.message}`);
+            throw errorDeBase('No pudimos eliminar los materiales del gestor.', errorMateriales);
         }
 
         const { error } = await supabase
@@ -550,7 +553,7 @@ const gestorService = {
             .eq('id', id);
 
         if (error) {
-            throw new Error(`No pudimos eliminar el gestor: ${error.message}`);
+            throw errorDeBase('No pudimos eliminar el gestor.', error);
         }
         return true;
     }

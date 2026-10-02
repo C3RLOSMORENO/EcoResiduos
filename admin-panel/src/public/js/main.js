@@ -8,6 +8,10 @@
   const $ = (selector, raiz) => (raiz || document).querySelector(selector);
   const $$ = (selector, raiz) => Array.from((raiz || document).querySelectorAll(selector));
 
+  // Token CSRF para los fetch (los formularios lo llevan en un campo oculto).
+  const metaCsrf = $('meta[name="csrf-token"]');
+  const tokenCsrf = metaCsrf ? metaCsrf.content : '';
+
   // ------------------------------------------------------------------
   // Formato de campos (data-format)
   // ------------------------------------------------------------------
@@ -80,6 +84,30 @@
     programarCierre(aviso);
     const cerrar = $('[data-cerrar-aviso]', aviso);
     if (cerrar) cerrar.addEventListener('click', () => cerrarAviso(aviso));
+  });
+
+  // ------------------------------------------------------------------
+  // Botones sencillos: imprimir, mostrar la contraseña y el aviso de ejemplo
+  // de /componentes. Viven aquí y no en atributos onclick porque la CSP del
+  // panel no permite JavaScript escrito dentro del HTML.
+  // ------------------------------------------------------------------
+  $$('[data-imprimir]').forEach((boton) => boton.addEventListener('click', () => window.print()));
+
+  $$('[data-ver-clave]').forEach((boton) => {
+    const campo = document.getElementById(boton.dataset.verClave);
+    if (!campo) return;
+    boton.addEventListener('click', () => {
+      const mostrar = campo.type === 'password';
+      campo.type = mostrar ? 'text' : 'password';
+      // Botón de alternar: el nombre no cambia, cambia aria-pressed.
+      boton.setAttribute('aria-pressed', String(mostrar));
+      const icono = $('.material-symbols-outlined', boton);
+      if (icono) icono.textContent = mostrar ? 'visibility_off' : 'visibility';
+    });
+  });
+
+  $$('[data-aviso-ejemplo]').forEach((boton) => {
+    boton.addEventListener('click', () => mostrarNotificacion(boton.dataset.avisoEjemplo));
   });
 
   // ------------------------------------------------------------------
@@ -324,6 +352,263 @@
   });
 
   // ------------------------------------------------------------------
+  // Fotos que no cargan: en lugar del ícono roto del navegador, un recuadro
+  // que dice que la foto no está disponible.
+  // ------------------------------------------------------------------
+  function marcarFotoCaida(img) {
+    if (img.dataset.caida) return;
+    img.dataset.caida = '1';
+    const grande = img.dataset.respaldo === 'detalle';
+    const recuadro = document.createElement('span');
+    // La miniatura caída se ve igual que la de una solicitud sin foto.
+    recuadro.className = grande ? 'foto-no-disponible h-40 w-full' : 'foto-no-disponible miniatura-vacia';
+    const icono = document.createElement('span');
+    icono.className = 'material-symbols-outlined';
+    icono.setAttribute('aria-hidden', 'true');
+    icono.textContent = 'image_not_supported';
+    recuadro.append(icono);
+    if (grande) {
+      const texto = document.createElement('span');
+      texto.textContent = 'No pudimos cargar la foto que publicó el generador.';
+      recuadro.append(texto);
+    } else {
+      recuadro.setAttribute('role', 'img');
+      recuadro.setAttribute('aria-label', 'Foto no disponible');
+    }
+    // Si la foto estaba dentro de un enlace al visor, el enlace ya no sirve.
+    (img.closest('a[data-visor]') || img).replaceWith(recuadro);
+  }
+
+  document.addEventListener('error', (e) => {
+    if (e.target instanceof HTMLImageElement && e.target.hasAttribute('data-respaldo')) marcarFotoCaida(e.target);
+  }, true);
+
+  // Las que fallaron antes de que cargara este archivo se comprueban de nuevo.
+  $$('img[data-respaldo]').forEach((img) => {
+    if (!img.complete || img.naturalWidth > 0 || !img.currentSrc) return;
+    const prueba = new Image();
+    prueba.addEventListener('error', () => marcarFotoCaida(img));
+    prueba.src = img.currentSrc;
+  });
+
+  // ------------------------------------------------------------------
+  // Visor de fotos: acercar, alejar y mover con mouse, teclado o toque.
+  // ------------------------------------------------------------------
+  const visor = $('#visorImagen');
+  if (visor) {
+    const lienzo = $('[data-visor-lienzo]', visor);
+    const foto = $('[data-visor-foto]', visor);
+    const cargando = $('[data-visor-cargando]', visor);
+    const fallo = $('[data-visor-fallo]', visor);
+    const nivel = $('#visorNivel');
+    const original = $('[data-visor-original]', visor);
+    const botonAlejar = $('[data-visor-alejar]', visor);
+    const botonAcercar = $('[data-visor-acercar]', visor);
+    const botonAjustar = $('[data-visor-ajustar]', visor);
+    const NIVELES = [1, 1.5, 2, 3, 4];
+    const MAXIMO = 4;
+    const PASO_FLECHAS = 60;
+    let escala = 1;
+    let x = 0;
+    let y = 0;
+    let disparador = null;
+
+    // Los botones se marcan con aria-disabled (no disabled) para que el foco
+    // no se pierda cuando llegan al límite.
+    function habilitar(boton, activo) {
+      boton.setAttribute('aria-disabled', String(!activo));
+    }
+
+    // La foto se puede mover solo hasta que su borde toca el del lienzo.
+    function limitarDesplazamiento() {
+      const sobraX = Math.max(0, (foto.offsetWidth * escala - lienzo.clientWidth) / 2);
+      const sobraY = Math.max(0, (foto.offsetHeight * escala - lienzo.clientHeight) / 2);
+      x = Math.min(sobraX, Math.max(-sobraX, x));
+      y = Math.min(sobraY, Math.max(-sobraY, y));
+    }
+
+    function pintar() {
+      limitarDesplazamiento();
+      foto.style.transform = `translate(${x}px, ${y}px) scale(${escala})`;
+      nivel.value = `${Math.round(escala * 100)} %`;
+      const lista = !foto.hidden;
+      habilitar(botonAlejar, lista && escala > 1);
+      habilitar(botonAcercar, lista && escala < MAXIMO);
+      habilitar(botonAjustar, lista && escala > 1);
+      lienzo.toggleAttribute('data-ampliado', escala > 1);
+    }
+
+    // Cambia el acercamiento dejando quieto el punto (px, py), medido desde
+    // el centro del lienzo: lo que está bajo el puntero sigue bajo el puntero.
+    function acercarA(nueva, px, py) {
+      if (foto.hidden) return;
+      const destino = Math.min(MAXIMO, Math.max(1, nueva));
+      const factor = destino / escala;
+      x = (px || 0) - ((px || 0) - x) * factor;
+      y = (py || 0) - ((py || 0) - y) * factor;
+      escala = destino;
+      if (escala === 1) { x = 0; y = 0; }
+      pintar();
+    }
+
+    const nivelSiguiente = () => NIVELES.find((n) => n > escala + 0.01) || MAXIMO;
+    const nivelAnterior = () => NIVELES.slice().reverse().find((n) => n < escala - 0.01) || 1;
+
+    function puntoEnLienzo(e) {
+      const r = lienzo.getBoundingClientRect();
+      return [e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2];
+    }
+
+    function abrirVisor(enlace) {
+      disparador = enlace;
+      const titulo = enlace.dataset.visorTitulo || 'Foto';
+      $('#visorTitulo').textContent = titulo;
+      original.href = enlace.href;
+      foto.alt = titulo;
+      foto.hidden = true;
+      fallo.hidden = true;
+      cargando.hidden = false;
+      escala = 1;
+      x = 0;
+      y = 0;
+      pintar();
+      foto.src = enlace.href;
+      raiz.classList.add('visor-abierto');
+      visor.showModal();
+      $('[data-visor-cerrar]', visor).focus();
+    }
+
+    foto.addEventListener('load', () => {
+      cargando.hidden = true;
+      foto.hidden = false;
+      pintar();
+    });
+    foto.addEventListener('error', () => {
+      if (!foto.getAttribute('src')) return;
+      cargando.hidden = true;
+      fallo.hidden = false;
+      pintar();
+    });
+
+    visor.addEventListener('close', () => {
+      raiz.classList.remove('visor-abierto');
+      foto.removeAttribute('src');
+      if (disparador && disparador.isConnected) disparador.focus();
+      disparador = null;
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const enlace = e.target instanceof Element ? e.target.closest('a[data-visor]') : null;
+      if (!enlace) return;
+      e.preventDefault();
+      abrirVisor(enlace);
+    });
+
+    const alPulsar = (boton, accion) => boton.addEventListener('click', () => {
+      if (boton.getAttribute('aria-disabled') !== 'true') accion();
+    });
+    alPulsar(botonAcercar, () => acercarA(nivelSiguiente()));
+    alPulsar(botonAlejar, () => acercarA(nivelAnterior()));
+    alPulsar(botonAjustar, () => acercarA(1));
+    $('[data-visor-cerrar]', visor).addEventListener('click', () => visor.close());
+
+    visor.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const flechas = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+      if (e.key === '+' || e.key === '=') acercarA(nivelSiguiente());
+      else if (e.key === '-' || e.key === '_') acercarA(nivelAnterior());
+      else if (e.key === '0') acercarA(1);
+      else if (flechas[e.key] && escala > 1) {
+        x += flechas[e.key][0] * PASO_FLECHAS;
+        y += flechas[e.key][1] * PASO_FLECHAS;
+        pintar();
+      } else return;
+      e.preventDefault();
+    });
+
+    lienzo.addEventListener('wheel', (e) => {
+      if (foto.hidden) return;
+      e.preventDefault();
+      acercarA(escala * (e.deltaY < 0 ? 1.2 : 1 / 1.2), ...puntoEnLienzo(e));
+    }, { passive: false });
+
+    // Arrastre con un dedo o el mouse; pellizco con dos dedos.
+    const punteros = new Map();
+    let arrastre = null;
+    let pellizco = null;
+    let ultimoToque = null;
+    let tipoPuntero = 'mouse';
+
+    const distancia = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+    function empezarArrastre(e) {
+      arrastre = escala > 1 ? { x0: e.clientX - x, y0: e.clientY - y } : null;
+      lienzo.toggleAttribute('data-arrastrando', Boolean(arrastre));
+    }
+
+    lienzo.addEventListener('pointerdown', (e) => {
+      if (foto.hidden) return;
+      tipoPuntero = e.pointerType;
+      lienzo.setPointerCapture(e.pointerId);
+      punteros.set(e.pointerId, e);
+      if (punteros.size === 2) {
+        const [a, b] = Array.from(punteros.values());
+        pellizco = { distancia: distancia(a, b) || 1, escala };
+        arrastre = null;
+      } else {
+        empezarArrastre(e);
+      }
+    });
+
+    lienzo.addEventListener('pointermove', (e) => {
+      if (!punteros.has(e.pointerId)) return;
+      punteros.set(e.pointerId, e);
+      if (pellizco && punteros.size === 2) {
+        const [a, b] = Array.from(punteros.values());
+        const centro = { clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 };
+        acercarA(pellizco.escala * (distancia(a, b) / pellizco.distancia), ...puntoEnLienzo(centro));
+      } else if (arrastre) {
+        x = e.clientX - arrastre.x0;
+        y = e.clientY - arrastre.y0;
+        pintar();
+      }
+    });
+
+    function soltar(e) {
+      if (!punteros.has(e.pointerId)) return;
+      punteros.delete(e.pointerId);
+      if (punteros.size < 2) pellizco = null;
+      if (punteros.size === 1) empezarArrastre(Array.from(punteros.values())[0]);
+      if (punteros.size === 0) {
+        arrastre = null;
+        lienzo.removeAttribute('data-arrastrando');
+      }
+    }
+
+    lienzo.addEventListener('pointerup', (e) => {
+      soltar(e);
+      if (e.pointerType !== 'touch' || punteros.size > 0) return;
+      // Doble toque: dos toques cortos y cercanos acercan o vuelven al 100 %.
+      const ahora = Date.now();
+      if (ultimoToque && ahora - ultimoToque.t < 300 && distancia(e, ultimoToque) < 30) {
+        acercarA(escala > 1 ? 1 : 2, ...puntoEnLienzo(e));
+        ultimoToque = null;
+      } else {
+        ultimoToque = { t: ahora, clientX: e.clientX, clientY: e.clientY };
+      }
+    });
+    lienzo.addEventListener('pointercancel', soltar);
+
+    lienzo.addEventListener('dblclick', (e) => {
+      if (tipoPuntero === 'touch') return;
+      acercarA(escala > 1 ? 1 : 2, ...puntoEnLienzo(e));
+    });
+
+    window.addEventListener('resize', () => { if (visor.open) pintar(); });
+  }
+
+  // ------------------------------------------------------------------
   // Esqueletos de carga: mientras el servidor arma la página siguiente,
   // <main> muestra la forma de esa vista en lugar del contenido anterior.
   // ------------------------------------------------------------------
@@ -402,6 +687,74 @@
   });
 
   // ------------------------------------------------------------------
+  // Tablas que no caben en su espacio: cada fila pasa a ser una tarjeta con
+  // la etiqueta de su columna en cada dato (.tabla-apilada en input.css). Se
+  // decide midiendo la tabla, no con un ancho fijo de pantalla, porque cada
+  // lista necesita un ancho distinto.
+  // ------------------------------------------------------------------
+  // Texto que se ve en pantalla: sin íconos ni textos solo para lector de pantalla.
+  function textoVisible(elemento) {
+    const copia = elemento.cloneNode(true);
+    $$('[aria-hidden="true"], .sr-only', copia).forEach((nodo) => nodo.remove());
+    return copia.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  function prepararTabla(tabla) {
+    const encabezados = $$('thead th', tabla);
+    // Roles explícitos: algunos navegadores dejan de anunciarla como tabla
+    // cuando sus filas pasan a display: block.
+    tabla.setAttribute('role', 'table');
+    $$('thead, tbody, tfoot', tabla).forEach((grupo) => grupo.setAttribute('role', 'rowgroup'));
+    $$('tr', tabla).forEach((fila) => {
+      fila.setAttribute('role', 'row');
+      Array.from(fila.children).forEach((celda, i) => {
+        if (celda.closest('thead')) {
+          celda.setAttribute('role', 'columnheader');
+          return;
+        }
+        celda.setAttribute('role', celda.tagName === 'TH' ? 'rowheader' : 'cell');
+        const encabezado = encabezados[i];
+        if (celda.tagName !== 'TD' || !encabezado) return;
+        const oculto = $('.sr-only', encabezado);
+        const texto = textoVisible(encabezado);
+        if (oculto && !texto) celda.setAttribute('data-celda-acciones', '');
+        else celda.dataset.etiqueta = texto;
+      });
+    });
+  }
+
+  // Ancho mínimo con que la tabla se ve completa (min-content).
+  function medirTabla(tabla) {
+    tabla.classList.remove('tabla-apilada');
+    tabla.style.width = '1px';
+    const ancho = tabla.offsetWidth;
+    tabla.style.width = '';
+    return ancho;
+  }
+
+  const tablasApilables = $$('.tabla-contenedor > .tabla:not([data-sin-apilar])');
+  if (tablasApilables.length && 'ResizeObserver' in window) {
+    const anchos = new Map();
+    const ajustar = (tabla) => {
+      tabla.classList.toggle('tabla-apilada', tabla.parentElement.clientWidth < anchos.get(tabla));
+    };
+    const medirTodas = () => tablasApilables.forEach((tabla) => {
+      anchos.set(tabla, medirTabla(tabla));
+      ajustar(tabla);
+    });
+
+    tablasApilables.forEach(prepararTabla);
+    medirTodas();
+    // Las fuentes cambian el ancho del texto: se mide de nuevo cuando cargan.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(medirTodas);
+    const observador = new ResizeObserver((entradas) => entradas.forEach((entrada) => {
+      const tabla = $('.tabla', entrada.target);
+      if (tabla && anchos.has(tabla)) ajustar(tabla);
+    }));
+    tablasApilables.forEach((tabla) => observador.observe(tabla.parentElement));
+  }
+
+  // ------------------------------------------------------------------
   // Listas de materiales con búsqueda, «Todos» y «Ninguno»
   // ------------------------------------------------------------------
   $$('[data-lista-materiales]').forEach((lista) => {
@@ -456,7 +809,7 @@
       try {
         const respuesta = await fetch(formPermiso.action, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/pdf', 'X-Requested-With': 'fetch', Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/pdf', 'X-Requested-With': 'fetch', 'X-CSRF-Token': tokenCsrf, Accept: 'application/json' },
           body: archivo,
           credentials: 'same-origin'
         });
@@ -594,7 +947,7 @@
     const expirar = () => {
       guardarBorradores('sesion');
       const volver = encodeURIComponent(location.pathname + location.search);
-      window.location.href = `/login?msg=${encodeURIComponent('Tu sesión venció por inactividad. Inicia sesión para continuar donde ibas.')}&type=error&volver=${volver}`;
+      window.location.href = `/login?aviso=sesion-vencida&volver=${volver}`;
     };
 
     async function renovar() {
@@ -603,7 +956,7 @@
       try {
         const respuesta = await fetch('/sesion/renovar', {
           method: 'POST',
-          headers: { 'X-Requested-With': 'fetch', Accept: 'application/json' },
+          headers: { 'X-Requested-With': 'fetch', 'X-CSRF-Token': tokenCsrf, Accept: 'application/json' },
           credentials: 'same-origin'
         });
         if (respuesta.status === 401) return expirar();

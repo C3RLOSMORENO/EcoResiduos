@@ -1,47 +1,47 @@
 const gestorService = require('../services/GestorService');
 const materialService = require('../services/MaterialService');
 const { leerPagina, paginacion, rutaInterna, conAviso } = require('../utils/web');
-const { municipioAdmitido } = require('../utils/municipios');
-const { etiquetaVerificacion } = require('../utils/formato');
+const { municipioAdmitido, normalizar } = require('../utils/municipios');
+const { etiquetaVerificacion, etiquetaCategoria } = require('../utils/formato');
+const { responderErrorCarga, renderLista } = require('../utils/errores');
+const { filtrosGestores } = require('../utils/filtros');
+const { sinUbicar } = require('../services/geocodificador');
 
 const adminDe = (req) => (req.user && (req.user.email || req.user.id)) || null;
 
-// El catálogo completo para elegir materiales (no se pagina: son decenas).
+// El catálogo completo para elegir materiales (no se pagina: son decenas),
+// con el texto en que busca el filtro del formulario: sin tildes ni
+// mayúsculas, para que «raee» encuentre «RAEE» y «electronico», «Electrónico».
 async function catalogoMateriales() {
-    return materialService.getAllMateriales();
+    const materiales = await materialService.getAllMateriales();
+    return materiales.map((m) => ({
+        ...m,
+        busqueda: normalizar(`${m.codigo || ''} ${m.nombre_comun || ''} ${etiquetaCategoria(m.categoria)}`)
+    }));
+}
+
+// Materiales del gestor agrupados por categoría, en el orden en que llegan.
+function agruparPorCategoria(materiales) {
+    const grupos = {};
+    materiales.forEach((m) => {
+        const clave = String(m.categoria || 'SIN_CATEGORIA').toUpperCase();
+        (grupos[clave] = grupos[clave] || []).push(m);
+    });
+    return grupos;
 }
 
 const gestorController = {
-    async renderGestoresPage(req, res) {
+    renderGestoresPage(req, res) {
         const pagina = leerPagina(req.query);
-        const filtros = {
-            q: String(req.query.q || '').trim(),
-            municipio: municipioAdmitido(req.query.municipio) || '',
-            estado: ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'SUSPENDIDO'].includes(String(req.query.estado || '').toUpperCase())
-                ? String(req.query.estado).toUpperCase() : '',
-            porVerificar: req.query.por_verificar === '1' ? '1' : '',
-            orden: req.query.orden === '-razon' ? '-razon' : 'razon'
-        };
-        try {
-            const { gestores, total } = await gestorService.listarGestores({ ...filtros, pagina });
-            res.render('gestores', {
-                titulo: 'Gestores',
-                activeTab: 'gestores',
-                gestores,
-                filtros,
-                pag: paginacion({ total, pagina, ruta: '/gestores', query: req.query }),
-                errorCarga: null
-            });
-        } catch (err) {
-            res.status(500).render('gestores', {
-                titulo: 'Gestores',
-                activeTab: 'gestores',
-                gestores: [],
-                filtros,
-                pag: null,
-                errorCarga: err.message
-            });
-        }
+        const filtros = filtrosGestores(req.query);
+        return renderLista(res, 'gestores', {
+            comunes: { titulo: 'Gestores', activeTab: 'gestores', filtros },
+            cargar: async () => {
+                const { gestores, total } = await gestorService.listarGestores({ ...filtros, pagina });
+                return { gestores, pag: paginacion({ total, pagina, ruta: '/gestores', query: req.query }) };
+            },
+            vacio: { gestores: [], pag: null }
+        });
     },
 
     async renderDetalleGestor(req, res, next) {
@@ -56,25 +56,30 @@ const gestorController = {
                 activeTab: 'gestores',
                 gestor,
                 dependencias,
-                decisiones
+                decisiones,
+                gruposMateriales: agruparPorCategoria(gestor.materiales),
+                // El mapa solo se muestra si la dirección se pudo ubicar: el
+                // centro de Bucaramanga es el valor que se guarda cuando no.
+                ubicado: gestor.latitud !== null && gestor.longitud !== null
+                    && !sinUbicar(gestor.latitud, gestor.longitud)
             });
         } catch (err) {
-            if (err.codigo === 'NO_ENCONTRADO') return next();
-            res.redirect(conAviso('/gestores', err.message, 'error'));
+            responderErrorCarga(res, next, err, { activeTab: 'gestores', que: 'el gestor', volver: { href: '/gestores', texto: 'Gestores' } });
         }
     },
 
-    async renderNuevoGestor(req, res) {
+    async renderNuevoGestor(req, res, next) {
         try {
             res.render('gestor-edit', {
                 titulo: 'Nuevo gestor',
                 activeTab: 'gestores',
                 modo: 'crear',
                 gestor: { material_ids: [], material_ids_por_verificar: [], disponible: true },
+                municipioEnLista: null,
                 materialesDisponibles: await catalogoMateriales()
             });
         } catch (err) {
-            res.redirect(conAviso('/gestores', err.message, 'error'));
+            responderErrorCarga(res, next, err, { activeTab: 'gestores', que: 'el formulario de nuevo gestor', volver: { href: '/gestores', texto: 'Gestores' } });
         }
     },
 
@@ -88,7 +93,7 @@ const gestorController = {
         }
     },
 
-    async renderEditGestor(req, res) {
+    async renderEditGestor(req, res, next) {
         try {
             const { id } = req.params;
             const [gestor, materialesDisponibles] = await Promise.all([
@@ -101,19 +106,19 @@ const gestorController = {
                 activeTab: 'gestores',
                 modo: 'editar',
                 gestor,
+                municipioEnLista: municipioAdmitido(gestor.municipio),
                 materialesDisponibles
             });
         } catch (err) {
-            res.redirect(conAviso('/gestores', err.message, 'error'));
+            responderErrorCarga(res, next, err, { activeTab: 'gestores', que: 'el gestor', volver: { href: '/gestores', texto: 'Gestores' } });
         }
     },
 
     async handleUpdateGestor(req, res) {
         const { id } = req.params;
         try {
-            const { motivoGuardado } = await gestorService.updateGestor(id, req.body, adminDe(req));
-            const mensaje = 'Cambios del gestor guardados.';
-            res.redirect(conAviso(`/gestores/${id}`, mensaje));
+            await gestorService.updateGestor(id, req.body, adminDe(req));
+            res.redirect(conAviso(`/gestores/${id}`, 'Cambios del gestor guardados.'));
         } catch (err) {
             res.redirect(conAviso(`/gestores/edit/${id}`, err.message, 'error'));
         }

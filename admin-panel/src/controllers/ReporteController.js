@@ -1,52 +1,37 @@
 const reporteService = require('../services/ReporteService');
 const { generarCsv } = require('../utils/csv');
-const { etiquetaCategoria, formatoNumero, fechaIsoBogota, fechaHora } = require('../utils/formato');
-
-function descripcionFiltros(filtros) {
-    return [
-        filtros.desde ? `Confirmadas desde ${filtros.desde}` : 'Desde el inicio',
-        filtros.hasta ? `hasta ${filtros.hasta}` : 'hasta hoy',
-        filtros.categoria ? `Categoría: ${etiquetaCategoria(filtros.categoria)}` : 'Todas las categorías'
-    ].join(' · ');
-}
+const { conAviso } = require('../utils/web');
+const { formatoNumero, fechaIsoBogota, fechaHora } = require('../utils/formato');
+const { renderLista } = require('../utils/errores');
+const { filtrosReporte, describirFiltrosReporte, enlaceCsvReporte } = require('../utils/filtros');
 
 // Cifras con coma decimal, como las lee Excel en español de Colombia.
 const cifra = (valor) => formatoNumero(valor, 2).replace(/\./g, '');
 
-exports.verReporte = async (req, res) => {
-    const filtros = reporteService.leerFiltros(req.query);
-    try {
-        const reporte = await reporteService.reciclajePorMunicipio(filtros);
-        res.render('reportes', {
+exports.verReporte = (req, res) => {
+    const filtros = filtrosReporte(req.query);
+    return renderLista(res, 'reportes', {
+        comunes: {
             titulo: 'Reportes',
             activeTab: 'reportes',
             filtros,
-            reporte,
-            descripcion: descripcionFiltros(filtros),
-            generado: fechaHora(new Date()),
-            errorCarga: null
-        });
-    } catch (err) {
-        res.status(500).render('reportes', {
-            titulo: 'Reportes',
-            activeTab: 'reportes',
-            filtros,
-            reporte: null,
-            descripcion: descripcionFiltros(filtros),
-            generado: fechaHora(new Date()),
-            errorCarga: err.message
-        });
-    }
+            descripcion: describirFiltrosReporte(filtros),
+            enlaceCsv: enlaceCsvReporte(filtros),
+            generado: fechaHora(new Date())
+        },
+        cargar: async () => ({ reporte: await reporteService.reciclajePorMunicipio(filtros) }),
+        vacio: { reporte: null }
+    });
 };
 
 // Solo cifras agregadas: el CSV no lleva datos personales.
 exports.descargarCsv = async (req, res) => {
-    const filtros = reporteService.leerFiltros(req.query);
+    const filtros = filtrosReporte(req.query);
     try {
         const reporte = await reporteService.reciclajePorMunicipio(filtros);
         const filas = [
             ['Reciclaje por municipio · EcoResiduos'],
-            [descripcionFiltros(filtros)],
+            [describirFiltrosReporte(filtros)],
             [`Generado: ${fechaHora(new Date())} (hora de Colombia)`],
             [],
             ['Recolecciones confirmadas por municipio y categoría'],
@@ -82,6 +67,7 @@ exports.descargarCsv = async (req, res) => {
         });
         res.send(generarCsv(filas));
     } catch (err) {
-        res.redirect(`/reportes?msg=${encodeURIComponent(`No pudimos generar el CSV: ${err.message}`)}&type=error`);
+        console.error('Reporte CSV:', err.message);
+        res.redirect(conAviso('/reportes', 'No pudimos generar el CSV. Intenta de nuevo en unos minutos.', 'error'));
     }
 };

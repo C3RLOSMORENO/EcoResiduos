@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 
 const { rango, textoBusqueda } = require('../utils/web');
+const { errorDeBase, noEncontrado } = require('../utils/errores');
 
 const autoridadService = {
     async listarAutoridades({ q, pagina = 1 } = {}) {
@@ -19,7 +20,7 @@ const autoridadService = {
             .range(desde, hasta);
 
         if (error) {
-            throw new Error(`No pudimos cargar las autoridades: ${error.message}`);
+            throw errorDeBase('No pudimos cargar las autoridades.', error);
         }
         return { autoridades: data || [], total: count || 0 };
     },
@@ -32,7 +33,7 @@ const autoridadService = {
             .order('id', { ascending: true });
 
         if (error) {
-            throw new Error(`Error en base de datos al listar autoridades: ${error.message}`);
+            throw errorDeBase('No pudimos cargar las autoridades.', error);
         }
 
         return (data || []).map((row) => ({
@@ -57,10 +58,11 @@ const autoridadService = {
             .from('autoridades_ambientales')
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
-        if (error || !data) {
-            throw new Error(`Error al obtener autoridad: ${error ? error.message : 'Autoridad no encontrada'}`);
+        if (error) throw errorDeBase('No pudimos cargar la autoridad.', error);
+        if (!data) {
+            throw noEncontrado('No encontramos la autoridad.');
         }
 
         return {
@@ -120,7 +122,7 @@ const autoridadService = {
             .select();
 
         if (error) {
-            throw new Error(`Error en base de datos al crear autoridad: ${error.message}`);
+            throw errorDeBase('No pudimos guardar la autoridad.', error);
         }
 
         return data;
@@ -174,7 +176,7 @@ const autoridadService = {
             .select();
 
         if (error) {
-            throw new Error(`Error en base de datos al actualizar autoridad: ${error.message}`);
+            throw errorDeBase('No pudimos guardar los cambios de la autoridad.', error);
         }
 
         return data;
@@ -191,7 +193,7 @@ const autoridadService = {
             .eq('id', id);
 
         if (error) {
-            throw new Error(`Error en base de datos al eliminar autoridad: ${error.message}`);
+            throw errorDeBase('No pudimos eliminar la autoridad.', error);
         }
 
         return true;

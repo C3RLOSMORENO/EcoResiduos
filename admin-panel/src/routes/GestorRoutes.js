@@ -1,5 +1,8 @@
 const express = require('express');
+const { validarIds } = require('../middlewares/validarId');
+
 const router = express.Router();
+validarIds(router, 'id', 'materialId');
 const gestorController = require('../controllers/GestorController');
 
 // El PDF del permiso llega como cuerpo binario de máximo 10 MB.

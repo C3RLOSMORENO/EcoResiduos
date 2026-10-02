@@ -24,6 +24,7 @@
       <%- include('partials/alert') %>
 
       <form action="/auth/login" method="POST" class="flex flex-col gap-4" data-validar>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <% if (volver) { %><input type="hidden" name="volver" value="<%= volver %>"><% } %>
         <div class="campo">
           <label for="email" class="campo-etiqueta">Correo <span class="campo-obligatorio">(obligatorio)</span></label>
@@ -33,7 +34,7 @@
           <label for="password" class="campo-etiqueta">Contraseña <span class="campo-obligatorio">(obligatorio)</span></label>
           <div class="relative">
             <input type="password" id="password" name="password" required autocomplete="current-password" class="campo-control pr-14">
-            <button type="button" id="botonVerClave" class="btn-icono absolute right-0.5 top-0.5" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false">
+            <button type="button" id="botonVerClave" data-ver-clave="password" class="btn-icono absolute right-0.5 top-0.5" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false">
               <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
             </button>
           </div>
@@ -47,15 +48,5 @@
     </div>
   </main>
   </div>
-
-  <script>
-    document.getElementById('botonVerClave').addEventListener('click', function () {
-      var campo = document.getElementById('password');
-      var mostrar = campo.type === 'password';
-      campo.type = mostrar ? 'text' : 'password';
-      this.setAttribute('aria-pressed', String(mostrar));
-      this.querySelector('span').textContent = mostrar ? 'visibility_off' : 'visibility';
-    });
-  </script>
 </body>
 </html>

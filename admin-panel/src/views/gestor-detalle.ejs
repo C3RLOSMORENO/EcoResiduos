@@ -4,13 +4,6 @@
   const nombre = gestor.razon_social || 'este gestor';
   const totalMateriales = gestor.materiales.length;
   const porVerificar = gestor.materiales.filter(function (m) { return !m.verificado; });
-  const grupos = {};
-  gestor.materiales.forEach(function (m) {
-    const clave = String(m.categoria || 'SIN_CATEGORIA').toUpperCase();
-    (grupos[clave] = grupos[clave] || []).push(m);
-  });
-  const conCoordenadas = gestor.latitud !== null && gestor.longitud !== null;
-  const sinUbicar = Number(gestor.latitud) === 7.119349 && Number(gestor.longitud) === -73.122741;
 %>
 
 <div class="flex flex-col gap-6">
@@ -57,6 +50,7 @@
               data-confirmar-titulo="Aprobar gestor"
               data-confirmar="Aprobar a <%= f.finFrase(nombre) %> Podrá ver solicitudes de <%= totalMateriales === 1 ? 'su material' : 'sus ' + totalMateriales + ' materiales' %><%= porVerificar.length === 1 ? ' (el que está por verificar queda verificado)' : (porVerificar.length > 1 ? ' (los ' + porVerificar.length + ' por verificar quedan verificados)' : '') %>."
               data-confirmar-accion="Aprobar">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="estado" value="APROBADO">
           <button type="submit" class="btn-filled" data-cargando="Aprobando…">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">verified</span>
@@ -71,6 +65,7 @@
               data-confirmar-accion="Rechazar"
               data-confirmar-peligro
               data-confirmar-motivo>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="estado" value="RECHAZADO">
           <button type="submit" class="btn-peligro-outlined">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">cancel</span>
@@ -85,6 +80,7 @@
               data-confirmar-accion="Suspender"
               data-confirmar-peligro
               data-confirmar-motivo>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="estado" value="SUSPENDIDO">
           <button type="submit" class="btn-peligro-outlined">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">pause_circle</span>
@@ -99,15 +95,15 @@
     <section aria-labelledby="tituloDatos" class="tarjeta flex flex-col gap-4">
       <h2 id="tituloDatos" class="tarjeta-titulo">Datos de la empresa</h2>
       <dl class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
-        <div><dt class="text-label-l text-on-surface-variant">Representante o contacto</dt><dd><%= f.textoODato(gestor.representante_legal) %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Teléfono</dt><dd><% if (gestor.telefono_contacto) { %><a class="enlace" href="tel:<%= gestor.telefono_contacto.replace(/[^0-9+]/g, '') %>"><%= gestor.telefono_contacto %></a><% } else { %>Sin dato<% } %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Correo</dt><dd class="break-all"><% if (gestor.email_contacto) { %><a class="enlace" href="mailto:<%= gestor.email_contacto %>"><%= gestor.email_contacto %></a><% } else { %>Sin dato<% } %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Municipio</dt><dd><%= gestor.municipio ? f.capitalizar(gestor.municipio) : 'Sin dato' %></dd></div>
+        <div><dt class="dato-etiqueta">Representante o contacto</dt><dd><%= f.textoODato(gestor.representante_legal) %></dd></div>
+        <div><dt class="dato-etiqueta">Teléfono</dt><dd><% if (gestor.telefono_contacto) { %><a class="enlace" href="tel:<%= gestor.telefono_contacto.replace(/[^0-9+]/g, '') %>"><%= gestor.telefono_contacto %></a><% } else { %>Sin dato<% } %></dd></div>
+        <div><dt class="dato-etiqueta">Correo</dt><dd class="break-all"><% if (gestor.email_contacto) { %><a class="enlace" href="mailto:<%= gestor.email_contacto %>"><%= gestor.email_contacto %></a><% } else { %>Sin dato<% } %></dd></div>
+        <div><dt class="dato-etiqueta">Municipio</dt><dd><%= gestor.municipio ? f.capitalizar(gestor.municipio) : 'Sin dato' %></dd></div>
         <div class="md:col-span-2">
-          <dt class="text-label-l text-on-surface-variant">Dirección</dt>
+          <dt class="dato-etiqueta">Dirección</dt>
           <dd>
             <%= f.textoODato(gestor.direccion) %>
-            <% if (conCoordenadas && !sinUbicar) { %>
+            <% if (ubicado) { %>
               <a class="enlace ml-1 inline-flex items-center gap-1" href="https://www.google.com/maps/search/?api=1&query=<%= gestor.latitud %>,<%= gestor.longitud %>" target="_blank" rel="noopener noreferrer">
                 Ver en Google Maps<span class="material-symbols-outlined icono-18" aria-hidden="true">open_in_new</span><span class="sr-only">(se abre en una pestaña nueva)</span>
               </a>
@@ -117,10 +113,10 @@
             <% } %>
           </dd>
         </div>
-        <div><dt class="text-label-l text-on-surface-variant">Horario de atención</dt><dd><%= f.textoODato(gestor.horario) %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Disponible para recolectar</dt><dd><%= gestor.disponible ? 'Sí' : 'No' %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Cuenta en la app</dt><dd><%= gestor.tiene_cuenta ? 'Sí, vinculada' : 'No tiene' %></dd></div>
-        <div><dt class="text-label-l text-on-surface-variant">Registro</dt><dd><%= f.fechaCorta(gestor.created_at) %></dd></div>
+        <div><dt class="dato-etiqueta">Horario de atención</dt><dd><%= f.textoODato(gestor.horario) %></dd></div>
+        <div><dt class="dato-etiqueta">Disponible para recolectar</dt><dd><%= gestor.disponible ? 'Sí' : 'No' %></dd></div>
+        <div><dt class="dato-etiqueta">Cuenta en la app</dt><dd><%= gestor.tiene_cuenta ? 'Sí, vinculada' : 'No tiene' %></dd></div>
+        <div><dt class="dato-etiqueta">Registro</dt><dd><%= f.fechaCorta(gestor.created_at) %></dd></div>
       </dl>
     </section>
 
@@ -148,6 +144,7 @@
               data-confirmar-titulo="Verificar todos los materiales"
               data-confirmar="Verificar <%= porVerificar.length === 1 ? 'el material por verificar' : 'los ' + porVerificar.length + ' materiales por verificar' %> de <%= f.finFrase(nombre) %> <%= estado === 'APROBADO' ? 'Empezará a ver sus solicitudes de inmediato.' : 'Los verá cuando la empresa esté aprobada.' %>"
               data-confirmar-accion="Verificar todos">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="btn-tonal">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">done_all</span>
             Verificar todos (<%= porVerificar.length %>)
@@ -161,11 +158,11 @@
       <p class="text-body-m text-on-surface-variant">
         <%= f.plural(totalMateriales - porVerificar.length, 'verificado', 'verificados') %><%= porVerificar.length > 0 ? ' · ' + porVerificar.length + ' por verificar (el gestor no ve sus solicitudes hasta verificarlos)' : '' %>.
       </p>
-      <% Object.keys(grupos).forEach(function (cat) { %>
+      <% Object.keys(gruposMateriales).forEach(function (cat) { %>
         <div class="flex flex-col gap-2">
           <h3 class="flex items-center gap-2 text-title-m"><%- include('partials/componentes/chip-categoria', { categoria: cat === 'SIN_CATEGORIA' ? '' : cat }) %></h3>
           <ul class="flex flex-col" role="list">
-            <% grupos[cat].forEach(function (m) { %>
+            <% gruposMateriales[cat].forEach(function (m) { %>
               <li class="flex flex-wrap items-center gap-3 border-t border-outline-variant py-3">
                 <span class="min-w-0 flex-1">
                   <span class="font-semibold"><%= m.nombre_comun %></span>
@@ -176,6 +173,7 @@
                 <% } else { %>
                   <span class="chip chip-estado-en-negociacion"><span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>Por verificar</span>
                   <form action="/gestores/<%= gestor.id %>/materiales/<%= m.id %>/verificar" method="POST" class="m-0">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit" class="btn-tonal btn-sm" aria-label="Verificar <%= m.nombre_comun %>">Verificar</button>
                   </form>
                   <form action="/gestores/<%= gestor.id %>/materiales/<%= m.id %>/quitar" method="POST" class="m-0"
@@ -183,6 +181,7 @@
                         data-confirmar="Quitar <%= m.nombre_comun %> de <%= f.finFrase(nombre) %> Dejará de ver solicitudes de este material."
                         data-confirmar-accion="Quitar"
                         data-confirmar-peligro>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit" class="btn-text btn-sm text-error" aria-label="Quitar <%= m.nombre_comun %>">Quitar</button>
                   </form>
                 <% } %>
@@ -232,6 +231,7 @@
             data-confirmar="Eliminar a <%= nombre %> y <%= totalMateriales === 1 ? 'su material asignado' : 'sus ' + totalMateriales + ' materiales asignados' %>. Esta acción no se puede deshacer."
             data-confirmar-accion="Eliminar"
             data-confirmar-peligro>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="btn-peligro-outlined">
           <span class="material-symbols-outlined icono-20" aria-hidden="true">delete</span>
           Eliminar gestor

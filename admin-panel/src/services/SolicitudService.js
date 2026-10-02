@@ -1,31 +1,11 @@
 const supabase = require('../config/supabase');
-const { municipioAdmitido, variantesMunicipio } = require('../utils/municipios');
-const { ESTADOS_SOLICITUD, CATEGORIAS } = require('../utils/formato');
-const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
+const { variantesMunicipio } = require('../utils/municipios');
+const { rango, faltaEnEsquema } = require('../utils/web');
 const { rangoBogota, haceDias } = require('../utils/fechas');
+const { errorDeBase } = require('../utils/errores');
 
 const ESTADOS_CANCELABLES = ['PUBLICADO', 'EN_NEGOCIACION'];
 const DIAS_SIN_CERTIFICADO = 7;
-
-// Filtros que llegan por la URL, ya validados.
-function leerFiltros(query = {}) {
-    const estado = String(query.estado || '').toUpperCase();
-    const categoria = String(query.categoria || '').toUpperCase();
-    const fechas = rangoBogota(query.desde, query.hasta);
-    const generador = parseInt(query.generador, 10);
-    return {
-        estado: ESTADOS_SOLICITUD.includes(estado) ? estado : '',
-        municipio: municipioAdmitido(query.municipio) || '',
-        categoria: CATEGORIAS[categoria] ? categoria : '',
-        desde: fechas.desde || '',
-        hasta: fechas.hasta || '',
-        q: textoBusqueda(query.q),
-        problema: query.problema === '1' ? '1' : '',
-        sinCertificado: query.sin_certificado === '1' ? '1' : '',
-        generador: Number.isInteger(generador) && generador > 0 ? generador : '',
-        orden: query.orden === 'fecha' ? 'fecha' : '-fecha'
-    };
-}
 
 // Un problema sin resolver es problema_reportado = TRUE: al resolverlo
 // (resolver_problema_no_recogido) vuelve a FALSE.
@@ -51,7 +31,6 @@ function aplicarFiltros(consulta, filtros) {
 const solicitudService = {
     ESTADOS_CANCELABLES,
     DIAS_SIN_CERTIFICADO,
-    leerFiltros,
 
     // Se puede resolver si el gestor la marcó recolectada, el generador
     // reportó el problema y aún no está confirmada.
@@ -77,7 +56,7 @@ const solicitudService = {
             .range(desde, hasta);
 
         if (error) {
-            throw new Error(`No pudimos cargar las solicitudes: ${error.message}`);
+            throw errorDeBase('No pudimos cargar las solicitudes.', error);
         }
         return { solicitudes: data || [], total: count || 0 };
     },
@@ -89,7 +68,7 @@ const solicitudService = {
             .eq('id', id)
             .maybeSingle();
 
-        if (error) throw new Error(`No pudimos cargar la solicitud: ${error.message}`);
+        if (error) throw errorDeBase('No pudimos cargar la solicitud.', error);
         if (!solicitud) return null;
 
         const [generador, historial, postulaciones, gestorAsignado] = await Promise.all([
@@ -139,7 +118,7 @@ const solicitudService = {
             if (faltaEnEsquema(error)) {
                 throw new Error('Falta aplicar la migración 20261003000200_resolucion_problemas_reportados.sql para resolver problemas desde el panel.');
             }
-            throw new Error(`No pudimos resolver el problema: ${error.message}`);
+            throw errorDeBase('No pudimos resolver el problema.', error);
         }
         return data;
     },
@@ -157,7 +136,7 @@ const solicitudService = {
             if (faltaEnEsquema(error)) {
                 throw new Error('Falta aplicar la migración 20261003000000_cancelar_solicitud_admin.sql para poder cancelar desde el panel.');
             }
-            throw new Error(`No pudimos cancelar la solicitud: ${error.message}`);
+            throw errorDeBase('No pudimos cancelar la solicitud.', error);
         }
         return data;
     }

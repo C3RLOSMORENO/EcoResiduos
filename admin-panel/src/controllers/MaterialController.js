@@ -1,36 +1,20 @@
 const materialService = require('../services/MaterialService');
 const { leerPagina, paginacion, conAviso } = require('../utils/web');
-const { CATEGORIAS_CATALOGO } = require('../utils/formato');
+const { responderErrorCarga, renderLista } = require('../utils/errores');
+const { filtrosMateriales } = require('../utils/filtros');
 
 const materialController = {
-    async renderMaterialesPage(req, res) {
+    renderMaterialesPage(req, res) {
         const pagina = leerPagina(req.query);
-        const categoria = String(req.query.categoria || '').toUpperCase();
-        const filtros = {
-            q: String(req.query.q || '').trim(),
-            categoria: CATEGORIAS_CATALOGO.includes(categoria) ? categoria : '',
-            orden: ['codigo', '-codigo', 'nombre', '-nombre'].includes(req.query.orden) ? req.query.orden : 'codigo'
-        };
-        try {
-            const { materiales, total } = await materialService.listarMateriales({ ...filtros, pagina });
-            res.render('materiales', {
-                titulo: 'Materiales',
-                activeTab: 'materiales',
-                materiales,
-                filtros,
-                pag: paginacion({ total, pagina, ruta: '/materiales', query: req.query }),
-                errorCarga: null
-            });
-        } catch (err) {
-            res.status(500).render('materiales', {
-                titulo: 'Materiales',
-                activeTab: 'materiales',
-                materiales: [],
-                filtros,
-                pag: null,
-                errorCarga: err.message
-            });
-        }
+        const filtros = filtrosMateriales(req.query);
+        return renderLista(res, 'materiales', {
+            comunes: { titulo: 'Materiales', activeTab: 'materiales', filtros },
+            cargar: async () => {
+                const { materiales, total } = await materialService.listarMateriales({ ...filtros, pagina });
+                return { materiales, pag: paginacion({ total, pagina, ruta: '/materiales', query: req.query }) };
+            },
+            vacio: { materiales: [], pag: null }
+        });
     },
 
     renderNuevoMaterial(req, res) {
@@ -52,7 +36,7 @@ const materialController = {
         }
     },
 
-    async renderEditMaterial(req, res) {
+    async renderEditMaterial(req, res, next) {
         try {
             const { id } = req.params;
             const [material, dependencias] = await Promise.all([
@@ -67,7 +51,7 @@ const materialController = {
                 dependencias
             });
         } catch (err) {
-            res.redirect(conAviso('/materiales', err.message, 'error'));
+            responderErrorCarga(res, next, err, { activeTab: 'materiales', que: 'el material', volver: { href: '/materiales', texto: 'Materiales' } });
         }
     },
 

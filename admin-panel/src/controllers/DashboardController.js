@@ -1,40 +1,37 @@
 const dashboardService = require('../services/DashboardService');
 const reporteService = require('../services/ReporteService');
+const { renderLista } = require('../utils/errores');
 
 const dashboardController = {
-    async renderDashboard(req, res) {
-        try {
-            const [data, resumen] = await Promise.all([
-                dashboardService.getDashboardKpis(),
-                reporteService.reciclajePorMunicipio({}).catch(() => null)
-            ]);
-            res.render('dashboard', {
-                activeTab: 'dashboard',
-                titulo: 'Inicio',
-                kpis: data.kpis,
-                pendientesAccion: data.pendientesAccion,
-                chartData: data.chartData,
-                gestoresPendientes: data.gestoresPendientes,
-                ultimasSolicitudes: data.ultimasSolicitudes,
-                erroresCarga: data.errores,
-                resumenReciclaje: resumen,
-                errorCarga: null
-            });
-        } catch (err) {
-            console.error('Error al renderizar dashboard:', err);
-            res.status(500).render('dashboard', {
-                activeTab: 'dashboard',
-                titulo: 'Inicio',
+    renderDashboard(req, res) {
+        return renderLista(res, 'dashboard', {
+            comunes: { activeTab: 'dashboard', titulo: 'Inicio' },
+            cargar: async () => {
+                // Si el resumen de reciclaje falla, el resto del inicio se muestra igual.
+                const [data, resumen] = await Promise.all([
+                    dashboardService.getDashboardKpis(),
+                    reporteService.reciclajePorMunicipio({}).catch(() => null)
+                ]);
+                return {
+                    kpis: data.kpis,
+                    pendientesAccion: data.pendientesAccion,
+                    chartData: data.chartData,
+                    gestoresPendientes: data.gestoresPendientes,
+                    ultimasSolicitudes: data.ultimasSolicitudes,
+                    erroresCarga: data.errores,
+                    resumenReciclaje: resumen
+                };
+            },
+            vacio: {
                 kpis: null,
                 pendientesAccion: null,
                 chartData: null,
                 gestoresPendientes: [],
                 ultimasSolicitudes: [],
                 erroresCarga: [],
-                resumenReciclaje: null,
-                errorCarga: err.message
-            });
-        }
+                resumenReciclaje: null
+            }
+        });
     }
 };
 

@@ -6,7 +6,7 @@
     <p class="mt-1 text-body-l text-on-surface-variant">Generadores registrados en la app y cuántos residuos han publicado. Datos personales protegidos por la Ley 1581 de 2012.</p>
   </div>
 
-  <form method="GET" action="/ciudadanos" class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-3" role="search" aria-label="Filtrar ciudadanos">
+  <form method="GET" action="/ciudadanos" class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-3" role="search" aria-label="Filtrar ciudadanos">
     <div class="campo md:col-span-2">
       <label for="filtroCiudadano" class="campo-etiqueta">Buscar</label>
       <input type="search" id="filtroCiudadano" name="q" value="<%= filtros.q %>" class="campo-control" aria-describedby="filtroCiudadanoAyuda">
@@ -41,41 +41,43 @@
       <% } %>
     </div>
   <% } else { %>
-    <div class="tabla-contenedor" role="region" aria-labelledby="captionCiudadanos" tabindex="0">
-      <table class="tabla">
-        <caption id="captionCiudadanos">Ciudadanos registrados, del más reciente al más antiguo<%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Documento</th>
-            <th scope="col">Contacto</th>
-            <th scope="col">Municipio</th>
-            <th scope="col">Registro</th>
-            <th scope="col" class="num">Publicaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% generadores.forEach(function (u) { %>
+    <div>
+      <div class="tabla-contenedor" role="region" aria-labelledby="captionCiudadanos" tabindex="0">
+        <table class="tabla">
+          <caption id="captionCiudadanos">Ciudadanos registrados, del más reciente al más antiguo<%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>
+          <thead>
             <tr>
-              <th scope="row"><%= f.textoODato(u.nombre_completo_o_empresa) %></th>
-              <td><%= f.textoODato(u.documento_nit) %></td>
-              <td>
-                <span class="block break-all"><%= f.textoODato(u.email) %></span>
-                <span class="block text-body-s text-on-surface-variant"><%= u.telefono || '' %></span>
-              </td>
-              <td><%= u.municipio ? f.capitalizar(u.municipio) : 'Sin dato' %></td>
-              <td class="whitespace-nowrap"><%= f.fechaCorta(u.created_at) %></td>
-              <td class="num">
-                <% if (u.publicaciones > 0) { %>
-                  <a class="enlace" href="/solicitudes?generador=<%= u.id %>" aria-label="<%= u.publicaciones %> publicaciones de <%= u.nombre_completo_o_empresa %>"><%= f.formatoNumero(u.publicaciones) %></a>
-                <% } else { %>0<% } %>
-              </td>
+              <th scope="col">Nombre</th>
+              <th scope="col">Documento</th>
+              <th scope="col">Contacto</th>
+              <th scope="col">Municipio</th>
+              <th scope="col">Registro</th>
+              <th scope="col" class="num">Publicaciones</th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% generadores.forEach(function (u) { %>
+              <tr>
+                <th scope="row"><%= f.textoODato(u.nombre_completo_o_empresa) %></th>
+                <td><%= f.textoODato(u.documento_nit) %></td>
+                <td>
+                  <span class="block break-all"><%= f.textoODato(u.email) %></span>
+                  <span class="block text-body-s text-on-surface-variant"><%= u.telefono || '' %></span>
+                </td>
+                <td><%= u.municipio ? f.capitalizar(u.municipio) : 'Sin dato' %></td>
+                <td class="whitespace-nowrap"><%= f.fechaCorta(u.created_at) %></td>
+                <td class="num">
+                  <% if (u.publicaciones > 0) { %>
+                    <a class="enlace" href="/solicitudes?generador=<%= u.id %>" aria-label="<%= u.publicaciones %> publicaciones de <%= u.nombre_completo_o_empresa %>"><%= f.formatoNumero(u.publicaciones) %></a>
+                  <% } else { %>0<% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('partials/componentes/paginacion', { pag, nombre: 'ciudadanos' }) %>
     </div>
-    <%- include('partials/componentes/paginacion', { pag, nombre: 'ciudadanos' }) %>
   <% } %>
 </div>
 

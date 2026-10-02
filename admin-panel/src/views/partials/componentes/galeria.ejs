@@ -1,6 +1,7 @@
+<% const tituloModo = p === 'claro' ? 'tituloClaro' : 'tituloOscuro'; %>
 <%# Muestra de todos los componentes. p es el prefijo de los id para poder incluirla dos veces. %>
 <div class="flex flex-col gap-6">
-  <section aria-labelledby="<%= p %>Botones" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Botones <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Botones" class="text-title-l">Botones</h3>
     <div class="flex flex-wrap items-center gap-2">
       <button type="button" class="btn-filled">Filled (acción principal)</button>
@@ -14,7 +15,7 @@
     </div>
   </section>
 
-  <section aria-labelledby="<%= p %>Campos" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Campos <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Campos" class="text-title-l">Campos</h3>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div class="campo">
@@ -35,7 +36,7 @@
     <label class="casilla"><input type="checkbox" checked> Casilla de verificación</label>
   </section>
 
-  <section aria-labelledby="<%= p %>Chips" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Chips <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Chips" class="text-title-l">Chips de categoría y estado</h3>
     <div class="flex flex-wrap gap-2">
       <% Object.keys(f.CATEGORIAS).forEach(function (c) { %><%- include('chip-categoria', { categoria: c }) %><% }); %>
@@ -48,7 +49,7 @@
     </div>
   </section>
 
-  <section aria-labelledby="<%= p %>Tarjetas" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Tarjetas <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Tarjetas" class="text-title-l">Tarjetas y KPI</h3>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
       <div class="tarjeta"><p class="tarjeta-titulo">Tarjeta</p><p class="text-body-m text-on-surface-variant">Contenido sobre surface-container-lowest.</p></div>
@@ -57,7 +58,7 @@
     </div>
   </section>
 
-  <section aria-labelledby="<%= p %>Notas" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Notas <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Notas" class="text-title-l">Avisos</h3>
     <div class="nota nota-info"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Información.</p></div>
     <div class="nota nota-advertencia"><span class="material-symbols-outlined" aria-hidden="true">warning</span><p>Advertencia.</p></div>
@@ -66,9 +67,9 @@
     <div class="aviso"><span class="material-symbols-outlined icono-20" aria-hidden="true">check_circle</span><p class="flex-1">Snackbar: Gestor aprobado.</p></div>
   </section>
 
-  <section aria-labelledby="<%= p %>Tabla" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Tabla <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Tabla" class="text-title-l">Tabla</h3>
-    <div class="tabla-contenedor" role="region" aria-labelledby="<%= p %>TablaCaption" tabindex="0">
+    <div class="tabla-contenedor" role="region" aria-labelledby="<%= p %>TablaCaption <%= tituloModo %>" tabindex="0">
       <table class="tabla">
         <caption id="<%= p %>TablaCaption">Ejemplo de tabla con encabezados de fila y columna</caption>
         <thead><tr><th scope="col" aria-sort="ascending">Municipio</th><th scope="col" class="num">Recolecciones</th><th scope="col" class="num">Total (kg)</th></tr></thead>
@@ -81,7 +82,7 @@
     </div>
   </section>
 
-  <section aria-labelledby="<%= p %>Estados" class="flex flex-col gap-3">
+  <section aria-labelledby="<%= p %>Estados <%= tituloModo %>" class="flex flex-col gap-3">
     <h3 id="<%= p %>Estados" class="text-title-l">Estados vacío y de error</h3>
     <div class="tarjeta"><%- include('estado-vacio', { icono: 'task_alt', titulo: 'Aún no hay gestores por revisar', texto: 'Cuando una empresa se registre desde la app, aparecerá aquí.' }) %></div>
     <%- include('estado-error', { titulo: 'No pudimos cargar las solicitudes.', reintentar: '/componentes' }) %>

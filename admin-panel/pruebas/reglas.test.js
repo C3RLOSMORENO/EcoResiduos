@@ -16,7 +16,9 @@ const app = require('../src/crearApp')();
 let geocodificaciones = 0;
 geocodificador.geocodificar = async () => { geocodificaciones += 1; return { latitud: 7.1, longitud: -73.1 }; };
 
-const SESION = 'sb_access_token=token-admin';
+const { TOKEN_CSRF, COOKIE_CSRF } = require('./apoyo/csrf');
+
+const SESION = `sb_access_token=token-admin; ${COOKIE_CSRF}`;
 
 const datosFormulario = {
     nit: '900396512',
@@ -179,7 +181,7 @@ test('la ruta de resolver redirige con aviso y el botón aparece solo si se pued
     assert.ok(detalle.text.includes('action="/solicitudes/7/problema/no-recogido"'));
     assert.ok(detalle.text.includes('data-confirmar-nota'));
 
-    const res = await request(app).post('/solicitudes/7/problema/no-recogido').set('Cookie', SESION).type('form').send({ nota: 'Se acordó nueva fecha' });
+    const res = await request(app).post('/solicitudes/7/problema/no-recogido').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', SESION).type('form').send({ nota: 'Se acordó nueva fecha' });
     assert.equal(res.status, 302);
     assert.ok(decodeURIComponent(res.headers.location).startsWith('/solicitudes/7?msg=Problema resuelto'));
     assert.deepEqual(supabase.rpcs[0].params, { p_solicitud_id: 7, p_nota: 'Se acordó nueva fecha' });
@@ -214,12 +216,12 @@ test('la ruta antigua de estado solo permite cancelar', async () => {
     supabase.manejador = responderConDatos;
     supabase.manejadorRpc = () => ({ data: { success: true, postulaciones_rechazadas: 1 }, error: null });
 
-    const otro = await request(app).post('/solicitudes/7/estado').set('Cookie', SESION).type('form').send({ estado: 'RECOLECTADO' });
+    const otro = await request(app).post('/solicitudes/7/estado').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', SESION).type('form').send({ estado: 'RECOLECTADO' });
     assert.equal(otro.status, 302);
     assert.match(decodeURIComponent(otro.headers.location), /solo se puede cancelar/);
     assert.equal(supabase.rpcs.length, 0);
 
-    const cancelar = await request(app).post('/solicitudes/7/estado').set('Cookie', SESION).type('form').send({ estado: 'CANCELADO' });
+    const cancelar = await request(app).post('/solicitudes/7/estado').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', SESION).type('form').send({ estado: 'CANCELADO' });
     assert.equal(cancelar.status, 302);
     assert.equal(supabase.rpcs[0].nombre, 'cancelar_solicitud_admin');
 });
