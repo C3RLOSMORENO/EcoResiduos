@@ -350,7 +350,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
           children: [
             Row(
               children: [
-                if (!isRol)
                   IconButton(
                     onPressed: _volver,
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
