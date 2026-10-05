@@ -1,4 +1,4 @@
-class GestorPadron {
+class GestorDirectorio {
   final int id;
   final String nit;
   final String razonSocial;
@@ -10,7 +10,7 @@ class GestorPadron {
   final String? municipio;
   final List<int> materialIds;
 
-  const GestorPadron({
+  const GestorDirectorio({
     required this.id,
     required this.nit,
     required this.razonSocial,
@@ -27,13 +27,13 @@ class GestorPadron {
   bool get estaAprobado => estadoVerificacion.toUpperCase() == 'APROBADO';
   bool get tieneCorreo => emailOficial?.isNotEmpty ?? false;
 
-  factory GestorPadron.fromMap(Map<String, dynamic> map) {
+  factory GestorDirectorio.fromMap(Map<String, dynamic> map) {
     String? texto(String clave) {
       final valor = map[clave]?.toString().trim();
       return valor == null || valor.isEmpty ? null : valor;
     }
 
-    return GestorPadron(
+    return GestorDirectorio(
       id: (map['id'] as num?)?.toInt() ?? 0,
       nit: (map['nit'] ?? '').toString().trim(),
       razonSocial: (map['razon_social'] ?? map['nombre_empresa'] ?? '').toString().trim(),
@@ -61,4 +61,3 @@ class GestorPadron {
     };
   }
 }
-

@@ -10,7 +10,7 @@ import '../../../widgets/empty_state_widget.dart';
 import '../../../widgets/grupo_materiales.dart';
 import '../../solicitudes/models/material_residuo.dart';
 import '../../solicitudes/repositories/solicitudes_repository.dart';
-import '../models/gestor_padron.dart';
+import '../models/gestor_directorio.dart';
 import '../repositories/auth_repository.dart';
 import '../widgets/campo_contrasena.dart';
 import 'revisa_correo_screen.dart';
@@ -56,7 +56,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _horario = TextEditingController();
   String? _municipio;
 
-  GestorPadron? _padron;
+  GestorDirectorio? _gestorDirectorio;
 
   /// La empresa no está registrada y se registra con su permiso.
   bool _registroNuevo = false;
@@ -172,7 +172,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  Future<void> _verificarPadron() async {
+  Future<void> _verificarDirectorio() async {
     if (_nit.text.trim().isEmpty) {
       setState(() => _mostrarErrores = true);
       return;
@@ -182,20 +182,20 @@ class _RegistroScreenState extends State<RegistroScreen> {
       _error = null;
     });
     try {
-      final padron = await _auth.buscarGestorEnPadron(_nit.text);
+      final gestor = await _auth.buscarGestorEnDirectorio(_nit.text);
       if (!mounted) return;
-      if (padron == null) {
+      if (gestor == null) {
         _ir(_Paso.gestorNoEncontrado);
-      } else if (padron.tieneCuentaActiva) {
+      } else if (gestor.tieneCuentaActiva) {
         setState(() => _error = 'Esta empresa ya tiene una cuenta. Inicia sesión con el correo de la empresa.');
-      } else if (!padron.tieneCorreo) {
+      } else if (!gestor.tieneCorreo) {
         setState(
           () => _error =
               'Tu empresa no tiene un correo registrado y lo necesitamos para activar la cuenta. Comunícate con '
               'el administrador de EcoResiduos para actualizarlo.',
         );
       } else {
-        _llenarDesdePadron(padron);
+        _llenarDesdeDirectorio(gestor);
         _ir(_Paso.datosGestor);
       }
     } catch (e) {
@@ -208,22 +208,22 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   /// Con el NIT basta: los datos y materiales registrados quedan llenos y el
   /// gestor solo corrige lo que haya cambiado.
-  void _llenarDesdePadron(GestorPadron padron) {
-    _padron = padron;
+  void _llenarDesdeDirectorio(GestorDirectorio gestor) {
+    _gestorDirectorio = gestor;
     _registroNuevo = false;
-    _razonSocial.text = padron.razonSocial;
-    _correo.text = padron.emailOficial!;
-    _telefono.text = padron.telefono ?? '';
-    _direccion.text = padron.direccion ?? '';
-    _municipio = municipioAdmitido(padron.municipio);
+    _razonSocial.text = gestor.razonSocial;
+    _correo.text = gestor.emailOficial!;
+    _telefono.text = gestor.telefono ?? '';
+    _direccion.text = gestor.direccion ?? '';
+    _municipio = municipioAdmitido(gestor.municipio);
     _materialesElegidos
       ..clear()
-      ..addAll(padron.materialIds);
+      ..addAll(gestor.materialIds);
   }
 
   void _iniciarRegistroNuevo() {
-    if (_padron != null) {
-      _padron = null;
+    if (_gestorDirectorio != null) {
+      _gestorDirectorio = null;
       for (final c in [_razonSocial, _correo, _telefono, _direccion]) {
         c.clear();
       }
@@ -289,8 +289,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
       () => _auth.signUpGestor(
         email: _correo.text,
         password: _contrasena.text,
-        padron: _padron!,
-        razonSocial: _padron!.razonSocial,
+        gestorDirectorio: _gestorDirectorio!,
+        razonSocial: _gestorDirectorio!.razonSocial,
         telefono: _telefono.text,
         direccion: _direccion.text,
         municipio: _municipio!,
@@ -388,7 +388,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           iconoBoton: Icons.verified_outlined,
           isLoading: _enviando,
           textoLoading: 'Buscando…',
-          onPressed: _verificarPadron,
+          onPressed: _verificarDirectorio,
         ),
       ),
       _Paso.datosGestor => _conTeclado(
@@ -591,7 +591,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Widget _pasoDatosGestor() {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final padron = _padron!;
+    final gestor = _gestorDirectorio!;
     return _formulario([
       Container(
         padding: const EdgeInsets.all(EcoSpace.s16),
@@ -613,7 +613,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     style: theme.textTheme.titleSmall?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                   Text(
-                    '${padron.razonSocial} · NIT ${padron.nit} · gestor autorizado.',
+                    '${gestor.razonSocial} · NIT ${gestor.nit} · gestor autorizado.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                 ],
@@ -742,7 +742,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, EcoSpace.s24),
           children: [
             Text(
-              _padron?.materialIds.isNotEmpty ?? false
+              _gestorDirectorio?.materialIds.isNotEmpty ?? false
                   ? 'Marcamos los que tu empresa ya tiene registrados. Agrega o quita lo que haga falta: el '
                         'administrador de EcoResiduos lo verifica antes de mostrarte solicitudes.'
                   : 'Elige lo que tu licencia te permite recibir. El administrador de EcoResiduos lo verifica antes '

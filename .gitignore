@@ -8,7 +8,7 @@
 Thumbs.db
 desktop.ini
 
-# Editores
+# Entornos de desarrollo
 .idea/
 .vscode/
 *.swp
@@ -21,20 +21,20 @@ build/
 .dart_tool/
 coverage/
 
-# Python (entrenamiento del modelo)
+# Python (entrenamiento de modelos)
 __pycache__/
 .venv/
 venv/
 
-# Logs
+# Archivos de registro (Logs)
 *.log
 
-# Supabase CLI: estado local, no las migraciones
+# Supabase CLI (estado local)
 supabase/.temp/
 supabase/.branches/
 supabase/.env
 
-# Copias y volcados de la base de datos
+# Volcados y respaldos locales de base de datos
 *.dump
 *.backup
 *.bak
@@ -42,21 +42,3 @@ supabase/.env
 *.sqlite
 *.sqlite3
 *.db
-
-# Depuración, notas de trabajo y archivos temporales de desarrollo
-*PROMPT*
-*prompt*
-PROMPT*
-prompt*
-*.prompt
-*.prompt.md
-.claude/
-.gemini/
-.agents/
-.cursor/
-.windsurf/
-.antigravity/
-.system_generated/
-*reporte_auditoria*
-docs/diseno/
-
