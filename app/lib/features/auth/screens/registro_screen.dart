@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/guia_categorias.dart';
@@ -351,15 +352,35 @@ class _RegistroScreenState extends State<RegistroScreen> {
           leading: IconButton(tooltip: 'Volver', icon: const Icon(Icons.arrow_back), onPressed: _volver),
           title: Text(titulo),
         ),
-        body: switch (_paso) {
-          _Paso.rol => _pasoRol(),
-          _Paso.generador => _pasoGenerador(),
-          _Paso.verificarGestor => _pasoVerificar(),
-          _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
-          _Paso.datosGestor => _pasoDatosGestor(),
-          _Paso.registroNuevo => _pasoRegistroNuevo(),
-          _Paso.materiales => _pasoMateriales(),
-        },
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: KeyedSubtree(
+            key: ValueKey(_paso),
+            child: switch (_paso) {
+              _Paso.rol => _pasoRol(),
+              _Paso.generador => _pasoGenerador(),
+              _Paso.verificarGestor => _pasoVerificar(),
+              _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
+              _Paso.datosGestor => _pasoDatosGestor(),
+              _Paso.registroNuevo => _pasoRegistroNuevo(),
+              _Paso.materiales => _pasoMateriales(),
+            },
+          ),
+        ),
         bottomNavigationBar: _barra(),
       ),
     );
@@ -482,7 +503,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
     final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(EcoSpace.s16),
-      children: [
+      children: AnimateList(
+        interval: 100.ms,
+        effects: [FadeEffect(duration: 400.ms), SlideEffect(begin: const Offset(0, 0.1), duration: 400.ms, curve: Curves.easeOutCubic)],
+        children: [
         Text('¿Cómo vas a usar EcoResiduos?', style: theme.textTheme.displaySmall),
         const SizedBox(height: EcoSpace.s24),
         RadioGroup<bool>(
@@ -508,6 +532,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -843,36 +868,62 @@ class _TarjetaRol extends StatelessWidget {
     final grupo = RadioGroup.maybeOf<bool>(context);
     final elegido = grupo?.groupValue == valor;
 
-    return Material(
-      color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(EcoRadius.medium)),
-        side: BorderSide(color: elegido ? scheme.primary : scheme.outlineVariant, width: elegido ? 2 : 1),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(EcoRadius.medium),
+        border: Border.all(
+          color: elegido ? scheme.primary : scheme.outlineVariant.withOpacity(0.5), 
+          width: elegido ? 2 : 1
+        ),
+        boxShadow: elegido ? [
+          BoxShadow(
+            color: scheme.primary.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ] : [],
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => grupo?.onChanged(valor),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 96),
-          child: Padding(
-            padding: const EdgeInsets.all(EcoSpace.s16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icono, size: 28, color: scheme.primary),
-                const SizedBox(width: EcoSpace.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(titulo, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: EcoSpace.s4),
-                      Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                    ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => grupo?.onChanged(valor),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 96),
+            child: Padding(
+              padding: const EdgeInsets.all(EcoSpace.s16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: elegido ? scheme.primary.withOpacity(0.1) : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icono, size: 28, color: scheme.primary),
                   ),
-                ),
-                Radio<bool>(value: valor),
-              ],
+                  const SizedBox(width: EcoSpace.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(titulo, style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: elegido ? FontWeight.bold : FontWeight.normal,
+                          color: elegido ? scheme.primary : scheme.onSurface,
+                        )),
+                        const SizedBox(height: EcoSpace.s4),
+                        Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  Radio<bool>(value: valor, groupValue: grupo?.groupValue, onChanged: (_) => grupo?.onChanged(valor)),
+                ],
+              ),
             ),
           ),
         ),
