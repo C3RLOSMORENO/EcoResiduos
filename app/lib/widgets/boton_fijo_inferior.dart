@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../theme/eco_theme.dart';
 
-/// Barra fija inferior con la acción principal (56 dp) y, en formularios, la
-/// meta de avance «N de M campos» con lo que falta.
+/// Barra fija inferior con la acciÃ³n principal (56 dp) y, en formularios, la
+/// meta de avance Â«N de M camposÂ» con lo que falta.
 class BotonFijoInferior extends StatelessWidget {
   const BotonFijoInferior({
     super.key,
@@ -97,6 +97,7 @@ class BotonFijoInferior extends StatelessWidget {
                     minimumSize: const Size(double.infinity, 56),
                     backgroundColor: scheme.primary,
                     foregroundColor: scheme.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(EcoRadius.full)),
                   ),
                   onPressed: isLoading ? null : onPressed,
                   child: isLoading
@@ -111,7 +112,7 @@ class BotonFijoInferior extends StatelessWidget {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                textoLoading ?? 'Procesando…',
+                                textoLoading ?? 'Procesandoâ€¦',
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimary),
                               ),
@@ -140,3 +141,4 @@ class BotonFijoInferior extends StatelessWidget {
     );
   }
 }
+
