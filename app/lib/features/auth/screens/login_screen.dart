@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: scheme.outline.withValues(alpha: 0.1)),
                               ),
-                              child: const EcoLogo(tamano: 64, oscuro: false),
+                              child: const EcoLogo(width: 80, showBadge: false),
                             )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
                             .moveY(begin: -5, end: 5, duration: 3.seconds, curve: Curves.easeInOut),
@@ -200,14 +200,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Tarjeta de Login Glassmorphism
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(EcoRadius.large),
+                          borderRadius: BorderRadius.circular(EcoRadius.extraLarge),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                             child: Container(
                               padding: const EdgeInsets.all(EcoSpace.s24),
                               decoration: BoxDecoration(
                                 color: scheme.surface.withValues(alpha: isDark ? 0.3 : 0.6),
-                                borderRadius: BorderRadius.circular(EcoRadius.large),
+                                borderRadius: BorderRadius.circular(EcoRadius.extraLarge),
                                 border: Border.all(
                                   color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
                                   width: 1.5,
@@ -424,4 +424,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
 
