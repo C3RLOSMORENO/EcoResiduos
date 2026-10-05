@@ -1,5 +1,4 @@
-﻿import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -80,275 +79,297 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Widget _buildCategoryChip(String label, IconData icon, Color color, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(EcoRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    // Colores basados en el diseño de referencia
+    final headerBgColor = scheme.primary; // Dark green
+    final contentBgColor = isDark ? scheme.surface : const Color(0xFFF8F6EE); // Cream/Off-white
+    final fieldBgColor = isDark ? scheme.surfaceContainerHigh : const Color(0xFFE6E3DB); // Input fields
+    final textColorLight = Colors.white.withValues(alpha: 0.9);
+
     return Scaffold(
+      backgroundColor: contentBgColor,
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // 1. Fondo base (Color sólido profundo)
-          Container(color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Header verde con borde ondulado
+            ClipPath(
+              clipper: _HeaderWaveClipper(),
+              child: Container(
+                color: headerBgColor,
+                child: Stack(
+                  children: [
+                    // Iconos decorativos de fondo (flotantes y tenues)
+                    Positioned(
+                      top: 40, right: 20,
+                      child: Icon(Icons.recycling_rounded, size: 80, color: Colors.white.withValues(alpha: 0.05))
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveY(begin: -5, end: 5, duration: 4.seconds, curve: Curves.easeInOut),
+                    ),
+                    Positioned(
+                      top: 150, right: 30,
+                      child: Icon(Icons.eco_rounded, size: 50, color: Colors.white.withValues(alpha: 0.04))
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveY(begin: 5, end: -5, duration: 3.seconds, curve: Curves.easeInOut),
+                    ),
+                    Positioned(
+                      bottom: 80, right: 40,
+                      child: Icon(Icons.battery_charging_full_rounded, size: 60, color: Colors.white.withValues(alpha: 0.06))
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveX(begin: -5, end: 5, duration: 5.seconds, curve: Curves.easeInOut),
+                    ),
 
-          // 2. Animaciones de Malla / Blobs de fondo (Mesh Gradient / Aurora effect)
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.primary.withValues(alpha: isDark ? 0.3 : 0.4),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scaleXY(begin: 1.0, end: 1.3, duration: 6.seconds, curve: Curves.easeInOut)
-            .move(begin: const Offset(0, 0), end: const Offset(50, 50), duration: 7.seconds, curve: Curves.easeInOut),
-          ),
-          Positioned(
-            bottom: -50,
-            right: -50,
-            child: Container(
-              width: 350,
-              height: 350,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.tertiary.withValues(alpha: isDark ? 0.3 : 0.4),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scaleXY(begin: 1.0, end: 1.4, duration: 8.seconds, curve: Curves.easeInOut)
-            .move(begin: const Offset(0, 0), end: const Offset(-50, -30), duration: 9.seconds, curve: Curves.easeInOut),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.3,
-            right: -150,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.secondary.withValues(alpha: isDark ? 0.2 : 0.3),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .move(begin: const Offset(0, 0), end: const Offset(-80, 80), duration: 10.seconds, curve: Curves.easeInOut),
-          ),
-
-          // 3. Filtro de desenfoque masivo para fusionar los colores (Efecto cristal en todo el fondo)
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-              child: const SizedBox(),
-            ),
-          ),
-
-          // 4. Contenido principal
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s24, vertical: EcoSpace.s32),
-                child: Form(
-                  key: _formKey,
-                  child: AutofillGroup(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Encabezado con animación de "flote"
-                        Column(
+                    SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(EcoSpace.s24, EcoSpace.s16, EcoSpace.s24, 70),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(EcoSpace.s16),
-                              decoration: BoxDecoration(
-                                color: scheme.surface.withValues(alpha: isDark ? 0.2 : 0.4),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: scheme.outline.withValues(alpha: 0.1)),
+                            // Logo y marca
+                            Row(
+                              children: [
+                                const EcoLogo(width: 48, showBadge: true),
+                                const SizedBox(width: EcoSpace.s12),
+                                Text(
+                                  'EcoResiduos',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1),
+                            
+                            const SizedBox(height: EcoSpace.s32),
+                            
+                            // Titulo principal
+                            Text(
+                              'Lo que sobra,\nvuelve a servir.',
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                                letterSpacing: -0.5,
                               ),
-                              child: const EcoLogo(width: 80, showBadge: false),
-                            )
-                            .animate(onPlay: (c) => c.repeat(reverse: true))
-                            .moveY(begin: -5, end: 5, duration: 3.seconds, curve: Curves.easeInOut),
+                            ).animate().fadeIn(duration: 600.ms, delay: 200.ms).slideY(begin: 0.1),
+                            
+                            const SizedBox(height: EcoSpace.s12),
+                            
+                            // Subtítulo
+                            Text(
+                              'Identifica tus residuos, publícalos y conecta con gestores ambientales de Santander.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: textColorLight,
+                                height: 1.4,
+                              ),
+                            ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
                             
                             const SizedBox(height: EcoSpace.s24),
-                            Text(
-                              'Bienvenido de vuelta',
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                                color: isDark ? Colors.white : scheme.onSurface,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: EcoSpace.s8),
-                            Text(
-                              'Ingresa tus datos para continuar',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: isDark ? Colors.white70 : scheme.onSurfaceVariant,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
+                            
+                            // Chips de categorias
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _buildCategoryChip('Aprovechables', Icons.recycling_rounded, const Color(0xFFCDEBF5), const Color(0xFF003544)),
+                                _buildCategoryChip('Electrónicos', Icons.devices_rounded, const Color(0xFFE8DEFF), const Color(0xFF2F1A75)),
+                                _buildCategoryChip('Peligrosos', Icons.science_rounded, const Color(0xFFFFE08A), const Color(0xFF1F1600)),
+                                _buildCategoryChip('Escombros', Icons.construction_rounded, const Color(0xFFF0E2D6), const Color(0xFF3A2C20)),
+                              ],
+                            ).animate().fadeIn(duration: 600.ms, delay: 400.ms).scaleXY(begin: 0.95),
                           ],
-                        ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.2, end: 0, curve: Curves.easeOutBack),
-
-                        const SizedBox(height: EcoSpace.s40),
-
-                        // Tarjeta de Login Glassmorphism
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(EcoRadius.extraLarge),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              padding: const EdgeInsets.all(EcoSpace.s24),
-                              decoration: BoxDecoration(
-                                color: scheme.surface.withValues(alpha: isDark ? 0.3 : 0.6),
-                                borderRadius: BorderRadius.circular(EcoRadius.extraLarge),
-                                border: Border.all(
-                                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 24,
-                                    spreadRadius: 0,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  if (_aviso != _AvisoLogin.ninguno) ...[
-                                    _banner().animate().fadeIn().slideY(begin: -0.1),
-                                    const SizedBox(height: EcoSpace.s24),
-                                  ],
-
-                                  // Campo Correo
-                                  TextFormField(
-                                    controller: _correo,
-                                    keyboardType: TextInputType.emailAddress,
-                                    textInputAction: TextInputAction.next,
-                                    autofillHints: const [AutofillHints.email],
-                                    validator: validarCorreo,
-                                    style: TextStyle(fontWeight: FontWeight.w500, color: scheme.onSurface),
-                                    decoration: InputDecoration(
-                                      labelText: 'Correo electrónico',
-                                      prefixIcon: Icon(Icons.email_rounded, color: scheme.primary),
-                                      filled: true,
-                                      fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.7),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(EcoRadius.medium),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(EcoRadius.medium),
-                                        borderSide: BorderSide(color: scheme.primary, width: 2),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: EcoSpace.s20),
-
-                                  // Campo Contraseña
-                                  CampoContrasena(
-                                    controller: _contrasena,
-                                    validator: (v) => (v ?? '').isEmpty ? 'Escribe tu contraseña' : null,
-                                    onSubmitted: (_) => _entrar(),
-                                  ),
-
-                                  const SizedBox(height: EcoSpace.s8),
-
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
-                                      onPressed: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => SolicitarRecuperacionScreen(authRepository: _auth)),
-                                      ),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: isDark ? Colors.white70 : scheme.primary,
-                                        textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                      child: const Text('¿Olvidaste tu contraseña?'),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: EcoSpace.s24),
-
-                                  // Botón principal
-                                  FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      minimumSize: const Size.fromHeight(56),
-                                      backgroundColor: scheme.primary,
-                                      foregroundColor: scheme.onPrimary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(EcoRadius.medium),
-                                      ),
-                                      elevation: 8,
-                                      shadowColor: scheme.primary.withValues(alpha: 0.5),
-                                    ),
-                                    onPressed: _cargando ? null : _entrar,
-                                    child: _cargando
-                                        ? const SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                                          )
-                                        : const Text('Entrar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                                  ).animate(target: _cargando ? 0 : 1).shimmer(duration: 2.5.seconds, color: Colors.white.withValues(alpha: 0.2)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-
-                        const SizedBox(height: EcoSpace.s32),
-
-                        // Enlace a registro
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('¿No tienes cuenta?', style: theme.textTheme.bodyMedium?.copyWith(
-                              color: isDark ? Colors.white70 : scheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            )),
-                            TextButton(
-                              onPressed: () => Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  pageBuilder: (context, animation, secondaryAnimation) => RegistroScreen(authRepository: _auth),
-                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                        position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(animation),
-                                        child: child,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: scheme.primary,
-                                textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                              child: const Text('Regístrate'),
-                            ),
-                          ],
-                        ).animate().fadeIn(duration: 800.ms, delay: 400.ms),
-                      ],
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 2. Formulario inferior (Crema)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(EcoSpace.s24, 0, EcoSpace.s24, EcoSpace.s32),
+              child: Form(
+                key: _formKey,
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Hola de nuevo',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: isDark ? Colors.white : const Color(0xFF192313),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
+                      
+                      const SizedBox(height: 4),
+                      Text(
+                        'Entra para seguir con tus residuos y\nrecolecciones.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
+                        ),
+                      ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
+                      
+                      const SizedBox(height: EcoSpace.s24),
+
+                      if (_aviso != _AvisoLogin.ninguno) ...[
+                        _banner().animate().fadeIn().slideY(begin: -0.1),
+                        const SizedBox(height: EcoSpace.s24),
+                      ],
+
+                      // Campo Correo
+                      TextFormField(
+                        controller: _correo,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        validator: validarCorreo,
+                        style: TextStyle(fontWeight: FontWeight.w500, color: scheme.onSurface),
+                        decoration: InputDecoration(
+                          hintText: 'Correo',
+                          prefixIcon: const Icon(Icons.mail_outline_rounded),
+                          filled: true,
+                          fillColor: fieldBgColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(EcoRadius.medium),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        ),
+                      ).animate().fadeIn(duration: 600.ms, delay: 700.ms).slideY(begin: 0.1),
+                      
+                      const SizedBox(height: EcoSpace.s16),
+
+                      // Campo Contraseña
+                      CampoContrasena(
+                        controller: _contrasena,
+                        validator: (v) => (v ?? '').isEmpty ? 'Escribe tu contraseña' : null,
+                        onSubmitted: (_) => _entrar(),
+                        fillColor: fieldBgColor,
+                      ).animate().fadeIn(duration: 600.ms, delay: 800.ms).slideY(begin: 0.1),
+
+                      const SizedBox(height: 4),
+
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => SolicitarRecuperacionScreen(authRepository: _auth)),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: scheme.primary,
+                            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          child: const Text('¿Olvidaste tu contraseña?'),
+                        ),
+                      ).animate().fadeIn(duration: 600.ms, delay: 900.ms),
+
+                      const SizedBox(height: EcoSpace.s32),
+
+                      // Botón principal
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                          backgroundColor: scheme.primary,
+                          foregroundColor: scheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(EcoRadius.full), // Pastilla completa
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: _cargando ? null : _entrar,
+                        child: _cargando
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('Entrar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward_rounded, size: 20),
+                                ],
+                              ),
+                      ).animate(target: _cargando ? 0 : 1).shimmer(duration: 2.5.seconds, color: Colors.white.withValues(alpha: 0.2)),
+                      
+                      const SizedBox(height: EcoSpace.s20),
+
+                      // Enlace a registro
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('¿No tienes cuenta?', style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
+                          )),
+                          TextButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (context, animation, secondaryAnimation) => RegistroScreen(authRepository: _auth),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(animation),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: scheme.primary,
+                              textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            ),
+                            child: const Text('Regístrate'),
+                          ),
+                        ],
+                      ).animate().fadeIn(duration: 600.ms, delay: 1000.ms),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -425,4 +446,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// Custom Clipper para la forma ondulada del encabezado
+class _HeaderWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 40);
+    
+    // Curva principal (suave y asimétrica)
+    path.quadraticBezierTo(
+      size.width * 0.35, size.height, 
+      size.width * 0.65, size.height - 25,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.85, size.height - 40, 
+      size.width, size.height - 15,
+    );
+    
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
 
