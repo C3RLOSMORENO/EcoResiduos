@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,8 +18,8 @@ import 'revisa_correo_screen.dart';
 
 enum _Paso { rol, generador, verificarGestor, gestorNoEncontrado, datosGestor, registroNuevo, materiales }
 
-/// Registro (03). Primero se elige el rol y despuÃƒÂ©s se ven solo los campos
-/// de ese rol. El gestor escribe su NIT: si ya estÃƒÂ¡ registrado, sus datos y
+/// Registro (03). Primero se elige el rol y después se ven solo los campos
+/// de ese rol. El gestor escribe su NIT: si ya está registrado, sus datos y
 /// materiales se llenan solos; si no, registra la empresa con su permiso
 /// ambiental en PDF. En ambos casos el administrador verifica antes de que
 /// vea solicitudes.
@@ -59,7 +59,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   GestorDirectorio? _gestorDirectorio;
 
-  /// La empresa no estÃƒÂ¡ registrada y se registra con su permiso.
+  /// La empresa no está registrada y se registra con su permiso.
   bool _registroNuevo = false;
   ArchivoPdf? _permiso;
   Future<List<MaterialResiduo>>? _catalogo;
@@ -120,30 +120,30 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Map<String, bool> get _camposGenerador => {
     'nombre': _lleno(_nombre),
     'documento': _lleno(_documento),
-    'telÃƒÂ©fono': _lleno(_telefono),
+    'teléfono': _lleno(_telefono),
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
-    'contraseÃƒÂ±a': validarContrasena(_contrasena.text) == null,
+    'contraseña': validarContrasena(_contrasena.text) == null,
   };
 
   Map<String, bool> get _camposGestor => {
-    'telÃƒÂ©fono': _lleno(_telefono),
-    'direcciÃƒÂ³n': _lleno(_direccion),
+    'teléfono': _lleno(_telefono),
+    'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
-    'contraseÃƒÂ±a': validarContrasena(_contrasena.text) == null,
+    'contraseña': validarContrasena(_contrasena.text) == null,
   };
 
   bool get _nitValido => RegExp(r'^\d{8,15}$').hasMatch(normalizarNit(_nit.text));
 
   Map<String, bool> get _camposGestorNuevo => {
     'NIT': _nitValido,
-    'razÃƒÂ³n social': _lleno(_razonSocial),
+    'razón social': _lleno(_razonSocial),
     'representante legal': _lleno(_representante),
-    'telÃƒÂ©fono': _lleno(_telefono),
-    'direcciÃƒÂ³n': _lleno(_direccion),
+    'teléfono': _lleno(_telefono),
+    'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
-    'contraseÃƒÂ±a': validarContrasena(_contrasena.text) == null,
+    'contraseña': validarContrasena(_contrasena.text) == null,
     'permiso en PDF': _permiso != null,
   };
 
@@ -188,11 +188,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
       if (gestor == null) {
         _ir(_Paso.gestorNoEncontrado);
       } else if (gestor.tieneCuentaActiva) {
-        setState(() => _error = 'Esta empresa ya tiene una cuenta. Inicia sesiÃƒÂ³n con el correo de la empresa.');
+        setState(() => _error = 'Esta empresa ya tiene una cuenta. Inicia sesión con el correo de la empresa.');
       } else if (!gestor.tieneCorreo) {
         setState(
           () => _error =
-              'Tu empresa no tiene un correo registrado y lo necesitamos para activar la cuenta. ComunÃƒÂ­cate con '
+              'Tu empresa no tiene un correo registrado y lo necesitamos para activar la cuenta. Comunícate con '
               'el administrador de EcoResiduos para actualizarlo.',
         );
       } else {
@@ -200,8 +200,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _ir(_Paso.datosGestor);
       }
     } catch (e) {
-      debugPrint('FallÃƒÂ³ la bÃƒÂºsqueda del NIT: $e');
-      if (mounted) setState(() => _error = 'No pudimos buscar tu empresa. Revisa tu conexiÃƒÂ³n.');
+      debugPrint('Falló la búsqueda del NIT: $e');
+      if (mounted) setState(() => _error = 'No pudimos buscar tu empresa. Revisa tu conexión.');
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -318,17 +318,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
     } on AuthException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } on StorageException catch (e) {
-      // Falla al subir el permiso: la cuenta aÃƒÂºn no se creÃƒÂ³.
-      debugPrint('FallÃƒÂ³ la subida del permiso: ${e.statusCode} ${e.message}');
+      // Falla al subir el permiso: la cuenta aún no se creó.
+      debugPrint('Falló la subida del permiso: ${e.statusCode} ${e.message}');
       if (mounted) {
         setState(
-          () => _error =
-              'No pudimos subir tu permiso ambiental, asÃƒÂ­ que aÃƒÂºn no creamos la cuenta. IntÃƒÂ©ntalo de nuevo.',
+          () => _error = 'No pudimos subir tu permiso ambiental, así que aún no creamos la cuenta. Inténtalo de nuevo.',
         );
       }
     } catch (e) {
-      debugPrint('FallÃƒÂ³ el registro: $e');
-      if (mounted) setState(() => _error = 'No pudimos crear la cuenta. Revisa tu conexiÃƒÂ³n e intÃƒÂ©ntalo de nuevo.');
+      debugPrint('Falló el registro: $e');
+      if (mounted) setState(() => _error = 'No pudimos crear la cuenta. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -339,7 +338,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     final isRol = _paso == _Paso.rol;
 
     return ClipPath(
-      clipper: const _HeaderWaveClipper(isRol: true), // We will always show it wavy
+      clipper: _HeaderWaveClipper(isRol: isRol),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
@@ -361,25 +360,30 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 Expanded(
                   child: Text(
                     isRol ? 'EcoResiduos' : titulo,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
             if (isRol) ...[
-               const SizedBox(height: 16),
-               Text('Ãšnete al\ncambio', style: theme.textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900, height: 1.1))
-                  .animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
-               const SizedBox(height: 8),
-               Text('Elige cÃ³mo quieres participar en la red de reciclaje de Santander.', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70))
-                  .animate().fadeIn(duration: 600.ms, delay: 200.ms),
-            ]
-          ]
-        )
-      )
+              const SizedBox(height: 16),
+              Text(
+                'Únete al\ncambio',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
+              const SizedBox(height: 8),
+              Text(
+                'Elige cómo quieres participar en la red de reciclaje.',
+                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -407,33 +411,33 @@ class _RegistroScreenState extends State<RegistroScreen> {
             _buildHeader(titulo),
             Expanded(
               child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero).animate(animation),
-                child: child,
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(_paso),
+                  child: switch (_paso) {
+                    _Paso.rol => _pasoRol(),
+                    _Paso.generador => _pasoGenerador(),
+                    _Paso.verificarGestor => _pasoVerificar(),
+                    _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
+                    _Paso.datosGestor => _pasoDatosGestor(),
+                    _Paso.registroNuevo => _pasoRegistroNuevo(),
+                    _Paso.materiales => _pasoMateriales(),
+                  },
+                ),
               ),
-            );
-          },
-          child: KeyedSubtree(
-            key: ValueKey(_paso),
-            child: switch (_paso) {
-              _Paso.rol => _pasoRol(),
-              _Paso.generador => _pasoGenerador(),
-              _Paso.verificarGestor => _pasoVerificar(),
-              _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
-              _Paso.datosGestor => _pasoDatosGestor(),
-              _Paso.registroNuevo => _pasoRegistroNuevo(),
-              _Paso.materiales => _pasoMateriales(),
-            },
-          ),
-        ),
-        ),
-        ],
+            ),
+          ],
         ),
         bottomNavigationBar: _barra(),
       ),
@@ -450,7 +454,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         BotonFijoInferior(
           textoBoton: 'Crear cuenta',
           isLoading: _enviando,
-          textoLoading: 'Creando cuentaÃ¢â‚¬Â¦',
+          textoLoading: 'Creando cuenta…',
           onPressed: _crearCuentaGenerador,
           camposCompletados: _camposGenerador.values.where((v) => v).length,
           totalCampos: _camposGenerador.length,
@@ -462,7 +466,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           textoBoton: 'Verificar',
           iconoBoton: Icons.verified_outlined,
           isLoading: _enviando,
-          textoLoading: 'BuscandoÃ¢â‚¬Â¦',
+          textoLoading: 'Buscando…',
           onPressed: _verificarDirectorio,
         ),
       ),
@@ -485,10 +489,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
       ),
       _Paso.materiales => BotonFijoInferior(
-        textoBoton: 'Enviar para verificaciÃƒÂ³n',
+        textoBoton: 'Enviar para verificación',
         iconoBoton: Icons.verified_outlined,
         isLoading: _enviando,
-        textoLoading: 'Creando cuentaÃ¢â‚¬Â¦',
+        textoLoading: 'Creando cuenta…',
         onPressed: _crearCuentaGestor,
       ),
       _Paso.gestorNoEncontrado => null,
@@ -564,7 +568,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           SlideEffect(begin: const Offset(0, 0.1), duration: 400.ms, curve: Curves.easeOutCubic),
         ],
         children: [
-          Text('Ã‚Â¿CÃƒÂ³mo vas a usar EcoResiduos?', style: theme.textTheme.displaySmall),
+          Text('¿Cómo vas a usar EcoResiduos?', style: theme.textTheme.displaySmall),
           const SizedBox(height: EcoSpace.s24),
           RadioGroup<bool>(
             groupValue: _esGestor,
@@ -575,8 +579,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   valor: false,
                   icono: Icons.home_work_outlined,
                   titulo: 'Tengo residuos',
-                  texto:
-                      'Hogar, negocio o persona. Identifica tus residuos, publÃƒÂ­calos y encuentra quiÃƒÂ©n los recibe.',
+                  texto: 'Hogar, negocio o persona. Identifica tus residuos, publícalos y encuentra quién los recibe.',
                 ),
                 SizedBox(height: EcoSpace.s12),
                 _TarjetaRol(
@@ -610,9 +613,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
         _campo(
           _telefono,
-          'TelÃƒÂ©fono',
+          'Teléfono',
           teclado: TextInputType.phone,
-          error: _lleno(_telefono) ? null : 'Escribe tu telÃƒÂ©fono',
+          error: _lleno(_telefono) ? null : 'Escribe tu teléfono',
           autofill: const [AutofillHints.telephoneNumber],
         ),
         _selectorMunicipio(),
@@ -625,9 +628,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
         CampoContrasena(
           controller: _contrasena,
-          ayuda: 'MÃƒÂ­nimo 8 caracteres y un nÃƒÂºmero',
+          ayuda: 'Mínimo 8 caracteres y un número',
           autofillHints: const [AutofillHints.newPassword],
           validator: (_) => _mostrarErrores ? validarContrasena(_contrasena.text) : null,
+          fillColor: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surfaceContainerHigh
+              : const Color(0xFFE6E3DB),
         ),
         if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
           _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -639,7 +645,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     final theme = Theme.of(context);
     return _formulario([
       Text(
-        'Escribe el NIT de tu empresa. Si ya estÃƒÂ¡ registrada como gestor autorizado, llenamos tus datos.',
+        'Escribe el NIT de tu empresa. Si ya está registrada como gestor autorizado, llenamos tus datos.',
         style: theme.textTheme.bodyLarge,
       ),
       _campo(
@@ -647,7 +653,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         'NIT',
         teclado: TextInputType.number,
         error: _lleno(_nit) ? null : 'Escribe el NIT de la empresa',
-        ayuda: 'Sin dÃƒÂ­gito de verificaciÃƒÂ³n. Ej.: 900456789',
+        ayuda: 'Sin dígito de verificación. Ej.: 900456789',
       ),
     ]);
   }
@@ -658,7 +664,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         icon: Icons.domain_add_outlined,
         title: 'No encontramos tu empresa',
         description:
-            'No hay un gestor registrado con ese NIT. Revisa que estÃƒÂ© bien escrito o registra tu empresa: llena '
+            'No hay un gestor registrado con ese NIT. Revisa que esté bien escrito o registra tu empresa: llena '
             'sus datos y adjunta en PDF tu licencia o permiso ambiental. '
             'Lo revisamos antes de que recibas solicitudes.',
         ctaText: 'Registrar mi empresa',
@@ -695,7 +701,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     style: theme.textTheme.titleSmall?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                   Text(
-                    '${gestor.razonSocial} Ã‚Â· NIT ${gestor.nit} Ã‚Â· gestor autorizado.',
+                    '${gestor.razonSocial} · NIT ${gestor.nit} · gestor autorizado.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
                   ),
                 ],
@@ -709,26 +715,29 @@ class _RegistroScreenState extends State<RegistroScreen> {
         'Correo de la empresa',
         teclado: TextInputType.emailAddress,
         soloLectura: true,
-        ayuda: 'Es el correo registrado de tu empresa. AhÃƒÂ­ te llega el enlace para activar la cuenta.',
+        ayuda: 'Es el correo registrado de tu empresa. Ahí te llega el enlace para activar la cuenta.',
       ),
       _campo(
         _telefono,
-        'TelÃƒÂ©fono',
+        'Teléfono',
         teclado: TextInputType.phone,
-        error: _lleno(_telefono) ? null : 'Escribe el telÃƒÂ©fono',
+        error: _lleno(_telefono) ? null : 'Escribe el teléfono',
       ),
       _campo(
         _direccion,
-        'DirecciÃƒÂ³n',
+        'Dirección',
         teclado: TextInputType.streetAddress,
-        error: _lleno(_direccion) ? null : 'Escribe la direcciÃƒÂ³n',
+        error: _lleno(_direccion) ? null : 'Escribe la dirección',
         maxLineas: null,
       ),
       _selectorMunicipio(),
       CampoContrasena(
         controller: _contrasena,
-        ayuda: 'MÃƒÂ­nimo 8 caracteres y un nÃƒÂºmero',
+        ayuda: 'Mínimo 8 caracteres y un número',
         autofillHints: const [AutofillHints.newPassword],
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : const Color(0xFFE6E3DB),
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -747,12 +756,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _nit,
         'NIT',
         teclado: TextInputType.number,
-        error: _nitValido ? null : 'El NIT debe tener entre 8 y 15 dÃƒÂ­gitos, sin dÃƒÂ­gito de verificaciÃƒÂ³n',
+        error: _nitValido ? null : 'El NIT debe tener entre 8 y 15 dígitos, sin dígito de verificación',
       ),
       _campo(
         _razonSocial,
-        'RazÃƒÂ³n social',
-        error: _lleno(_razonSocial) ? null : 'Escribe la razÃƒÂ³n social',
+        'Razón social',
+        error: _lleno(_razonSocial) ? null : 'Escribe la razón social',
         maxLineas: null,
       ),
       _campo(
@@ -762,15 +771,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
       ),
       _campo(
         _telefono,
-        'TelÃƒÂ©fono',
+        'Teléfono',
         teclado: TextInputType.phone,
-        error: _lleno(_telefono) ? null : 'Escribe el telÃƒÂ©fono',
+        error: _lleno(_telefono) ? null : 'Escribe el teléfono',
       ),
       _campo(
         _direccion,
-        'DirecciÃƒÂ³n',
+        'Dirección',
         teclado: TextInputType.streetAddress,
-        error: _lleno(_direccion) ? null : 'Escribe la direcciÃƒÂ³n',
+        error: _lleno(_direccion) ? null : 'Escribe la dirección',
         maxLineas: null,
       ),
       _selectorMunicipio(),
@@ -780,19 +789,22 @@ class _RegistroScreenState extends State<RegistroScreen> {
         teclado: TextInputType.emailAddress,
         error: validarCorreo(_correo.text),
         autofill: const [AutofillHints.email],
-        ayuda: 'AhÃƒÂ­ te llega el enlace para activar la cuenta.',
+        ayuda: 'Ahí te llega el enlace para activar la cuenta.',
       ),
       _campo(
         _horario,
-        'Horario de atenciÃƒÂ³n (opcional)',
+        'Horario de atención (opcional)',
         teclado: TextInputType.text,
         maxLargo: 120,
-        ayuda: 'Ej.: Lun a vie 7:30 a 17:00 Ã‚Â· SÃƒÂ¡b 8:00 a 12:00',
+        ayuda: 'Ej.: Lun a vie 7:30 a 17:00 · Sáb 8:00 a 12:00',
       ),
       CampoContrasena(
         controller: _contrasena,
-        ayuda: 'MÃƒÂ­nimo 8 caracteres y un nÃƒÂºmero',
+        ayuda: 'Mínimo 8 caracteres y un número',
         autofillHints: const [AutofillHints.newPassword],
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : const Color(0xFFE6E3DB),
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -887,8 +899,7 @@ class _SelectorPermiso extends StatelessWidget {
                       Text('Licencia o permiso ambiental', style: theme.textTheme.titleSmall),
                       const SizedBox(height: 2),
                       Text(
-                        archivo?.nombre ??
-                            'PDF de mÃƒÂ¡ximo 10 MB expedido por la autoridad ambiental (CDMB, AMB o CAS).',
+                        archivo?.nombre ?? 'PDF de máximo 10 MB expedido por la autoridad ambiental (CDMB, AMB o CAS).',
                         style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                     ],
@@ -933,11 +944,11 @@ class _TarjetaRol extends StatelessWidget {
         color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(EcoRadius.medium),
         border: Border.all(
-          color: elegido ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.5),
+          color: elegido ? scheme.primary : scheme.outlineVariant.withOpacity(0.5),
           width: elegido ? 2 : 1,
         ),
         boxShadow: elegido
-            ? [BoxShadow(color: scheme.primary.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4))]
+            ? [BoxShadow(color: scheme.primary.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))]
             : [],
       ),
       clipBehavior: Clip.antiAlias,
@@ -956,7 +967,7 @@ class _TarjetaRol extends StatelessWidget {
                     duration: const Duration(milliseconds: 300),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: elegido ? scheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+                      color: elegido ? scheme.primary.withOpacity(0.1) : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icono, size: 28, color: scheme.primary),
@@ -1036,5 +1047,3 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant _HeaderWaveClipper oldClipper) => oldClipper.isRol != isRol;
 }
-
-
