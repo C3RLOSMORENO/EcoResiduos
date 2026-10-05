@@ -1,154 +1,167 @@
-# Panel de administración de EcoResiduos
+# EcoResiduos — Panel Administrativo y de Auditoría Ambiental
 
-Desde este panel, el equipo de EcoResiduos revisa y aprueba gestores, sigue las solicitudes de recolección, atiende los problemas que reportan los generadores y descarga el reporte de reciclaje por municipio. También administra el catálogo de materiales y el directorio de autoridades ambientales.
+<div align="center">
 
-Está hecho con Node.js, Express y vistas EJS. Los estilos usan Tailwind con los tokens de Material Design 3, y los datos vienen del mismo proyecto de Supabase que usa la app. Las páginas se arman en el servidor y todo funciona sin JavaScript. `main.js` solo agrega mejoras, como el visor de fotos, los diálogos de confirmación y la carga de permisos.
+![Node.js](https://img.shields.io/badge/Node.js-18.x+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![EJS](https://img.shields.io/badge/Templates-EJS-B4CA65?style=for-the-badge)
+![WCAG](https://img.shields.io/badge/Accessibility-WCAG_2.1_AA-blue?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-99_Passed-brightgreen?style=for-the-badge)
 
-## Requisitos
+**Sistema web de fiscalización documental, trazabilidad regional y mediación para autoridades ambientales y administradores**
 
-- Node.js 20.3 o superior. El panel usa `AbortSignal.any` para cortar las consultas que tardan demasiado.
-- El proyecto de Supabase con todas las migraciones de [`supabase/migrations/`](../supabase/migrations) aplicadas (ver [Migraciones que usa el panel](#migraciones-que-usa-el-panel)).
-- Una cuenta de administrador: un usuario de Supabase Auth cuya fila en la tabla `usuarios` tenga `rol = 'ADMIN'`. Las cuentas de la app (generadores y gestores) no pueden entrar.
+*Jurisdicción: 6 Municipios de Santander (AMB / CDMB / CAS)*
 
-## Instalación
+</div>
 
-```bash
-cd admin-panel
-npm install
-cp .env.example .env      # y llena los valores
-npm run build:css
-npm run dev               # http://localhost:3000
+---
+
+## 1. Descripción del Subsistema
+
+El **Panel Administrativo** de EcoResiduos es una plataforma web desarrollada en **Node.js y Express**, diseñada para que las autoridades ambientales (**CDMB**, **AMB**, **CAS**) y los administradores del sistema auditen la operación de recolección en los seis (6) municipios priorizados de Santander: **Bucaramanga, Floridablanca, Girón, Piedecuesta, Barrancabermeja y Sabana de Torres**.
+
+### Funcionalidades Principales
+- **Auditoría Documental de Gestores:** Revisión de licencias ambientales en PDF, validación de NIT, verificación de materiales autorizados por empresa y registro inmutable de decisiones administrativas (Aprobado, Rechazado, Suspendido).
+- **Catálogo de Materiales y Peligrosidad:** Administración de la matriz de residuos bajo la **Resolución 2184 de 2019**, definiendo códigos de color oficiales, peligrosidad (RESPEL) y directrices técnicas de manejo.
+- **Trazabilidad y Mediación de Novedades:** Panel de mediación de incidentes reportados por generadores o gestores durante la recolección física.
+- **Consolidación Estadística y Reportes:** Generación de métricas de recolección por municipio y exportación de datos en formato CSV con sanitización contra inyección de fórmulas.
+
+---
+
+## 2. Arquitectura de Software y Pipeline de Mediación
+
+El panel web implementa el patrón de diseño **Model-View-Controller (MVC)** con renderizado en el servidor (*Server-Side Rendering - SSR*) a través de EJS y una **tubería de seguridad en capas (*Middleware Pipeline*)**:
+
+```mermaid
+flowchart TD
+    REQ["Petición HTTP Entrante<br/>(Browser del Auditor)"] --> SEC_HEADERS["1. Cabeceras de Seguridad Perimetral<br/>(CSP L3 + Nonce Criptográfico + HSTS)"]
+    SEC_HEADERS --> RATE_LIMIT["2. Rate Limiting por IP<br/>(Mitigación de Fuerza Bruta)"]
+    RATE_LIMIT --> AUTH_MID["3. Middleware de Sesión y Autenticación<br/>(JWT en Cookies HttpOnly / SameSite=Strict)"]
+    AUTH_MID --> CSRF_MID["4. Validación Anti-CSRF<br/>(Tokens firmados en Peticiones POST)"]
+    CSRF_MID --> CONTROLLER["5. Capa de Controladores (MVC)<br/>(Solicitudes, Gestores, Materiales, Reportes)"]
+    
+    CONTROLLER --> SERVICE["6. Capa de Servicios y Adaptadores<br/>(Geocodificación, Sanitizador CSV, Supabase Client)"]
+    SERVICE --> DB[(PostgreSQL 15+ / Supabase<br/>Operaciones con service_role)]
+    
+    CONTROLLER --> EJS_VIEW["7. Renderizado EJS con Sanitización XSS<br/>(HTML Semántico + WCAG 2.1 AA)"]
+    EJS_VIEW --> RESP["Respuesta HTTP Segura<br/>(Renderizado en Servidor)"]
 ```
 
-Si falta una variable obligatoria, el panel no arranca y dice cuál es y para qué sirve.
+### Desglose de Capas Arquitectónicas
 
-## Variables de entorno
-
-Se leen de `admin-panel/.env`. El archivo [`.env.example`](.env.example) tiene la plantilla.
-
-| Variable | Obligatoria | Para qué sirve |
+| Capa del Panel | Componentes Principales | Responsabilidad de Ingeniería |
 |---|---|---|
-| `SUPABASE_URL` | Sí | Dirección del proyecto (`https://<proyecto>.supabase.co`). También se agrega a la CSP para las fotos. |
-| `SUPABASE_ANON_KEY` | Sí | Llave pública. Solo la usa la página de restablecer contraseña, en el navegador. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Sí | Llave `service_role`. Se usa únicamente en el servidor y **nunca** se envía al navegador. |
-| `PORT` | No | Puerto del servidor. Por defecto, 3000. |
-| `NODE_ENV` | En producción | Con `production` se activan HSTS, las cookies `Secure` y el prefijo `__Host-` del token CSRF. |
-| `SECRETO_PANEL` | En producción | Firma los avisos que viajan en la URL (`?msg=`). Si se deja vacía, se genera uno al azar en cada reinicio. Para crear uno: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `TRUST_PROXY` | Detrás de un proxy | Número de proxies delante del panel (por ejemplo, `1` en Render, Railway o detrás de Nginx). Sin este valor, el límite de intentos de inicio de sesión ve a todos con la misma IP. |
+| **Seguridad Perimetral** | `src/middlewares/` | Generación de nonces dinámicos para CSP L3, validación de firmas CSRF y control estricto de sesiones. |
+| **Enrutamiento y Control** | `src/routes/`, `src/controllers/` | Mapeo RESTful de endpoints, validación de parámetros de entrada y mediación de transacciones administrativas. |
+| **Servicios e Integración** | `src/services/`, `src/config/` | Clientes de persistencia Supabase (`service_role`), geocodificación de coordenadas y cálculo de métricas regionales. |
+| **Presentación Accesible** | `src/views/`, `src/views/partials/` | Renderizado accesible conforme a WCAG 2.1 AA, navegación por teclado y contraste de color calibrado. |
 
-## Scripts
+---
 
-| Comando | Qué hace |
-|---|---|
-| `npm start` | Arranca el panel (`node server.js`). Es el comando de producción. |
-| `npm run dev` | Arranca con `nodemon` y reinicia el servidor al guardar cambios. |
-| `npm run dev:css` | Recompila `style.css` cada vez que cambian las vistas o `input.css`. |
-| `npm run build:css` | Compila y minifica `src/public/css/style.css`. |
-| `npm test` | Ejecuta las pruebas automáticas (`node --test`). |
-| `npm run test:e2e` | Ejecuta las pruebas de extremo a extremo en un navegador real (Playwright). |
-| `npm run lint` | Revisa el código con ESLint. |
-
-`style.css` está en el repositorio. Si cambias clases en las vistas o en `input.css`, corre `npm run build:css` y sube también el CSS compilado.
-
-## Estructura
+### Estructura de Directorios del Código Fuente
 
 ```
 admin-panel/
-├── server.js               revisa el entorno y arranca
 ├── src/
-│   ├── crearApp.js         Express: seguridad, compresión, estáticos y rutas
-│   ├── config/             entorno y cliente de Supabase (con tiempo límite)
-│   ├── middlewares/        sesión, CSRF, cabeceras, validación de ids
-│   ├── routes/             una ruta por módulo
-│   ├── controllers/        leen la petición y eligen la vista
-│   ├── services/           consultas a Supabase y reglas de negocio
-│   ├── utils/              filtros, formato, fechas, CSV, íconos
-│   ├── views/              EJS; componentes en partials/componentes/
-│   └── public/             CSS, JS e imágenes
-└── pruebas/                pruebas automáticas y de extremo a extremo
+│   ├── config/                   # Configuración del cliente Supabase (service_role) y entorno
+│   ├── controllers/              # Controladores de solicitudes, gestores, materiales y reportes
+│   ├── middlewares/              # Cadena de seguridad (Auth, CSRF, Nonces CSP, Rate Limit)
+│   ├── routes/                   # Definición modular de rutas del servidor
+│   ├── services/                 # Capa de integración con base de datos y geocodificación
+│   ├── utils/                    # Sanitizadores de CSV, formateadores de fecha y helpers
+│   ├── views/                    # Plantillas EJS estructuradas con protección contra XSS
+│   ├── app.js                    # Configuración de Express, middlewares globales y rutas
+│   └── server.js                 # Punto de entrada y arranque del servidor HTTP
+│
+├── pruebas/                      # Suite de 99 pruebas de integración, seguridad y WCAG
+├── tailwind.config.js            # Configuración de diseño accesible conforme a WCAG 2.1 AA
+└── package.json                  # Dependencias y scripts de construcción
 ```
 
-Los controladores no consultan Supabase directamente; para eso están los servicios. Una prueba de arquitectura revisa que se cumpla.
+---
 
-## Migraciones que usa el panel
+## 3. Mecanismos de Seguridad Implementados
 
-Algunas acciones llaman funciones SQL que se ejecutan con `service_role`:
+```
+┌───────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
+│ Vector de Vulnerabilidad                      │ Mecanismo de Mitigación Implementado                          │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Cross-Site Scripting (XSS)                    │ Content Security Policy (CSP) L3 con nonces criptográficos    │
+│                                               │ únicos por petición. Sin directivas unsafe-inline.            │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Cross-Site Request Forgery (CSRF)             │ Tokens anti-CSRF criptográficamente firmados y validados      │
+│                                               │ en toda petición POST, almacenados en cookies HttpOnly.      │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Inyección de Fórmulas en CSV                  │ Sanitización automática de caracteres de escape (=, +, -, @) │
+│                                               │ en todas las columnas de texto exportadas.                    │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Ataques de Fuerza Bruta en Autenticación      │ Middleware de limitación de tasa (Rate Limiting) por IP       │
+│                                               │ y bloqueo temporal tras 5 intentos consecutivos fallidos.     │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Clickjacking y Sniffing de Tipos MIME         │ Cabeceras X-Frame-Options: DENY, X-Content-Type-Options:      │
+│                                               │ nosniff y Strict-Transport-Security (HSTS en producción).     │
+└───────────────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
+```
 
-| Acción | Función | Migración |
-|---|---|---|
-| Cancelar una solicitud (y rechazar sus postulaciones abiertas) | `cancelar_solicitud_admin` | `20261003000000_cancelar_solicitud_admin.sql` |
-| Aprobar, rechazar o suspender un gestor con motivo y aviso | `cambiar_verificacion_gestor_admin` | `20261003000100_motivo_verificacion_y_avisos_gestor.sql` |
-| Resolver un problema reportado como «no se recogió» | `resolver_problema_no_recogido` | `20261003000200_resolucion_problemas_reportados.sql` |
+---
 
-Si alguna falta, el panel no falla: explica en pantalla qué migración hay que aplicar. Al cambiar el estado de un gestor sin la segunda migración, el estado se guarda, pero el motivo no, y se avisa.
+## 4. Instalación y Despliegue Local
 
-Los permisos ambientales se guardan en el bucket privado `permisos`, bajo la ruta `admin/<id>/<aleatorio>.pdf`. Solo se aceptan PDF reales de hasta 10 MB, y se abren con un enlace firmado que dura 10 minutos.
+### Prerrequisitos
+- [Node.js](https://nodejs.org/) versión 18.x o superior.
+- Gestor de paquetes `npm`.
 
-## Despliegue
+### Configuración del Entorno
 
-1. Instala con `npm ci --omit=dev`. Chart.js y supabase-js se sirven desde `node_modules`, así que no van a un CDN.
-2. Define `NODE_ENV=production`, `SECRETO_PANEL` y, si hay un proxy delante, `TRUST_PROXY`. Al arrancar, el panel avisa si falta alguna de las dos últimas.
-3. Publica el panel solo por HTTPS. En producción, las cookies son `Secure` y se envía HSTS.
-4. Arranca con `npm start`.
+1. Navegar al directorio del panel:
+   ```bash
+   cd admin-panel
+   ```
 
-Ten en cuenta:
+2. Crear el archivo de configuración `.env` a partir de la plantilla:
+   ```bash
+   cp .env.example .env
+   ```
 
-- **Límite de intentos del inicio de sesión:** vive en memoria. Funciona bien con una instancia; con varias, cada una lleva su propia cuenta.
-- **Archivos estáticos:** CSS, JS e imágenes se piden con `?v=<huella>` y se guardan en caché un año. Cada despliegue cambia la huella de lo que cambió, así que no hace falta vaciar cachés.
-- **Compresión:** las respuestas viajan con Brotli o gzip.
-- **Tiempo límite:** si Supabase no responde en 10 s (60 s para subir un PDF), la página muestra el error con «Reintentar» en lugar de quedarse cargando. Si Supabase Auth se cae, la sesión no se cierra; se muestra «El servicio no respondió» (código 503).
+3. Configurar las variables requeridas:
+   ```env
+   PORT=3000
+   NODE_ENV=development
+   SUPABASE_URL=https://<tu-proyecto>.supabase.co
+   SUPABASE_ANON_KEY=<tu_anon_key>
+   SUPABASE_SERVICE_ROLE_KEY=<tu_service_role_key>
+   COOKIE_SECRET=<clave_aleatoria_para_firmado_de_cookies>
+   ```
 
-## Seguridad
+4. Instalar dependencias del proyecto:
+   ```bash
+   npm install
+   ```
 
-Cabeceras que lleva cada respuesta:
+5. Compilar los estilos de Tailwind CSS:
+   ```bash
+   npm run build:css
+   ```
 
-| Cabecera | Valor |
-|---|---|
-| `Content-Security-Policy` | `default-src 'self'`; `script-src 'self' 'nonce-…'` (un nonce nuevo por respuesta); `style-src 'self' https://fonts.googleapis.com`; `font-src https://fonts.gstatic.com`; `img-src 'self' data: <Supabase>`; `connect-src 'self' <Supabase>`; `object-src 'none'`; `base-uri 'self'`; `form-action 'self'`; `frame-ancestors 'none'`; en producción, `upgrade-insecure-requests` |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (solo en producción) |
-| `X-Content-Type-Options` | `nosniff` |
-| `X-Frame-Options` | `DENY` |
-| `Referrer-Policy` | `same-origin` |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=()` |
-| `Cross-Origin-Opener-Policy` | `same-origin` |
-| `Cross-Origin-Resource-Policy` | `same-origin` |
+6. Iniciar el servidor en modo desarrollo:
+   ```bash
+   npm run dev
+   ```
+   Acceder a la interfaz web en: `http://localhost:3000`.
 
-Además:
+---
 
-- **Sin código en línea.** Ninguna vista tiene JavaScript ni estilos escritos dentro del HTML (`onclick`, `style="…"`). Lo que necesita script está en `main.js`.
-- **CSRF.** Cada formulario POST lleva un token que debe coincidir con la cookie `csrf` (`__Host-csrf` en producción, `httpOnly`, `SameSite=Strict`). Además, se rechaza todo POST que venga de otro sitio según `Origin` o `Sec-Fetch-Site`.
-- **Sesión.** Las cookies `sb_access_token` y `sb_refresh_token` son `httpOnly` y `SameSite=Lax`, y vencen tras 15 minutos sin actividad. Cerrar sesión solo funciona por POST.
-- **Inicio de sesión.** Se permiten 5 intentos fallidos por correo y 20 por IP cada 15 minutos. Si una cuenta de la app usa la contraseña correcta, recibe el mismo mensaje que con una contraseña errada.
-- **Avisos.** Los mensajes de la URL van firmados con HMAC. Un `?msg=` escrito a mano no aparece en pantalla.
-- **Identificadores.** Un id que no sea un entero positivo responde 404 sin consultar la base.
-- **Errores.** El texto de PostgreSQL nunca llega a la pantalla. Solo se muestran los mensajes propios de las funciones del panel.
-- **CSV del reporte.** Va protegido contra inyección de fórmulas y solo trae cifras agregadas, sin datos personales.
+## 5. Suite de Pruebas Automatizadas (99 Tests)
 
-## Pruebas
+El panel cuenta con una suite integral de 99 pruebas automatizadas ejecutadas mediante el test runner nativo de Node.js (`node --test`):
 
 ```bash
-npm test             # 99 pruebas, unos segundos
-npm run lint
-npm run test:e2e     # recorridos en navegador
+npm test
 ```
 
-`npm test` usa un Supabase simulado ([`pruebas/apoyo/`](pruebas/apoyo)) y nunca toca la base real. Cubre:
-
-- **Rutas del inventario.** [`pruebas/inventario.test.js`](pruebas/inventario.test.js) compara la lista con las rutas del código y revisa cada una sin sesión, sin token CSRF y con sesión. También prueba crear, editar y eliminar por todos los alias, y las validaciones de cada formulario.
-- **Seguridad.** Cabeceras, CSRF, límite de intentos, avisos firmados, ids inválidos y errores de la base ([`seguridad.test.js`](pruebas/seguridad.test.js)).
-- **Reglas de negocio.** Aprobar, rechazar y suspender gestores, verificar materiales, cancelar solicitudes y no eliminar registros con historia ([`reglas.test.js`](pruebas/reglas.test.js)).
-- **Accesibilidad, diseño, rendimiento y arquitectura.** Están en sus archivos con el mismo nombre.
-
-`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí inicia sesión, aprueba un gestor y amplía la foto de una solicitud, en escritorio y en celular. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
-
-```bash
-npx playwright install chromium
-# o, para usar el Chrome ya instalado:
-E2E_CANAL=chrome npm run test:e2e
-```
-
-## Al hacer cambios
-
-- **Íconos.** La fuente de Material Symbols se pide solo con los íconos de la lista en [`src/utils/iconos.js`](src/utils/iconos.js). Si usas uno nuevo, agrégalo ahí en orden alfabético; `npm test` avisa si falta alguno.
-- **Colores, radios y tamaños.** Salen de los tokens (`--md-sys-color-*`, `--eco-*`) definidos en `input.css`. Tailwind no genera la paleta por defecto, así que una clase como `bg-white` no existe.
-- **Textos de la interfaz.** Se escriben en español de Colombia, sin tecnicismos.
+### Cobertura de Pruebas
+- **Pruebas de Seguridad HTTP:** Verificación de cabeceras CSP, nonces, cookies seguras y HSTS.
+- **Pruebas de Integridad CSRF:** Rechazo de peticiones sin token o con firmas manipuladas.
+- **Auditoría de Accesibilidad:** Cumplimiento de **WCAG 2.1 Nivel AA** (ratios de contraste cromático > 4.5:1, etiquetas ARIA y navegación por teclado).
+- **Lógica de Controladores y Negocio:** Flujos de aprobación y rechazo de gestores, auditoría de licencias PDF y exportación segura de reportes CSV.

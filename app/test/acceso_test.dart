@@ -1,4 +1,4 @@
-import 'package:ecoresiduos/features/auth/models/gestor_padron.dart';
+import 'package:ecoresiduos/features/auth/models/gestor_directorio.dart';
 import 'package:ecoresiduos/features/auth/screens/login_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/registro_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/restablecer_password_screen.dart';
@@ -11,7 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'fakes.dart';
 
-const _padron = GestorPadron(
+const _gestorDirectorio = GestorDirectorio(
   id: 7,
   nit: '900456789',
   razonSocial: 'Reciclajes del Oriente S.A.S.',
@@ -92,7 +92,7 @@ void main() {
 
     testWidgets('con el NIT de una empresa registrada se llenan los datos y los materiales', (tester) async {
       usarPantallaAlta(tester);
-      final auth = FakeAuthRepository()..padron = _padron;
+      final auth = FakeAuthRepository()..gestorDirectorio = _gestorDirectorio;
       await irAVerificacion(tester, auth);
       await verificarNit(tester, '900.456.789-2');
 
@@ -116,7 +116,7 @@ void main() {
 
     testWidgets('una empresa registrada sin correo no puede activar la cuenta', (tester) async {
       final auth = FakeAuthRepository()
-        ..padron = const GestorPadron(
+        ..gestorDirectorio = const GestorDirectorio(
           id: 8,
           nit: '900111222',
           razonSocial: 'Sin Correo S.A.S.',

@@ -7,7 +7,7 @@ import '../../../models/perfil_generador.dart';
 import '../../../models/perfil_gestor.dart';
 import '../../../services/archivo_pdf.dart';
 import '../../../utils/sesion.dart';
-import '../models/gestor_padron.dart';
+import '../models/gestor_directorio.dart';
 
 /// Autenticación, registro y perfil de la cuenta.
 abstract class AuthRepository {
@@ -29,14 +29,14 @@ abstract class AuthRepository {
 
   /// Busca por su NIT una empresa ya registrada como gestor autorizado, con
   /// sus datos de contacto y los materiales que ya tiene registrados.
-  Future<GestorPadron?> buscarGestorEnPadron(String nit);
+  Future<GestorDirectorio?> buscarGestorEnDirectorio(String nit);
 
-  /// Crea la cuenta de un gestor que ya está registrado. Los materiales
+  /// Crea la cuenta de un gestor que ya está registrado en el directorio. Los materiales
   /// declarados quedan pendientes de verificación por el administrador.
   Future<AuthResponse> signUpGestor({
     required String email,
     required String password,
-    required GestorPadron padron,
+    required GestorDirectorio gestorDirectorio,
     required String razonSocial,
     required String telefono,
     required String direccion,
@@ -161,7 +161,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<GestorPadron?> buscarGestorEnPadron(String nit) async {
+  Future<GestorDirectorio?> buscarGestorEnDirectorio(String nit) async {
     final sinDigitoVerificacion = normalizarNit(nit);
     final todosLosDigitos = nit.replaceAll(RegExp(r'[^0-9]'), '');
     if (sinDigitoVerificacion.isEmpty) return null;
@@ -173,14 +173,14 @@ class SupabaseAuthRepository implements AuthRepository {
         )
         .inFilter('nit', {sinDigitoVerificacion, todosLosDigitos}.toList())
         .limit(1);
-    return filas.isEmpty ? null : GestorPadron.fromMap(filas.first);
+    return filas.isEmpty ? null : GestorDirectorio.fromMap(filas.first);
   }
 
   @override
   Future<AuthResponse> signUpGestor({
     required String email,
     required String password,
-    required GestorPadron padron,
+    required GestorDirectorio gestorDirectorio,
     required String razonSocial,
     required String telefono,
     required String direccion,
@@ -193,8 +193,8 @@ class SupabaseAuthRepository implements AuthRepository {
         password: password,
         data: {
           'rol': 'GESTOR',
-          'gestor_id': padron.id,
-          'nit': padron.nit,
+          'gestor_id': gestorDirectorio.id,
+          'nit': gestorDirectorio.nit,
           'razon_social': razonSocial.trim(),
           'telefono': telefono.trim(),
           'direccion': direccion.trim(),

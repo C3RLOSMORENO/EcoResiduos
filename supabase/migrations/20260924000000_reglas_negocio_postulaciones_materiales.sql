@@ -369,7 +369,7 @@ END;
 $$;
 
 
--- 8. Función RPC: Vincular la cuenta de un gestor con su empresa del padrón
+-- 8. Función RPC: Vincular la cuenta de un gestor con su empresa del directorio
 -- El registro corre sin sesión, así que el vínculo se hace en el primer
 -- inicio de sesión. Los metadatos de la cuenta los escribe el cliente, por eso
 -- solo se vincula si el correo confirmado coincide con el de la empresa.
@@ -425,7 +425,7 @@ BEGIN
     END IF;
 
     IF lower(coalesce(v_gestor.email_contacto, '')) <> lower(v_email) THEN
-        RAISE EXCEPTION 'El correo de la cuenta no coincide con el de la empresa en el padrón.' USING ERRCODE = '42501';
+        RAISE EXCEPTION 'El correo de la cuenta no coincide con el de la empresa en el directorio.' USING ERRCODE = '42501';
     END IF;
 
     UPDATE perfiles_gestor

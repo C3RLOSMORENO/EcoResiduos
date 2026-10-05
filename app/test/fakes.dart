@@ -1,4 +1,4 @@
-import 'package:ecoresiduos/features/auth/models/gestor_padron.dart';
+import 'package:ecoresiduos/features/auth/models/gestor_directorio.dart';
 import 'package:ecoresiduos/features/auth/repositories/auth_repository.dart';
 import 'package:ecoresiduos/features/solicitudes/models/material_residuo.dart';
 import 'package:ecoresiduos/features/solicitudes/models/solicitud_recoleccion.dart';
@@ -246,7 +246,7 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
 
 class FakeAuthRepository implements AuthRepository {
   AuthException? errorAlEntrar;
-  GestorPadron? padron;
+  GestorDirectorio? gestorDirectorio;
   AuthException? errorOtp;
 
   final llamadas = <String>[];
@@ -278,16 +278,16 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<GestorPadron?> buscarGestorEnPadron(String nit) async {
-    llamadas.add('padron:$nit');
-    return padron;
+  Future<GestorDirectorio?> buscarGestorEnDirectorio(String nit) async {
+    llamadas.add('directorio:$nit');
+    return gestorDirectorio;
   }
 
   @override
   Future<AuthResponse> signUpGestor({
     required String email,
     required String password,
-    required GestorPadron padron,
+    required GestorDirectorio gestorDirectorio,
     required String razonSocial,
     required String telefono,
     required String direccion,
