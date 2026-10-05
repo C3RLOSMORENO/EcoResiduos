@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SafeArea(
                       bottom: false,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(EcoSpace.s24, EcoSpace.s16, EcoSpace.s24, 70),
+                        padding: const EdgeInsets.fromLTRB(EcoSpace.s24, EcoSpace.s16, EcoSpace.s24, 40),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1),
                             
-                            const SizedBox(height: EcoSpace.s32),
+                            const SizedBox(height: EcoSpace.s16),
                             
                             // Titulo principal
                             Text(
@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ).animate().fadeIn(duration: 600.ms, delay: 200.ms).slideY(begin: 0.1),
                             
-                            const SizedBox(height: EcoSpace.s12),
+                            const SizedBox(height: EcoSpace.s8),
                             
                             // Subtítulo
                             Text(
@@ -197,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
                             
-                            const SizedBox(height: EcoSpace.s24),
+                            const SizedBox(height: EcoSpace.s16),
                             
                             // Chips de categorias
                             Wrap(
@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // 2. Formulario inferior (Crema)
             Padding(
-              padding: const EdgeInsets.fromLTRB(EcoSpace.s24, 0, EcoSpace.s24, EcoSpace.s32),
+              padding: const EdgeInsets.fromLTRB(EcoSpace.s24, 0, EcoSpace.s24, EcoSpace.s16),
               child: Form(
                 key: _formKey,
                 child: AutofillGroup(
@@ -245,11 +245,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
                       
-                      const SizedBox(height: EcoSpace.s24),
+                      const SizedBox(height: EcoSpace.s12),
 
                       if (_aviso != _AvisoLogin.ninguno) ...[
                         _banner().animate().fadeIn().slideY(begin: -0.1),
-                        const SizedBox(height: EcoSpace.s24),
+                        const SizedBox(height: EcoSpace.s16),
                       ],
 
                       // Campo Correo
@@ -273,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 700.ms).slideY(begin: 0.1),
                       
-                      const SizedBox(height: EcoSpace.s16),
+                      const SizedBox(height: EcoSpace.s12),
 
                       // Campo Contraseña
                       CampoContrasena(
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 900.ms),
 
-                      const SizedBox(height: EcoSpace.s32),
+                      const SizedBox(height: EcoSpace.s24),
 
                       // Botón principal
                       FilledButton(
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                       ).animate(target: _cargando ? 0 : 1).shimmer(duration: 2.5.seconds, color: Colors.white.withValues(alpha: 0.2)),
                       
-                      const SizedBox(height: EcoSpace.s20),
+                      const SizedBox(height: EcoSpace.s12),
 
                       // Enlace a registro
                       Row(
@@ -451,16 +451,16 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 40);
+    path.lineTo(0, size.height - 25);
     
     // Curva principal (suave y asimétrica)
     path.quadraticBezierTo(
       size.width * 0.35, size.height, 
-      size.width * 0.65, size.height - 25,
+      size.width * 0.65, size.height - 15,
     );
     path.quadraticBezierTo(
-      size.width * 0.85, size.height - 40, 
-      size.width, size.height - 15,
+      size.width * 0.85, size.height - 25, 
+      size.width, size.height - 10,
     );
     
     path.lineTo(size.width, 0);
@@ -471,4 +471,6 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
+
+
 
