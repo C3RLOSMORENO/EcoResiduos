@@ -3,6 +3,7 @@ const { MUNICIPIOS } = require('../utils/municipios');
 const { jsonParaScript, PARAMETROS_AVISO, avisoAutentico } = require('../utils/web');
 const { recurso } = require('../utils/recursos');
 const { URL_ICONOS } = require('../utils/iconos');
+const { urlFotoPerfil } = require('../utils/fotosPerfil');
 
 // Avisos que arma el navegador (no el servidor), así que no pueden ir
 // firmados: la URL solo trae el código y el texto vive aquí.
@@ -18,6 +19,7 @@ function vistaMiddleware(req, res, next) {
     res.locals.jsonParaScript = jsonParaScript;
     res.locals.recurso = recurso;
     res.locals.urlIconos = URL_ICONOS;
+    res.locals.urlFotoPerfil = urlFotoPerfil;
     res.locals.query = req.query || {};
     res.locals.rutaActual = req.path;
 

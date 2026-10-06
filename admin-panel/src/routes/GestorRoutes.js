@@ -32,6 +32,7 @@ router.post('/:id/estado', gestorController.handleUpdateEstado);
 router.post('/:id(\\d+)/materiales/verificar-todos', gestorController.handleVerificarTodos);
 router.post('/:id(\\d+)/materiales/:materialId(\\d+)/verificar', gestorController.handleVerificarMaterial);
 router.post('/:id(\\d+)/materiales/:materialId(\\d+)/quitar', gestorController.handleQuitarMaterial);
+router.post('/:id(\\d+)/imagenes/quitar', gestorController.handleQuitarImagen);
 router.get('/:id(\\d+)', gestorController.renderDetalleGestor);
 
 module.exports = router;

@@ -272,6 +272,18 @@ function urlSegura(url) {
     return /^https?:\/\//i.test(texto) ? texto : null;
 }
 
+// Iniciales para el avatar: las mismas que muestra la app (utils/formato.dart).
+// Se saltan los conectores y lo que no empieza por letra (S.A.S., números).
+function iniciales(nombre) {
+    const palabras = String(nombre || '')
+        .split(/\s+/)
+        .filter((p) => p && p[0].toUpperCase() !== p[0].toLowerCase())
+        .filter((p) => !['de', 'del', 'la', 'las', 'los', 'y'].includes(p.toLowerCase()));
+    if (palabras.length === 0) return 'E';
+    if (palabras.length === 1) return palabras[0][0].toUpperCase();
+    return (palabras[0][0] + palabras[1][0]).toUpperCase();
+}
+
 module.exports = {
     CATEGORIAS,
     CATEGORIAS_CATALOGO,
@@ -300,5 +312,6 @@ module.exports = {
     finFrase,
     plural,
     textoODato,
-    urlSegura
+    urlSegura,
+    iniciales
 };

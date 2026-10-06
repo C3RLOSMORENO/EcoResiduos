@@ -42,9 +42,12 @@ module.exports = {
   // Los chips y las etiquetas del panel de acceso se arman con la categoría
   // o el estado real (chip-cat-<x>, etiqueta-fondo-<x>): Tailwind no los ve
   // escritos completos en las vistas.
+  // Las clases driver-* del recorrido guiado las pone Driver.js, que vive en
+  // node_modules.
   safelist: [
     { pattern: /^chip-(cat|estado)-/ },
-    { pattern: /^etiqueta-(fondo|texto)-/ }
+    { pattern: /^etiqueta-(fondo|texto)-/ },
+    { pattern: /^driver-/ }
   ],
   theme: {
     // Tamaños de ventana de M3: compacta (< 600), media (600–839),

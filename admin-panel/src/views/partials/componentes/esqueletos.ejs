@@ -1,146 +1,356 @@
 <%
-  // Esqueletos de carga (skeleton screens). main.js los copia dentro de
-  // <main> mientras el servidor arma la página siguiente; cada uno imita la
-  // forma de un tipo de vista para que el cambio no salte.
-  const filas = [0, 1, 2, 3, 4, 5];
-%>
-<template id="esqueleto-lista">
-  <div class="flex flex-col gap-6">
-    <div class="flex flex-col gap-2">
-      <span class="esqueleto esqueleto-titulo w-56"></span>
-      <span class="esqueleto esqueleto-texto w-full max-w-xl"></span>
-    </div>
-    <div class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <% [0, 1, 2, 3].forEach(function () { %>
-        <div class="flex flex-col gap-2">
-          <span class="esqueleto esqueleto-texto w-24"></span>
-          <span class="esqueleto esqueleto-campo"></span>
-        </div>
-      <% }); %>
-    </div>
-    <div class="tabla-contenedor">
-      <div class="esqueleto-tabla-encabezado">
-        <span class="esqueleto esqueleto-texto w-1/4"></span>
-        <span class="esqueleto esqueleto-texto w-1/6"></span>
-        <span class="esqueleto esqueleto-texto w-1/6"></span>
-        <span class="esqueleto esqueleto-texto hidden w-1/6 md:block"></span>
+  // Esqueletos de carga (skeleton screens). main.js copia dentro de <main> el
+  // de la pantalla a la que se va mientras el servidor la arma. Cada uno
+  // reproduce esa pantalla: su título, las etiquetas de sus filtros y los
+  // encabezados de su tabla son los reales (no cambian); solo los datos se
+  // muestran como bloques animados. Así el cambio se siente inmediato y no
+  // salta cuando llega el contenido. Si cambias una pantalla, cambia su
+  // esqueleto: pruebas/esqueletos.test.js compara títulos y columnas.
+  //
+  // Todo el esqueleto es aria-hidden (main.js anuncia «Cargando…» aparte):
+  // por eso los títulos son <p> y no encabezados.
+
+  const FILAS = [0, 1, 2, 3, 4];
+
+  // Bloque animado. ancho: clase de Tailwind (w-24, w-3/4…).
+  function bloque(clase, ancho) { %><span class="esqueleto <%= clase %> <%= ancho || '' %>"></span><% }
+
+  // En ventana compacta el botón baja a su propia línea, como en la página.
+  function encabezado(titulo, botones) { %>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="flex min-w-0 basis-full flex-col gap-2 md:basis-0 md:flex-1">
+        <p class="titulo-pagina"><%= titulo %></p>
+        <% bloque('esqueleto-texto', 'w-full max-w-xl') %>
       </div>
-      <% filas.forEach(function () { %>
-        <div class="esqueleto-tabla-fila">
-          <span class="esqueleto h-12 w-12 shrink-0 rounded-sm"></span>
-          <span class="flex flex-1 flex-col gap-2">
-            <span class="esqueleto esqueleto-texto w-3/5"></span>
-            <span class="esqueleto esqueleto-chip"></span>
-          </span>
-          <span class="esqueleto esqueleto-texto hidden w-24 md:block"></span>
-          <span class="esqueleto esqueleto-chip hidden lg:block"></span>
-          <span class="esqueleto esqueleto-boton"></span>
-        </div>
-      <% }); %>
+      <% if (botones) { %>
+        <div class="flex gap-2"><% botones.forEach(function (ancho) { bloque('esqueleto-boton esqueleto-boton-grande', ancho); }); %></div>
+      <% } %>
     </div>
-  </div>
-</template>
+  <% }
+
+  function campo(etiqueta, clases) { %>
+    <div class="campo <%= clases || '' %>">
+      <span class="campo-etiqueta"><%= etiqueta %></span>
+      <% bloque('esqueleto-campo') %>
+    </div>
+  <% }
+
+  function casilla(etiqueta, clases) { %>
+    <span class="casilla <%= clases || '' %>"><% bloque('esqueleto-casilla') %><%= etiqueta %></span>
+  <% }
+
+  function accionesFiltro(clases) { %>
+    <div class="flex flex-wrap items-center justify-end gap-2 <%= clases || '' %>">
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-28') %>
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-24') %>
+    </div>
+  <% }
+
+  // Celdas de la tabla según el tipo de dato de cada columna.
+  function celda(tipo) {
+    if (tipo === 'miniatura') { %>
+      <span class="flex items-center gap-3"><% bloque('esqueleto-miniatura') %><span class="flex flex-1 flex-col gap-2"><% bloque('esqueleto-texto', 'w-28') %><% bloque('esqueleto-chip') %></span></span>
+    <% } else if (tipo === 'avatar') { %>
+      <span class="flex items-start gap-3"><% bloque('esqueleto-avatar') %><span class="flex flex-1 flex-col gap-2"><% bloque('esqueleto-texto', 'w-44') %><% bloque('esqueleto-texto', 'w-24') %></span></span>
+    <% } else if (tipo === 'avatar-sm') { %>
+      <span class="flex items-center gap-3"><% bloque('esqueleto-avatar esqueleto-avatar-sm') %><% bloque('esqueleto-texto', 'w-40') %></span>
+    <% } else if (tipo === 'dos') { %>
+      <span class="flex flex-col gap-2"><% bloque('esqueleto-texto', 'w-32') %><% bloque('esqueleto-texto', 'w-44') %></span>
+    <% } else if (tipo === 'chip') { %>
+      <% bloque('esqueleto-chip', 'w-24') %>
+    <% } else if (tipo === 'chips') { %>
+      <span class="flex gap-1"><% bloque('esqueleto-chip', 'w-10') %><% bloque('esqueleto-chip', 'w-16') %></span>
+    <% } else if (tipo === 'num') { %>
+      <span class="flex justify-end"><% bloque('esqueleto-texto', 'w-10') %></span>
+    <% } else if (tipo === 'boton') { %>
+      <span class="flex justify-end"><% bloque('esqueleto-boton') %></span>
+    <% } else if (tipo === 'corto') { %>
+      <% bloque('esqueleto-texto', 'w-12') %>
+    <% } else { %>
+      <% bloque('esqueleto-texto', 'w-24') %>
+    <% }
+  }
+
+  // columnas: [{ texto, tipo, num }]; texto '' es la columna de acciones.
+  // Como en la pantalla real, main.js apila la tabla en tarjetas si no cabe;
+  // la del reporte (primera columna fija) nunca se apila.
+  function tabla(caption, columnas, filas, clasesTabla) { %>
+    <div>
+      <div class="tabla-contenedor">
+        <table class="tabla <%= clasesTabla || '' %>" <%= clasesTabla ? 'data-sin-apilar' : '' %>>
+          <% if (caption) { %><caption><%= caption %></caption><% } %>
+          <thead>
+            <tr>
+              <% columnas.forEach(function (c) { %><th class="<%= c.num ? 'num' : '' %>"><% if (c.texto) { %><%= c.texto %><% } else { %><span class="sr-only">Acciones</span><% } %></th><% }); %>
+            </tr>
+          </thead>
+          <tbody>
+            <% (filas || FILAS).forEach(function () { %>
+              <tr>
+                <% columnas.forEach(function (c, i) { %>
+                  <% if (i === 0) { %><th><% celda(c.tipo) %></th><% } else { %><td><% celda(c.tipo) %></td><% } %>
+                <% }); %>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% }
+
+  function migas(seccion) { %>
+    <p class="flex items-center gap-1 text-body-m"><span class="enlace"><%= seccion %></span><span>/</span><% bloque('esqueleto-texto', 'w-40') %></p>
+  <% }
+
+  // Tarjeta con título real y pares etiqueta/dato.
+  function tarjetaDatos(titulo, etiquetas, columnas) { %>
+    <div class="tarjeta flex flex-col gap-4">
+      <p class="tarjeta-titulo"><%= titulo %></p>
+      <div class="grid grid-cols-1 gap-x-6 gap-y-3 <%= columnas === 2 ? 'md:grid-cols-2' : '' %>">
+        <% etiquetas.forEach(function (e) { %>
+          <span class="flex flex-col gap-1"><span class="dato-etiqueta"><%= e %></span><% bloque('esqueleto-texto', 'w-3/4') %></span>
+        <% }); %>
+      </div>
+    </div>
+  <% }
+
+  function tarjetaTexto(titulo, lineas) { %>
+    <div class="tarjeta flex flex-col gap-3">
+      <p class="tarjeta-titulo"><%= titulo %></p>
+      <% for (let i = 0; i < lineas; i++) { bloque('esqueleto-texto', i === lineas - 1 ? 'w-2/3' : 'w-full'); } %>
+    </div>
+  <% }
+%>
 
 <template id="esqueleto-inicio">
   <div class="flex flex-col gap-8">
-    <div class="flex flex-col gap-2">
-      <span class="esqueleto esqueleto-titulo w-40"></span>
-      <span class="esqueleto esqueleto-texto w-full max-w-lg"></span>
-    </div>
+    <% encabezado('Inicio') %>
     <div class="flex flex-col gap-4">
-      <span class="esqueleto esqueleto-subtitulo w-64"></span>
+      <p class="seccion-titulo">Pendientes de acción</p>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <% [0, 1, 2, 3].forEach(function () { %>
           <div class="tarjeta-accion">
             <span class="esqueleto h-6 w-6 shrink-0 rounded-full"></span>
             <span class="flex flex-1 flex-col gap-2">
-              <span class="esqueleto esqueleto-cifra"></span>
-              <span class="esqueleto esqueleto-texto w-4/5"></span>
+              <% bloque('esqueleto-cifra') %>
+              <% bloque('esqueleto-texto', 'w-4/5') %>
+              <% bloque('esqueleto-texto', 'w-3/5') %>
             </span>
           </div>
         <% }); %>
       </div>
     </div>
     <div class="flex flex-col gap-4">
-      <span class="esqueleto esqueleto-subtitulo w-48"></span>
+      <p class="seccion-titulo">Gestores por revisar</p>
+      <% tabla(null, [{ texto: 'Empresa', tipo: 'avatar' }, { texto: 'Municipio' }, { texto: 'Registro' }, { texto: '', tipo: 'boton' }], [0, 1, 2]) %>
+    </div>
+    <div class="flex flex-col gap-4">
+      <p class="seccion-titulo">Cifras generales</p>
       <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <% [0, 1, 2, 3, 4].forEach(function () { %>
-          <div class="tarjeta-kpi">
-            <span class="esqueleto esqueleto-texto w-20"></span>
-            <span class="esqueleto esqueleto-cifra"></span>
-          </div>
+          <div class="tarjeta-kpi"><% bloque('esqueleto-texto', 'w-20') %><% bloque('esqueleto-cifra') %></div>
         <% }); %>
       </div>
-    </div>
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <% [0, 1].forEach(function () { %>
-        <div class="tarjeta flex flex-col gap-3">
-          <span class="esqueleto esqueleto-subtitulo w-56"></span>
-          <span class="esqueleto h-64 w-full rounded-sm"></span>
-        </div>
-      <% }); %>
     </div>
   </div>
 </template>
 
-<template id="esqueleto-detalle">
+<template id="esqueleto-solicitudes">
   <div class="flex flex-col gap-6">
-    <span class="esqueleto esqueleto-texto w-48"></span>
+    <% encabezado('Solicitudes') %>
+    <div class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <% campo('Material', 'xl:col-span-2') %>
+      <% campo('Estado') %>
+      <% campo('Municipio') %>
+      <% campo('Categoría') %>
+      <% campo('Publicada desde') %>
+      <% campo('Publicada hasta') %>
+      <div class="flex flex-col justify-center gap-3">
+        <% casilla('Solo con problema reportado') %>
+        <% casilla('Sin certificado (+7 días)') %>
+      </div>
+      <% accionesFiltro('md:col-span-2 xl:col-span-4') %>
+    </div>
+    <% tabla('Solicitudes', [
+      { texto: 'Material', tipo: 'miniatura' }, { texto: 'Cantidad', tipo: 'num', num: true }, { texto: 'Municipio' },
+      { texto: 'Estado', tipo: 'chip' }, { texto: 'Publicada' }, { texto: '', tipo: 'boton' }
+    ]) %>
+  </div>
+</template>
+
+<template id="esqueleto-gestores">
+  <div class="flex flex-col gap-6">
+    <% encabezado('Gestores', ['w-40']) %>
+    <div class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <% campo('Buscar', 'xl:col-span-2') %>
+      <% campo('Municipio') %>
+      <% campo('Estado de verificación') %>
+      <% casilla('Solo con materiales por verificar', 'md:col-span-2') %>
+      <% accionesFiltro('md:col-span-2') %>
+    </div>
+    <% tabla('Gestores registrados', [
+      { texto: 'Gestor', tipo: 'avatar' }, { texto: 'Municipio' }, { texto: 'Verificación', tipo: 'chip' },
+      { texto: 'Materiales', tipo: 'chips' }, { texto: '', tipo: 'boton' }
+    ]) %>
+  </div>
+</template>
+
+<template id="esqueleto-ciudadanos">
+  <div class="flex flex-col gap-6">
+    <% encabezado('Ciudadanos') %>
+    <div class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-3">
+      <% campo('Buscar', 'md:col-span-2') %>
+      <% campo('Municipio') %>
+      <% accionesFiltro('md:col-span-3') %>
+    </div>
+    <% tabla('Ciudadanos registrados, del más reciente al más antiguo', [
+      { texto: 'Nombre' }, { texto: 'Documento' }, { texto: 'Contacto', tipo: 'dos' }, { texto: 'Municipio' },
+      { texto: 'Registro' }, { texto: 'Publicaciones', tipo: 'num', num: true }
+    ]) %>
+  </div>
+</template>
+
+<template id="esqueleto-materiales">
+  <div class="flex flex-col gap-6">
+    <% encabezado('Materiales', ['w-44']) %>
+    <div class="panel-filtros grid grid-cols-1 gap-4 md:grid-cols-3">
+      <% campo('Buscar', 'md:col-span-2') %>
+      <% campo('Categoría') %>
+      <% accionesFiltro('md:col-span-3') %>
+    </div>
+    <% tabla('Catálogo de materiales', [
+      { texto: 'Código', tipo: 'corto' }, { texto: 'Nombre común', tipo: 'dos' }, { texto: 'Categoría', tipo: 'chip' }, { texto: '', tipo: 'boton' }
+    ]) %>
+  </div>
+</template>
+
+<template id="esqueleto-autoridades">
+  <div class="flex flex-col gap-6">
+    <% encabezado('Autoridades ambientales', ['w-44']) %>
+    <div class="panel-filtros flex flex-wrap items-end gap-4">
+      <% campo('Buscar', 'min-w-0 flex-1') %>
+      <% accionesFiltro() %>
+    </div>
+    <% tabla('Autoridades ambientales, por nombre', [
+      { texto: 'Entidad', tipo: 'dos' }, { texto: 'Jurisdicción' }, { texto: 'Contacto', tipo: 'dos' }, { texto: 'Horario' }, { texto: '', tipo: 'boton' }
+    ]) %>
+  </div>
+</template>
+
+<template id="esqueleto-reportes">
+  <div class="flex flex-col gap-6">
+    <% encabezado('Reciclaje por municipio') %>
+    <div class="flex flex-wrap gap-2">
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-56') %>
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-40') %>
+    </div>
+    <div class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <% campo('Confirmadas desde') %>
+      <% campo('Confirmadas hasta') %>
+      <% campo('Categoría') %>
+      <% accionesFiltro('self-end') %>
+    </div>
+    <% bloque('esqueleto-texto', 'w-80 max-w-full') %>
+    <% tabla('Número de recolecciones confirmadas por municipio y categoría', [
+      { texto: 'Municipio' }, { texto: 'Aprovechable', tipo: 'num', num: true }, { texto: 'Peligroso (RESPEL)', tipo: 'num', num: true },
+      { texto: 'RAEE', tipo: 'num', num: true }, { texto: 'Escombros (RCD)', tipo: 'num', num: true },
+      { texto: 'Riesgo biológico', tipo: 'num', num: true }, { texto: 'Total confirmadas', tipo: 'num', num: true }
+    ], [0, 1, 2, 3, 4, 5], 'tabla-primera-fija') %>
+  </div>
+</template>
+
+<template id="esqueleto-detalle-solicitud">
+  <div class="flex flex-col gap-6">
+    <% migas('Solicitudes') %>
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex flex-col gap-2">
-        <span class="esqueleto esqueleto-titulo w-72 max-w-full"></span>
-        <span class="flex gap-2">
-          <span class="esqueleto esqueleto-chip"></span>
-          <span class="esqueleto esqueleto-chip"></span>
-        </span>
+        <% bloque('esqueleto-titulo', 'w-80 max-w-full') %>
+        <span class="flex gap-2"><% bloque('esqueleto-chip', 'w-28') %><% bloque('esqueleto-chip', 'w-32') %><% bloque('esqueleto-texto', 'w-48 self-center') %></span>
       </div>
-      <span class="esqueleto esqueleto-boton w-32"></span>
+      <div class="flex gap-2"><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-28') %><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-44') %></div>
     </div>
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <% [0, 1].forEach(function () { %>
-        <div class="tarjeta flex flex-col gap-4">
-          <span class="esqueleto esqueleto-subtitulo w-40"></span>
-          <% [0, 1, 2, 3].forEach(function () { %>
-            <div class="flex flex-col gap-2">
-              <span class="esqueleto esqueleto-texto w-24"></span>
-              <span class="esqueleto esqueleto-texto w-3/4"></span>
-            </div>
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div class="tarjeta flex flex-col gap-4">
+        <p class="tarjeta-titulo">Residuo</p>
+        <span class="esqueleto h-64 w-full rounded-sm"></span>
+        <div class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+          <% ['Material', 'Categoría', 'Cantidad estimada', 'Municipio', 'Dirección de recolección'].forEach(function (e) { %>
+            <span class="flex flex-col gap-1"><span class="dato-etiqueta"><%= e %></span><% bloque('esqueleto-texto', 'w-3/4') %></span>
           <% }); %>
         </div>
-      <% }); %>
+      </div>
+      <div class="flex flex-col gap-6">
+        <% tarjetaDatos('Generador', ['Nombre', 'Teléfono de la solicitud', 'Correo'], 2) %>
+        <div class="tarjeta flex flex-col gap-3">
+          <p class="tarjeta-titulo">Gestor asignado</p>
+          <span class="flex items-start gap-3"><% bloque('esqueleto-avatar') %><span class="flex flex-1 flex-col gap-2"><% bloque('esqueleto-texto', 'w-3/5') %><% bloque('esqueleto-texto', 'w-2/5') %></span></span>
+        </div>
+        <% tarjetaTexto('Certificado', 2) %>
+      </div>
     </div>
-    <div class="tarjeta flex flex-col gap-3">
-      <span class="esqueleto esqueleto-subtitulo w-48"></span>
-      <% [0, 1, 2].forEach(function () { %>
-        <span class="esqueleto esqueleto-texto w-full"></span>
-      <% }); %>
+    <div class="flex flex-col gap-3">
+      <p class="seccion-titulo">Postulaciones</p>
+      <% tabla(null, [
+        { texto: 'Gestor', tipo: 'avatar-sm' }, { texto: 'Estado', tipo: 'chip' }, { texto: 'Valor', tipo: 'num', num: true },
+        { texto: 'Propuesta' }, { texto: 'Fecha' }
+      ], [0, 1]) %>
     </div>
+  </div>
+</template>
+
+<template id="esqueleto-detalle-gestor">
+  <div class="flex flex-col gap-6">
+    <% migas('Gestores') %>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <% bloque('esqueleto-avatar esqueleto-avatar-lg') %>
+        <div class="flex flex-col gap-2">
+          <% bloque('esqueleto-titulo', 'w-80 max-w-full') %>
+          <span class="flex gap-2"><% bloque('esqueleto-chip', 'w-24') %><% bloque('esqueleto-texto', 'w-32 self-center') %></span>
+        </div>
+      </div>
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-28') %>
+    </div>
+    <div class="tarjeta flex flex-col gap-4">
+      <p class="tarjeta-titulo">Estado de verificación</p>
+      <% bloque('esqueleto-texto', 'w-full') %>
+      <span class="flex gap-2"><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-32') %><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-32') %></span>
+    </div>
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <% tarjetaDatos('Datos de la empresa', ['Representante o contacto', 'Teléfono', 'Correo', 'Municipio', 'Dirección', 'Horario de atención', 'Disponible para recolectar', 'Cuenta en la app'], 2) %>
+      <div class="flex flex-col gap-6">
+        <% tarjetaTexto('Licencia o permiso ambiental', 2) %>
+        <div class="tarjeta flex flex-col gap-4">
+          <p class="tarjeta-titulo">Imagen en la app</p>
+          <% bloque('esqueleto-texto', 'w-full') %>
+          <span class="esqueleto h-[120px] w-full rounded-md"></span>
+        </div>
+      </div>
+    </div>
+    <% tarjetaTexto('Materiales que recibe', 3) %>
   </div>
 </template>
 
 <template id="esqueleto-formulario">
   <div class="flex flex-col gap-6">
-    <span class="esqueleto esqueleto-texto w-48"></span>
+    <% bloque('esqueleto-texto', 'w-48') %>
     <div class="flex flex-col gap-2">
-      <span class="esqueleto esqueleto-titulo w-64 max-w-full"></span>
-      <span class="esqueleto esqueleto-texto w-full max-w-xl"></span>
+      <% bloque('esqueleto-titulo', 'w-64 max-w-full') %>
+      <% bloque('esqueleto-texto', 'w-full max-w-xl') %>
     </div>
     <div class="tarjeta flex flex-col gap-4">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <% [0, 1, 2, 3, 4, 5].forEach(function () { %>
-          <div class="flex flex-col gap-2">
-            <span class="esqueleto esqueleto-texto w-28"></span>
-            <span class="esqueleto esqueleto-campo"></span>
-          </div>
+          <div class="flex flex-col gap-2"><% bloque('esqueleto-texto', 'w-28') %><% bloque('esqueleto-campo') %></div>
         <% }); %>
       </div>
       <div class="flex flex-col gap-2">
-        <span class="esqueleto esqueleto-texto w-28"></span>
+        <% bloque('esqueleto-texto', 'w-28') %>
         <span class="esqueleto h-24 w-full rounded-sm"></span>
       </div>
       <div class="flex justify-end gap-2">
-        <span class="esqueleto esqueleto-boton w-24"></span>
-        <span class="esqueleto esqueleto-boton w-28"></span>
+        <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-24') %>
+        <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-28') %>
       </div>
     </div>
   </div>

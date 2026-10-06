@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/eco_theme.dart';
 import '../utils/enlaces.dart';
 import 'gestor_card.dart';
+import 'imagen_foto.dart';
 
 /// Plantilla de ficha de contacto (15, 17): banner con volver superpuesto,
 /// avatar en etiqueta, filas de contacto tocables y «Llamar / Cómo llegar»
@@ -23,11 +24,17 @@ class FichaContacto extends StatelessWidget {
     this.horario,
     this.latitud,
     this.longitud,
+    this.fotoUrl,
+    this.portadaUrl,
   });
 
   final String nombre;
   final String subtitulo;
   final String? avatarTexto;
+
+  /// Foto de perfil (logo) y portada del banner; sin ellas, iniciales y color.
+  final String? fotoUrl;
+  final String? portadaUrl;
 
   /// Autoridades: banner en el tono secondary y sin materiales.
   final bool secundaria;
@@ -65,15 +72,26 @@ class FichaContacto extends StatelessWidget {
                 Container(
                   height: 148 + MediaQuery.paddingOf(context).top,
                   color: fondoBanner,
-                  alignment: Alignment.bottomCenter,
-                  child: coloresFranja.isEmpty
-                      ? null
-                      : SizedBox(
-                          height: 10,
-                          child: Row(
-                            children: [for (final c in coloresFranja) Expanded(child: ColoredBox(color: c))],
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Decorativa: no aporta información al lector de pantalla.
+                      if (portadaUrl != null)
+                        ExcludeSemantics(
+                          child: ImagenFoto(ruta: portadaUrl, respaldo: const SizedBox.shrink()),
+                        ),
+                      if (coloresFranja.isNotEmpty)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: SizedBox(
+                            height: 10,
+                            child: Row(
+                              children: [for (final c in coloresFranja) Expanded(child: ColoredBox(color: c))],
+                            ),
                           ),
                         ),
+                    ],
+                  ),
                 ),
                 Positioned(
                   top: MediaQuery.paddingOf(context).top + EcoSpace.s8,
@@ -92,7 +110,13 @@ class FichaContacto extends StatelessWidget {
                 Positioned(
                   left: EcoSpace.s16,
                   bottom: -36,
-                  child: AvatarEntidad(nombre: nombre, texto: avatarTexto, size: 72, secundario: secundaria),
+                  child: AvatarEntidad(
+                    nombre: nombre,
+                    texto: avatarTexto,
+                    size: 72,
+                    secundario: secundaria,
+                    fotoUrl: fotoUrl,
+                  ),
                 ),
               ],
             ),

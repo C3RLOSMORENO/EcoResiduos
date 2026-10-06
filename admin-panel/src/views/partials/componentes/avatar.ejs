@@ -1,0 +1,17 @@
+<%
+  // Avatar de una empresa: su logo si lo puso en la app; si no, o mientras
+  // carga, o si falla (main.js quita la imagen caída), sus iniciales.
+  // Decorativo: el nombre siempre va al lado, así que el lector de pantalla
+  // no lo anuncia.
+  // Parámetros: nombre, ruta (foto_perfil_path), tamano ('sm' | 'md' | 'lg').
+  // Clases escritas completas: Tailwind no ve las que se arman con texto.
+  const TAMANOS = { sm: ['avatar-sm', 32], md: ['avatar-md', 40], lg: ['avatar-lg', 72] };
+  const [claseTamano, pixeles] = TAMANOS[typeof tamano !== 'undefined' && tamano] || TAMANOS.md;
+  const urlAvatar = urlFotoPerfil(typeof ruta !== 'undefined' ? ruta : null);
+%>
+<span class="avatar <%= claseTamano %>" aria-hidden="true">
+  <span><%= f.iniciales(nombre) %></span>
+  <% if (urlAvatar) { %>
+    <img src="<%= urlAvatar %>" alt="" width="<%= pixeles %>" height="<%= pixeles %>" loading="lazy" decoding="async" data-avatar>
+  <% } %>
+</span>

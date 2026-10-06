@@ -29,6 +29,7 @@ const INVENTARIO = [
     'POST /gestores/delete/:id', 'POST /gestores/eliminar/:id', 'GET /gestores/:id/permiso', 'POST /gestores/:id/permiso',
     'POST /gestores/estado/:id', 'POST /gestores/:id/estado', 'POST /gestores/:id/materiales/verificar-todos',
     'POST /gestores/:id/materiales/:materialId/verificar', 'POST /gestores/:id/materiales/:materialId/quitar',
+    'POST /gestores/:id/imagenes/quitar',
     'GET /gestores/:id',
     'GET /materiales', 'POST /materiales', 'POST /materiales/guardar', 'GET /materiales/nuevo',
     'GET /materiales/edit/:id', 'GET /materiales/editar/:id', 'POST /materiales/edit/:id', 'POST /materiales/editar/:id',
@@ -39,7 +40,8 @@ const INVENTARIO = [
     'GET /solicitudes', 'GET /solicitudes/:id', 'POST /solicitudes/:id/cancelar',
     'POST /solicitudes/:id/problema/no-recogido', 'POST /solicitudes/:id/estado',
     'GET /ciudadanos',
-    'GET /reportes', 'GET /reportes/csv'
+    'GET /reportes', 'GET /reportes/csv',
+    'POST /recorridos/:pantalla'
 ];
 
 const PUBLICAS = new Set(['GET /', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout', 'GET /restablecer-password']);
@@ -68,6 +70,7 @@ function rutasDelCodigo() {
 const EJEMPLO_ID = { gestores: '1', materiales: '2', autoridades: '5', solicitudes: '7' };
 const concreta = (ruta) => ruta
     .replace(':materialId', '2')
+    .replace(':pantalla', 'dashboard')
     .replace(':id', EJEMPLO_ID[ruta.split('/')[1]] || '1');
 
 test.beforeEach(() => {

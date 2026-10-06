@@ -77,14 +77,19 @@
             <% gestores.forEach(function (g) { %>
               <tr>
                 <th scope="row">
-                  <a class="enlace" href="/gestores/<%= g.id %>"><%= g.razon_social || 'Sin razón social' %></a>
-                  <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
-                  <% if (g.estado_verificacion === 'PENDIENTE' && g.tiene_permiso) { %>
-                    <span class="mt-1 flex flex-wrap items-center gap-2">
-                      <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
-                      <a class="enlace text-body-s font-normal" href="/gestores/<%= g.id %>/permiso" target="_blank" rel="noopener noreferrer">Ver permiso<span class="sr-only"> de <%= g.razon_social %> (PDF, se abre en una pestaña nueva)</span></a>
+                  <span class="flex items-start gap-3">
+                    <%- include('partials/componentes/avatar', { nombre: g.razon_social, ruta: g.foto_perfil_path, tamano: 'md' }) %>
+                    <span class="flex min-w-0 flex-col">
+                      <a class="enlace" href="/gestores/<%= g.id %>"><%= g.razon_social || 'Sin razón social' %></a>
+                      <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
+                      <% if (g.estado_verificacion === 'PENDIENTE' && g.tiene_permiso) { %>
+                        <span class="mt-1 flex flex-wrap items-center gap-2">
+                          <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
+                          <a class="enlace text-body-s font-normal" href="/gestores/<%= g.id %>/permiso" target="_blank" rel="noopener noreferrer">Ver permiso<span class="sr-only"> de <%= g.razon_social %> (PDF, se abre en una pestaña nueva)</span></a>
+                        </span>
+                      <% } %>
                     </span>
-                  <% } %>
+                  </span>
                 </th>
                 <td><%= g.municipio ? f.capitalizar(g.municipio) : 'Sin dato' %></td>
                 <td><%- include('partials/componentes/chip-estado', { estado: g.estado_verificacion, tipo: 'verificacion' }) %></td>

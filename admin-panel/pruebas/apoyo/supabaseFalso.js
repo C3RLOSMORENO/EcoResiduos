@@ -98,19 +98,32 @@ function crearClienteFalso() {
                 };
             }
         },
+        // Metadatos del usuario (user_metadata) por id, como los guarda Supabase Auth.
+        metadatos: {},
+        authOps: [],
         auth: {
             async getUser(token) {
-                if (token === 'token-admin') return { data: { user: { id: 'admin-1', email: 'admin@ecoresiduos.test' } }, error: null };
+                if (token === 'token-admin') {
+                    return { data: { user: { id: 'admin-1', email: 'admin@ecoresiduos.test', user_metadata: { ...(cliente.metadatos['admin-1'] || {}) } } }, error: null };
+                }
                 return { data: { user: null }, error: { message: 'JWT expired' } };
             },
             admin: {
-                async signOut() { return { error: null }; }
+                async signOut() { return { error: null }; },
+                // Supabase mezcla las claves de primer nivel de user_metadata.
+                async updateUserById(id, atributos) {
+                    cliente.authOps.push({ op: 'actualizar', id, atributos });
+                    cliente.metadatos[id] = { ...(cliente.metadatos[id] || {}), ...(atributos.user_metadata || {}) };
+                    return { data: { user: { id, user_metadata: cliente.metadatos[id] } }, error: null };
+                }
             }
         },
         limpiar() {
             cliente.consultas.length = 0;
             cliente.rpcs.length = 0;
             cliente.storageOps.length = 0;
+            cliente.authOps.length = 0;
+            cliente.metadatos = {};
             cliente.manejador = null;
             cliente.manejadorRpc = null;
         }

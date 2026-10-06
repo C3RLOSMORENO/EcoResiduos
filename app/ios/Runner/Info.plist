@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Esta aplicación necesita acceso a la cámara para identificar residuos.</string>
+	<string>Usamos la cámara para identificar residuos y para tomar tu foto de perfil.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Esta aplicación necesita acceso a tus fotos para identificar o publicar residuos.</string>
+	<string>Usamos tus fotos para identificar o publicar residuos y para tu foto de perfil o portada.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Esta aplicación necesita acceso al micrófono para grabar videos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

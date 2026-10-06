@@ -126,8 +126,13 @@
       <section aria-labelledby="tituloAsignado" class="tarjeta flex flex-col gap-3">
         <h2 id="tituloAsignado" class="tarjeta-titulo">Gestor asignado</h2>
         <% if (gestorAsignado) { %>
-          <p><a class="enlace" href="/gestores/<%= gestorAsignado.id %>"><%= gestorAsignado.razon_social %></a> · NIT <%= gestorAsignado.nit %></p>
-          <p class="text-body-m text-on-surface-variant"><%= f.textoODato(gestorAsignado.telefono_contacto) %> · <%= f.textoODato(gestorAsignado.email_contacto) %></p>
+          <div class="flex items-start gap-3">
+            <%- include('partials/componentes/avatar', { nombre: gestorAsignado.razon_social, ruta: gestorAsignado.foto_perfil_path, tamano: 'md' }) %>
+            <div class="flex min-w-0 flex-col gap-1">
+              <p><a class="enlace" href="/gestores/<%= gestorAsignado.id %>"><%= gestorAsignado.razon_social %></a> · NIT <%= gestorAsignado.nit %></p>
+              <p class="text-body-m text-on-surface-variant"><%= f.textoODato(gestorAsignado.telefono_contacto) %> · <%= f.textoODato(gestorAsignado.email_contacto) %></p>
+            </div>
+          </div>
         <% } else { %>
           <p class="text-on-surface-variant">Aún no hay gestor asignado.</p>
         <% } %>
@@ -169,7 +174,12 @@
           <tbody>
             <% postulaciones.forEach(function (p) { const g = p.perfiles_gestor || {}; %>
               <tr>
-                <th scope="row"><a class="enlace" href="/gestores/<%= p.gestor_id %>"><%= g.razon_social || 'Gestor ' + p.gestor_id %></a></th>
+                <th scope="row">
+                  <span class="flex items-center gap-3">
+                    <%- include('partials/componentes/avatar', { nombre: g.razon_social || 'Gestor', ruta: g.foto_perfil_path, tamano: 'sm' }) %>
+                    <a class="enlace" href="/gestores/<%= p.gestor_id %>"><%= g.razon_social || 'Gestor ' + p.gestor_id %></a>
+                  </span>
+                </th>
                 <td><%- include('partials/componentes/chip-estado', { estado: p.estado, tipo: 'solicitud' }) %></td>
                 <td class="text-right">
                   <% if (p.tipo_valor) { %>

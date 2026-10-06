@@ -46,6 +46,12 @@
       </button>
       <a href="/dashboard" class="flex items-center gap-2 font-display text-title-l text-on-surface no-underline md:hidden">EcoResiduos</a>
       <div class="ml-auto flex items-center gap-1">
+        <% if (typeof recorrido !== 'undefined' && recorrido) { %>
+          <%# Oculto hasta que recorrido.js confirme que hay pasos que mostrar: sin JavaScript no serviría. %>
+          <button type="button" id="botonRecorrido" class="btn-icono" aria-label="Ver recorrido de esta pantalla" title="Ver recorrido de esta pantalla" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true">help</span>
+          </button>
+        <% } %>
         <button type="button" id="botonTema" class="btn-icono" aria-pressed="false" aria-label="Modo oscuro">
           <span class="material-symbols-outlined" aria-hidden="true" data-icono-tema>dark_mode</span>
         </button>
