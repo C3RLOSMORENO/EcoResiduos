@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/gestor.dart';
+import '../services/foto_perfil_service.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import 'categoria_chip.dart';
+import 'imagen_foto.dart';
 
 /// Tarjeta de gestor. En [compacta] es la del carrusel «Cerca de ti» (232 dp);
 /// si no, es la fila de la lista completa con la distancia a la derecha.
@@ -41,7 +43,7 @@ class GestorCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  AvatarEntidad(nombre: gestor.nombre),
+                  AvatarEntidad(nombre: gestor.nombre, fotoUrl: FotoPerfilService.url(gestor.fotoPerfilPath)),
                   const SizedBox(width: EcoSpace.s8),
                   if (gestor.distanciaKm != null)
                     Expanded(
@@ -63,7 +65,7 @@ class GestorCard extends StatelessWidget {
         : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AvatarEntidad(nombre: gestor.nombre),
+              AvatarEntidad(nombre: gestor.nombre, fotoUrl: FotoPerfilService.url(gestor.fotoPerfilPath)),
               const SizedBox(width: EcoSpace.s12),
               Expanded(
                 child: Column(
@@ -129,9 +131,23 @@ class ChipsCategorias extends StatelessWidget {
   }
 }
 
-/// Iniciales en un recuadro terracota (gestores) o secundario (autoridades).
+/// Foto de perfil o, si no hay (o mientras carga, o si falla), iniciales en un
+/// recuadro terracota (gestores) o secundario (autoridades).
+///
+/// Las iniciales y la foto son decorativas: el nombre siempre va al lado, así
+/// que el lector de pantalla no las anuncia. Un [texto] propio (la sigla de
+/// una autoridad) sí aporta información y se anuncia.
 class AvatarEntidad extends StatelessWidget {
-  const AvatarEntidad({super.key, required this.nombre, this.size = 40, this.secundario = false, this.texto});
+  const AvatarEntidad({
+    super.key,
+    required this.nombre,
+    this.size = 40,
+    this.secundario = false,
+    this.texto,
+    this.fotoUrl,
+    this.ajuste = BoxFit.contain,
+    this.circular = false,
+  });
 
   final String nombre;
   final double size;
@@ -140,8 +156,46 @@ class AvatarEntidad extends StatelessWidget {
   /// Texto a mostrar en lugar de las iniciales (p. ej. la sigla).
   final String? texto;
 
+  /// URL de la foto de perfil; null muestra las iniciales.
+  final String? fotoUrl;
+
+  /// `contain` para logos de empresa (no se recortan, van sobre blanco) y
+  /// `cover` para fotos de personas.
+  final BoxFit ajuste;
+
+  /// Círculo para personas; recuadro redondeado para empresas y entidades,
+  /// como distinguen Material Design y la mayoría de apps.
+  final bool circular;
+
+  ShapeBorder _forma({BorderSide lado = BorderSide.none}) => circular
+      ? CircleBorder(side: lado)
+      : RoundedRectangleBorder(borderRadius: const BorderRadius.all(Radius.circular(EcoRadius.small)), side: lado);
+
   @override
   Widget build(BuildContext context) {
+    final iniciales = _iniciales(context);
+    if (fotoUrl == null) return ExcludeSemantics(excluding: texto == null, child: iniciales);
+
+    final esLogo = ajuste == BoxFit.contain;
+    return ExcludeSemantics(
+      excluding: texto == null,
+      child: Container(
+        width: size,
+        height: size,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          // Los logos se diseñan sobre blanco: en modo oscuro uno negro se perdería.
+          color: esLogo ? Colors.white : null,
+          shape: _forma(
+            lado: esLogo ? BorderSide(color: Theme.of(context).colorScheme.outlineVariant) : BorderSide.none,
+          ),
+        ),
+        child: ImagenFoto(ruta: fotoUrl, respaldo: iniciales, fit: ajuste),
+      ),
+    );
+  }
+
+  Widget _iniciales(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final fondo = secundario ? scheme.secondaryContainer : scheme.tertiaryContainer;
@@ -150,10 +204,7 @@ class AvatarEntidad extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: fondo,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
-      ),
+      decoration: ShapeDecoration(color: fondo, shape: _forma()),
       child: FittedBox(
         child: Padding(
           padding: const EdgeInsets.all(4),

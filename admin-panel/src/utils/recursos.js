@@ -14,6 +14,7 @@ const MODULOS = path.join(__dirname, '..', '..', 'node_modules');
 // package.json) en lugar de un CDN: la CSP solo permite scripts propios.
 const LIBRERIAS = {
     '/vendor/chart.umd.js': path.join(MODULOS, 'chart.js', 'dist', 'chart.umd.js'),
+    '/vendor/driver.js': path.join(MODULOS, 'driver.js', 'dist', 'driver.js.iife.js'),
     '/vendor/supabase.js': path.join(MODULOS, '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js')
 };
 

@@ -204,6 +204,17 @@ const gestorController = {
         }
     },
 
+    async handleQuitarImagen(req, res) {
+        const { id } = req.params;
+        const tipo = req.body && req.body.imagen;
+        try {
+            await gestorService.quitarImagen(id, tipo);
+            res.redirect(conAviso(`/gestores/${id}`, tipo === 'perfil' ? 'Logo quitado. El gestor verá sus iniciales hasta que suba otro.' : 'Portada quitada.'));
+        } catch (err) {
+            res.redirect(conAviso(`/gestores/${id}`, err.message, 'error'));
+        }
+    },
+
     async handleVerificarTodos(req, res) {
         const { id } = req.params;
         try {

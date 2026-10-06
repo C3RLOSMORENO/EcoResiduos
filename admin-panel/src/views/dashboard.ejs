@@ -1,4 +1,5 @@
-<%- include('partials/header', { activeTab: 'dashboard', titulo: 'Inicio' }) %>
+<%# Sin datos no hay qué recorrer: con error de carga no se ofrece el recorrido. %>
+<%- include('partials/header', { activeTab: 'dashboard', titulo: 'Inicio', recorrido: errorCarga ? null : recorrido }) %>
 
 <div class="flex flex-col gap-8">
   <div>
@@ -17,7 +18,7 @@
     </div>
   <% } %>
 
-  <section aria-labelledby="tituloPendientes" class="flex flex-col gap-4">
+  <section aria-labelledby="tituloPendientes" class="flex flex-col gap-4" data-recorrido="pendientes">
     <h2 id="tituloPendientes" class="seccion-titulo">Pendientes de acción</h2>
     <%
       const tarjetasPendientes = [
@@ -44,7 +45,7 @@
     </ul>
   </section>
 
-  <section aria-labelledby="tituloPorRevisar" class="flex flex-col gap-4">
+  <section aria-labelledby="tituloPorRevisar" class="flex flex-col gap-4" data-recorrido="gestores">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 id="tituloPorRevisar" class="seccion-titulo">Gestores por revisar</h2>
       <a href="/gestores?estado=PENDIENTE" class="btn-text">Ver todos</a>
@@ -65,8 +66,13 @@
             <% gestoresPendientes.forEach(function (g) { %>
               <tr>
                 <th scope="row">
-                  <%= g.razon_social || 'Sin razón social' %>
-                  <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
+                  <span class="flex items-center gap-3">
+                    <%- include('partials/componentes/avatar', { nombre: g.razon_social, ruta: g.foto_perfil_path, tamano: 'md' }) %>
+                    <span class="flex min-w-0 flex-col">
+                      <%= g.razon_social || 'Sin razón social' %>
+                      <span class="block text-body-s font-normal text-on-surface-variant">NIT <%= g.nit || 'sin dato' %></span>
+                    </span>
+                  </span>
                 </th>
                 <td><%= g.municipio ? f.capitalizar(g.municipio) : 'Sin dato' %></td>
                 <td>
@@ -127,7 +133,7 @@
   <section aria-labelledby="tituloGraficos" class="flex flex-col gap-4">
     <h2 id="tituloGraficos" class="seccion-titulo">Solicitudes en gráficos</h2>
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <figure class="tarjeta flex flex-col gap-3">
+      <figure class="tarjeta flex flex-col gap-3" data-recorrido="graficos">
         <figcaption id="tituloGraficoEstados" class="tarjeta-titulo">Estado de las solicitudes</figcaption>
         <p id="descGraficoEstados" class="text-body-m text-on-surface-variant">
           <%= estadosGrafico.map(function (e) { return e.etiqueta + ': ' + f.formatoNumero(e.valor); }).join('; ') %>.
@@ -269,6 +275,11 @@
     colores: ['--md-sys-color-primary']
   }) %></script>
   <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
+  <% if (recorrido) { %>
+    <script type="application/json" id="datosRecorrido"><%- jsonParaScript(recorrido) %></script>
+    <script src="<%= recurso('/vendor/driver.js') %>" defer></script>
+    <script src="<%= recurso('/js/recorrido.js') %>" defer></script>
+  <% } %>
   <% } %>
 </div>
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/gestor.dart';
+import '../services/foto_perfil_service.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../widgets/categoria_chip.dart';
@@ -32,6 +33,8 @@ class GestorDetalleScreen extends StatelessWidget {
       horario: gestor.horario,
       latitud: gestor.latitud,
       longitud: gestor.longitud,
+      fotoUrl: FotoPerfilService.url(gestor.fotoPerfilPath),
+      portadaUrl: FotoPerfilService.url(gestor.portadaPath),
       contenido: [
         if (materialResaltado != null && categoriaResaltada != null) ...[
           Container(

@@ -860,6 +860,194 @@
     @apply mt-6 flex flex-wrap justify-end gap-2;
   }
 
+  /* ---------- Recorrido guiado (Driver.js) ----------
+     La hoja de Driver.js no se carga: estas reglas la reemplazan con los
+     tokens del panel, así el recorrido sigue el tema claro u oscuro. Las
+     primeras son las que la librería necesita para funcionar. Driver.js
+     muestra y oculta sus botones con style.display, por eso la altura de los
+     botones sale del padding y no de un display flex. */
+  .driver-active .driver-overlay,
+  .driver-active * {
+    pointer-events: none;
+  }
+
+  .driver-active .driver-active-element,
+  .driver-active .driver-active-element *,
+  .driver-popover,
+  .driver-popover * {
+    pointer-events: auto;
+  }
+
+  .driver-no-interaction,
+  .driver-no-interaction * {
+    pointer-events: none !important;
+  }
+
+  .driver-active.driver-no-scroll {
+    overflow: hidden;
+  }
+
+  .driver-active-element-parent-no-scroll {
+    overflow: hidden !important;
+  }
+
+  @keyframes recorrido-aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .driver-fade .driver-overlay,
+  .driver-fade .driver-popover {
+    animation: recorrido-aparecer var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+  }
+
+  .driver-popover {
+    @apply rounded-xl bg-surface-container-high text-on-surface;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1000000000;
+    box-sizing: border-box;
+    min-width: 260px;
+    /* Nunca más ancho que la pantalla menos 16 px a cada lado. */
+    max-width: min(360px, calc(100vw - 32px));
+    margin: 0;
+    padding: 20px 20px 16px;
+    box-shadow: var(--md-sys-elevation-level3);
+  }
+
+  .driver-popover-title {
+    @apply font-display text-title-l text-on-surface;
+    margin: 0;
+    padding-right: 40px;
+  }
+
+  .driver-popover-description {
+    @apply mt-2 text-body-m text-on-surface-variant;
+    margin-bottom: 0;
+  }
+
+  .driver-popover-close-btn {
+    @apply capa-estado rounded-full text-on-surface-variant;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+  }
+
+  .driver-popover-close-btn .material-symbols-outlined {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .driver-popover-footer {
+    margin-top: 20px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .driver-popover-progress-text {
+    @apply text-label-m text-on-surface-variant;
+  }
+
+  .driver-popover-navigation-btns {
+    display: flex;
+    flex-grow: 1;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .driver-popover-footer-btn {
+    @apply capa-estado rounded-full text-label-l text-primary;
+    padding: 9px 16px;
+    line-height: 20px;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+  }
+
+  .driver-popover-next-btn {
+    @apply bg-primary text-on-primary;
+  }
+
+  .driver-popover-btn-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* Con el dedo, los controles del recorrido miden 48 px, como los del panel. */
+  @media (pointer: coarse) {
+    .driver-popover-footer-btn {
+      padding-top: 13px;
+      padding-bottom: 13px;
+    }
+
+    .driver-popover-close-btn {
+      width: 48px;
+      height: 48px;
+      top: 4px;
+      right: 4px;
+    }
+  }
+
+  .driver-popover-arrow {
+    position: absolute;
+    border: 6px solid var(--md-sys-color-surface-container-high);
+  }
+
+  .driver-popover-arrow-side-over,
+  .driver-popover-arrow-side-center,
+  .driver-popover-arrow-none {
+    display: none;
+  }
+
+  .driver-popover-arrow-side-left {
+    left: 100%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .driver-popover-arrow-side-right {
+    right: 100%;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+  }
+
+  .driver-popover-arrow-side-top {
+    top: 100%;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+  }
+
+  .driver-popover-arrow-side-bottom {
+    bottom: 100%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-left-color: transparent;
+  }
+
+  /* Alto contraste de Windows: los fondos desaparecen y la tarjeta necesita borde. */
+  @media (forced-colors: active) {
+    .driver-popover {
+      border: 1px solid CanvasText;
+    }
+  }
+
   /* ---------- Etiquetas de residuo del panel de acceso (SVG) ---------- */
   .etiqueta-fondo-aprovechable { fill: var(--eco-cat-aprovechable-color); }
   .etiqueta-texto-aprovechable { fill: var(--eco-cat-aprovechable-on); }
@@ -888,6 +1076,85 @@
 
   .foto-miniatura img {
     object-fit: cover;
+  }
+
+  /* ---------- Avatar de empresa (logo o iniciales) ----------
+     Recuadro redondeado, como la app: las personas van en círculo y las
+     empresas en recuadro. Las iniciales quedan debajo del logo y se ven si
+     no hay logo, mientras carga o si falla. El logo va completo sobre blanco
+     porque se diseña para fondo claro (en modo oscuro uno negro se perdería). */
+  .avatar {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-small);
+    background-color: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    font-family: 'Barlow Condensed', system-ui, sans-serif;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #FFFFFF;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: inherit;
+  }
+
+  .avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .avatar-md {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+
+  .avatar-lg {
+    width: 72px;
+    height: 72px;
+    font-size: 30px;
+    border-radius: var(--md-sys-shape-corner-medium);
+  }
+
+  /* ---------- Vista previa de la ficha en la app ----------
+     Reproduce la cabecera de la ficha del gestor en la app: portada (o el
+     color de la marca) y el logo encima, abajo a la izquierda. */
+  .vista-ficha {
+    position: relative;
+    margin-bottom: 36px;
+  }
+
+  .vista-ficha-portada {
+    height: 120px;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background-color: var(--md-sys-color-primary-container);
+  }
+
+  .vista-ficha-portada img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .vista-ficha .avatar {
+    position: absolute;
+    left: 16px;
+    bottom: -36px;
+    box-shadow: 0 0 0 3px var(--md-sys-color-surface-container-lowest);
   }
 
   /* La lupa aparece al pasar el puntero o al llegar con el teclado. */
@@ -1026,16 +1293,51 @@
     overflow: hidden;
   }
 
-  /* ---------- Snackbar ---------- */
+  /* ---------- Snackbar ----------
+     M3: en ventana compacta ocupa el ancho con 16 px a los lados; en media y
+     expandida va abajo a la izquierda del área de contenido (después de la
+     navegación, --ancho-nav), con 24 px de margen y entre 344 y 560 px de
+     ancho. Así no queda centrado sobre la navegación ni encima del pie. */
   .avisos-region {
-    @apply pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4;
+    @apply pointer-events-none fixed z-50 flex flex-col gap-2;
+    left: calc(var(--ancho-nav, 0px) + 16px);
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    align-items: stretch;
   }
 
   .aviso {
-    @apply pointer-events-auto flex w-full items-center gap-3 rounded-sm bg-inverse-surface px-4 py-3 text-body-m text-inverse-on-surface;
-    max-width: 560px;
+    @apply pointer-events-auto flex items-center gap-3 rounded-sm bg-inverse-surface py-1 pl-4 pr-2 text-body-m text-inverse-on-surface;
     min-height: 48px;
     box-shadow: var(--md-sys-elevation-level3);
+    animation: aviso-entrar var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate);
+  }
+
+  .aviso > p {
+    @apply py-2;
+  }
+
+  .aviso > .material-symbols-outlined:first-child {
+    color: var(--md-sys-color-inverse-primary);
+  }
+
+  @keyframes aviso-entrar {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (min-width: 600px) {
+    .avisos-region {
+      left: calc(var(--ancho-nav, 0px) + 24px);
+      right: auto;
+      bottom: 24px;
+      align-items: flex-start;
+    }
+
+    .aviso {
+      min-width: 344px;
+      max-width: min(560px, calc(100vw - var(--ancho-nav, 0px) - 48px));
+    }
   }
 
   .aviso .btn-icono {
@@ -1047,9 +1349,12 @@
     @apply block rounded-sm;
     background-color: var(--md-sys-color-surface-container-high);
     background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 60%, transparent) 50%, transparent 100%);
-    background-size: 200% 100%;
+    /* fixed: una sola onda de brillo recorre toda la pantalla, en lugar de
+       que cada bloque parpadee por su cuenta. */
+    background-size: 200vw 100%;
+    background-attachment: fixed;
     background-repeat: no-repeat;
-    animation: esqueleto-brillo 1.4s ease-in-out infinite;
+    animation: esqueleto-brillo 1.6s ease-in-out infinite;
   }
 
   .esqueleto-titulo { height: 36px; }
@@ -1059,6 +1364,18 @@
   .esqueleto-campo { @apply w-full; height: 48px; }
   .esqueleto-chip { @apply w-20 rounded-full; height: 24px; }
   .esqueleto-boton { @apply w-20 shrink-0 rounded-full; height: 32px; }
+  .esqueleto-boton-grande { height: 40px; }
+  .esqueleto-casilla { @apply shrink-0 rounded-xs; width: 20px; height: 20px; }
+  .esqueleto-miniatura { @apply h-12 w-12 shrink-0 rounded-sm; }
+  .esqueleto-avatar { @apply shrink-0 rounded-sm; width: 40px; height: 40px; }
+  .esqueleto-avatar-sm { width: 32px; height: 32px; }
+  .esqueleto-avatar-lg { @apply rounded-md; width: 72px; height: 72px; }
+
+  /* En el esqueleto las celdas solo llevan bloques: se centran en la fila. */
+  [data-esqueleto] .tabla td,
+  [data-esqueleto] .tabla th {
+    vertical-align: middle;
+  }
 
   .esqueleto-tabla-encabezado {
     @apply flex items-center gap-6 bg-surface-container px-4 py-4;
@@ -1303,6 +1620,7 @@ html:not(.js) .boton-menu {
   }
 
   .app-contenido {
+    --ancho-nav: 88px;
     margin-left: 88px;
   }
 
@@ -1342,6 +1660,7 @@ html:not(.js) .boton-menu {
   }
 
   .app-contenido {
+    --ancho-nav: 280px;
     margin-left: 280px;
   }
 

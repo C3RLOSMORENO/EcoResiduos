@@ -81,7 +81,9 @@ admin-panel/
 
 ---
 
-## 3. Mecanismos de Seguridad Implementados
+El logo y la portada que cada gestor pone desde la app están en el bucket público `fotos_perfil` (migración `20261006000000_foto_perfil_y_portada.sql`). El panel los muestra en la lista, la ficha, el inicio y las solicitudes, y desde la ficha se pueden quitar si son inapropiados. Sin esa migración el panel funciona igual, con las iniciales de cada empresa. Las fotos de los ciudadanos no se muestran: el panel no las necesita para su trabajo (Ley 1581 de 2012, principios de finalidad y necesidad).
+
+Los permisos ambientales se guardan en el bucket privado `permisos`, bajo la ruta `admin/<id>/<aleatorio>.pdf`. Solo se aceptan PDF reales de hasta 10 MB, y se abren con un enlace firmado que dura 10 minutos.
 
 ```
 ┌───────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
@@ -104,7 +106,10 @@ admin-panel/
 └───────────────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
----
+1. Instala con `npm ci --omit=dev`. Chart.js, Driver.js y supabase-js se sirven desde `node_modules`, así que no van a un CDN.
+2. Define `NODE_ENV=production`, `SECRETO_PANEL` y, si hay un proxy delante, `TRUST_PROXY`. Al arrancar, el panel avisa si falta alguna de las dos últimas.
+3. Publica el panel solo por HTTPS. En producción, las cookies son `Secure` y se envía HSTS.
+4. Arranca con `npm start`.
 
 ## 4. Instalación y Despliegue Local
 
@@ -144,24 +149,26 @@ admin-panel/
    npm run build:css
    ```
 
-6. Iniciar el servidor en modo desarrollo:
-   ```bash
-   npm run dev
-   ```
-   Acceder a la interfaz web en: `http://localhost:3000`.
+```bash
+npm test             # 120 pruebas, unos segundos
+npm run lint
+npm run test:e2e     # recorridos en navegador
+```
 
 ---
 
 ## 5. Suite de Pruebas Automatizadas (99 Tests)
 
-El panel cuenta con una suite integral de 99 pruebas automatizadas ejecutadas mediante el test runner nativo de Node.js (`node --test`):
+`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí inicia sesión, recorre y salta el recorrido guiado del inicio, aprueba un gestor, quita su logo, comprueba el esqueleto de carga y amplía la foto de una solicitud, en escritorio y en celular. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
 
 ```bash
 npm test
 ```
 
-### Cobertura de Pruebas
-- **Pruebas de Seguridad HTTP:** Verificación de cabeceras CSP, nonces, cookies seguras y HSTS.
-- **Pruebas de Integridad CSRF:** Rechazo de peticiones sin token o con firmas manipuladas.
-- **Auditoría de Accesibilidad:** Cumplimiento de **WCAG 2.1 Nivel AA** (ratios de contraste cromático > 4.5:1, etiquetas ARIA y navegación por teclado).
-- **Lógica de Controladores y Negocio:** Flujos de aprobación y rechazo de gestores, auditoría de licencias PDF y exportación segura de reportes CSV.
+## Al hacer cambios
+
+- **Íconos.** La fuente de Material Symbols se pide solo con los íconos de la lista en [`src/utils/iconos.js`](src/utils/iconos.js). Si usas uno nuevo, agrégalo ahí en orden alfabético; `npm test` avisa si falta alguno.
+- **Colores, radios y tamaños.** Salen de los tokens (`--md-sys-color-*`, `--eco-*`) definidos en `input.css`. Tailwind no genera la paleta por defecto, así que una clase como `bg-white` no existe.
+- **Esqueletos de carga.** Cada pantalla tiene el suyo en [`partials/componentes/esqueletos.ejs`](src/views/partials/componentes/esqueletos.ejs), con su título, sus filtros y sus columnas reales; `main.js` elige cuál mostrar según la ruta. Si cambias una pantalla, cambia su esqueleto: [`pruebas/esqueletos.test.js`](pruebas/esqueletos.test.js) compara ambos.
+- **Recorrido guiado.** Los pasos de cada pantalla, su texto y su versión están en [`src/utils/recorridos.js`](src/utils/recorridos.js); cada paso apunta a un atributo `data-recorrido` de la vista. Para mostrar pasos nuevos a quien ya vio el recorrido, sube `version` y marca esos pasos con `desde` igual a la versión nueva: solo verán lo nuevo. Lo visto se guarda en la cuenta (`user_metadata.recorrido_panel_<pantalla>` de Supabase Auth) y el botón de ayuda del encabezado lo repite. `npm test` revisa el largo de los textos y que cada paso apunte a algo que exista en la página.
+- **Textos de la interfaz.** Se escriben en español de Colombia, sin tecnicismos.

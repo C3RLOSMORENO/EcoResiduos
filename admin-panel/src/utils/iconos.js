@@ -9,7 +9,7 @@ const ICONOS = [
     'category', 'check_circle', 'chevron_left', 'chevron_right', 'close',
     'cloud_off', 'dark_mode', 'delete', 'description', 'domain', 'domain_add',
     'done_all', 'download', 'edit', 'error', 'fact_check', 'filter_list',
-    'fit_screen', 'gpp_maybe', 'group_off', 'groups', 'handshake', 'home',
+    'fit_screen', 'gpp_maybe', 'group_off', 'groups', 'handshake', 'help', 'home',
     'hourglass_top', 'how_to_reg', 'image_not_supported', 'inbox', 'info',
     'light_mode', 'local_shipping', 'lock_reset', 'login', 'logout',
     'mark_email_read', 'menu', 'monitoring', 'open_in_new', 'pause_circle',

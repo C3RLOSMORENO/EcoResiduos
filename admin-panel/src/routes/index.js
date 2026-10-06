@@ -9,6 +9,7 @@ const autoridadRoutes = require('./AutoridadRoutes');
 const solicitudRoutes = require('./SolicitudRoutes');
 const generadorRoutes = require('./GeneradorRoutes');
 const reporteRoutes = require('./ReporteRoutes');
+const recorridoRoutes = require('./RecorridoRoutes');
 const { requireAuth } = require('../middlewares/authMiddleware');
 
 router.use('/', authRoutes);
@@ -25,6 +26,7 @@ router.use('/autoridades', requireAuth, autoridadRoutes);
 router.use('/solicitudes', requireAuth, solicitudRoutes);
 router.use('/ciudadanos', requireAuth, generadorRoutes);
 router.use('/reportes', requireAuth, reporteRoutes);
+router.use('/recorridos', requireAuth, recorridoRoutes);
 router.get('/componentes', requireAuth, (req, res) => {
     res.render('componentes', { titulo: 'Componentes', activeTab: '' });
 });

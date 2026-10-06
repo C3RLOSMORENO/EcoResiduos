@@ -16,14 +16,17 @@
   </nav>
 
   <div class="flex flex-wrap items-start justify-between gap-4">
-    <div class="flex flex-col gap-2">
-      <h1 class="titulo-pagina"><%= gestor.razon_social || 'Gestor sin razón social' %></h1>
-      <div class="flex flex-wrap items-center gap-2">
-        <%- include('partials/componentes/chip-estado', { estado: estado, tipo: 'verificacion' }) %>
-        <% if (estado === 'PENDIENTE' && gestor.tiene_permiso) { %>
-          <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
-        <% } %>
-        <span class="text-body-m text-on-surface-variant">NIT <%= gestor.nit || 'sin dato' %></span>
+    <div class="flex min-w-0 items-center gap-4">
+      <%- include('partials/componentes/avatar', { nombre: gestor.razon_social, ruta: gestor.foto_perfil_path, tamano: 'lg' }) %>
+      <div class="flex min-w-0 flex-col gap-2">
+        <h1 class="titulo-pagina"><%= gestor.razon_social || 'Gestor sin razón social' %></h1>
+        <div class="flex flex-wrap items-center gap-2">
+          <%- include('partials/componentes/chip-estado', { estado: estado, tipo: 'verificacion' }) %>
+          <% if (estado === 'PENDIENTE' && gestor.tiene_permiso) { %>
+            <span class="chip chip-cat-neutro"><span class="material-symbols-outlined" aria-hidden="true">smartphone</span>Registrado desde la app</span>
+          <% } %>
+          <span class="text-body-m text-on-surface-variant">NIT <%= gestor.nit || 'sin dato' %></span>
+        </div>
       </div>
     </div>
     <a href="/gestores/edit/<%= gestor.id %>" class="btn-outlined">
@@ -120,20 +123,62 @@
       </dl>
     </section>
 
-    <section aria-labelledby="tituloPermiso" class="tarjeta flex flex-col gap-4">
-      <h2 id="tituloPermiso" class="tarjeta-titulo">Licencia o permiso ambiental</h2>
-      <% if (gestor.tiene_permiso) { %>
-        <p class="text-body-m text-on-surface-variant">El PDF se abre en una pestaña nueva con un enlace que vence a los 10 minutos.</p>
-        <p>
-          <a href="/gestores/<%= gestor.id %>/permiso" target="_blank" rel="noopener noreferrer" class="btn-tonal">
-            <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>
-            Ver permiso (PDF)<span class="sr-only"> de <%= nombre %>, se abre en una pestaña nueva</span>
-          </a>
-        </p>
-      <% } else { %>
-        <%- include('partials/componentes/estado-vacio', { icono: 'description', titulo: 'Sin permiso adjunto', texto: 'Los gestores creados desde el panel no traen permiso. Súbelo en PDF desde Editar.', accion: { href: '/gestores/edit/' + gestor.id + '#seccionPermiso', texto: 'Subir permiso' } }) %>
-      <% } %>
-    </section>
+    <div class="flex flex-col gap-6">
+      <section aria-labelledby="tituloPermiso" class="tarjeta flex flex-col gap-4">
+        <h2 id="tituloPermiso" class="tarjeta-titulo">Licencia o permiso ambiental</h2>
+        <% if (gestor.tiene_permiso) { %>
+          <p class="text-body-m text-on-surface-variant">El PDF se abre en una pestaña nueva con un enlace que vence a los 10 minutos.</p>
+          <p>
+            <a href="/gestores/<%= gestor.id %>/permiso" target="_blank" rel="noopener noreferrer" class="btn-tonal">
+              <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>
+              Ver permiso (PDF)<span class="sr-only"> de <%= nombre %>, se abre en una pestaña nueva</span>
+            </a>
+          </p>
+        <% } else { %>
+          <%- include('partials/componentes/estado-vacio', { icono: 'description', titulo: 'Sin permiso adjunto', texto: 'Los gestores creados desde el panel no traen permiso. Súbelo en PDF desde Editar.', accion: { href: '/gestores/edit/' + gestor.id + '#seccionPermiso', texto: 'Subir permiso' } }) %>
+        <% } %>
+      </section>
+
+      <%
+        const urlPortada = urlFotoPerfil(gestor.portada_path);
+        const imagenes = [
+          gestor.foto_perfil_path ? { valor: 'perfil', texto: 'Quitar logo', titulo: 'Quitar logo', detalle: 'El gestor verá sus iniciales hasta que suba otro desde la app.' } : null,
+          gestor.portada_path ? { valor: 'portada', texto: 'Quitar portada', titulo: 'Quitar portada', detalle: 'La ficha vuelve al color de EcoResiduos hasta que suba otra desde la app.' } : null
+        ].filter(Boolean);
+      %>
+      <section aria-labelledby="tituloImagen" class="tarjeta flex flex-col gap-4">
+        <div>
+          <h2 id="tituloImagen" class="tarjeta-titulo">Imagen en la app</h2>
+          <p class="mt-1 text-body-m text-on-surface-variant">Así ven los ciudadanos la ficha de <%= nombre %> en el directorio. El logo y la portada los pone el gestor desde la app.</p>
+        </div>
+        <div class="vista-ficha" aria-hidden="true">
+          <div class="vista-ficha-portada">
+            <% if (urlPortada) { %><img src="<%= urlPortada %>" alt="" loading="lazy" decoding="async" data-avatar><% } %>
+          </div>
+          <%- include('partials/componentes/avatar', { nombre: gestor.razon_social, ruta: gestor.foto_perfil_path, tamano: 'lg' }) %>
+        </div>
+        <% if (imagenes.length === 0) { %>
+          <p class="text-body-m text-on-surface-variant">Aún no ha puesto logo ni portada: se ven sus iniciales y el color de EcoResiduos.</p>
+        <% } else { %>
+          <div class="flex flex-wrap gap-2">
+            <% imagenes.forEach(function (img) { %>
+              <form action="/gestores/<%= gestor.id %>/imagenes/quitar" method="POST"
+                    data-confirmar-titulo="<%= img.titulo %>"
+                    data-confirmar="<%= img.titulo %> de <%= f.finFrase(nombre) %> <%= img.detalle %>"
+                    data-confirmar-accion="Quitar"
+                    data-confirmar-peligro>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="imagen" value="<%= img.valor %>">
+                <button type="submit" class="btn-peligro-outlined btn-sm">
+                  <span class="material-symbols-outlined icono-20" aria-hidden="true">delete</span>
+                  <%= img.texto %>
+                </button>
+              </form>
+            <% }); %>
+          </div>
+        <% } %>
+      </section>
+    </div>
   </div>
 
   <section aria-labelledby="tituloMateriales" class="tarjeta flex flex-col gap-4">

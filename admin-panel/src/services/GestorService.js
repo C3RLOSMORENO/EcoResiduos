@@ -5,6 +5,7 @@ const { municipioParaGuardar, variantesMunicipio, municipioAdmitido } = require(
 const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
 const { errorDeBase } = require('../utils/errores');
 const { ESTADOS_GESTOR } = require('../utils/formato');
+const { BUCKET: BUCKET_FOTOS, COLUMNAS: COLUMNAS_FOTO } = require('../utils/fotosPerfil');
 
 const ESTADOS_VALIDOS = ESTADOS_GESTOR;
 const TAMANO_MAXIMO_PERMISO = 10 * 1024 * 1024;
@@ -66,6 +67,8 @@ function mapearGestor(row) {
         horario: row.horario || '',
         tiene_cuenta: Boolean(row.usuario_id),
         tiene_permiso: Boolean(row.permiso_path),
+        foto_perfil_path: row.foto_perfil_path || null,
+        portada_path: row.portada_path || null,
         created_at: row.created_at || null,
         material_ids: relaciones.map((gm) => gm.material_id),
         material_ids_por_verificar: relaciones.filter((gm) => gm.verificado === false).map((gm) => gm.material_id),
@@ -452,6 +455,38 @@ const gestorService = {
             .select('material_id');
         if (error) throw errorDeBase('No pudimos verificar los materiales.', error);
         return (data || []).length;
+    },
+
+    // Quita el logo («perfil») o la portada que el gestor puso en la app, por
+    // ejemplo si es inapropiada. Se borra el archivo y también la copia en los
+    // metadatos de su cuenta, que la app usa para la barra superior.
+    async quitarImagen(id, tipo) {
+        const columna = Object.prototype.hasOwnProperty.call(COLUMNAS_FOTO, tipo) ? COLUMNAS_FOTO[tipo] : null;
+        if (!columna) throw new Error('Esa imagen no existe.');
+
+        const { data: actual, error: errorActual } = await supabase
+            .from('perfiles_gestor')
+            .select(`id, usuario_id, ${columna}`)
+            .eq('id', id)
+            .maybeSingle();
+        if (errorActual) throw errorDeBase('No pudimos cargar el gestor.', errorActual);
+        if (!actual) throw new Error('No encontramos el gestor.');
+        const ruta = actual[columna];
+        if (!ruta) throw new Error(tipo === 'perfil' ? 'El gestor no tiene logo.' : 'El gestor no tiene portada.');
+
+        const { error } = await supabase.from('perfiles_gestor').update({ [columna]: null }).eq('id', id);
+        if (error) throw errorDeBase('No pudimos quitar la imagen.', error);
+
+        // Lo que sigue no cambia lo que ve la gente: si falla, solo queda un
+        // archivo huérfano o una copia vieja que la app ignora al no cargar.
+        const { error: errorArchivo } = await supabase.storage.from(BUCKET_FOTOS).remove([ruta]);
+        if (errorArchivo) console.error(`No se borró la imagen ${ruta}: ${errorArchivo.message}`);
+        if (actual.usuario_id) {
+            const { error: errorCuenta } = await supabase.auth.admin.updateUserById(actual.usuario_id, {
+                user_metadata: { [columna]: null }
+            });
+            if (errorCuenta) console.error(`No se actualizó la cuenta del gestor ${id}: ${errorCuenta.message}`);
+        }
     },
 
     // Enlace temporal al permiso ambiental. El bucket es privado: el enlace

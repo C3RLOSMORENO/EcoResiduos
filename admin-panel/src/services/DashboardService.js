@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const solicitudService = require('./SolicitudService');
 const { MUNICIPIOS, variantesMunicipio } = require('../utils/municipios');
 const { haceDias } = require('../utils/fechas');
@@ -24,11 +25,11 @@ const dashboardService = {
         // Las dos listas salen junto con los conteos, no después: no dependen
         // de ellos y así el inicio espera una sola ronda de consultas.
         const listas = Promise.all([
-            supabase.from('perfiles_gestor')
-                .select('id, nit, razon_social, municipio, estado_verificacion, permiso_path, created_at')
+            conFotoSiExiste((foto) => supabase.from('perfiles_gestor')
+                .select(`id, nit, razon_social, municipio, estado_verificacion, permiso_path, created_at${foto}`)
                 .eq('estado_verificacion', 'PENDIENTE')
                 .order('created_at', { ascending: true })
-                .limit(6),
+                .limit(6)),
             supabase.from('solicitudes_recoleccion')
                 .select('id, cantidad_estimada, unidad_medida, estado, municipio, created_at, problema_reportado, materiales_residuos(codigo, nombre_comun, categoria)')
                 .order('created_at', { ascending: false })

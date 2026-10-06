@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { variantesMunicipio } = require('../utils/municipios');
 const { rango, faltaEnEsquema } = require('../utils/web');
+const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
 
@@ -81,14 +82,14 @@ const solicitudService = {
                 .select('id, estado, created_at')
                 .eq('solicitud_id', id)
                 .order('created_at', { ascending: true }),
-            supabase.from('postulaciones_recoleccion')
-                .select('id, gestor_id, estado, propuesta, tipo_valor, valor, created_at, perfiles_gestor(id, razon_social, nit)')
+            conFotoSiExiste((foto) => supabase.from('postulaciones_recoleccion')
+                .select(`id, gestor_id, estado, propuesta, tipo_valor, valor, created_at, perfiles_gestor(id, razon_social, nit${foto})`)
                 .eq('solicitud_id', id)
-                .order('created_at', { ascending: true }),
+                .order('created_at', { ascending: true })),
             solicitud.gestor_asignado_id
-                ? supabase.from('perfiles_gestor')
-                    .select('id, razon_social, nit, telefono_contacto, email_contacto, municipio')
-                    .eq('id', solicitud.gestor_asignado_id).maybeSingle()
+                ? conFotoSiExiste((foto) => supabase.from('perfiles_gestor')
+                    .select(`id, razon_social, nit, telefono_contacto, email_contacto, municipio${foto}`)
+                    .eq('id', solicitud.gestor_asignado_id).maybeSingle())
                 : Promise.resolve({ data: null })
         ]);
 

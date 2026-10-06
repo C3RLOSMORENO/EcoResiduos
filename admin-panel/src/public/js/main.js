@@ -59,12 +59,20 @@
       texto.textContent = mensaje;
       nota.append(icono, texto);
       region.append(nota);
+      // La nota va arriba del contenido: si el administrador estaba más
+      // abajo, se lleva a la vista (role="alert" ya la anuncia).
+      const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      nota.scrollIntoView({ block: 'nearest', behavior: sinMovimiento ? 'auto' : 'smooth' });
       return;
     }
     const region = $('#avisosEstado');
     if (!region) return;
     const aviso = document.createElement('div');
     aviso.className = 'aviso';
+    const icono = document.createElement('span');
+    icono.className = 'material-symbols-outlined icono-20';
+    icono.setAttribute('aria-hidden', 'true');
+    icono.textContent = 'check_circle';
     const texto = document.createElement('p');
     texto.className = 'flex-1';
     texto.textContent = mensaje;
@@ -74,7 +82,7 @@
     cerrar.setAttribute('aria-label', 'Cerrar aviso');
     cerrar.innerHTML = '<span class="material-symbols-outlined icono-20" aria-hidden="true">close</span>';
     cerrar.addEventListener('click', () => cerrarAviso(aviso));
-    aviso.append(texto, cerrar);
+    aviso.append(icono, texto, cerrar);
     region.append(aviso);
     programarCierre(aviso);
   }
@@ -379,15 +387,22 @@
     (img.closest('a[data-visor]') || img).replaceWith(recuadro);
   }
 
+  // Un logo que no carga se quita: debajo están las iniciales del avatar.
+  function fotoCaida(img) {
+    if (img.hasAttribute('data-avatar')) img.remove();
+    else marcarFotoCaida(img);
+  }
+
   document.addEventListener('error', (e) => {
-    if (e.target instanceof HTMLImageElement && e.target.hasAttribute('data-respaldo')) marcarFotoCaida(e.target);
+    if (!(e.target instanceof HTMLImageElement)) return;
+    if (e.target.hasAttribute('data-respaldo') || e.target.hasAttribute('data-avatar')) fotoCaida(e.target);
   }, true);
 
   // Las que fallaron antes de que cargara este archivo se comprueban de nuevo.
-  $$('img[data-respaldo]').forEach((img) => {
+  $$('img[data-respaldo], img[data-avatar]').forEach((img) => {
     if (!img.complete || img.naturalWidth > 0 || !img.currentSrc) return;
     const prueba = new Image();
-    prueba.addEventListener('error', () => marcarFotoCaida(img));
+    prueba.addEventListener('error', () => fotoCaida(img));
     prueba.src = img.currentSrc;
   });
 
@@ -619,17 +634,53 @@
   // Rutas que descargan, abren un archivo o salen del panel: sin esqueleto.
   const RUTAS_SIN_ESQUELETO = [/^\/logout/, /^\/login/, /^\/restablecer-password/, /\/csv$/, /\/permiso$/];
 
+  // Cada pantalla tiene su esqueleto (partials/componentes/esqueletos.ejs).
+  // Una ruta sin esqueleto propio no muestra ninguno: mejor la página anterior
+  // un momento que la forma de otra pantalla.
+  const ESQUELETO_POR_SECCION = {
+    solicitudes: 'solicitudes',
+    gestores: 'gestores',
+    ciudadanos: 'ciudadanos',
+    materiales: 'materiales',
+    autoridades: 'autoridades',
+    reportes: 'reportes'
+  };
+
   function tipoEsqueleto(url) {
     const ruta = url.pathname.replace(/\/+$/, '') || '/';
     if (RUTAS_SIN_ESQUELETO.some((patron) => patron.test(ruta))) return null;
     if (ruta === '/' || ruta === '/dashboard') return 'inicio';
     if (/\/(nuevo|edit|editar)(\/|$)/.test(ruta)) return 'formulario';
-    if (/^\/(solicitudes|gestores)\/\d+$/.test(ruta)) return 'detalle';
-    return 'lista';
+    const detalle = ruta.match(/^\/(solicitudes|gestores)\/\d+$/);
+    if (detalle) return detalle[1] === 'solicitudes' ? 'detalle-solicitud' : 'detalle-gestor';
+    const seccion = ruta.split('/')[1];
+    return ruta === `/${seccion}` ? ESQUELETO_POR_SECCION[seccion] || null : null;
+  }
+
+  // Mientras carga, la navegación ya marca la sección de destino: así el
+  // clic se siente atendido. Si la carga se cancela, vuelve a la anterior.
+  let navAnterior = null;
+
+  function marcarNavegacion(url) {
+    const seccion = url.pathname.split('/')[1] || 'dashboard';
+    const destino = $$('.nav-item').find((enlace) => new URL(enlace.href).pathname.split('/')[1] === seccion);
+    const actual = $('.nav-item[aria-current="page"]');
+    if (!destino || destino === actual) return;
+    navAnterior = actual;
+    if (actual) actual.removeAttribute('aria-current');
+    destino.setAttribute('aria-current', 'page');
+  }
+
+  function restaurarNavegacion() {
+    if (navAnterior === null) return;
+    $$('.nav-item[aria-current="page"]').forEach((enlace) => enlace.removeAttribute('aria-current'));
+    if (navAnterior) navAnterior.setAttribute('aria-current', 'page');
+    navAnterior = null;
   }
 
   function quitarEsqueleto() {
     clearTimeout(temporizadorEsqueleto);
+    restaurarNavegacion();
     if (!principal) return;
     $$('[data-esqueleto]', principal).forEach((nodo) => nodo.remove());
     principal.removeAttribute('aria-busy');
@@ -658,6 +709,13 @@
       envoltura.lastElementChild.setAttribute('aria-hidden', 'true');
       principal.append(envoltura);
       principal.setAttribute('aria-busy', 'true');
+      marcarNavegacion(url);
+      // Si la tabla de la pantalla real no cabe, se ve en tarjetas: la del
+      // esqueleto también, para que no cambie de forma al llegar.
+      $$('.tabla-contenedor > .tabla:not([data-sin-apilar])', envoltura).forEach((tabla) => {
+        prepararTabla(tabla);
+        tabla.classList.toggle('tabla-apilada', tabla.parentElement.clientWidth < medirTabla(tabla));
+      });
       window.scrollTo(0, 0);
     }, ESPERA_ESQUELETO_MS);
   }

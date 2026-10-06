@@ -1,11 +1,12 @@
 const dashboardService = require('../services/DashboardService');
 const reporteService = require('../services/ReporteService');
 const { renderLista } = require('../utils/errores');
+const { datosRecorrido } = require('../utils/recorridos');
 
 const dashboardController = {
     renderDashboard(req, res) {
         return renderLista(res, 'dashboard', {
-            comunes: { activeTab: 'dashboard', titulo: 'Inicio' },
+            comunes: { activeTab: 'dashboard', titulo: 'Inicio', recorrido: datosRecorrido('dashboard', req.user) },
             cargar: async () => {
                 // Si el resumen de reciclaje falla, el resto del inicio se muestra igual.
                 const [data, resumen] = await Promise.all([

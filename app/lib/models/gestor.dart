@@ -13,6 +13,8 @@ class Gestor {
     this.longitud,
     this.categorias = const [],
     this.distanciaKm,
+    this.fotoPerfilPath,
+    this.portadaPath,
   });
 
   /// Construye un gestor desde `perfiles_gestor` con sus materiales
@@ -37,7 +39,14 @@ class Gestor {
       latitud: double.tryParse(map['latitud']?.toString() ?? ''),
       longitud: double.tryParse(map['longitud']?.toString() ?? ''),
       categorias: categorias.toList(),
+      fotoPerfilPath: _textoOpcional(map['foto_perfil_path']),
+      portadaPath: _textoOpcional(map['portada_path']),
     );
+  }
+
+  static String? _textoOpcional(Object? valor) {
+    final texto = valor?.toString().trim();
+    return texto == null || texto.isEmpty ? null : texto;
   }
 
   final int id;
@@ -57,6 +66,10 @@ class Gestor {
   /// Distancia al usuario en km; null si no se conoce su ubicación.
   final double? distanciaKm;
 
+  /// Rutas de su foto de perfil y su portada en el bucket `fotos_perfil`.
+  final String? fotoPerfilPath;
+  final String? portadaPath;
+
   Gestor conDistancia(double? km) => Gestor(
     id: id,
     nombre: nombre,
@@ -70,5 +83,7 @@ class Gestor {
     longitud: longitud,
     categorias: categorias,
     distanciaKm: km,
+    fotoPerfilPath: fotoPerfilPath,
+    portadaPath: portadaPath,
   );
 }

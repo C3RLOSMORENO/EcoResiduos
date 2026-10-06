@@ -25,6 +25,8 @@ class SesionUsuario {
     this.municipio,
     this.documento,
     this.esGestor = false,
+    this.fotoPerfilPath,
+    this.portadaPath,
   });
 
   /// Lee la sesión actual. Devuelve una sesión vacía si Supabase no está
@@ -58,6 +60,8 @@ class SesionUsuario {
       municipio: texto(['municipio']),
       documento: esGestor ? texto(['nit']) : texto(['documento_nit', 'documento']),
       esGestor: esGestor,
+      fotoPerfilPath: texto(['foto_perfil_path']),
+      portadaPath: esGestor ? texto(['portada_path']) : null,
     );
   }
 
@@ -67,6 +71,23 @@ class SesionUsuario {
   final String? municipio;
   final String? documento;
   final bool esGestor;
+
+  /// Rutas en el bucket `fotos_perfil` (copia en `user_metadata` de lo que
+  /// guarda el perfil). La portada es solo de gestores.
+  final String? fotoPerfilPath;
+  final String? portadaPath;
+
+  /// La misma sesión con otras rutas de foto de perfil y portada.
+  SesionUsuario conImagenes({required String? fotoPerfilPath, required String? portadaPath}) => SesionUsuario(
+    nombre: nombre,
+    correo: correo,
+    telefono: telefono,
+    municipio: municipio,
+    documento: documento,
+    esGestor: esGestor,
+    fotoPerfilPath: fotoPerfilPath,
+    portadaPath: esGestor ? portadaPath : null,
+  );
 
   /// Nombre para el saludo: primer nombre de una persona o la razón social
   /// completa de una empresa.
