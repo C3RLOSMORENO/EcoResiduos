@@ -25,6 +25,7 @@ class SesionUsuario {
     this.municipio,
     this.documento,
     this.esGestor = false,
+    this.fotoUrl,
   });
 
   /// Lee la sesión actual. Devuelve una sesión vacía si Supabase no está
@@ -58,6 +59,7 @@ class SesionUsuario {
       municipio: texto(['municipio']),
       documento: esGestor ? texto(['nit']) : texto(['documento_nit', 'documento']),
       esGestor: esGestor,
+      fotoUrl: texto(['foto_url', 'avatar_url']),
     );
   }
 
@@ -67,6 +69,7 @@ class SesionUsuario {
   final String? municipio;
   final String? documento;
   final bool esGestor;
+  final String? fotoUrl;
 
   /// Nombre para el saludo: primer nombre de una persona o la razón social
   /// completa de una empresa.

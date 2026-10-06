@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/eco_theme.dart';
 import '../utils/enlaces.dart';
-import 'gestor_card.dart';
+import 'avatar_entidad.dart';
 
 /// Plantilla de ficha de contacto (15, 17): banner con volver superpuesto,
 /// avatar en etiqueta, filas de contacto tocables y «Llamar / Cómo llegar»

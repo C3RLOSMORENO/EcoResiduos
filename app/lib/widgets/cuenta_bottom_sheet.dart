@@ -4,7 +4,10 @@ import '../features/auth/repositories/auth_repository.dart';
 import '../features/auth/screens/restablecer_password_screen.dart';
 import '../features/solicitudes/screens/mis_materiales_screen.dart';
 import '../theme/eco_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/formato.dart';
+import '../services/fotos_service.dart';
+import 'avatar_entidad.dart';
 import '../utils/municipios.dart';
 import '../utils/sesion.dart';
 
@@ -37,6 +40,8 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   String? _municipio;
   String? _documento;
   bool _eligiendoMunicipio = false;
+  bool _cambiandoFoto = false;
+  String? _fotoUrl;
   String? _municipioNuevo;
   bool _guardando = false;
 
@@ -47,6 +52,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     _telefono = _sesion.telefono;
     _municipio = _sesion.municipio;
     _documento = _sesion.documento;
+    _fotoUrl = _sesion.fotoUrl;
     _cargarPerfil();
   }
 
@@ -112,6 +118,23 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     );
   }
 
+  Future<void> _cambiarFoto() async {
+    final ruta = await FotosService.elegirDeGaleria();
+    if (ruta == null || !mounted) return;
+    setState(() => _cambiandoFoto = true);
+    try {
+      final fotos = FotosService();
+      if (_fotoUrl != null) await fotos.eliminar(_fotoUrl);
+      final nuevaUrl = await fotos.subir(ruta, CarpetaFoto.perfiles);
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'foto_url': nuevaUrl}));
+      if (mounted) setState(() => _fotoUrl = nuevaUrl);
+    } catch (e) {
+      debugPrint('Error al cambiar foto: $e');
+    } finally {
+      if (mounted) setState(() => _cambiandoFoto = false);
+    }
+  }
+
   Widget _vistaCuenta() {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -122,19 +145,31 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
         children: [
           Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                alignment: Alignment.center,
-                decoration: ShapeDecoration(
-                  color: scheme.tertiaryContainer,
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
+              Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AvatarEntidad(nombre: _nombre, fotoUrl: _fotoUrl, size: 56),
+                    if (_cambiandoFoto)
+                      const CircularProgressIndicator(strokeWidth: 3)
+                    else
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Material(
+                          color: scheme.primary,
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: _cambiarFoto,
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                child: Text(
-                  iniciales(_nombre),
-                  style: theme.textTheme.headlineSmall?.copyWith(color: scheme.onTertiaryContainer),
-                ),
-              ),
               const SizedBox(width: EcoSpace.s16),
               Expanded(
                 child: Column(

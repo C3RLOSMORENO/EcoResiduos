@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'avatar_entidad.dart';
+
 
 import '../models/gestor.dart';
 import '../theme/eco_theme.dart';
@@ -129,40 +131,4 @@ class ChipsCategorias extends StatelessWidget {
   }
 }
 
-/// Iniciales en un recuadro terracota (gestores) o secundario (autoridades).
-class AvatarEntidad extends StatelessWidget {
-  const AvatarEntidad({super.key, required this.nombre, this.size = 40, this.secundario = false, this.texto});
 
-  final String nombre;
-  final double size;
-  final bool secundario;
-
-  /// Texto a mostrar en lugar de las iniciales (p. ej. la sigla).
-  final String? texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final fondo = secundario ? scheme.secondaryContainer : scheme.tertiaryContainer;
-    final frente = secundario ? scheme.onSecondaryContainer : scheme.onTertiaryContainer;
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: fondo,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(EcoRadius.small))),
-      ),
-      child: FittedBox(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            texto ?? iniciales(nombre),
-            style: theme.textTheme.headlineSmall?.copyWith(fontSize: size * 0.4, color: frente),
-          ),
-        ),
-      ),
-    );
-  }
-}

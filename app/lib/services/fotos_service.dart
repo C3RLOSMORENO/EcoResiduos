@@ -8,7 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Carpetas dentro de `<uid>/` en el bucket.
 enum CarpetaFoto {
   solicitudes('solicitudes'),
-  escaneos('escaneos');
+  escaneos('escaneos'),
+  perfiles('perfiles');
 
   const CarpetaFoto(this.nombre);
   final String nombre;

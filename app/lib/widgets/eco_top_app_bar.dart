@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../screens/notificaciones_screen.dart';
 import '../services/contador_novedades.dart';
 import '../theme/eco_theme.dart';
-import '../utils/formato.dart';
+
 import '../utils/sesion.dart';
 import 'cuenta_bottom_sheet.dart';
+import 'avatar_entidad.dart';
 
 /// Cabecera única de las vistas principales: título grande, campana y avatar.
 ///
@@ -72,19 +73,7 @@ class EcoTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: () => CuentaBottomSheet.show(context),
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Center(
-                      child: Text(
-                        iniciales(sesion.nombre),
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: scheme.onTertiaryContainer,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: AvatarEntidad(nombre: sesion.nombre, fotoUrl: sesion.fotoUrl, size: 40),
                 ),
               ),
             ),

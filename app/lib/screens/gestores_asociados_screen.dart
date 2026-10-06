@@ -12,6 +12,7 @@ import '../widgets/chip_menu.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/gestor_card.dart';
+import '../widgets/avatar_entidad.dart';
 import '../widgets/skeleton_loading.dart';
 import 'autoridad_detalle_screen.dart';
 import 'gestor_detalle_screen.dart';
