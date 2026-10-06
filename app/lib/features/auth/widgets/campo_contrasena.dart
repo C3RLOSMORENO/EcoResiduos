@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../theme/eco_theme.dart';
 
 /// Campo de contraseña con botón para mostrarla u ocultarla.
 class CampoContrasena extends StatefulWidget {
@@ -11,6 +12,7 @@ class CampoContrasena extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.onSubmitted,
     this.autofillHints = const [AutofillHints.password],
+    this.fillColor,
   });
 
   final TextEditingController controller;
@@ -20,6 +22,7 @@ class CampoContrasena extends StatefulWidget {
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;
   final Iterable<String> autofillHints;
+  final Color? fillColor;
 
   @override
   State<CampoContrasena> createState() => _CampoContrasenaState();
@@ -37,9 +40,19 @@ class _CampoContrasenaState extends State<CampoContrasena> {
       textInputAction: widget.textInputAction,
       onFieldSubmitted: widget.onSubmitted,
       autofillHints: widget.autofillHints,
+      style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
-        labelText: widget.etiqueta,
-        hintText: widget.ayuda,
+        hintText: widget.etiqueta,
+        prefixIcon: const Icon(Icons.lock_outline_rounded),
+        filled: widget.fillColor != null,
+        fillColor: widget.fillColor,
+        border: widget.fillColor != null 
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(EcoRadius.medium),
+              borderSide: BorderSide.none,
+            )
+          : null,
+        contentPadding: const EdgeInsets.symmetric(vertical: 18),
         suffixIcon: IconButton(
           tooltip: _oculta ? 'Mostrar contraseña' : 'Ocultar contraseña',
           icon: Icon(_oculta ? Icons.visibility_outlined : Icons.visibility_off_outlined),

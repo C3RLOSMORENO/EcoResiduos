@@ -81,7 +81,7 @@ RETURNS VOID
 LANGUAGE sql SECURITY DEFINER
 SET search_path = ''
 AS $$
-    -- Las empresas del padrón sin cuenta vinculada no tienen usuario.
+    -- Las empresas del directorio sin cuenta vinculada no tienen usuario.
     INSERT INTO public.notificaciones (usuario_id, tipo, titulo, solicitud_id)
     SELECT p_usuario_id, p_tipo, p_titulo, p_solicitud_id
     WHERE p_usuario_id IS NOT NULL;
