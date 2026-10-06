@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/guia_categorias.dart';
@@ -332,8 +333,62 @@ class _RegistroScreenState extends State<RegistroScreen> {
     }
   }
 
+  Widget _buildHeader(String titulo) {
+    final theme = Theme.of(context);
+    final isRol = _paso == _Paso.rol;
+
+    return ClipPath(
+      clipper: _HeaderWaveClipper(isRol: isRol),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+        color: theme.colorScheme.primary,
+        padding: EdgeInsets.fromLTRB(24, MediaQuery.paddingOf(context).top + 16, 24, isRol ? 40 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                  IconButton(
+                    onPressed: _volver,
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                  ),
+                Expanded(
+                  child: Text(
+                    isRol ? 'EcoResiduos' : titulo,
+                    style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            if (isRol) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Únete al\ncambio',
+                style: theme.textTheme.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
+              const SizedBox(height: 8),
+              Text(
+                'Elige cómo quieres participar en la red de reciclaje.',
+                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final titulo = switch (_paso) {
       _Paso.rol => '',
       _Paso.generador => 'Tus datos',
@@ -347,19 +402,42 @@ class _RegistroScreenState extends State<RegistroScreen> {
         if (!didPop) _volver();
       },
       child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(tooltip: 'Volver', icon: const Icon(Icons.arrow_back), onPressed: _volver),
-          title: Text(titulo),
+        backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : const Color(0xFFF8F6EE),
+        extendBodyBehindAppBar: true,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(titulo),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(_paso),
+                  child: switch (_paso) {
+                    _Paso.rol => _pasoRol(),
+                    _Paso.generador => _pasoGenerador(),
+                    _Paso.verificarGestor => _pasoVerificar(),
+                    _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
+                    _Paso.datosGestor => _pasoDatosGestor(),
+                    _Paso.registroNuevo => _pasoRegistroNuevo(),
+                    _Paso.materiales => _pasoMateriales(),
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
-        body: switch (_paso) {
-          _Paso.rol => _pasoRol(),
-          _Paso.generador => _pasoGenerador(),
-          _Paso.verificarGestor => _pasoVerificar(),
-          _Paso.gestorNoEncontrado => _pasoNoEncontrado(),
-          _Paso.datosGestor => _pasoDatosGestor(),
-          _Paso.registroNuevo => _pasoRegistroNuevo(),
-          _Paso.materiales => _pasoMateriales(),
-        },
         bottomNavigationBar: _barra(),
       ),
     );
@@ -482,32 +560,38 @@ class _RegistroScreenState extends State<RegistroScreen> {
     final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(EcoSpace.s16),
-      children: [
-        Text('¿Cómo vas a usar EcoResiduos?', style: theme.textTheme.displaySmall),
-        const SizedBox(height: EcoSpace.s24),
-        RadioGroup<bool>(
-          groupValue: _esGestor,
-          onChanged: (valor) => setState(() => _esGestor = valor ?? false),
-          child: const Column(
-            children: [
-              _TarjetaRol(
-                valor: false,
-                icono: Icons.home_work_outlined,
-                titulo: 'Tengo residuos',
-                texto: 'Hogar, negocio o persona. Identifica tus residuos, publícalos y encuentra quién los recibe.',
-              ),
-              SizedBox(height: EcoSpace.s12),
-              _TarjetaRol(
-                valor: true,
-                icono: Icons.local_shipping_outlined,
-                titulo: 'Soy gestor certificado',
-                texto:
-                    'Empresa autorizada. Recibe solicitudes de los materiales que puedes gestionar.',
-              ),
-            ],
+      children: AnimateList(
+        interval: 100.ms,
+        effects: [
+          FadeEffect(duration: 400.ms),
+          SlideEffect(begin: const Offset(0, 0.1), duration: 400.ms, curve: Curves.easeOutCubic),
+        ],
+        children: [
+          Text('¿Cómo vas a usar EcoResiduos?', style: theme.textTheme.displaySmall),
+          const SizedBox(height: EcoSpace.s24),
+          RadioGroup<bool>(
+            groupValue: _esGestor,
+            onChanged: (valor) => setState(() => _esGestor = valor ?? false),
+            child: const Column(
+              children: [
+                _TarjetaRol(
+                  valor: false,
+                  icono: Icons.home_work_outlined,
+                  titulo: 'Tengo residuos',
+                  texto: 'Hogar, negocio o persona. Identifica tus residuos, publícalos y encuentra quién los recibe.',
+                ),
+                SizedBox(height: EcoSpace.s12),
+                _TarjetaRol(
+                  valor: true,
+                  icono: Icons.local_shipping_outlined,
+                  titulo: 'Soy gestor certificado',
+                  texto: 'Empresa autorizada. Recibe solicitudes de los materiales que puedes gestionar.',
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -546,6 +630,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
           ayuda: 'Mínimo 8 caracteres y un número',
           autofillHints: const [AutofillHints.newPassword],
           validator: (_) => _mostrarErrores ? validarContrasena(_contrasena.text) : null,
+          fillColor: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surfaceContainerHigh
+              : const Color(0xFFE6E3DB),
         ),
         if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
           _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -647,6 +734,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
         controller: _contrasena,
         ayuda: 'Mínimo 8 caracteres y un número',
         autofillHints: const [AutofillHints.newPassword],
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : const Color(0xFFE6E3DB),
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -711,6 +801,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
         controller: _contrasena,
         ayuda: 'Mínimo 8 caracteres y un número',
         autofillHints: const [AutofillHints.newPassword],
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : const Color(0xFFE6E3DB),
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
@@ -843,36 +936,61 @@ class _TarjetaRol extends StatelessWidget {
     final grupo = RadioGroup.maybeOf<bool>(context);
     final elegido = grupo?.groupValue == valor;
 
-    return Material(
-      color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(EcoRadius.medium)),
-        side: BorderSide(color: elegido ? scheme.primary : scheme.outlineVariant, width: elegido ? 2 : 1),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(EcoRadius.medium),
+        border: Border.all(
+          color: elegido ? scheme.primary : scheme.outlineVariant.withOpacity(0.5),
+          width: elegido ? 2 : 1,
+        ),
+        boxShadow: elegido
+            ? [BoxShadow(color: scheme.primary.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))]
+            : [],
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => grupo?.onChanged(valor),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 96),
-          child: Padding(
-            padding: const EdgeInsets.all(EcoSpace.s16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icono, size: 28, color: scheme.primary),
-                const SizedBox(width: EcoSpace.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(titulo, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: EcoSpace.s4),
-                      Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                    ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => grupo?.onChanged(valor),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 96),
+            child: Padding(
+              padding: const EdgeInsets.all(EcoSpace.s16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: elegido ? scheme.primary.withOpacity(0.1) : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icono, size: 28, color: scheme.primary),
                   ),
-                ),
-                Radio<bool>(value: valor),
-              ],
+                  const SizedBox(width: EcoSpace.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titulo,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: elegido ? FontWeight.bold : FontWeight.normal,
+                            color: elegido ? scheme.primary : scheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: EcoSpace.s4),
+                        Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  Radio<bool>(value: valor, groupValue: grupo?.groupValue, onChanged: (_) => grupo?.onChanged(valor)),
+                ],
+              ),
             ),
           ),
         ),
@@ -905,4 +1023,26 @@ class _MensajeError extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HeaderWaveClipper extends CustomClipper<Path> {
+  const _HeaderWaveClipper({this.isRol = false});
+  final bool isRol;
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final curveDepth = isRol ? 25.0 : 15.0;
+
+    path.lineTo(0, size.height - curveDepth);
+    path.quadraticBezierTo(size.width * 0.35, size.height, size.width * 0.65, size.height - (curveDepth * 0.6));
+    path.quadraticBezierTo(size.width * 0.85, size.height - curveDepth, size.width, size.height - (curveDepth * 0.4));
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _HeaderWaveClipper oldClipper) => oldClipper.isRol != isRol;
 }
