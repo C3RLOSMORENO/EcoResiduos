@@ -40,7 +40,7 @@ const INVENTARIO = [
     'GET /solicitudes', 'GET /solicitudes/:id', 'POST /solicitudes/:id/cancelar',
     'POST /solicitudes/:id/problema/no-recogido', 'POST /solicitudes/:id/estado',
     'GET /ciudadanos',
-    'GET /reportes', 'GET /reportes/csv',
+    'GET /reportes', 'GET /reportes/excel',
     'POST /recorridos/:pantalla'
 ];
 

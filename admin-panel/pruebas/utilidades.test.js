@@ -3,23 +3,31 @@ const assert = require('node:assert/strict');
 const { instalarSupabaseFalso } = require('./apoyo/supabaseFalso');
 
 instalarSupabaseFalso();
-const { celdaCsv, generarCsv } = require('../src/utils/csv');
+const ExcelJS = require('exceljs');
+const { generarExcelReporte } = require('../src/utils/excel');
 const { jsonParaScript, rutaInterna, textoBusqueda, paginacion } = require('../src/utils/web');
 const { rangoBogota } = require('../src/utils/fechas');
 const { municipioAdmitido, MUNICIPIOS } = require('../src/utils/municipios');
 const f = require('../src/utils/formato');
 const reporteService = require('../src/services/ReporteService');
 
-test('CSV protegido contra inyección de fórmulas', () => {
-    assert.equal(celdaCsv('=SUMA(A1:A9)'), "'=SUMA(A1:A9)");
-    assert.equal(celdaCsv('+57 300'), "'+57 300");
-    assert.equal(celdaCsv('-1'), "'-1");
-    assert.equal(celdaCsv('@cmd'), "'@cmd");
-    assert.equal(celdaCsv('\tx'), "'\tx");
-    assert.equal(celdaCsv('Girón; Santander'), '"Girón; Santander"');
-    const csv = generarCsv([['Municipio', 'Total'], ['Girón', '12,5']]);
-    assert.equal(csv.charCodeAt(0), 0xfeff, 'UTF-8 con BOM para Excel');
-    assert.ok(csv.includes('Municipio;Total\r\nGirón;12,5'));
+test('el Excel escribe los textos como texto y nunca como fórmula', async () => {
+    const fila = (municipio) => ({ municipio, porCategoria: { X: 1 }, confirmadas: 1, sinConfirmar: 0, porUnidad: { kg: 2.5 } });
+    const reporte = {
+        categorias: [{ clave: 'X', etiqueta: '+57 300' }],
+        unidades: [{ clave: 'kg', etiqueta: '@cmd' }],
+        filas: [fila('=SUMA(A1:A9)'), fila('-1')],
+        total: fila('Total'),
+        hayOtro: false
+    };
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load(await generarExcelReporte(reporte, '=HYPERLINK("x")'));
+    let celdas = 0;
+    libro.eachSheet((hoja) => hoja.eachRow((r) => r.eachCell((celda) => {
+        celdas += 1;
+        assert.notEqual(celda.type, ExcelJS.ValueType.Formula, `${hoja.name}!${celda.address}`);
+    })));
+    assert.ok(celdas > 20);
 });
 
 test('JSON seguro dentro de <script>', () => {

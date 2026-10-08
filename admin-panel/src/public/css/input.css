@@ -136,6 +136,25 @@
     --eco-estado-no-seleccionada-on: #FFFFFF;
     --eco-estado-no-seleccionada-container: #E3E3DC;
     --eco-estado-no-seleccionada-on-container: #1A1C18;
+
+    /* Paleta de los gráficos: categórica de 8 posiciones, en orden fijo. Se
+       validó con simulación de daltonismo (protanopia, deuteranopia y
+       tritanopia): cada par vecino se distingue (ΔE OKLab ≥ 8) en ambos temas.
+       El tema oscuro no invierte la clara: usa sus propios pasos. Los colores
+       de los chips no sirven aquí: verde y naranja se confunden con protanopia. */
+    --eco-graf-1: #2A78D6;
+    --eco-graf-2: #EB6834;
+    --eco-graf-3: #1BAF7A;
+    --eco-graf-4: #EDA100;
+    --eco-graf-5: #E87BA4;
+    --eco-graf-6: #008300;
+    --eco-graf-7: #4A3AA7;
+    --eco-graf-8: #E34948;
+    /* «Otro» o «sin dato»: gris neutro, nunca una novena tonalidad. */
+    --eco-graf-neutro: #73796E;
+    /* Una sola serie: el color de la marca. */
+    --eco-graf-unica: #1F4A2C;
+    --eco-graf-rejilla: #E3E5DD;
   }
 
   /* ecoDarkColorScheme y ecoColoresDark. Se repiten para la preferencia del
@@ -236,6 +255,18 @@
       --eco-estado-no-seleccionada-on: #2F312C;
       --eco-estado-no-seleccionada-container: #454742;
       --eco-estado-no-seleccionada-on-container: #E3E3DC;
+
+      --eco-graf-1: #3987E5;
+      --eco-graf-2: #D95926;
+      --eco-graf-3: #199E70;
+      --eco-graf-4: #C98500;
+      --eco-graf-5: #D55181;
+      --eco-graf-6: #008300;
+      --eco-graf-7: #9085E9;
+      --eco-graf-8: #E66767;
+      --eco-graf-neutro: #8D9387;
+      --eco-graf-unica: #9DD3A5;
+      --eco-graf-rejilla: #2A2D27;
     }
   }
 
@@ -335,6 +366,18 @@
     --eco-estado-no-seleccionada-on: #2F312C;
     --eco-estado-no-seleccionada-container: #454742;
     --eco-estado-no-seleccionada-on-container: #E3E3DC;
+
+    --eco-graf-1: #3987E5;
+    --eco-graf-2: #D95926;
+    --eco-graf-3: #199E70;
+    --eco-graf-4: #C98500;
+    --eco-graf-5: #D55181;
+    --eco-graf-6: #008300;
+    --eco-graf-7: #9085E9;
+    --eco-graf-8: #E66767;
+    --eco-graf-neutro: #8D9387;
+    --eco-graf-unica: #9DD3A5;
+    --eco-graf-rejilla: #2A2D27;
   }
 
   html {
@@ -667,9 +710,177 @@
     @apply flex flex-col gap-1 rounded-md bg-surface-container-low p-4;
   }
 
+  /* Cuando el dato destacado es un nombre y no una cifra. */
+  .kpi-cifra-texto {
+    @apply truncate font-sans text-headline-s;
+    line-height: 40px;
+  }
+
+  /* Contexto de una cifra destacada: a qué equivale o de dónde sale. */
+  .kpi-contexto {
+    @apply text-body-s text-on-surface-variant;
+  }
+
+  /* ---------- Gráficos ----------
+     Anatomía fija: título que dice la conclusión, subtítulo con las cifras,
+     leyenda (desde 2 series), el lienzo y una nota con la fuente. El lienzo
+     no tiene alto fijo en el HTML: main.js lo calcula por número de barras,
+     así las etiquetas del eje nunca quedan recortadas. */
+  .grafico {
+    @apply flex flex-col gap-4;
+  }
+
+  .grafico-encabezado {
+    @apply flex flex-col gap-1;
+  }
+
+  .grafico-subtitulo {
+    @apply text-body-m text-on-surface-variant;
+  }
+
+  .grafico-lienzo {
+    @apply relative w-full;
+    min-height: 64px;
+  }
+
+  .grafico-lienzo-proporcion {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .grafico-nota {
+    @apply text-body-s text-on-surface-variant;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    padding-top: 12px;
+  }
+
+  /* La leyenda es texto (cifras incluidas): la serie nunca se reconoce solo
+     por el color. Muestra rectangular, como las barras que representa. */
+  .grafico-leyenda {
+    @apply flex flex-wrap gap-x-5 gap-y-2 text-body-m text-on-surface;
+  }
+
+  .grafico-leyenda-item {
+    @apply inline-flex items-center gap-2;
+  }
+
+  .grafico-leyenda-item strong {
+    @apply font-semibold;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grafico-leyenda-dato {
+    @apply text-on-surface-variant;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Leyenda en columna: una fila por serie con su cifra alineada. */
+  .grafico-leyenda-lista {
+    @apply grid gap-0;
+  }
+
+  .grafico-leyenda-lista .grafico-leyenda-item {
+    @apply grid items-center gap-3 py-2;
+    grid-template-columns: 12px 1fr auto auto;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .grafico-leyenda-lista .grafico-leyenda-item:first-child {
+    border-top: 0;
+  }
+
+  .grafico-leyenda-lista strong,
+  .grafico-leyenda-lista .grafico-leyenda-dato {
+    @apply text-right;
+  }
+
+  .grafico-leyenda-lista .grafico-leyenda-dato {
+    min-width: 4.5em;
+  }
+
+  .muestra {
+    @apply inline-block shrink-0;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    forced-color-adjust: none;
+  }
+
+  .muestra-1 { background: var(--eco-graf-1); }
+  .muestra-2 { background: var(--eco-graf-2); }
+  .muestra-3 { background: var(--eco-graf-3); }
+  .muestra-4 { background: var(--eco-graf-4); }
+  .muestra-5 { background: var(--eco-graf-5); }
+  .muestra-6 { background: var(--eco-graf-6); }
+  .muestra-7 { background: var(--eco-graf-7); }
+  .muestra-8 { background: var(--eco-graf-8); }
+  .muestra-neutro { background: var(--eco-graf-neutro); }
+  .muestra-unica { background: var(--eco-graf-unica); }
+
+  /* Leyenda en forma de tabla (estado, cifra, porcentaje): filas bajas y
+     sin fondo en el encabezado, para que se lea como parte del gráfico. */
+  .tabla-leyenda tbody tr {
+    height: 40px;
+  }
+
+  .tabla-leyenda thead th {
+    @apply bg-transparent text-label-m;
+    height: 36px;
+  }
+
+  .tabla-leyenda th,
+  .tabla-leyenda td {
+    @apply px-2;
+  }
+
+  .tabla-leyenda tbody tr:hover {
+    background-color: transparent;
+  }
+
+  /* «Ver como tabla»: la tabla gemela del gráfico, plegada. */
+  .grafico-tabla > summary {
+    @apply w-fit;
+  }
+
+  .grafico-tabla[open] > summary {
+    @apply mb-2;
+  }
+
+  /* ---------- Barras de datos dentro de una tabla ----------
+     La cifra sigue escrita; la barra solo ayuda a comparar filas de un
+     vistazo. main.js le da el ancho (la CSP no admite estilos en línea). */
+  .celda-proporcion {
+    @apply flex items-center justify-end gap-3;
+  }
+
+  .barra-dato {
+    @apply relative hidden h-2 flex-1 overflow-hidden rounded-full md:block;
+    min-width: 64px;
+    max-width: 160px;
+    background: var(--eco-graf-rejilla);
+  }
+
+  .barra-dato > span {
+    @apply absolute inset-y-0 left-0 rounded-full;
+    width: 0;
+    background: var(--eco-graf-unica);
+  }
+
+  .celda-proporcion > .valor {
+    min-width: 4.5em;
+    text-align: right;
+  }
+
+  /* Un cero informa, pero no debe pesar como una cifra. */
+  .cifra-cero {
+    @apply text-on-surface-variant;
+    opacity: 0.6;
+  }
+
+  /* Cifra suelta: dígitos proporcionales (los tabulares la separan de más).
+     tabular-nums queda para las columnas que deben alinearse. */
   .kpi-cifra {
     @apply font-display text-display-s text-on-surface;
-    font-variant-numeric: tabular-nums;
   }
 
   /* Ícono y cifra arriba, en la misma línea en todas las tarjetas aunque el
@@ -795,6 +1006,13 @@
     @apply h-10 w-10;
   }
 
+  .tabla .celda-secundaria {
+    @apply text-on-surface-variant;
+  }
+
+  .tabla .encabezado-detalle {
+    @apply block text-body-s font-normal text-on-surface-variant;
+  }
 
   /* La paginación se pega al pie de la tabla que pagina, como en la tabla
      de datos de Material. */
@@ -1726,5 +1944,22 @@ html:not(.js) .boton-menu {
 
   a {
     color: #000000 !important;
+  }
+
+  /* Las muestras de la leyenda y las barras de datos se imprimen a color. */
+  .muestra,
+  .barra-dato,
+  .barra-dato > span {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .grafico,
+  .grafico-lienzo {
+    break-inside: avoid;
+  }
+
+  .grafico-tabla > summary {
+    display: none;
   }
 }

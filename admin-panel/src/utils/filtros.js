@@ -94,14 +94,14 @@ function describirFiltrosReporte(filtros) {
     ].join(' · ');
 }
 
-// Enlace de descarga del CSV con los mismos filtros que se ven en pantalla.
-function enlaceCsvReporte(filtros) {
+// Enlace de descarga del Excel con los mismos filtros que se ven en pantalla.
+function enlaceExcelReporte(filtros) {
     const params = new URLSearchParams();
     ['desde', 'hasta', 'categoria'].forEach((clave) => {
         if (filtros[clave]) params.set(clave, filtros[clave]);
     });
     const cadena = params.toString();
-    return `/reportes/csv${cadena ? `?${cadena}` : ''}`;
+    return `/reportes/excel${cadena ? `?${cadena}` : ''}`;
 }
 
 module.exports = {
@@ -113,5 +113,5 @@ module.exports = {
     filtrosAutoridades,
     filtrosReporte,
     describirFiltrosReporte,
-    enlaceCsvReporte
+    enlaceExcelReporte
 };

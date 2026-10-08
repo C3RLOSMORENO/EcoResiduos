@@ -122,59 +122,72 @@
     </p>
   </section>
 
-  <%
-    const estadosGrafico = [
-      { etiqueta: 'Publicadas', valor: kpis.solicitudesPublicadas, color: '--eco-estado-publicado-color' },
-      { etiqueta: 'En negociación', valor: kpis.solicitudesEnProceso, color: '--eco-estado-en-negociacion-color' },
-      { etiqueta: 'Recolectadas', valor: kpis.solicitudesRecolectadas, color: '--eco-estado-recolectado-color' },
-      { etiqueta: 'Canceladas', valor: kpis.solicitudesCanceladas, color: '--eco-estado-cancelado-color' }
-    ];
-  %>
   <section aria-labelledby="tituloGraficos" class="flex flex-col gap-4">
     <h2 id="tituloGraficos" class="seccion-titulo">Solicitudes en gráficos</h2>
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <figure class="tarjeta flex flex-col gap-3" data-recorrido="graficos">
+      <%# Parte de un todo con 4 estados: una barra de proporción, no una dona
+          (comparar ángulos es más difícil que comparar largos). La leyenda es
+          una tabla con la cifra y el porcentaje de cada estado. %>
+      <figure class="tarjeta grafico" data-recorrido="graficos">
         <figcaption id="tituloGraficoEstados" class="tarjeta-titulo">Estado de las solicitudes</figcaption>
-        <p id="descGraficoEstados" class="text-body-m text-on-surface-variant">
-          <%= estadosGrafico.map(function (e) { return e.etiqueta + ': ' + f.formatoNumero(e.valor); }).join('; ') %>.
-        </p>
-        <div class="relative h-64">
-          <canvas data-grafico="datosEstados" role="img" aria-labelledby="tituloGraficoEstados" aria-describedby="descGraficoEstados"></canvas>
-        </div>
-        <details>
-          <summary class="btn-text w-fit">Ver como tabla</summary>
-          <table class="tabla mt-2">
-            <caption class="sr-only">Estado de las solicitudes</caption>
-            <thead><tr><th scope="col">Estado</th><th scope="col" class="num">Solicitudes</th></tr></thead>
+        <p id="descGraficoEstados" class="grafico-subtitulo"><%= graficoEstados.resumen %></p>
+        <% if (graficoEstados.total > 0) { %>
+          <div class="grafico-lienzo grafico-lienzo-proporcion">
+            <canvas data-grafico="datosEstados" role="img" aria-labelledby="tituloGraficoEstados" aria-describedby="descGraficoEstados"></canvas>
+          </div>
+          <table class="tabla tabla-leyenda">
+            <caption class="sr-only">Solicitudes por estado, con su porcentaje del total</caption>
+            <thead>
+              <tr><th scope="col">Estado</th><th scope="col" class="num">Solicitudes</th><th scope="col" class="num">% del total</th></tr>
+            </thead>
             <tbody>
-              <% estadosGrafico.forEach(function (e) { %>
-                <tr><th scope="row"><%= e.etiqueta %></th><td class="num"><%= f.formatoNumero(e.valor) %></td></tr>
+              <% graficoEstados.series.forEach(function (s) { %>
+                <tr>
+                  <th scope="row"><span class="grafico-leyenda-item"><span class="muestra muestra-<%= s.ranura %>" aria-hidden="true"></span><%= s.nombre %></span></th>
+                  <td class="num <%= s.valor === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(s.valor) %></td>
+                  <td class="num celda-secundaria"><%= s.proporcion %></td>
+                </tr>
               <% }); %>
             </tbody>
+            <tfoot>
+              <tr><th scope="row">Total</th><td class="num"><%= f.formatoNumero(graficoEstados.total) %></td><td class="num">100 %</td></tr>
+            </tfoot>
           </table>
-        </details>
+        <% } else { %>
+          <%- include('partials/componentes/estado-vacio', { icono: 'monitoring', titulo: 'Aún no hay solicitudes', texto: 'Cuando los generadores publiquen residuos desde la app, verás aquí en qué estado está cada una.' }) %>
+        <% } %>
       </figure>
 
-      <figure class="tarjeta flex flex-col gap-3">
+      <figure class="tarjeta grafico">
         <figcaption id="tituloGraficoMunicipios" class="tarjeta-titulo">Solicitudes por municipio</figcaption>
-        <p id="descGraficoMunicipios" class="text-body-m text-on-surface-variant">
-          <%= chartData.municipiosLabels.map(function (m, i) { return m + ': ' + f.formatoNumero(chartData.municipiosData[i]); }).join('; ') %>.
-        </p>
-        <div class="relative h-64">
-          <canvas data-grafico="datosMunicipios" role="img" aria-labelledby="tituloGraficoMunicipios" aria-describedby="descGraficoMunicipios"></canvas>
-        </div>
-        <details>
-          <summary class="btn-text w-fit">Ver como tabla</summary>
-          <table class="tabla mt-2">
-            <caption class="sr-only">Solicitudes por municipio</caption>
-            <thead><tr><th scope="col">Municipio</th><th scope="col" class="num">Solicitudes</th></tr></thead>
-            <tbody>
-              <% chartData.municipiosLabels.forEach(function (m, i) { %>
-                <tr><th scope="row"><%= m %></th><td class="num"><%= f.formatoNumero(chartData.municipiosData[i]) %></td></tr>
-              <% }); %>
-            </tbody>
-          </table>
-        </details>
+        <p id="descGraficoMunicipios" class="grafico-subtitulo"><%= graficoMunicipios.resumen %></p>
+        <% if (graficoMunicipios.total > 0) { %>
+          <div class="grafico-lienzo">
+            <canvas data-grafico="datosMunicipios" role="img" aria-labelledby="tituloGraficoMunicipios" aria-describedby="descGraficoMunicipios"></canvas>
+          </div>
+          <details class="grafico-tabla">
+            <summary class="btn-text">Ver como tabla</summary>
+            <table class="tabla">
+              <caption class="sr-only">Solicitudes por municipio, de mayor a menor</caption>
+              <thead><tr><th scope="col">Municipio</th><th scope="col" class="num">Solicitudes</th><th scope="col" class="num">% del total</th></tr></thead>
+              <tbody>
+                <% graficoMunicipios.filas.forEach(function (m) { %>
+                  <tr>
+                    <th scope="row"><%= m.municipio %></th>
+                    <td class="num <%= m.valor === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(m.valor) %></td>
+                    <td class="num celda-secundaria"><%= m.proporcion %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+              <tfoot>
+                <tr><th scope="row">Total</th><td class="num"><%= f.formatoNumero(graficoMunicipios.total) %></td><td class="num">100 %</td></tr>
+              </tfoot>
+            </table>
+          </details>
+        <% } else { %>
+          <%- include('partials/componentes/estado-vacio', { icono: 'monitoring', titulo: 'Aún no hay solicitudes', texto: 'Cuando haya solicitudes, verás aquí cuántas llegan de cada municipio.' }) %>
+        <% } %>
+        <p class="grafico-nota">Todas las solicitudes registradas, sin importar su estado.</p>
       </figure>
     </div>
   </section>
@@ -260,20 +273,12 @@
     <% } %>
   </section>
 
-  <script type="application/json" id="datosEstados"><%- jsonParaScript({
-    tipo: 'doughnut',
-    serie: 'Solicitudes',
-    etiquetas: estadosGrafico.map(function (e) { return e.etiqueta; }),
-    valores: estadosGrafico.map(function (e) { return e.valor; }),
-    colores: estadosGrafico.map(function (e) { return e.color; })
-  }) %></script>
-  <script type="application/json" id="datosMunicipios"><%- jsonParaScript({
-    tipo: 'bar',
-    serie: 'Solicitudes',
-    etiquetas: chartData.municipiosLabels,
-    valores: chartData.municipiosData,
-    colores: ['--md-sys-color-primary']
-  }) %></script>
+  <% if (graficoEstados.total > 0) { %>
+    <script type="application/json" id="datosEstados"><%- jsonParaScript(graficoEstados.datos) %></script>
+  <% } %>
+  <% if (graficoMunicipios.total > 0) { %>
+    <script type="application/json" id="datosMunicipios"><%- jsonParaScript(graficoMunicipios.datos) %></script>
+  <% } %>
   <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
   <% if (recorrido) { %>
     <script type="application/json" id="datosRecorrido"><%- jsonParaScript(recorrido) %></script>

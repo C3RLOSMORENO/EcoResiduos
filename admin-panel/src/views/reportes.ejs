@@ -6,16 +6,10 @@
       <h1 class="titulo-pagina">Reciclaje por municipio</h1>
       <p class="mt-1 text-body-l text-on-surface-variant">Cuánto se recicla en cada municipio, para la dirección y las autoridades ambientales.</p>
     </div>
-    <div class="no-imprimir flex flex-wrap gap-2">
-      <button type="button" class="btn-outlined" data-imprimir>
-        <span class="material-symbols-outlined icono-20" aria-hidden="true">print</span>
-        Imprimir o guardar en PDF
-      </button>
-      <a href="<%= enlaceCsv %>" class="btn-filled" download>
-        <span class="material-symbols-outlined icono-20" aria-hidden="true">download</span>
-        Descargar CSV
-      </a>
-    </div>
+    <a href="<%= enlaceExcel %>" class="no-imprimir btn-filled" download>
+      <span class="material-symbols-outlined icono-20" aria-hidden="true">download</span>
+      Descargar Excel
+    </a>
   </div>
 
   <div class="solo-impresion text-body-s">
@@ -61,6 +55,78 @@
   <% } else { %>
     <p class="text-body-m text-on-surface-variant"><strong>Filtros:</strong> <%= descripcion %>.</p>
 
+    <%# Primero el resumen, luego el gráfico y al final el detalle: de lo
+        general a lo particular. %>
+    <section aria-labelledby="tituloCifrasReporte" class="flex flex-col gap-3">
+      <h2 id="tituloCifrasReporte" class="sr-only">Cifras principales</h2>
+      <dl class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div class="tarjeta-kpi">
+          <dt class="text-label-l text-on-surface-variant">Recolecciones confirmadas</dt>
+          <dd class="kpi-cifra"><%= f.formatoNumero(cifras.confirmadas) %></dd>
+          <dd class="kpi-contexto">En el periodo y la categoría filtrados</dd>
+        </div>
+        <div class="tarjeta-kpi">
+          <dt class="text-label-l text-on-surface-variant">Recolectadas sin confirmar</dt>
+          <dd class="kpi-cifra"><%= f.formatoNumero(cifras.sinConfirmar) %></dd>
+          <dd class="kpi-contexto">No se cuentan en el total</dd>
+        </div>
+        <div class="tarjeta-kpi">
+          <dt class="text-label-l text-on-surface-variant">Municipio con más recolecciones</dt>
+          <% if (cifras.lider) { %>
+            <dd class="kpi-cifra kpi-cifra-texto" title="<%= cifras.lider.nombre %>"><%= cifras.lider.nombre %></dd>
+            <dd class="kpi-contexto"><%= f.formatoNumero(cifras.lider.valor) %> · <%= cifras.lider.proporcion %> del total</dd>
+          <% } else { %>
+            <dd class="kpi-cifra">—</dd>
+            <dd class="kpi-contexto">Sin recolecciones confirmadas</dd>
+          <% } %>
+        </div>
+        <%# Con una categoría filtrada, «la categoría principal» sería ella misma al 100 %. %>
+        <% if (filtros.categoria) { %>
+          <div class="tarjeta-kpi">
+            <dt class="text-label-l text-on-surface-variant">Municipios con recolecciones</dt>
+            <dd class="kpi-cifra"><%= f.formatoNumero(cifras.municipios) %></dd>
+            <dd class="kpi-contexto">De los <%= cifras.municipiosTotal %> donde opera EcoResiduos</dd>
+          </div>
+        <% } else { %>
+          <div class="tarjeta-kpi">
+            <dt class="text-label-l text-on-surface-variant">Categoría más recolectada</dt>
+            <% if (cifras.categoria) { %>
+              <dd class="kpi-cifra kpi-cifra-texto" title="<%= cifras.categoria.nombre %>"><%= cifras.categoria.nombre %></dd>
+              <dd class="kpi-contexto"><%= f.formatoNumero(cifras.categoria.valor) %> · <%= cifras.categoria.proporcion %> del total</dd>
+            <% } else { %>
+              <dd class="kpi-cifra">—</dd>
+              <dd class="kpi-contexto">Sin recolecciones confirmadas</dd>
+            <% } %>
+          </div>
+        <% } %>
+      </dl>
+    </section>
+
+    <% if (reporte.total.confirmadas > 0) { %>
+      <%# Barras horizontales apiladas: los nombres de municipio se leen
+          completos y cada barra suma sus categorías. La tabla de abajo es
+          la versión accesible con todas las cifras. %>
+      <figure class="tarjeta grafico">
+        <figcaption id="tituloGraficoReporte" class="tarjeta-titulo">Recolecciones confirmadas por municipio<%= grafico.series.length > 1 ? ' y categoría' : '' %></figcaption>
+        <p id="descGraficoReporte" class="grafico-subtitulo"><%= grafico.resumen %></p>
+        <% if (grafico.series.length > 1) { %>
+          <p class="grafico-leyenda">
+            <% grafico.series.forEach(function (s, i) { %>
+              <span class="grafico-leyenda-item">
+                <span class="muestra muestra-<%= s.ranura %>" aria-hidden="true"></span>
+                <%= s.nombre %>
+                <span class="grafico-leyenda-dato"><%= f.formatoNumero(s.total) %> (<%= s.proporcion %>)</span><% if (i < grafico.series.length - 1) { %><span class="sr-only">;</span><% } %>
+              </span>
+            <% }); %>
+          </p>
+        <% } %>
+        <div class="grafico-lienzo">
+          <canvas data-grafico="datosReporte" role="img" aria-labelledby="tituloGraficoReporte" aria-describedby="descGraficoReporte"></canvas>
+        </div>
+        <p class="grafico-nota">Fuente: solicitudes confirmadas en EcoResiduos. Filtros: <%= descripcion %>. El detalle de cada municipio está en la tabla siguiente.</p>
+      </figure>
+    <% } %>
+
     <div class="tabla-contenedor" role="region" aria-labelledby="captionReporte" tabindex="0">
       <table class="tabla tabla-primera-fija" data-sin-apilar>
         <caption id="captionReporte">Número de recolecciones confirmadas por municipio y categoría</caption>
@@ -71,6 +137,7 @@
               <th scope="col" class="num"><%= c.etiqueta %></th>
             <% }); %>
             <th scope="col" class="num">Total confirmadas</th>
+            <th scope="col" class="num">% del total</th>
             <th scope="col" class="num">Recolectadas sin confirmar</th>
           </tr>
         </thead>
@@ -79,10 +146,16 @@
             <tr>
               <th scope="row"><%= fila.municipio %></th>
               <% reporte.categorias.forEach(function (c) { %>
-                <td class="num"><%= f.formatoNumero(fila.porCategoria[c.clave]) %></td>
+                <td class="num <%= fila.porCategoria[c.clave] === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(fila.porCategoria[c.clave]) %></td>
               <% }); %>
-              <td class="num font-semibold"><%= f.formatoNumero(fila.confirmadas) %></td>
-              <td class="num"><%= f.formatoNumero(fila.sinConfirmar) %></td>
+              <td class="num font-semibold <%= fila.confirmadas === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(fila.confirmadas) %></td>
+              <td class="num">
+                <span class="celda-proporcion">
+                  <span class="barra-dato" aria-hidden="true"><span data-proporcion="<%= reporte.total.confirmadas > 0 ? fila.confirmadas / reporte.total.confirmadas : 0 %>"></span></span>
+                  <span class="valor <%= fila.confirmadas === 0 ? 'cifra-cero' : '' %>"><%= f.formatoPorcentaje(fila.confirmadas, reporte.total.confirmadas) %></span>
+                </span>
+              </td>
+              <td class="num <%= fila.sinConfirmar === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(fila.sinConfirmar) %></td>
             </tr>
           <% }); %>
         </tbody>
@@ -93,6 +166,7 @@
               <td class="num"><%= f.formatoNumero(reporte.total.porCategoria[c.clave]) %></td>
             <% }); %>
             <td class="num"><%= f.formatoNumero(reporte.total.confirmadas) %></td>
+            <td class="num"><%= reporte.total.confirmadas > 0 ? '100 %' : '0 %' %></td>
             <td class="num"><%= f.formatoNumero(reporte.total.sinConfirmar) %></td>
           </tr>
         </tfoot>
@@ -130,7 +204,7 @@
                 <tr>
                   <th scope="row"><%= fila.municipio %></th>
                   <% reporte.unidades.forEach(function (u) { %>
-                    <td class="num"><%= f.formatoNumero(fila.porUnidad[u.clave]) %></td>
+                    <td class="num <%= fila.porUnidad[u.clave] === 0 ? 'cifra-cero' : '' %>"><%= f.formatoNumero(fila.porUnidad[u.clave]) %></td>
                   <% }); %>
                 </tr>
               <% }); %>
@@ -148,25 +222,10 @@
       <% } %>
     </section>
 
-    <figure class="tarjeta flex flex-col gap-3">
-      <figcaption id="tituloGraficoReporte" class="tarjeta-titulo">Recolecciones confirmadas por municipio</figcaption>
-      <p id="descGraficoReporte" class="text-body-m text-on-surface-variant">
-        Mismos datos de la columna «Total confirmadas» de la tabla:
-        <%= reporte.filas.map(function (fila) { return fila.municipio + ' ' + f.formatoNumero(fila.confirmadas); }).join('; ') %>.
-      </p>
-      <div class="relative h-72">
-        <canvas data-grafico="datosReporte" role="img" aria-labelledby="tituloGraficoReporte" aria-describedby="descGraficoReporte"></canvas>
-      </div>
-    </figure>
-
-    <script type="application/json" id="datosReporte"><%- jsonParaScript({
-      tipo: 'bar',
-      serie: 'Recolecciones confirmadas',
-      etiquetas: reporte.filas.map(function (fila) { return fila.municipio; }),
-      valores: reporte.filas.map(function (fila) { return fila.confirmadas; }),
-      colores: ['--md-sys-color-primary']
-    }) %></script>
-    <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
+    <% if (reporte.total.confirmadas > 0) { %>
+      <script type="application/json" id="datosReporte"><%- jsonParaScript(grafico.datos) %></script>
+      <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
+    <% } %>
   <% } %>
 </div>
 

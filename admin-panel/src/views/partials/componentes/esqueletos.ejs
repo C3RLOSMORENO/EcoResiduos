@@ -240,10 +240,7 @@
 <template id="esqueleto-reportes">
   <div class="flex flex-col gap-6">
     <% encabezado('Reciclaje por municipio') %>
-    <div class="flex flex-wrap gap-2">
-      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-56') %>
-      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-40') %>
-    </div>
+    <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-44') %>
     <div class="tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <% campo('Confirmadas desde') %>
       <% campo('Confirmadas hasta') %>
@@ -267,7 +264,7 @@
         <% bloque('esqueleto-titulo', 'w-80 max-w-full') %>
         <span class="flex gap-2"><% bloque('esqueleto-chip', 'w-28') %><% bloque('esqueleto-chip', 'w-32') %><% bloque('esqueleto-texto', 'w-48 self-center') %></span>
       </div>
-      <div class="flex gap-2"><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-28') %><% bloque('esqueleto-boton esqueleto-boton-grande', 'w-44') %></div>
+      <% bloque('esqueleto-boton esqueleto-boton-grande', 'w-44') %>
     </div>
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <div class="tarjeta flex flex-col gap-4">
@@ -320,11 +317,6 @@
       <% tarjetaDatos('Datos de la empresa', ['Representante o contacto', 'Teléfono', 'Correo', 'Municipio', 'Dirección', 'Horario de atención', 'Disponible para recolectar', 'Cuenta en la app'], 2) %>
       <div class="flex flex-col gap-6">
         <% tarjetaTexto('Licencia o permiso ambiental', 2) %>
-        <div class="tarjeta flex flex-col gap-4">
-          <p class="tarjeta-titulo">Imagen en la app</p>
-          <% bloque('esqueleto-texto', 'w-full') %>
-          <span class="esqueleto h-[120px] w-full rounded-md"></span>
-        </div>
       </div>
     </div>
     <% tarjetaTexto('Materiales que recibe', 3) %>
