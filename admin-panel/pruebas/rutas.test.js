@@ -8,6 +8,7 @@ const geocodificador = require('../src/services/geocodificador');
 geocodificador.geocodificar = async () => null;
 
 const request = require('supertest');
+const ExcelJS = require('exceljs');
 const app = require('../src/crearApp')();
 
 const { TOKEN_CSRF, COOKIE_CSRF } = require('./apoyo/csrf');
@@ -62,7 +63,7 @@ test.beforeEach(() => {
 });
 
 test('sin sesión, cada ruta GET protegida redirige a /login recordando la página', async () => {
-    for (const ruta of [...RUTAS_GET, '/gestores/1/permiso', '/reportes/csv']) {
+    for (const ruta of [...RUTAS_GET, '/gestores/1/permiso', '/reportes/excel']) {
         const res = await request(app).get(ruta);
         assert.equal(res.status, 302, ruta);
         assert.match(res.headers.location, /^\/login\?/, ruta);
@@ -204,22 +205,32 @@ test('las listas se paginan en el servidor con 25 filas y conteo exacto', async 
     assert.deepEqual(consulta.filtros.find((f) => f[0] === 'range').slice(1), [50, 74]);
 });
 
-test('el CSV del reporte tiene BOM, separador «;» y solo cifras agregadas', async () => {
-    const res = await request(app).get('/reportes/csv?categoria=PELIGROSO').set('Cookie', SESION).buffer(true).parse((r, cb) => {
-        let datos = '';
-        r.setEncoding('utf8');
-        r.on('data', (t) => { datos += t; });
-        r.on('end', () => cb(null, datos));
+test('el Excel del reporte trae filtros, las dos tablas, sus notas y solo cifras agregadas', async () => {
+    const res = await request(app).get('/reportes/excel?categoria=PELIGROSO').set('Cookie', SESION).buffer(true).parse((r, cb) => {
+        const partes = [];
+        r.on('data', (p) => partes.push(p));
+        r.on('end', () => cb(null, Buffer.concat(partes)));
     });
     assert.equal(res.status, 200);
-    assert.match(res.headers['content-type'], /text\/csv/);
-    assert.equal(res.body.charCodeAt(0), 0xfeff);
-    assert.match(res.body, /Recolecciones confirmadas por municipio y categoría/);
-    assert.match(res.body, /Municipio;Aprovechable;Peligroso \(RESPEL\);RAEE;Escombros \(RCD\);Riesgo biológico;Total confirmadas;Recolectadas sin confirmar/);
-    assert.match(res.body, /Cantidades declaradas por unidad/);
-    assert.match(res.body, /Municipio;kg\r\n/);
-    assert.doesNotMatch(res.body, /\(kg\)|kilogramo|1\.000 kg/i);
-    assert.doesNotMatch(res.body, /laura@correo\.test|1098000000/);
+    assert.match(res.headers['content-type'], /spreadsheetml\.sheet/);
+    assert.match(res.headers['content-disposition'], /attachment; filename="reciclaje-por-municipio-\d{4}-\d{2}-\d{2}\.xlsx"/);
+
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load(res.body);
+    assert.deepEqual(libro.worksheets.map((h) => h.name), ['Recolecciones', 'Cantidades por unidad']);
+    const filas = (nombre) => {
+        const lista = [];
+        libro.getWorksheet(nombre).eachRow((fila) => lista.push(fila.values.slice(1).join('|')));
+        return lista;
+    };
+    const recolecciones = filas('Recolecciones');
+    assert.ok(recolecciones.some((f) => f.includes('Categoría: Peligroso (RESPEL)')), 'faltan los filtros');
+    assert.ok(recolecciones.includes('Municipio|Aprovechable|Peligroso (RESPEL)|RAEE|Escombros (RCD)|Riesgo biológico|Total confirmadas|Recolectadas sin confirmar'));
+    assert.ok(recolecciones.some((f) => f.startsWith('Total|')), 'falta la fila de total');
+    assert.ok(recolecciones.some((f) => f.includes('confirmadas solas a las 72 horas')), 'faltan las notas');
+    const unidades = filas('Cantidades por unidad');
+    assert.ok(unidades.includes('Municipio|kg'));
+    assert.doesNotMatch([...recolecciones, ...unidades].join('\n'), /laura@correo\.test|1098000000/);
 });
 
 test('los avisos firmados se anuncian en regiones status o alert', async () => {

@@ -95,12 +95,10 @@
   });
 
   // ------------------------------------------------------------------
-  // Botones sencillos: imprimir, mostrar la contraseña y el aviso de ejemplo
-  // de /componentes. Viven aquí y no en atributos onclick porque la CSP del
+  // Botones sencillos: mostrar la contraseña y el aviso de ejemplo de
+  // /componentes. Viven aquí y no en atributos onclick porque la CSP del
   // panel no permite JavaScript escrito dentro del HTML.
   // ------------------------------------------------------------------
-  $$('[data-imprimir]').forEach((boton) => boton.addEventListener('click', () => window.print()));
-
   $$('[data-ver-clave]').forEach((boton) => {
     const campo = document.getElementById(boton.dataset.verClave);
     if (!campo) return;
@@ -632,7 +630,7 @@
   let temporizadorEsqueleto = null;
 
   // Rutas que descargan, abren un archivo o salen del panel: sin esqueleto.
-  const RUTAS_SIN_ESQUELETO = [/^\/logout/, /^\/login/, /^\/restablecer-password/, /\/csv$/, /\/permiso$/];
+  const RUTAS_SIN_ESQUELETO = [/^\/logout/, /^\/login/, /^\/restablecer-password/, /\/excel$/, /\/permiso$/];
 
   // Cada pantalla tiene su esqueleto (partials/componentes/esqueletos.ejs).
   // Una ruta sin esqueleto propio no muestra ninguno: mejor la página anterior
@@ -889,10 +887,219 @@
   // ------------------------------------------------------------------
   // Gráficos (Chart.js) con los colores de los tokens
   // ------------------------------------------------------------------
+  // Una sola especificación para todos los gráficos del panel:
+  // - Barras horizontales (los nombres se leen completos), de 20 px como
+  //   máximo, extremo del dato redondeado a 4 px y base recta.
+  // - Entre segmentos apilados, 2 px del color de la superficie: separan
+  //   sin dibujar bordes.
+  // - Rejilla de 1 px solo en el eje del valor; el eje de categorías es la
+  //   línea base.
+  // - El total va escrito al final de cada barra, en color de texto (nunca
+  //   en el color de la serie).
+  // - Tooltip: la cifra primero, luego el porcentaje. Responde a toda la
+  //   franja de la barra, no solo a la barra pintada.
+  // - El alto sale del número de barras: el eje nunca queda recortado.
+  // - Leyenda y tabla van en el HTML, así se leen sin JavaScript, con lector
+  //   de pantalla y al imprimir.
   const graficos = [];
+  const cifraGrafico = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 });
+  const FUENTE_GRAFICO = "'Public Sans', system-ui, sans-serif";
+  const BANDA_BARRA = 40;
+  const ALTO_EJE = 36;
+  let graficosDibujados = false;
 
   function colorToken(nombre) {
     return getComputedStyle(raiz).getPropertyValue(nombre).trim() || '#000000';
+  }
+
+  function porcentajeGrafico(parte, total) {
+    if (!total) return '0 %';
+    return `${cifraGrafico.format(Math.round((parte / total) * 1000) / 10)} %`;
+  }
+
+  function conUnidad(valor, unidad) {
+    const [singular, varios] = unidad || ['', ''];
+    return `${cifraGrafico.format(valor)} ${valor === 1 ? singular : varios}`.trim();
+  }
+
+  const valorDe = (dataset, i) => Number(dataset.data[i]) || 0;
+
+  // ¿Es el último (o el primer) segmento con valor de su pila? Solo los
+  // extremos llevan las esquinas redondeadas; el último no lleva separación.
+  function extremoDePila(contexto, haciaAdelante) {
+    const { datasets } = contexto.chart.data;
+    const paso = haciaAdelante ? 1 : -1;
+    for (let k = contexto.datasetIndex + paso; k >= 0 && k < datasets.length; k += paso) {
+      if (contexto.chart.isDatasetVisible(k) && valorDe(datasets[k], contexto.dataIndex) > 0) return false;
+    }
+    return true;
+  }
+
+  function totalDeFila(grafico, i) {
+    return grafico.data.datasets.reduce((suma, d, k) => suma + (grafico.isDatasetVisible(k) ? valorDe(d, i) : 0), 0);
+  }
+
+  // Escribe el total al final de cada barra.
+  const pluginTotales = {
+    id: 'totales',
+    afterDatasetsDraw(grafico, argumentos, opciones) {
+      const metas = grafico.getSortedVisibleDatasetMetas();
+      if (!metas.length) return;
+      const { ctx } = grafico;
+      ctx.save();
+      ctx.font = `600 13px ${FUENTE_GRAFICO}`;
+      ctx.fillStyle = opciones.color;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      grafico.data.labels.forEach((etiqueta, i) => {
+        const barra = metas[0].data[i];
+        if (!barra) return;
+        const total = totalDeFila(grafico, i);
+        ctx.fillText(cifraGrafico.format(total), grafico.scales.x.getPixelForValue(total) + 8, barra.y);
+      });
+      ctx.restore();
+    }
+  };
+
+  function estiloTooltip() {
+    const texto = colorToken('--md-sys-color-inverse-on-surface');
+    return {
+      backgroundColor: colorToken('--md-sys-color-inverse-surface'),
+      titleColor: texto,
+      bodyColor: texto,
+      footerColor: texto,
+      titleFont: { family: FUENTE_GRAFICO, size: 13, weight: '600' },
+      bodyFont: { family: FUENTE_GRAFICO, size: 13 },
+      footerFont: { family: FUENTE_GRAFICO, size: 13, weight: '600' },
+      padding: 12,
+      cornerRadius: 8,
+      caretSize: 6,
+      boxWidth: 10,
+      boxHeight: 10,
+      boxPadding: 6,
+      borderWidth: 0
+    };
+  }
+
+  const sumaFila = (datos, i) => datos.series.reduce((suma, s) => suma + (Number(s.valores[i]) || 0), 0);
+
+  // Barras de una serie, o apiladas por categoría.
+  function configuracionBarras(datos, lienzo) {
+    const apilado = datos.tipo === 'apiladas';
+    const superficie = colorToken('--md-sys-color-surface-container-lowest');
+    const totales = datos.etiquetas.map((e, i) => sumaFila(datos, i));
+    const totalGeneral = totales.reduce((a, b) => a + b, 0);
+
+    // Alto: una banda por barra más el eje.
+    lienzo.parentElement.style.height = `${datos.etiquetas.length * BANDA_BARRA + ALTO_EJE}px`;
+
+    // Aire a la derecha para que quepa el total más largo.
+    const medidor = document.createElement('canvas').getContext('2d');
+    medidor.font = `600 13px ${FUENTE_GRAFICO}`;
+    const aire = Math.ceil(medidor.measureText(cifraGrafico.format(Math.max(0, ...totales))).width) + 16;
+
+    return {
+      type: 'bar',
+      plugins: [pluginTotales],
+      data: {
+        labels: datos.etiquetas,
+        datasets: datos.series.map((s) => ({
+          label: s.nombre,
+          data: s.valores,
+          backgroundColor: colorToken(s.color),
+          borderColor: superficie,
+          borderWidth: (contexto) => (apilado && !extremoDePila(contexto, true) ? { right: 2 } : 0),
+          borderSkipped: false,
+          borderRadius: (contexto) => (extremoDePila(contexto, true) ? { topRight: 4, bottomRight: 4 } : 0),
+          barThickness: 20
+        }))
+      },
+      options: {
+        indexAxis: 'y',
+        layout: { padding: { right: aire } },
+        interaction: { mode: 'index', axis: 'y', intersect: false },
+        plugins: {
+          legend: { display: false },
+          totales: { color: colorToken('--md-sys-color-on-surface') },
+          tooltip: {
+            ...estiloTooltip(),
+            displayColors: apilado,
+            filter: (item) => !apilado || item.raw > 0,
+            callbacks: {
+              label: (item) => (apilado
+                ? ` ${item.dataset.label}: ${cifraGrafico.format(item.raw)} (${porcentajeGrafico(item.raw, totales[item.dataIndex])})`
+                : `${conUnidad(item.raw, datos.unidad)} · ${porcentajeGrafico(item.raw, totalGeneral)} del total`),
+              footer: (items) => {
+                if (!apilado || !items.length) return '';
+                const total = totales[items[0].dataIndex];
+                return `Total: ${conUnidad(total, datos.unidad)} · ${porcentajeGrafico(total, totalGeneral)} del total`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: apilado,
+            beginAtZero: true,
+            grid: { color: colorToken('--eco-graf-rejilla'), lineWidth: 1, drawTicks: false },
+            border: { display: false },
+            ticks: { precision: 0, padding: 8, maxTicksLimit: 6, callback: (valor) => cifraGrafico.format(valor) }
+          },
+          y: {
+            stacked: apilado,
+            grid: { display: false },
+            border: { color: colorToken('--md-sys-color-outline'), width: 1 },
+            ticks: { color: colorToken('--md-sys-color-on-surface'), padding: 8, font: { size: 13 } }
+          }
+        }
+      }
+    };
+  }
+
+  // Parte de un todo: una sola barra al 100 %, un segmento por parte.
+  function configuracionProporcion(datos) {
+    const superficie = colorToken('--md-sys-color-surface-container-lowest');
+    const total = sumaFila(datos, 0);
+    return {
+      type: 'bar',
+      data: {
+        labels: datos.etiquetas,
+        datasets: datos.series.map((s) => ({
+          label: s.nombre,
+          data: s.valores,
+          backgroundColor: colorToken(s.color),
+          borderColor: superficie,
+          borderWidth: (contexto) => (extremoDePila(contexto, true) ? 0 : { right: 2 }),
+          borderSkipped: false,
+          borderRadius: (contexto) => {
+            const primero = extremoDePila(contexto, false) ? 4 : 0;
+            const ultimo = extremoDePila(contexto, true) ? 4 : 0;
+            return { topLeft: primero, bottomLeft: primero, topRight: ultimo, bottomRight: ultimo };
+          },
+          barThickness: 24
+        }))
+      },
+      options: {
+        indexAxis: 'y',
+        layout: { padding: 0 },
+        interaction: { mode: 'nearest', axis: 'x', intersect: true },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...estiloTooltip(),
+            displayColors: true,
+            callbacks: {
+              title: () => '',
+              label: (item) => ` ${item.dataset.label}: ${conUnidad(item.raw, datos.unidad)} (${porcentajeGrafico(item.raw, total)})`
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, display: false, min: 0, max: total },
+          y: { stacked: true, display: false }
+        }
+      }
+    };
   }
 
   function dibujarGraficos() {
@@ -900,7 +1107,8 @@
     graficos.forEach((g) => g.destroy());
     graficos.length = 0;
     const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.Chart.defaults.font.family = "'Public Sans', system-ui, sans-serif";
+    window.Chart.defaults.font.family = FUENTE_GRAFICO;
+    window.Chart.defaults.font.size = 12;
     window.Chart.defaults.color = colorToken('--md-sys-color-on-surface-variant');
 
     $$('canvas[data-grafico]').forEach((lienzo) => {
@@ -908,50 +1116,26 @@
       if (!fuente) return;
       let datos;
       try { datos = JSON.parse(fuente.textContent); } catch (e) { return; }
-      const colores = (datos.colores || []).map(colorToken);
-      const esDona = datos.tipo === 'doughnut';
-      graficos.push(new window.Chart(lienzo, {
-        type: datos.tipo,
-        data: {
-          labels: datos.etiquetas,
-          datasets: [{
-            label: datos.serie,
-            data: datos.valores,
-            backgroundColor: esDona ? colores : colores[0],
-            borderColor: colorToken('--md-sys-color-surface-container-lowest'),
-            borderWidth: esDona ? 2 : 0,
-            borderRadius: esDona ? 0 : 8,
-            maxBarThickness: 48
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: sinMovimiento ? false : { duration: 300 },
-          cutout: esDona ? '60%' : undefined,
-          plugins: {
-            legend: {
-              display: esDona,
-              position: 'bottom',
-              labels: {
-                // La leyenda lleva el valor: la serie no se distingue solo por color.
-                generateLabels: (grafico) => window.Chart.overrides.doughnut.plugins.legend.labels.generateLabels(grafico)
-                  .map((item, i) => Object.assign(item, { text: `${item.text}: ${datos.valores[i]}` }))
-              }
-            }
-          },
-          scales: esDona ? {} : {
-            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: colorToken('--md-sys-color-outline-variant') } },
-            x: { grid: { display: false } }
-          }
-        }
-      }));
+      if (!datos || !Array.isArray(datos.series) || !Array.isArray(datos.etiquetas)) return;
+      const configuracion = datos.tipo === 'proporcion' ? configuracionProporcion(datos) : configuracionBarras(datos, lienzo);
+      configuracion.options.responsive = true;
+      configuracion.options.maintainAspectRatio = false;
+      // Al cambiar de tema se redibuja sin animar: solo cambian los colores.
+      configuracion.options.animation = sinMovimiento || graficosDibujados ? false : { duration: 400, easing: 'easeOutQuart' };
+      graficos.push(new window.Chart(lienzo, configuracion));
     });
+    graficosDibujados = true;
   }
 
   dibujarGraficos();
   document.addEventListener('tema-cambiado', dibujarGraficos);
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', dibujarGraficos);
+
+  // Barras de datos en las tablas: el ancho es la proporción de la fila.
+  $$('[data-proporcion]').forEach((barra) => {
+    const proporcion = Math.min(1, Math.max(0, Number(barra.dataset.proporcion) || 0));
+    barra.style.width = `${proporcion * 100}%`;
+  });
 
   // ------------------------------------------------------------------
   // Sesión: se renueva con la actividad y avisa 2 minutos antes de vencer

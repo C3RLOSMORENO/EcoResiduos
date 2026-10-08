@@ -142,24 +142,22 @@
       <%
         const urlPortada = urlFotoPerfil(gestor.portada_path);
         const imagenes = [
-          gestor.foto_perfil_path ? { valor: 'perfil', texto: 'Quitar logo', titulo: 'Quitar logo', detalle: 'El gestor verá sus iniciales hasta que suba otro desde la app.' } : null,
-          gestor.portada_path ? { valor: 'portada', texto: 'Quitar portada', titulo: 'Quitar portada', detalle: 'La ficha vuelve al color de EcoResiduos hasta que suba otra desde la app.' } : null
+          gestor.foto_perfil_path ? { valor: 'perfil', titulo: 'Quitar logo', detalle: 'El gestor verá sus iniciales hasta que suba otro desde la app.' } : null,
+          gestor.portada_path ? { valor: 'portada', titulo: 'Quitar portada', detalle: 'La ficha vuelve al color de EcoResiduos hasta que suba otra desde la app.' } : null
         ].filter(Boolean);
       %>
-      <section aria-labelledby="tituloImagen" class="tarjeta flex flex-col gap-4">
-        <div>
-          <h2 id="tituloImagen" class="tarjeta-titulo">Imagen en la app</h2>
-          <p class="mt-1 text-body-m text-on-surface-variant">Así ven los ciudadanos la ficha de <%= nombre %> en el directorio. El logo y la portada los pone el gestor desde la app.</p>
-        </div>
-        <div class="vista-ficha" aria-hidden="true">
-          <div class="vista-ficha-portada">
-            <% if (urlPortada) { %><img src="<%= urlPortada %>" alt="" loading="lazy" decoding="async" data-avatar><% } %>
+      <% if (imagenes.length > 0) { %>
+        <section aria-labelledby="tituloImagen" class="tarjeta flex flex-col gap-4">
+          <div>
+            <h2 id="tituloImagen" class="tarjeta-titulo">Logo y portada</h2>
+            <p class="mt-1 text-body-m text-on-surface-variant">Los sube el gestor desde la app y los ven los ciudadanos. Quítalos si no corresponden a la empresa o son inapropiados.</p>
           </div>
-          <%- include('partials/componentes/avatar', { nombre: gestor.razon_social, ruta: gestor.foto_perfil_path, tamano: 'lg' }) %>
-        </div>
-        <% if (imagenes.length === 0) { %>
-          <p class="text-body-m text-on-surface-variant">Aún no ha puesto logo ni portada: se ven sus iniciales y el color de EcoResiduos.</p>
-        <% } else { %>
+          <div class="vista-ficha" aria-hidden="true">
+            <div class="vista-ficha-portada">
+              <% if (urlPortada) { %><img src="<%= urlPortada %>" alt="" loading="lazy" decoding="async" data-avatar><% } %>
+            </div>
+            <%- include('partials/componentes/avatar', { nombre: gestor.razon_social, ruta: gestor.foto_perfil_path, tamano: 'lg' }) %>
+          </div>
           <div class="flex flex-wrap gap-2">
             <% imagenes.forEach(function (img) { %>
               <form action="/gestores/<%= gestor.id %>/imagenes/quitar" method="POST"
@@ -171,13 +169,13 @@
                 <input type="hidden" name="imagen" value="<%= img.valor %>">
                 <button type="submit" class="btn-peligro-outlined btn-sm">
                   <span class="material-symbols-outlined icono-20" aria-hidden="true">delete</span>
-                  <%= img.texto %>
+                  <%= img.titulo %>
                 </button>
               </form>
             <% }); %>
           </div>
-        <% } %>
-      </section>
+        </section>
+      <% } %>
     </div>
   </div>
 

@@ -2,6 +2,7 @@ const dashboardService = require('../services/DashboardService');
 const reporteService = require('../services/ReporteService');
 const { renderLista } = require('../utils/errores');
 const { datosRecorrido } = require('../utils/recorridos');
+const { graficoEstados, graficoMunicipios } = require('../utils/graficos');
 
 const dashboardController = {
     renderDashboard(req, res) {
@@ -16,7 +17,8 @@ const dashboardController = {
                 return {
                     kpis: data.kpis,
                     pendientesAccion: data.pendientesAccion,
-                    chartData: data.chartData,
+                    graficoEstados: graficoEstados(data.kpis),
+                    graficoMunicipios: graficoMunicipios(data.chartData),
                     gestoresPendientes: data.gestoresPendientes,
                     ultimasSolicitudes: data.ultimasSolicitudes,
                     erroresCarga: data.errores,
@@ -26,7 +28,8 @@ const dashboardController = {
             vacio: {
                 kpis: null,
                 pendientesAccion: null,
-                chartData: null,
+                graficoEstados: null,
+                graficoMunicipios: null,
                 gestoresPendientes: [],
                 ultimasSolicitudes: [],
                 erroresCarga: [],

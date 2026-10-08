@@ -144,12 +144,12 @@ class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver
               )
             else
               const Center(child: CircularProgressIndicator(color: Colors.white)),
-            const IgnorePointer(child: CustomPaint(painter: _GuiaEtiquetaPainter())),
+            const IgnorePointer(child: CustomPaint(painter: _GuiaEscaneoPainter())),
             SafeArea(
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(EcoSpace.s8),
+                    padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16, vertical: EcoSpace.s8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -164,16 +164,23 @@ class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver
                     ),
                   ),
                   const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s24),
+                  // Fondo oscuro para que el texto se lea sobre cualquier imagen.
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: EcoSpace.s24),
+                    padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16, vertical: EcoSpace.s8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(EcoRadius.full),
+                    ),
                     child: Text(
-                      'Centra el residuo dentro de la etiqueta',
+                      'Centra el residuo dentro del recuadro',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.titleSmall?.copyWith(color: Colors.white),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                   ),
+                  const SizedBox(height: EcoSpace.s12),
                   SizedBox(
-                    height: 150,
+                    height: 140,
                     child: Row(
                       children: [
                         Expanded(
@@ -221,31 +228,59 @@ class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver
   }
 }
 
-/// Oscurece el visor fuera de la guía y dibuja el contorno de la etiqueta
-/// (inset 40, arriba 140, alto 340) con su ojal.
-class _GuiaEtiquetaPainter extends CustomPainter {
-  const _GuiaEtiquetaPainter();
+/// Oscurece el visor fuera de un recuadro cuadrado y marca sus 4 esquinas.
+/// El recuadro va un poco arriba del centro para no quedar bajo los botones.
+class _GuiaEscaneoPainter extends CustomPainter {
+  const _GuiaEscaneoPainter();
+
+  static const double _radio = 24;
+  static const double _largoEsquina = 28;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final alto = (size.height - 140 - 230).clamp(200.0, 340.0);
-    final guia = Rect.fromLTWH(40, 140, size.width - 80, alto);
-    const forma = EtiquetaBorder(radius: EcoRadius.medium, hole: 8, holeCenter: Offset(30, 30));
-    final contorno = forma.getOuterPath(guia);
+    final lado = (size.width - EcoSpace.s64).clamp(240.0, 320.0);
+    final guia = Rect.fromLTWH((size.width - lado) / 2, (size.height - lado) / 2 - 35, lado, lado);
+    final recuadro = RRect.fromRectAndRadius(guia, const Radius.circular(_radio));
 
-    final velo = Path.combine(PathOperation.difference, Path()..addRect(Offset.zero & size), contorno);
-    canvas.drawPath(velo, Paint()..color = Colors.black.withValues(alpha: 0.45));
-    canvas.drawPath(
-      contorno,
+    final velo = Path.combine(PathOperation.difference, Path()..addRect(Offset.zero & size), Path()..addRRect(recuadro));
+    canvas.drawPath(velo, Paint()..color = Colors.black.withValues(alpha: 0.5));
+    canvas.drawRRect(
+      recuadro,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..color = Colors.white,
+        ..strokeWidth = 1.2
+        ..color = Colors.white.withValues(alpha: 0.25),
     );
+
+    final trazo = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white;
+    // (dx, dy) apunta de la esquina hacia el interior del recuadro.
+    for (final (esquina, dx, dy) in [
+      (guia.topLeft, 1.0, 1.0),
+      (guia.topRight, -1.0, 1.0),
+      (guia.bottomRight, -1.0, -1.0),
+      (guia.bottomLeft, 1.0, -1.0),
+    ]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(esquina.dx, esquina.dy + dy * _largoEsquina)
+          ..lineTo(esquina.dx, esquina.dy + dy * _radio)
+          ..arcToPoint(
+            Offset(esquina.dx + dx * _radio, esquina.dy),
+            radius: const Radius.circular(_radio),
+            clockwise: dx * dy > 0,
+          )
+          ..lineTo(esquina.dx + dx * _largoEsquina, esquina.dy),
+        trazo,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(_GuiaEtiquetaPainter oldDelegate) => false;
+  bool shouldRepaint(_GuiaEscaneoPainter oldDelegate) => false;
 }
 
 class _BotonCircular extends StatelessWidget {

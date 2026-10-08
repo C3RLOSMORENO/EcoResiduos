@@ -59,13 +59,12 @@ test('la lista, la ficha y el inicio muestran el logo con las iniciales debajo, 
     }
 });
 
-test('sin logo se ven solo las iniciales y la ficha lo explica', async () => {
+test('sin logo ni portada se ven las iniciales y la ficha no ofrece quitar nada', async () => {
     supabase.manejador = datos.responderConDatos;
     const html = (await request(app).get('/gestores/1').set('Cookie', SESION)).text;
     assert.match(html, /<span class="avatar avatar-lg" aria-hidden="true">\s*<span>RO<\/span>\s*<\/span>/);
     assert.ok(!html.includes('data-avatar'));
-    assert.match(html, /Aún no ha puesto logo ni portada/);
-    assert.ok(!html.includes('Quitar logo'));
+    assert.ok(!html.includes('Logo y portada'));
 });
 
 test('la ficha ofrece quitar el logo y la portada, con confirmación', async () => {

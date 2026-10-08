@@ -182,6 +182,15 @@ function formatoNumero(valor, decimales = 1) {
     }).format(n);
 }
 
+// «34,5 %», con espacio antes del signo (norma de la RAE y del SI) y un
+// decimal como máximo. Sin total no hay proporción que mostrar.
+function formatoPorcentaje(parte, total) {
+    const p = Number(parte);
+    const t = Number(total);
+    if (!Number.isFinite(p) || !Number.isFinite(t) || t <= 0) return '0 %';
+    return `${formatoNumero(Math.round((p / t) * 1000) / 10)} %`;
+}
+
 function formatoCantidad(cantidad, unidad) {
     if (cantidad === null || cantidad === undefined || cantidad === '') return 'Sin dato';
     return `${formatoNumero(cantidad)} ${unidadCorta(unidad)}`.trim();
@@ -304,6 +313,7 @@ module.exports = {
     unidadCorta,
     formatoNumero,
     formatoCantidad,
+    formatoPorcentaje,
     formatoPesos,
     fechaCorta,
     fechaHora,

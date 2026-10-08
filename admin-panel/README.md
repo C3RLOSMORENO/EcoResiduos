@@ -25,7 +25,7 @@ El **Panel Administrativo** de EcoResiduos es una plataforma web desarrollada en
 - **Auditoría Documental de Gestores:** Revisión de licencias ambientales en PDF, validación de NIT, verificación de materiales autorizados por empresa y registro inmutable de decisiones administrativas (Aprobado, Rechazado, Suspendido).
 - **Catálogo de Materiales y Peligrosidad:** Administración de la matriz de residuos bajo la **Resolución 2184 de 2019**, definiendo códigos de color oficiales, peligrosidad (RESPEL) y directrices técnicas de manejo.
 - **Trazabilidad y Mediación de Novedades:** Panel de mediación de incidentes reportados por generadores o gestores durante la recolección física.
-- **Consolidación Estadística y Reportes:** Generación de métricas de recolección por municipio y exportación de datos en formato CSV con sanitización contra inyección de fórmulas.
+- **Consolidación Estadística y Reportes:** Generación de métricas de recolección por municipio y descarga del reporte en Excel (.xlsx), con los filtros aplicados, las notas para leer las cifras y solo datos agregados.
 
 ---
 
@@ -41,7 +41,7 @@ flowchart TD
     AUTH_MID --> CSRF_MID["4. Validación Anti-CSRF<br/>(Tokens firmados en Peticiones POST)"]
     CSRF_MID --> CONTROLLER["5. Capa de Controladores (MVC)<br/>(Solicitudes, Gestores, Materiales, Reportes)"]
     
-    CONTROLLER --> SERVICE["6. Capa de Servicios y Adaptadores<br/>(Geocodificación, Sanitizador CSV, Supabase Client)"]
+    CONTROLLER --> SERVICE["6. Capa de Servicios y Adaptadores<br/>(Geocodificación, Reporte Excel, Supabase Client)"]
     SERVICE --> DB[(PostgreSQL 15+ / Supabase<br/>Operaciones con service_role)]
     
     CONTROLLER --> EJS_VIEW["7. Renderizado EJS con Sanitización XSS<br/>(HTML Semántico + WCAG 2.1 AA)"]
@@ -69,7 +69,7 @@ admin-panel/
 │   ├── middlewares/              # Cadena de seguridad (Auth, CSRF, Nonces CSP, Rate Limit)
 │   ├── routes/                   # Definición modular de rutas del servidor
 │   ├── services/                 # Capa de integración con base de datos y geocodificación
-│   ├── utils/                    # Sanitizadores de CSV, formateadores de fecha y helpers
+│   ├── utils/                    # Generador del Excel, formateadores de fecha y helpers
 │   ├── views/                    # Plantillas EJS estructuradas con protección contra XSS
 │   ├── app.js                    # Configuración de Express, middlewares globales y rutas
 │   └── server.js                 # Punto de entrada y arranque del servidor HTTP
@@ -95,8 +95,8 @@ Los permisos ambientales se guardan en el bucket privado `permisos`, bajo la rut
 │ Cross-Site Request Forgery (CSRF)             │ Tokens anti-CSRF criptográficamente firmados y validados      │
 │                                               │ en toda petición POST, almacenados en cookies HttpOnly.      │
 ├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
-│ Inyección de Fórmulas en CSV                  │ Sanitización automática de caracteres de escape (=, +, -, @) │
-│                                               │ en todas las columnas de texto exportadas.                    │
+│ Inyección de Fórmulas en el Excel             │ Cada celda se escribe como valor, nunca como fórmula: un      │
+│                                               │ texto que empiece con =, +, - o @ no se ejecuta al abrirlo.   │
 ├───────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
 │ Ataques de Fuerza Bruta en Autenticación      │ Middleware de limitación de tasa (Rate Limiting) por IP       │
 │                                               │ y bloqueo temporal tras 5 intentos consecutivos fallidos.     │

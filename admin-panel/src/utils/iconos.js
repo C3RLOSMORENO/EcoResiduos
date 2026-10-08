@@ -13,7 +13,7 @@ const ICONOS = [
     'hourglass_top', 'how_to_reg', 'image_not_supported', 'inbox', 'info',
     'light_mode', 'local_shipping', 'lock_reset', 'login', 'logout',
     'mark_email_read', 'menu', 'monitoring', 'open_in_new', 'pause_circle',
-    'person_off', 'person_search', 'picture_as_pdf', 'print',
+    'person_off', 'person_search', 'picture_as_pdf',
     'radio_button_unchecked', 'recycling', 'report', 'save', 'schedule_send',
     'search_off', 'send', 'smartphone', 'task_alt', 'travel_explore',
     'unfold_more', 'upload_file', 'verified', 'visibility', 'visibility_off',

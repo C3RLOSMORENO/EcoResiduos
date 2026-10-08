@@ -31,10 +31,10 @@ test('la descripción de los filtros de solicitudes queda vacía si no hay ningu
         'Recolectado · Girón · desde 1 sep 2026');
 });
 
-test('el enlace del CSV lleva los mismos filtros que el reporte en pantalla', () => {
-    assert.equal(filtros.enlaceCsvReporte(filtros.filtrosReporte({})), '/reportes/csv');
-    assert.equal(filtros.enlaceCsvReporte(filtros.filtrosReporte({ desde: '2026-01-01', categoria: 'rcd', otro: 'x' })),
-        '/reportes/csv?desde=2026-01-01&categoria=RCD');
+test('el enlace del Excel lleva los mismos filtros que el reporte en pantalla', () => {
+    assert.equal(filtros.enlaceExcelReporte(filtros.filtrosReporte({})), '/reportes/excel');
+    assert.equal(filtros.enlaceExcelReporte(filtros.filtrosReporte({ desde: '2026-01-01', categoria: 'rcd', otro: 'x' })),
+        '/reportes/excel?desde=2026-01-01&categoria=RCD');
 });
 
 test('al arrancar se dice qué variable falta y qué conviene corregir en producción', () => {
