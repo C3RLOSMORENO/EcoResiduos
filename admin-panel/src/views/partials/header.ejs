@@ -20,14 +20,14 @@
   <div id="navFondo" class="nav-fondo" hidden></div>
 
   <nav id="navPrincipal" class="app-nav" aria-label="Navegación principal">
-    <a href="/dashboard" class="mb-4 flex items-center gap-3 rounded-sm px-3 py-2 no-underline" aria-label="EcoResiduos, Panel de administración: ir al inicio">
+    <a href="/dashboard" class="mb-4 flex items-center gap-3 rounded-lg px-3 py-2 no-underline" aria-label="EcoResiduos, Panel de administración: ir al inicio">
       <img src="<%= recurso('/images/isotipo-192.png') %>" alt="" width="40" height="40" class="h-10 w-10 object-contain">
       <span class="nav-marca-texto">
-        <span class="block font-display text-title-l text-on-surface">EcoResiduos</span>
-        <span class="block text-label-m text-on-surface-variant">Panel de administración</span>
+        <span class="block font-display text-title-l text-on-surface font-bold">EcoResiduos</span>
+        <span class="block text-label-s text-on-surface-variant font-medium">Panel de administración</span>
       </span>
     </a>
-    <ul class="flex flex-col gap-1" role="list">
+    <ul class="flex flex-col gap-1.5" role="list">
       <% enlacesNav.forEach(function (item) { %>
         <li>
           <a href="<%= item.href %>" class="nav-item" <%- pestana === item.clave ? 'aria-current="page"' : '' %>>
@@ -37,6 +37,21 @@
         </li>
       <% }); %>
     </ul>
+
+    <div class="mt-auto pt-4 pb-3 border-t border-outline-variant/60">
+      <div class="flex items-center gap-3 px-2 py-2 rounded-lg bg-surface-container/60">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary font-bold text-xs tracking-wider" aria-hidden="true">
+          AD
+        </div>
+        <div class="nav-marca-texto min-w-0 flex-1">
+          <p class="truncate text-body-s font-semibold text-on-surface">Administrador</p>
+          <div class="flex items-center gap-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true"></span>
+            <span class="truncate text-label-s text-on-surface-variant">Superadmin</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <div id="appContenido" class="app-contenido">

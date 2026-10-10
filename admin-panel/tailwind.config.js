@@ -80,6 +80,7 @@ module.exports = {
       md: '12px',
       lg: '16px',
       xl: '28px',
+      '2xl': '24px',
       full: '9999px'
     },
     extend: {

@@ -112,6 +112,20 @@
     });
   });
 
+  // Aviso accesible cuando Bloq Mayús está activo en el campo de contraseña
+  const campoClave = $('#password');
+  const avisoMayus = $('#avisoMayusculas');
+  if (campoClave && avisoMayus) {
+    const revisarMayus = (e) => {
+      const activo = Boolean(e && e.getModifierState && e.getModifierState('CapsLock'));
+      avisoMayus.hidden = !activo;
+    };
+    campoClave.addEventListener('keydown', revisarMayus);
+    campoClave.addEventListener('keyup', revisarMayus);
+    campoClave.addEventListener('focus', revisarMayus);
+    campoClave.addEventListener('blur', () => { avisoMayus.hidden = true; });
+  }
+
   $$('[data-aviso-ejemplo]').forEach((boton) => {
     boton.addEventListener('click', () => mostrarNotificacion(boton.dataset.avisoEjemplo));
   });

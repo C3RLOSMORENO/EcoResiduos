@@ -121,7 +121,7 @@
         }
       })),
       animate: !sinMovimiento,
-      smoothScroll: !sinMovimiento,
+      smoothScroll: false,
       allowClose: true,
       allowKeyboardControl: true,
       // Lo resaltado se mira, no se usa: un clic en una tarjeta a mitad del

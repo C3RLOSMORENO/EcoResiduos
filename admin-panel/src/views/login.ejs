@@ -4,49 +4,82 @@
   <%- include('partials/head', { titulo: 'Iniciar sesión' }) %>
   <meta name="description" content="Acceso al panel de administración de EcoResiduos">
 </head>
-<body class="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+<body class="fondo-autenticacion relative">
   <a href="#contenido" class="saltar">Saltar al contenido</a>
-  <%- include('partials/marca-acceso') %>
-  <div class="flex min-h-screen flex-col lg:min-h-0">
-  <header class="flex items-center justify-between gap-3 p-2 lg:justify-end">
-    <%- include('partials/marca-compacta') %>
-    <button type="button" id="botonTema" class="btn-icono" aria-pressed="false" aria-label="Modo oscuro">
-      <span class="material-symbols-outlined" aria-hidden="true" data-icono-tema>dark_mode</span>
+
+  <header class="absolute top-0 right-0 p-4 sm:p-6 z-10">
+    <button type="button" id="botonTema" class="btn-icono rounded-full border border-outline-variant bg-surface-container-low transition-colors hover:bg-surface-container hover:border-outline focus-visible:ring-2 focus-visible:ring-primary" aria-pressed="false" aria-label="Modo oscuro">
+      <span class="material-symbols-outlined icono-20" aria-hidden="true" data-icono-tema>dark_mode</span>
     </button>
   </header>
-  <main id="contenido" tabindex="-1" class="flex flex-1 items-center justify-center px-4 pb-12">
-    <div class="w-full max-w-md rounded-xl bg-surface-container-low p-6 md:p-10">
-      <div class="mb-6 flex flex-col items-center gap-2 text-center">
-        <h1 class="font-display text-headline-l text-on-surface">Inicia sesión</h1>
-        <p class="text-body-m text-on-surface-variant">Entra con tu cuenta de administrador de EcoResiduos.</p>
+
+  <main id="contenido" tabindex="-1" class="flex flex-1 items-center justify-center px-4 py-8 sm:py-12">
+    <div class="w-full max-w-[420px]">
+      <div class="mb-6 flex flex-col items-center text-center">
+        <span class="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-container-high border border-outline-variant shadow-sm">
+          <img src="/images/isotipo-192.png" alt="" width="28" height="28" class="h-7 w-7 object-contain">
+        </span>
+        <span class="font-display text-title-m font-bold tracking-tight text-primary">EcoResiduos</span>
       </div>
+
+      <div class="tarjeta-login p-6 sm:p-8 md:p-10">
+        <div class="mb-6 text-center">
+          <h1 class="font-display text-headline-m text-on-surface">Inicia sesión</h1>
+          <p class="mt-1 text-body-m text-on-surface-variant">Panel de administración</p>
+        </div>
 
       <%- include('partials/alert') %>
 
       <form action="/auth/login" method="POST" class="flex flex-col gap-4" data-validar>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <% if (volver) { %><input type="hidden" name="volver" value="<%= volver %>"><% } %>
+
         <div class="campo">
           <label for="email" class="campo-etiqueta">Correo <span class="campo-obligatorio">(obligatorio)</span></label>
-          <input type="email" id="email" name="email" required autocomplete="username" inputmode="email" class="campo-control">
+          <div class="campo-con-icono">
+            <span class="campo-icono-prefijo" aria-hidden="true">
+              <span class="material-symbols-outlined icono-20">mail</span>
+            </span>
+            <input type="email" id="email" name="email" required autocomplete="username" inputmode="email" placeholder="admin@ecoresiduos.com" class="campo-control">
+          </div>
         </div>
+
         <div class="campo">
-          <label for="password" class="campo-etiqueta">Contraseña <span class="campo-obligatorio">(obligatorio)</span></label>
-          <div class="relative">
-            <input type="password" id="password" name="password" required autocomplete="current-password" class="campo-control pr-14">
-            <button type="button" id="botonVerClave" data-ver-clave="password" class="btn-icono absolute right-0.5 top-0.5" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false">
+          <div class="flex items-center justify-between">
+            <label for="password" class="campo-etiqueta">Contraseña <span class="campo-obligatorio">(obligatorio)</span></label>
+            <a href="/restablecer-password" class="text-label-s text-primary hover:underline">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="campo-con-icono">
+            <span class="campo-icono-prefijo" aria-hidden="true">
+              <span class="material-symbols-outlined icono-20">lock</span>
+            </span>
+            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••" class="campo-control pr-12">
+            <button type="button" id="botonVerClave" data-ver-clave="password" class="btn-icono absolute right-1 top-1" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false">
               <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
             </button>
           </div>
+          <p id="avisoMayusculas" class="campo-aviso-mayusculas" role="status" aria-live="polite" hidden>
+            <span class="material-symbols-outlined icono-18" aria-hidden="true">warning</span>
+            <span>Bloqueo de mayúsculas activado</span>
+          </p>
         </div>
-        <button type="submit" class="btn-filled mt-2 w-full" data-cargando="Ingresando…">
+
+        <button type="submit" class="btn-filled mt-2 w-full h-12 text-label-l font-semibold" data-cargando="Ingresando…">
           <span class="material-symbols-outlined icono-20" aria-hidden="true">login</span>
           <span data-etiqueta>Ingresar</span>
         </button>
-        <a href="/restablecer-password" class="btn-text self-center">¿Olvidaste tu contraseña?</a>
       </form>
     </div>
-  </main>
+
+    <p class="mt-6 text-center text-body-s text-on-surface-variant">
+      ¿Problemas para acceder?
+      <a href="mailto:soporte@ecoresiduos.com" class="text-primary font-medium hover:underline">Contacta a soporte</a>
+    </p>
   </div>
+</main>
+
+  <footer class="py-6 text-center text-body-s text-on-surface-variant opacity-70">
+    <p>EcoResiduos · Panel de administración · Santander</p>
+  </footer>
 </body>
 </html>

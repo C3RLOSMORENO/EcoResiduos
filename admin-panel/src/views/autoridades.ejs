@@ -57,9 +57,30 @@
                 </th>
                 <td><%= f.textoODato(a.jurisdiccion) %></td>
                 <td>
-                  <% if (web) { %><a class="enlace block break-all" href="<%= web %>" target="_blank" rel="noopener noreferrer"><%= web.replace(/^https?:\/\//, '').replace(/\/$/, '') %><span class="sr-only"> (se abre en una pestaña nueva)</span></a><% } %>
-                  <span class="block"><%= a.telefono || '' %></span>
-                  <span class="block break-all text-body-s text-on-surface-variant"><%= a.email || '' %></span>
+                  <div class="flex flex-col gap-1 text-body-s">
+                    <% if (web) { %>
+                      <a class="enlace inline-flex items-center gap-1.5 break-all" href="<%= web %>" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-outlined icono-16 text-primary" aria-hidden="true">open_in_new</span>
+                        <span><%= web.replace(/^https?:\/\//, '').replace(/\/$/, '') %></span>
+                        <span class="sr-only"> (se abre en una pestaña nueva)</span>
+                      </a>
+                    <% } %>
+                    <% if (a.telefono) { %>
+                      <span class="inline-flex items-center gap-1.5 text-on-surface">
+                        <span class="material-symbols-outlined icono-16 text-on-surface-variant" aria-hidden="true">smartphone</span>
+                        <span><%= a.telefono %></span>
+                      </span>
+                    <% } %>
+                    <% if (a.email) { %>
+                      <span class="inline-flex items-center gap-1.5 break-all text-on-surface-variant">
+                        <span class="material-symbols-outlined icono-16 text-on-surface-variant" aria-hidden="true">mail</span>
+                        <span><%= a.email %></span>
+                      </span>
+                    <% } %>
+                    <% if (!web && !a.telefono && !a.email) { %>
+                      <span class="text-on-surface-variant">Sin dato</span>
+                    <% } %>
+                  </div>
                 </td>
                 <td><%= f.textoODato(a.horario) %></td>
                 <td class="text-right">
