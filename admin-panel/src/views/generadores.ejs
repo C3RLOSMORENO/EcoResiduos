@@ -68,8 +68,13 @@
                 <td class="whitespace-nowrap"><%= f.fechaCorta(u.created_at) %></td>
                 <td class="num">
                   <% if (u.publicaciones > 0) { %>
-                    <a class="enlace" href="/solicitudes?generador=<%= u.id %>" aria-label="<%= u.publicaciones %> publicaciones de <%= u.nombre_completo_o_empresa %>"><%= f.formatoNumero(u.publicaciones) %></a>
-                  <% } else { %>0<% } %>
+                    <a class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-s font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/40 no-underline transition-colors" href="/solicitudes?generador=<%= u.id %>" aria-label="<%= u.publicaciones %> publicaciones de <%= u.nombre_completo_o_empresa %>">
+                      <span><%= f.formatoNumero(u.publicaciones) %></span>
+                      <span class="material-symbols-outlined icono-14" aria-hidden="true">open_in_new</span>
+                    </a>
+                  <% } else { %>
+                    <span class="text-on-surface-variant text-body-s">0</span>
+                  <% } %>
                 </td>
               </tr>
             <% }); %>

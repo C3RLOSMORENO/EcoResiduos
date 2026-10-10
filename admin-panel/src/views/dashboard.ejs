@@ -1,10 +1,10 @@
 <%# Sin datos no hay qué recorrer: con error de carga no se ofrece el recorrido. %>
 <%- include('partials/header', { activeTab: 'dashboard', titulo: 'Inicio', recorrido: errorCarga ? null : recorrido }) %>
 
-<div class="flex flex-col gap-8">
+<div class="flex flex-col gap-4 md:gap-8">
   <div>
     <h1 class="titulo-pagina">Inicio</h1>
-    <p class="mt-1 text-body-l text-on-surface-variant">Lo que necesita tu atención hoy y cómo va el reciclaje en Santander.</p>
+    <p class="mt-0.5 text-body-m md:text-body-l text-on-surface-variant">Lo que necesita tu atención hoy y cómo va el reciclaje en Santander.</p>
   </div>
 
   <% if (errorCarga) { %>
@@ -18,7 +18,7 @@
     </div>
   <% } %>
 
-  <section aria-labelledby="tituloPendientes" class="flex flex-col gap-4" data-recorrido="pendientes">
+  <section aria-labelledby="tituloPendientes" class="flex flex-col gap-2.5 md:gap-4" data-recorrido="pendientes">
     <h2 id="tituloPendientes" class="seccion-titulo">Pendientes de acción</h2>
     <%
       const tarjetasPendientes = [
@@ -28,7 +28,7 @@
         { cifra: pendientesAccion.sinCertificado, titulo: 'Sin certificado hace más de 7 días', texto: 'Recolecciones sin certificado de disposición o aprovechamiento.', href: '/solicitudes?sin_certificado=1', icono: 'description' }
       ];
     %>
-    <ul class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" role="list">
+    <ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4" role="list">
       <% tarjetasPendientes.forEach(function (t) { %>
         <li>
           <a href="<%= t.href %>" class="tarjeta-accion h-full <%= t.cifra > 0 ? 'tarjeta-accion-activa' : '' %>">
@@ -98,20 +98,23 @@
     <h2 id="tituloCifras" class="seccion-titulo">Cifras generales</h2>
     <dl class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       <% [
-        ['Solicitudes', kpis.totalSolicitudes],
-        ['Publicadas', kpis.solicitudesPublicadas],
-        ['En negociación', kpis.solicitudesEnProceso],
-        ['Recolectadas', kpis.solicitudesRecolectadas],
-        ['Canceladas', kpis.solicitudesCanceladas],
-        ['Gestores', kpis.totalGestores],
-        ['Gestores por revisar', kpis.gestoresPendientesCount],
-        ['Gestores aprobados', kpis.gestoresAprobados],
-        ['Gestores rechazados', kpis.gestoresRechazados],
-        ['Postulaciones', kpis.totalPostulaciones]
+        ['Solicitudes', kpis.totalSolicitudes, 'local_shipping'],
+        ['Publicadas', kpis.solicitudesPublicadas, 'send'],
+        ['En negociación', kpis.solicitudesEnProceso, 'handshake'],
+        ['Recolectadas', kpis.solicitudesRecolectadas, 'check_circle'],
+        ['Canceladas', kpis.solicitudesCanceladas, 'cancel'],
+        ['Gestores', kpis.totalGestores, 'domain'],
+        ['Gestores por revisar', kpis.gestoresPendientesCount, 'hourglass_top'],
+        ['Gestores aprobados', kpis.gestoresAprobados, 'verified'],
+        ['Gestores rechazados', kpis.gestoresRechazados, 'block'],
+        ['Postulaciones', kpis.totalPostulaciones, 'inbox']
       ].forEach(function (kpi) { %>
         <div class="tarjeta-kpi">
-          <dt class="text-label-l text-on-surface-variant"><%= kpi[0] %></dt>
-          <dd class="kpi-cifra"><%= f.formatoNumero(kpi[1]) %></dd>
+          <div class="flex items-center justify-between">
+            <dt class="text-label-m text-on-surface-variant font-medium"><%= kpi[0] %></dt>
+            <span class="material-symbols-outlined icono-18 text-on-surface-variant opacity-70" aria-hidden="true"><%= kpi[2] %></span>
+          </div>
+          <dd class="kpi-cifra text-headline-s"><%= f.formatoNumero(kpi[1]) %></dd>
         </div>
       <% }); %>
     </dl>
