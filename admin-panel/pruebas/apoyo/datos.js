@@ -52,7 +52,7 @@ const solicitud = {
     problema_reportado: true,
     problema_detalle: 'No vinieron a la hora acordada.',
     gestor_asignado_id: 1,
-    certificado_url: 'https://almacenamiento.test/certificados/a.pdf',
+    certificado_url: 'https://proyecto.supabase.co/storage/v1/object/public/certificados/0b6f4a39-2d61-4c1e-9a52-7f3e8c1d2a40/a.pdf',
     certificado_tipo: 'APROVECHAMIENTO',
     certificado_at: '2026-09-29T15:00:00Z',
     materiales_residuos: material

@@ -5,6 +5,33 @@ const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
 
+const BUCKET_CERTIFICADOS = 'certificados';
+const PREFIJO_CERTIFICADOS = `/storage/v1/object/public/${BUCKET_CERTIFICADOS}/`;
+
+/**
+ * Ruta dentro del bucket de certificados a partir de la URL que guardó la app.
+ *
+ * La URL la escribe el gestor, así que el panel nunca la descarga: si lo
+ * hiciera, el servidor visitaría la dirección que el gestor quisiera (SSRF).
+ * Solo se acepta una URL del propio proyecto de Supabase y el archivo se lee
+ * con Storage.
+ *
+ * @param {string} url Valor de certificado_url.
+ * @returns {?string} La ruta del archivo, o null si la URL es de otro sitio o
+ *     de otro bucket.
+ */
+function rutaCertificado(url) {
+    try {
+        const direccion = new URL(String(url).trim());
+        const proyecto = new URL(process.env.SUPABASE_URL).origin;
+        if (direccion.origin !== proyecto || !direccion.pathname.startsWith(PREFIJO_CERTIFICADOS)) return null;
+        const ruta = decodeURIComponent(direccion.pathname.slice(PREFIJO_CERTIFICADOS.length));
+        return ruta && !ruta.split('/').includes('..') ? ruta : null;
+    } catch {
+        return null;
+    }
+}
+
 const ESTADOS_CANCELABLES = ['PUBLICADO', 'EN_NEGOCIACION'];
 const DIAS_SIN_CERTIFICADO = 7;
 
@@ -31,6 +58,7 @@ function aplicarFiltros(consulta, filtros) {
 
 const solicitudService = {
     ESTADOS_CANCELABLES,
+    rutaCertificado,
     DIAS_SIN_CERTIFICADO,
 
     // Se puede resolver si el gestor la marcó recolectada, el generador
@@ -142,8 +170,15 @@ const solicitudService = {
         return data;
     },
 
-    // Descarga el PDF del certificado para servirlo directamente desde el panel
-    // sin exponer la URL interna de Supabase Storage en el navegador.
+    /**
+     * PDF del certificado, leído del bucket con la llave del servidor para
+     * servirlo desde el panel.
+     *
+     * @param {number|string} id Identificador de la solicitud.
+     * @returns {Promise<{buffer: Buffer, tipo: ?string}>}
+     * @throws {Error} Si la solicitud no tiene certificado, si la URL no es del
+     *     bucket de certificados del proyecto o si Storage no entrega el archivo.
+     */
     async descargarCertificado(id) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {
@@ -156,48 +191,26 @@ const solicitudService = {
             .eq('id', solicitudId)
             .maybeSingle();
 
-        if (error || !data || !data.certificado_url) {
+        if (error) throw errorDeBase('No pudimos cargar el certificado.', error);
+        if (!data || !data.certificado_url) {
             throw new Error('Esta solicitud no tiene un certificado adjunto.');
         }
 
-        const url = String(data.certificado_url).trim();
-
-        // En pruebas o con almacenamiento simulado, responder buffer de prueba
-        if (url.includes('almacenamiento.test') || process.env.NODE_ENV === 'test') {
-            return {
-                buffer: Buffer.from('%PDF-1.7 certificado de prueba'),
-                tipo: data.certificado_tipo
-            };
+        const ruta = rutaCertificado(data.certificado_url);
+        if (!ruta) {
+            console.error(`Certificado de la solicitud ${solicitudId} fuera del bucket ${BUCKET_CERTIFICADOS}: ${data.certificado_url}`);
+            throw new Error('El certificado no está guardado en el almacenamiento de EcoResiduos, así que no lo abrimos.');
         }
 
-        // Validación anti-SSRF: solo permitir protocolo HTTPS/HTTP y rechazar hosts locales/internos
-        let urlParsed;
-        try {
-            urlParsed = new URL(url);
-        } catch {
-            throw new Error('La dirección del certificado no es válida.');
+        const { data: archivo, error: errorDescarga } = await supabase.storage.from(BUCKET_CERTIFICADOS).download(ruta);
+        if (errorDescarga || !archivo) {
+            throw errorDescarga
+                ? errorDeBase('No pudimos abrir el certificado.', errorDescarga)
+                : new Error('No encontramos el archivo del certificado.');
         }
-
-        if (!['http:', 'https:'].includes(urlParsed.protocol)) {
-            throw new Error('Protocolo de certificado no permitido.');
-        }
-
-        const hostname = urlParsed.hostname.toLowerCase();
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1' ||
-            hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('169.254.')) {
-            throw new Error('Origen de certificado no permitido por seguridad.');
-        }
-
-        const respuesta = await fetch(url, { signal: AbortSignal.timeout(10000) });
-        if (!respuesta.ok) {
-            throw new Error('No pudimos descargar el archivo del certificado.');
-        }
-
-        const arrayBuffer = await respuesta.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
 
         return {
-            buffer,
+            buffer: Buffer.from(await archivo.arrayBuffer()),
             tipo: data.certificado_tipo
         };
     }

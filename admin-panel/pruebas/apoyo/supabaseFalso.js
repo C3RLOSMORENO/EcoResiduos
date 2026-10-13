@@ -157,6 +157,8 @@ function crearClienteFalso() {
 
 // Reemplaza src/config/supabase antes de cargar la aplicación.
 function instalarSupabaseFalso() {
+    // Las URL de Storage de los datos de prueba son de este proyecto.
+    process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://proyecto.supabase.co';
     const cliente = crearClienteFalso();
     const ruta = require.resolve(path.join(__dirname, '..', '..', 'src', 'config', 'supabase'));
     require.cache[ruta] = { id: ruta, filename: ruta, loaded: true, exports: cliente };

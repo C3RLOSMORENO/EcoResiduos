@@ -234,3 +234,39 @@ test('los avisos que arma el navegador usan códigos con texto fijo', async () =
     const inventado = await request(app).get('/login?aviso=lo-que-sea');
     assert.ok(!inventado.text.includes('lo-que-sea'));
 });
+
+test('el certificado se lee de Storage y nunca se descarga una URL de otro sitio', async () => {
+    const { rutaCertificado } = require('../src/services/SolicitudService');
+    const uid = '0b6f4a39-2d61-4c1e-9a52-7f3e8c1d2a40';
+    const propia = `https://proyecto.supabase.co/storage/v1/object/public/certificados/${uid}/a.pdf`;
+    assert.equal(rutaCertificado(propia), `${uid}/a.pdf`);
+    for (const url of [
+        `https://otro-sitio.co/storage/v1/object/public/certificados/${uid}/a.pdf`,
+        `http://127.0.0.1/storage/v1/object/public/certificados/${uid}/a.pdf`,
+        `https://proyecto.supabase.co/storage/v1/object/public/permisos/${uid}/a.pdf`,
+        `https://proyecto.supabase.co/storage/v1/object/public/certificados/%2e%2e/permisos/registro/b.pdf`,
+        'no es una url'
+    ]) {
+        assert.equal(rutaCertificado(url), null, url);
+    }
+
+    const fetchOriginal = globalThis.fetch;
+    let descargas = 0;
+    globalThis.fetch = async () => { descargas += 1; throw new Error('no debe descargar'); };
+    try {
+        supabase.manejador = (consulta) => (consulta.tabla === 'solicitudes_recoleccion'
+            ? { data: { id: 7, certificado_url: `https://otro-sitio.co/storage/v1/object/public/certificados/${uid}/a.pdf` }, error: null }
+            : responderConDatos(consulta));
+        const externo = await request(app).get('/solicitudes/7/certificado').set('Cookie', SESION);
+        assert.equal(externo.status, 302);
+        assert.equal(descargas, 0);
+
+        supabase.manejador = responderConDatos;
+        const res = await request(app).get('/solicitudes/7/certificado').set('Cookie', SESION);
+        assert.equal(res.status, 200);
+        assert.deepEqual(supabase.storageOps.at(-1), { bucket: 'certificados', op: 'descargar', ruta: `${uid}/a.pdf` });
+        assert.equal(descargas, 0);
+    } finally {
+        globalThis.fetch = fetchOriginal;
+    }
+});

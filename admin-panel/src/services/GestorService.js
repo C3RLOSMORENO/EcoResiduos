@@ -489,8 +489,14 @@ const gestorService = {
         }
     },
 
-    // Descarga el archivo del permiso ambiental para servirlo directamente desde
-    // el servidor del panel sin exponer la URL de Supabase al navegador.
+    /**
+     * PDF del permiso ambiental, leído del bucket privado con la llave del
+     * servidor: el navegador no recibe ninguna URL de Supabase.
+     *
+     * @param {number|string} id Identificador del gestor.
+     * @returns {Promise<{buffer: Buffer, razonSocial: string}>}
+     * @throws {Error} Si el gestor no tiene permiso o Storage no entrega el archivo.
+     */
     async descargarPermiso(id) {
         const { data, error } = await supabase
             .from('perfiles_gestor')
@@ -498,50 +504,23 @@ const gestorService = {
             .eq('id', id)
             .maybeSingle();
 
-        if (error || !data || !data.permiso_path) {
+        if (error) throw errorDeBase('No pudimos cargar el permiso.', error);
+        if (!data || !data.permiso_path) {
             throw new Error('Este gestor no tiene un permiso ambiental adjunto.');
         }
 
-        const ruta = String(data.permiso_path).trim();
-
-        // 1. Descarga directa desde el bucket privado de permisos
-        if (typeof supabase.storage.from('permisos').download === 'function') {
-            const { data: blob, error: errorDescarga } = await supabase.storage
-                .from('permisos')
-                .download(ruta);
-
-            if (!errorDescarga && blob) {
-                const arrayBuffer = await blob.arrayBuffer();
-                return {
-                    buffer: Buffer.from(arrayBuffer),
-                    razonSocial: data.razon_social
-                };
-            }
-        }
-
-        // 2. Fallback: URL firmada descargada internamente por el servidor
-        const { data: firmado, error: errorFirma } = await supabase.storage
+        const { data: archivo, error: errorDescarga } = await supabase.storage
             .from('permisos')
-            .createSignedUrl(ruta, 60);
+            .download(String(data.permiso_path).trim());
 
-        if (errorFirma || !firmado || !firmado.signedUrl) {
-            throw errorFirma ? errorDeBase('No pudimos abrir el permiso.', errorFirma) : new Error('No encontramos el archivo del permiso.');
+        if (errorDescarga || !archivo) {
+            throw errorDescarga
+                ? errorDeBase('No pudimos abrir el permiso.', errorDescarga)
+                : new Error('No encontramos el archivo del permiso.');
         }
 
-        if (firmado.signedUrl.includes('almacenamiento.test')) {
-            return {
-                buffer: Buffer.from('%PDF-1.7 permiso simulado'),
-                razonSocial: data.razon_social
-            };
-        }
-
-        const respuesta = await fetch(firmado.signedUrl, { signal: AbortSignal.timeout(10000) });
-        if (!respuesta.ok) {
-            throw new Error('No se pudo descargar el archivo del permiso.');
-        }
-        const arrayBuffer = await respuesta.arrayBuffer();
         return {
-            buffer: Buffer.from(arrayBuffer),
+            buffer: Buffer.from(await archivo.arrayBuffer()),
             razonSocial: data.razon_social
         };
     },
