@@ -1,3 +1,11 @@
+"""Descarga fotos de Wikimedia Commons con licencia abierta para varias categorías.
+
+Quedan en descargas_crudas/wikimedia/<CATEGORIA>/. descargar_wikimedia_v2.py
+hace lo mismo y además registra el autor y la licencia de cada foto.
+
+    python descargar_wikimedia.py
+"""
+
 import os
 import sys
 import json
@@ -94,6 +102,7 @@ WIKIMEDIA_QUERIES = {
 }
 
 def search_wikimedia(query, limit=50):
+    """Resultados de Wikimedia Commons con su URL y licencia; [] si la API no responde."""
     url = "https://commons.wikimedia.org/w/api.php"
     params = {
         'action': 'query',
@@ -134,6 +143,7 @@ def search_wikimedia(query, limit=50):
     return []
 
 def download_and_process_image(item, output_path):
+    """Descarga la imagen, la reduce y la guarda si mide al menos 224 px. True si quedó guardada."""
     try:
         r = requests.get(item['url'], headers=HEADERS, timeout=15)
         if r.status_code != 200:
@@ -160,6 +170,7 @@ def download_and_process_image(item, output_path):
         return False
 
 def collect_wikimedia_for_category(category, max_images=400):
+    """Descarga las imágenes de las consultas de la categoría y devuelve cuántas guardó."""
     target_dir = RAW_BASE / "wikimedia" / category
     target_dir.mkdir(parents=True, exist_ok=True)
     
@@ -194,6 +205,7 @@ def collect_wikimedia_for_category(category, max_images=400):
     return saved
 
 def main():
+    """Descarga de Wikimedia Commons hasta 350 imágenes de RCD, RIESGO_BIOLOGICO, PELIGROSO, RAEE, ORDINARIO y FONDO."""
     print("🚀 INICIANDO RECOLECCIÓN DE IMÁGENES LIBRES (WIKIMEDIA COMMONS CC BY/CC0)...")
     summary = {}
     categories = ["RCD", "RIESGO_BIOLOGICO", "PELIGROSO", "RAEE", "ORDINARIO", "FONDO"]

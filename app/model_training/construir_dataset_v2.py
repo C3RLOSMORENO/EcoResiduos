@@ -1,3 +1,12 @@
+"""Arma dataset/ balanceado desde las fuentes descargadas en descargas_crudas/.
+
+Vacía dataset/ y descarta las fotos pequeñas, muy alargadas, de catálogo,
+movidas, con mucho texto, duplicadas o que ya están en dataset_prueba/. En
+cada categoría ninguna fuente pasa de MAX_FUENTE_UNICA.
+
+    python construir_dataset_v2.py
+"""
+
 import os
 import sys
 import shutil
@@ -44,6 +53,7 @@ def es_catalogo(imagen):
     return (borde > 235).mean() > 0.85
 
 def has_excessive_text(arr):
+    """True si la imagen parece una infografía: mucho blanco puro y mucho negro puro."""
     # Detección simple de infografías con mucho contraste y bordes rectos binarios
     gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
     # Si más del 20% de la imagen es texto blanco sobre negro o negro sobre blanco puro
@@ -54,6 +64,10 @@ def has_excessive_text(arr):
     return False
 
 def check_image_quality(img_path, allow_catalog=False):
+    """Revisa tamaño, proporción, fondo de catálogo, nitidez y texto.
+
+    Devuelve ((imagen, hash perceptual), "ok") o (None, motivo del descarte).
+    """
     try:
         with Image.open(img_path) as im:
             im = im.convert("RGB")
@@ -94,12 +108,14 @@ def check_image_quality(img_path, allow_catalog=False):
         return None, f"error_lectura: {e}"
 
 def is_duplicate(candidate_hash, hash_list):
+    """True si el hash está a HAMMING_THRESHOLD bits o menos de alguno de la lista."""
     for h in hash_list:
         if (candidate_hash - h) <= HAMMING_THRESHOLD:
             return True
     return False
 
 def collect_candidates():
+    """Candidatas por categoría y por fuente, a partir de descargas_crudas/."""
     candidates = defaultdict(lambda: defaultdict(list))
     
     # 1. RealWaste (Limpio)
@@ -250,6 +266,10 @@ def collect_candidates():
     return candidates
 
 def assemble_balanced_dataset():
+    """Vacía dataset/ y lo vuelve a armar repartiendo cada categoría entre fuentes.
+
+    Ninguna fuente pasa de MAX_FUENTE_UNICA y no entran duplicados ni fotos de dataset_prueba/.
+    """
     print("🚀 ENSAMBLANDO DATASET V2 CON REGLAS ESTRICTAS...")
     
     # Limpiar dataset previo

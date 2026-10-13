@@ -28,10 +28,12 @@ DIFERENCIA_MINIMA = 12.0
 
 
 def nitidez(gris):
+    """Varianza del laplaciano: cuanto más baja, más movida está la imagen."""
     return cv2.Laplacian(gris, cv2.CV_64F).var()
 
 
 def reducir(frame):
+    """Reduce el fotograma a LADO_MAXIMO en su lado mayor; si ya es menor, lo deja igual."""
     alto, ancho = frame.shape[:2]
     escala = LADO_MAXIMO / max(alto, ancho)
     if escala >= 1:
@@ -40,6 +42,10 @@ def reducir(frame):
 
 
 def extraer(video, destino, por_segundo):
+    """Guarda en destino los fotogramas nítidos y distintos del anterior.
+
+    Devuelve cuántos guardó y cuántos descartó.
+    """
     captura = cv2.VideoCapture(str(video))
     fps = captura.get(cv2.CAP_PROP_FPS) or 30
     salto = max(1, round(fps / por_segundo))
@@ -72,6 +78,7 @@ def extraer(video, destino, por_segundo):
 
 
 def main():
+    """Procesa los videos de cada carpeta de videos/ hacia dataset/<CATEGORIA>/."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--por-segundo', type=float, default=2, help='fotogramas a revisar por segundo de video')
     args = parser.parse_args()

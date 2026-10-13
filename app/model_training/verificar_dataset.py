@@ -44,6 +44,7 @@ EXTENSIONES = {'.jpg', '.jpeg', '.png', '.webp'}
 
 
 def fuente(archivo):
+    """Fuente de la imagen según el prefijo de su nombre (hasta el primer «_»)."""
     return archivo.stem.split('_', 1)[0].lower()
 
 
@@ -55,10 +56,12 @@ def es_catalogo(imagen):
 
 
 def imagenes(carpeta):
+    """Imágenes de la carpeta con extensión admitida, en orden alfabético."""
     return sorted(f for f in carpeta.iterdir() if f.suffix.lower() in EXTENSIONES)
 
 
 def main():
+    """Hace todas las revisiones, escribe revision/verificacion.md y sale con 1 si hay errores."""
     if not DATASET_DIR.exists():
         print(f"❌ No existe '{DATASET_DIR}'.")
         sys.exit(1)

@@ -53,6 +53,11 @@ AUMENTO = tf.keras.Sequential([
 
 
 def cargar(directorio, subconjunto=None, mezclar=True):
+    """Lee las fotos de una carpeta por categoría como lotes con etiqueta one-hot.
+
+    Con subconjunto ('training' o 'validation') toma su parte de la división
+    80/20; sin él, la carpeta completa.
+    """
     return tf.keras.utils.image_dataset_from_directory(
         directorio,
         validation_split=0.2 if subconjunto else None,
@@ -66,6 +71,10 @@ def cargar(directorio, subconjunto=None, mezclar=True):
 
 
 def construir_modelo(num_clases):
+    """MobileNetV3Large preentrenada en ImageNet con una cabeza nueva.
+
+    Devuelve el modelo y la base, congelada, para descongelarla en el ajuste fino.
+    """
     base = tf.keras.applications.MobileNetV3Large(
         input_shape=IMG_SIZE + (3,),
         include_top=False,
@@ -83,12 +92,14 @@ def construir_modelo(num_clases):
 
 
 def pesos_por_clase(dataset, num_clases):
+    """Peso de cada categoría para que las que tienen menos fotos cuenten igual."""
     etiquetas = np.concatenate([np.argmax(y, axis=1) for _, y in dataset])
     pesos = compute_class_weight('balanced', classes=np.arange(num_clases), y=etiquetas)
     return dict(enumerate(pesos))
 
 
 def evaluar(modelo, dataset, nombres, titulo):
+    """Devuelve el reporte de precisión por categoría y la matriz de confusión."""
     reales, predichas = [], []
     for x, y in dataset:
         reales.extend(np.argmax(y, axis=1))
@@ -100,6 +111,7 @@ def evaluar(modelo, dataset, nombres, titulo):
 
 
 def guardar_matriz(matriz, nombres, titulo):
+    """Dibuja la matriz de confusión normalizada por fila en matriz_confusion.png."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -120,6 +132,10 @@ def guardar_matriz(matriz, nombres, titulo):
 
 
 def exportar_tflite(modelo):
+    """Convierte el modelo a TensorFlow Lite con la optimización por defecto.
+
+    Si la conversión directa falla, lo exporta antes como SavedModel.
+    """
     try:
         convertidor = tf.lite.TFLiteConverter.from_keras_model(modelo)
         convertidor.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -156,6 +172,7 @@ def comprobar_tflite(modelo, dataset):
 
 
 def main():
+    """Entrena en dos fases, evalúa, exporta el .tflite y comprueba que coincida con Keras."""
     if not DATASET_DIR.exists():
         print(f"❌ No se encontró la carpeta '{DATASET_DIR}'.")
         return

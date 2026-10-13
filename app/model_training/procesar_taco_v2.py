@@ -1,3 +1,11 @@
+"""Recorta los objetos de TACO por categoría y agrega recortes de fondo.
+
+Los recortes de fondo son zonas de la foto que no tocan ningún objeto
+anotado y van a la categoría FONDO.
+
+    python procesar_taco_v2.py
+"""
+
 import os
 import sys
 import json
@@ -63,6 +71,7 @@ TACO_CAT_MAPPING = {
 }
 
 def box_intersection(box1, box2):
+    """Área de intersección de dos cajas (x1, y1, x2, y2); 0 si no se tocan."""
     # box: (x1, y1, x2, y2)
     ix1 = max(box1[0], box2[0])
     iy1 = max(box1[1], box2[1])
@@ -73,6 +82,10 @@ def box_intersection(box1, box2):
     return 0
 
 def extract_background_crops(im, all_boxes, img_id, target_dir, max_bg_per_img=2):
+    """Guarda recortes de la imagen que no tocan ningún objeto anotado, para FONDO.
+
+    Devuelve cuántos guardó.
+    """
     w, h = im.size
     bg_crops = []
     # Generar candidatos de recorte de fondo de tamaño al menos 300x300
@@ -105,6 +118,7 @@ def extract_background_crops(im, all_boxes, img_id, target_dir, max_bg_per_img=2
     return saved
 
 def main():
+    """Recorta los objetos de TACO por categoría y agrega recortes de fondo."""
     if not ANNOTATIONS_PATH.exists():
         print(f"No existe {ANNOTATIONS_PATH}")
         return

@@ -1,3 +1,11 @@
+"""Recorta los ladrillos anotados en Open Images para la categoría RCD.
+
+Usa las anotaciones de validación que deja procesar_openimages.py en
+descargas_crudas/openimages/ y guarda los recortes en crops_v2/RCD/.
+
+    python descargar_openimages_bricks.py
+"""
+
 import os
 import sys
 import csv
@@ -17,12 +25,14 @@ CROPS_DIR = RAW_DIR / "crops_v2" / "RCD"
 CROPS_DIR.mkdir(parents=True, exist_ok=True)
 
 def es_catalogo(imagen):
+    """Foto de producto sobre fondo blanco: casi todo el borde es blanco."""
     import numpy as np
     gris = np.asarray(imagen.convert('L').resize((96, 96)))
     borde = np.concatenate([gris[:6].ravel(), gris[-6:].ravel(), gris[:, :6].ravel(), gris[:, -6:].ravel()])
     return (borde > 235).mean() > 0.85
 
 def main():
+    """Recorta los ladrillos (/m/0199g) de las imágenes de validación de Open Images para RCD."""
     bbox_file = RAW_DIR / "validation-annotations-bbox.csv"
     img_file = RAW_DIR / "validation-images-with-rotation.csv"
     

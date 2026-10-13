@@ -1,3 +1,13 @@
+"""Audita con Gemini una muestra de cada categoría de dataset/.
+
+Gemini clasifica cada imagen sin ver la carpeta y el script compara su
+respuesta con la categoría asignada. Escribe reporte_auditoria_gemini.md y,
+con limpieza automática, mueve las discordantes a dataset_descartados_gemini/.
+filtrar_con_gemini.py revisa todas las imágenes, no una muestra.
+
+Necesita GEMINI_API_KEY en app/.env o como variable de entorno.
+"""
+
 import os
 import sys
 import base64
@@ -16,8 +26,8 @@ DATASET_DIR = SCRIPT_DIR / "dataset"
 DISCARDED_DIR = SCRIPT_DIR / "dataset_descartados_gemini"
 REPORT_FILE = SCRIPT_DIR / "reporte_auditoria_gemini.md"
 
-# Cargar API KEY desde .env
 def get_api_key():
+    """GEMINI_API_KEY del primer .env que la tenga, o de la variable de entorno."""
     env_paths = [
         SCRIPT_DIR.parent / ".env",
         SCRIPT_DIR.parent.parent / "app" / ".env",
@@ -52,6 +62,10 @@ CANDIDATE_MODELS = [
 ]
 
 def audit_image_with_gemini(api_key, img_path, max_retries=3):
+    """Pregunta a Gemini a qué categoría pertenece la imagen.
+
+    Devuelve el veredicto en un diccionario, o {"error": ...} si ningún modelo respondió.
+    """
     # Redimensionar en memoria a máx 512x512 para que la subida sea instantánea y no cause timeouts
     try:
         from PIL import Image
@@ -142,6 +156,10 @@ Responde UNICAMENTE con un objeto JSON valido en este formato exacto:
     return {"error": "Cuota o límite de peticiones temporalmente alcanzado en todos los modelos disponibles"}
 
 def main(samples_per_cat=5, auto_clean=False, target_category=None):
+    """Audita una muestra por categoría y escribe el reporte en Markdown.
+
+    Con auto_clean mueve las discordantes a dataset_descartados_gemini/.
+    """
     api_key = get_api_key()
     if not api_key:
         print("❌ Error: No se encontró la GEMINI_API_KEY en los archivos .env.")

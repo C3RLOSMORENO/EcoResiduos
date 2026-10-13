@@ -1,3 +1,8 @@
+"""Descarga TACO (Trash Annotations in Context) y recorta sus objetos por categoría.
+
+    python descargar_taco.py
+"""
+
 import os
 import sys
 import json
@@ -66,6 +71,7 @@ TACO_CAT_MAPPING = {
 }
 
 def download_annotations():
+    """Descarga las anotaciones de TACO si aún no están."""
     if not ANNOTATIONS_PATH.exists():
         print("Descargando annotations.json de TACO...")
         r = requests.get(ANNOTATIONS_URL, timeout=30)
@@ -75,6 +81,7 @@ def download_annotations():
         print("annotations.json descargado.")
 
 def download_and_crop_taco(max_per_category=200):
+    """Recorta cada objeto anotado de TACO y lo guarda en la categoría de TACO_CAT_MAPPING."""
     download_annotations()
     with open(ANNOTATIONS_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)

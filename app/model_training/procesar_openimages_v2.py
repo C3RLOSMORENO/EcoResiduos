@@ -1,3 +1,11 @@
+"""Recorta de Open Images los objetos de las clases de OI_CLASSES.
+
+Usa las anotaciones que descargó procesar_openimages.py y guarda los recortes
+en descargas_crudas/openimages/crops_v2/.
+
+    python procesar_openimages_v2.py
+"""
+
 import os
 import sys
 import csv
@@ -57,6 +65,7 @@ OI_CLASSES = {
 MAX_PER_SUBCLASS = 120
 
 def main():
+    """Recorta los objetos de las clases de interés de Open Images en descargas_crudas/openimages/crops_v2/."""
     bbox_file = RAW_DIR / "validation-annotations-bbox.csv"
     img_file = RAW_DIR / "validation-images-with-rotation.csv"
     

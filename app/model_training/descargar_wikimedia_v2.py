@@ -1,3 +1,11 @@
+"""Descarga fotos de Wikimedia Commons con licencia abierta y registra su atribución.
+
+Quedan en descargas_crudas/wikimedia_v2/ y cada una se anota con su autor y
+licencia en fuentes_individuales.csv.
+
+    python descargar_wikimedia_v2.py
+"""
+
 import os
 import sys
 import csv
@@ -92,6 +100,7 @@ WIKIMEDIA_QUERIES = {
 }
 
 def search_wikimedia(query, limit=50):
+    """Resultados de Wikimedia Commons con URL, autor y licencia; [] si la API no responde."""
     url = "https://commons.wikimedia.org/w/api.php"
     params = {
         'action': 'query',
@@ -141,6 +150,7 @@ def search_wikimedia(query, limit=50):
     return []
 
 def download_and_process_image(item, output_path):
+    """Descarga la imagen, la reduce y la guarda si mide al menos 224 px. True si quedó guardada."""
     try:
         r = requests.get(item['url'], headers=HEADERS, timeout=15)
         if r.status_code != 200:
@@ -169,6 +179,7 @@ def download_and_process_image(item, output_path):
         return None
 
 def collect_wikimedia(max_per_category=350):
+    """Descarga de Wikimedia Commons hasta max_per_category imágenes por categoría."""
     all_records = []
     
     # Si ya existe CSV, leerlo para mantener registros

@@ -1,3 +1,10 @@
+"""Busca en Hugging Face datasets de residuos y muestra los más descargados.
+
+Script exploratorio: no descarga nada.
+
+    python buscar_hf.py
+"""
+
 import requests
 
 queries = ['construction waste', 'demolition', 'medical waste', 'battery waste', 'e-waste', 'garbage classification']

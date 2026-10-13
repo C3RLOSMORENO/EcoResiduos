@@ -1,3 +1,10 @@
+"""Descarga las anotaciones de validación de Open Images y recorta los objetos de interés.
+
+Los recortes quedan en descargas_crudas/openimages/crops/.
+
+    python procesar_openimages.py
+"""
+
 import os
 import sys
 import csv
@@ -51,6 +58,7 @@ OI_CLASSES = {
 MAX_PER_SUBCLASS = 150
 
 def download_openimages_annotations():
+    """Descarga las anotaciones de validación de Open Images si aún no están."""
     val_bbox_url = "https://storage.googleapis.com/openimages/v5/validation-annotations-bbox.csv"
     val_img_url = "https://storage.googleapis.com/openimages/2018_04/validation/validation-images-with-rotation.csv"
     
@@ -72,6 +80,7 @@ def download_openimages_annotations():
     return val_bbox_file, val_img_file
 
 def main():
+    """Recorta los objetos de las clases de interés de Open Images en descargas_crudas/openimages/crops/."""
     bbox_file, img_file = download_openimages_annotations()
     
     # Leer URLs de imágenes

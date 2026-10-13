@@ -1,3 +1,10 @@
+"""Descarga carpetas de TrashBox desde GitHub para RAEE, PELIGROSO y RIESGO_BIOLOGICO.
+
+MAPPING indica a qué categoría va cada carpeta.
+
+    python descargar_trashbox.py
+"""
+
 import os
 import sys
 import time
@@ -34,6 +41,7 @@ MAPPING = {
 }
 
 def get_folder_files(parent, folder):
+    """Archivos de una carpeta de TrashBox en GitHub, o [] si la API no responde."""
     encoded_folder = requests.utils.quote(folder)
     url = f"https://api.github.com/repos/nikhilvenkatkumsetty/TrashBox/contents/TrashBox_train_dataset_subfolders/{parent}/{encoded_folder}"
     try:
@@ -45,6 +53,7 @@ def get_folder_files(parent, folder):
     return []
 
 def download_and_save_image(file_info, target_path):
+    """Descarga la imagen, la reduce y la guarda si mide al menos 224 px. True si quedó guardada."""
     download_url = file_info.get("download_url")
     if not download_url:
         return False
@@ -79,6 +88,7 @@ def download_and_save_image(file_info, target_path):
         return False
 
 def main():
+    """Descarga las carpetas de TrashBox listadas en MAPPING a su categoría."""
     print("🚀 DESCARGANDO DATASET TRASHBOX (Medical Waste y E-Waste)...")
     summary = {}
     

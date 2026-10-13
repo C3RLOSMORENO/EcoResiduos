@@ -1,3 +1,11 @@
+"""Prepara fotos de escombros y texturas para RCD y FONDO.
+
+Extrae demolition_scrap.zip (si ya está en descargas_crudas/) y descarga y
+extrae el Describable Textures Dataset (DTD) de la Universidad de Oxford.
+
+    python descargar_rcd_dtd.py
+"""
+
 import os
 import sys
 import requests
@@ -16,6 +24,7 @@ RAW_DIR.mkdir(parents=True, exist_ok=True)
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 def extract_zip_safely(zip_path, target_folder):
+    """Extrae solo las imágenes del .zip, con nombres nuevos para que ninguna ruta salga de target_folder."""
     target_folder.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, 'r') as z:
         for idx, item in enumerate(z.infolist()):
@@ -32,6 +41,7 @@ def extract_zip_safely(zip_path, target_folder):
     print(f"✅ Extracción segura completada en {target_folder}")
 
 def download_file(url, target_path):
+    """Descarga el archivo por partes mostrando el progreso."""
     print(f"Descargando {url} -> {target_path}...")
     r = requests.get(url, stream=True, headers=HEADERS, timeout=30)
     r.raise_for_status()
@@ -49,6 +59,7 @@ def download_file(url, target_path):
     print(f"✅ Descarga completada: {target_path.name}")
 
 def extract_dtd_safely(tar_path, target_folder):
+    """Extrae las imágenes del Describable Textures Dataset en una carpeta por textura."""
     target_folder.mkdir(parents=True, exist_ok=True)
     with tarfile.open(tar_path, 'r:gz') as t:
         for member in t.getmembers():
@@ -69,6 +80,7 @@ def extract_dtd_safely(tar_path, target_folder):
     print(f"✅ Extracción DTD completada en {target_folder}")
 
 def main():
+    """Extrae el dataset de demolición y descarga y extrae DTD para RCD y FONDO."""
     # 1. Demolition & Building Materials (RCD)
     rcd_zip = RAW_DIR / "demolition_scrap.zip"
     rcd_extract = RAW_DIR / "rcd_hf"

@@ -1,3 +1,10 @@
+"""Genera hojas de contacto de 10 x 10 miniaturas por categoría para revisar dataset/ a ojo.
+
+Las hojas quedan en revision/, con el nombre de cada archivo bajo su miniatura.
+
+    python generar_hojas_revision.py
+"""
+
 import os
 import sys
 from pathlib import Path
@@ -33,6 +40,7 @@ CELL_H = THUMB_H + LABEL_H + 8
 MARGIN = 16
 
 def create_contact_sheet(category, batch_idx, image_files):
+    """Arma una hoja de 10 x 10 miniaturas con el nombre de cada archivo y la guarda en revision/."""
     num_imgs = len(image_files)
     sheet_w = MARGIN * 2 + GRID_COLS * CELL_W
     sheet_h = MARGIN * 2 + GRID_ROWS * CELL_H + 40  # Header area
@@ -85,6 +93,7 @@ def create_contact_sheet(category, batch_idx, image_files):
     return out_path
 
 def main():
+    """Genera las hojas de todas las categorías de dataset/."""
     REVISION_DIR.mkdir(parents=True, exist_ok=True)
     print("🎨 Generando hojas de contacto 10x10 para revisión visual...")
     

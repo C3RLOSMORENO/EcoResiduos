@@ -1,3 +1,10 @@
+"""Descarga las fotos de baterías de Garbage_Classification_YOLO (Hugging Face).
+
+Quedan en descargas_crudas/battery_hazard/ para la categoría PELIGROSO.
+
+    python descargar_baterias.py
+"""
+
 import os
 import sys
 import time
@@ -18,6 +25,7 @@ TARGET_DIR.mkdir(parents=True, exist_ok=True)
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 def get_battery_file_list():
+    """Rutas de las fotos de la clase battery en Garbage_Classification_YOLO (Hugging Face)."""
     url = "https://huggingface.co/api/datasets/khoaliamle/Garbage_Classification_YOLO"
     r = requests.get(url, timeout=10)
     files = []
@@ -30,6 +38,7 @@ def get_battery_file_list():
     return files
 
 def download_image(hf_path, idx):
+    """Descarga una foto y la guarda si mide al menos 224 px. True si quedó guardada."""
     raw_url = f"https://huggingface.co/datasets/khoaliamle/Garbage_Classification_YOLO/resolve/main/{hf_path}"
     out_file = TARGET_DIR / f"hf_battery_{idx:04d}.jpg"
     if out_file.exists():
@@ -52,6 +61,7 @@ def download_image(hf_path, idx):
         return False
 
 def main():
+    """Descarga todas las fotos de baterías a descargas_crudas/battery_hazard/."""
     print("🚀 Descargando imágenes de baterías para PELIGROSO...")
     files = get_battery_file_list()
     print(f"Total imágenes de baterías encontradas: {len(files)}")
