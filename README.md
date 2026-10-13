@@ -8,7 +8,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-Edge_Vision-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-203%20Passed%20(100%25)-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-246%20Passed%20(100%25)-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
 
 **Plataforma de Trazabilidad Logística de Residuos, Clasificación por Visión Computacional en Dispositivo y Auditoría Ambiental**
@@ -154,13 +154,13 @@ EcoResiduos/
 │   ├── lib/features/solicitudes/     # Ciclo de publicación, negociación y recolección
 │   ├── lib/models/                   # Entidades de dominio
 │   ├── lib/services/                 # Servicios de visión artificial y geolocalización
-│   └── test/                         # Suite de 104 pruebas unitarias y de widgets
+│   └── test/                         # Suite de 117 pruebas unitarias y de widgets
 │
 ├── admin-panel/                      # Panel web de auditoría (Node.js / Express / EJS)
 │   ├── src/controllers/              # Controladores de negocio y mediación
 │   ├── src/middlewares/              # Cabeceras CSP, mitigación CSRF y control de sesiones
 │   ├── src/views/                    # Plantillas del servidor con protección XSS
-│   ├── pruebas/                      # Suite de 99 pruebas de integración y accesibilidad
+│   ├── pruebas/                      # 129 pruebas de integración y accesibilidad, más las de navegador
 │   └── tailwind.config.js            # Tokens visuales y diseño accesible
 │
 └── supabase/
@@ -270,7 +270,8 @@ sequenceDiagram
    - `20261003000200_resolucion_problemas_reportados.sql`
 
 2. Comprueba que los buckets de almacenamiento existan:
-   - `solicitudes`: Fotografías de evidencias de residuos.
+   - `escaneos_ia`: Fotografías de los residuos publicados y escaneados.
+   - `fotos_perfil`: Logo y portada de los gestores.
    - `certificados`: Certificados de disposición final y aprovechamiento en PDF.
    - `permisos`: Documentos de licencias ambientales (bucket privado con acceso exclusivo de servidor).
 
@@ -314,29 +315,30 @@ El panel estará disponible en `http://localhost:3000`.
 
 ## 10. Suites de Pruebas Automatizadas
 
-El proyecto mantiene **203 pruebas automatizadas** que garantizan la estabilidad y no regresión:
+El proyecto mantiene **246 pruebas automatizadas**, más 7 recorridos en navegador con Playwright, que garantizan la estabilidad y no regresión:
 
 ```
 ┌───────────────────────────────────────────────┬──────────────┬──────────────┐
 │ Suite de Pruebas                              │ Cantidad     │ Estado       │
 ├───────────────────────────────────────────────┼──────────────┼──────────────┤
-│ App Móvil (Flutter / Dart)                    │ 104 Tests    │ 100% Pass ✅ │
-│ Panel Administrativo (Node.js / Express / EJS)│ 99 Tests     │ 100% Pass ✅ │
+│ App Móvil (Flutter / Dart)                    │ 117 Tests    │ 100% Pass ✅ │
+│ Panel Administrativo (Node.js / Express / EJS)│ 129 Tests    │ 100% Pass ✅ │
 ├───────────────────────────────────────────────┼──────────────┼──────────────┤
-│ Total Pruebas Automatizadas                   │ 203 Tests    │ 100% Pass ✅ │
+│ Total Pruebas Automatizadas                   │ 246 Tests    │ 100% Pass ✅ │
 └───────────────────────────────────────────────┴──────────────┴──────────────┘
 ```
 
-### Ejecutar Pruebas de la Aplicación Móvil (104 Tests)
+### Ejecutar Pruebas de la Aplicación Móvil (117 Tests)
 ```bash
 cd app
 flutter test
 ```
 
-### Ejecutar Pruebas del Panel Administrativo (99 Tests)
+### Ejecutar Pruebas del Panel Administrativo (129 Tests)
 ```bash
 cd admin-panel
 npm test
+npm run test:e2e   # recorridos en navegador (escritorio y celular)
 ```
 
 ---
@@ -345,7 +347,7 @@ npm test
 
 - **Políticas Row Level Security (RLS):** Cada consulta está restringida en el motor de base de datos para que los generadores y gestores solo accedan a sus propios registros.
 - **Transacciones ACID:** Los cambios de estado críticos se realizan a través de funciones almacenadas `SECURITY DEFINER` con bloqueos pesimistas (`FOR UPDATE`), previniendo condiciones de carrera.
-- **Seguridad Web:** El panel implementa Content Security Policy (CSP) con nonces criptográficos dinámicos, cookies con flags `HttpOnly` y `SameSite=Strict`, protección contra falsificación de petición (CSRF) y reportes en Excel que escriben cada celda como valor, nunca como fórmula, para evitar la inyección de fórmulas.
+- **Seguridad Web:** El panel implementa Content Security Policy (CSP) con nonces criptográficos dinámicos, cookies `HttpOnly` (`SameSite=Lax` las de sesión y `Strict` la de CSRF), protección contra falsificación de petición (CSRF) y reportes en Excel que escriben cada celda como valor, nunca como fórmula, para evitar la inyección de fórmulas.
 - **Privacidad de Imágenes:** El procesamiento visual opera 100% en la memoria local del teléfono, garantizando que ninguna captura sea transmitida a servicios externos para su análisis.
 
 ---

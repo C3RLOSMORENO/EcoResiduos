@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Dart-3.5+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Flutter_SDK-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Tests](https://img.shields.io/badge/Flutter_Tests-104_Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Flutter_Tests-117_Passed-brightgreen?style=for-the-badge)
 
 **Aplicación cliente con inferencia de visión computacional en el borde (*Edge ML*) para la gestión de residuos en los 6 municipios priorizados de Santander**
 
@@ -85,7 +85,7 @@ flowchart TD
 1. **Repository Pattern:** Desacopla la lógica de interfaz de los mecanismos de almacenamiento. La UI consume repositorios abstractos, lo que permite sustituir fuentes de datos en pruebas mediante *fakes* y *mocks* sin alterar la vista.
 2. **Offline-First Optimistic Sync:** Cuando el dispositivo pierde la conectividad, las publicaciones se guardan en la base de datos local SQLite y se encolan automáticamente para ser retransmitidas al recuperar conexión a internet.
 3. **Edge Vision Pipeline:** Pipeline lineal de inferencia que realiza captura, redimensionamiento bicúbico a $224 \times 224$, normalización de tenores Float32 en memoria, inferencia TFLite y clasificación jerárquica basada en umbrales probabilísticos.
-4. **Dependency Inversion:** Todos los servicios y repositorios son inyectables, facilitando la ejecución de la suite de 104 pruebas automatizadas con 100% de éxito.
+4. **Dependency Inversion:** Todos los servicios y repositorios son inyectables, facilitando la ejecución de la suite de 117 pruebas automatizadas con 100% de éxito.
 
 ---
 
@@ -113,7 +113,7 @@ app/
 │   ├── utils/                    # Validadores de NIT, normalización y geocodificación
 │   └── widgets/                  # Componentes reutilizables y estados de carga
 │
-└── test/                         # 104 Pruebas unitarias, de servicios, repositorios y widgets
+└── test/                         # 117 pruebas unitarias, de servicios, repositorios y widgets
 ```
 
 ---
@@ -184,7 +184,7 @@ El servicio de clasificación visual opera de forma autónoma dentro del hardwar
 
 ---
 
-## 5. Batería de Pruebas Automatizadas (104 Tests)
+## 5. Batería de Pruebas Automatizadas (117 Tests)
 
 La aplicación cuenta con una cobertura integral de pruebas que validan lógica de negocio, inferencia y renderizado de componentes:
 

@@ -21,7 +21,7 @@ Este documento contiene la atribución bibliográfica, las licencias verificadas
 
 ## 📑 Metadatos Individuales (Wikimedia y Unsplash)
 
-Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas de forma individual en el archivo [app/model_training/fuentes_individuales.csv](file:///c:/Users/cemor/Documents/EcoResiduos/app/model_training/fuentes_individuales.csv) con las siguientes columnas:
+Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas de forma individual en el archivo [fuentes_individuales.csv](fuentes_individuales.csv) con las siguientes columnas:
 - `archivo`: Nombre del archivo guardado en el dataset.
 - `categoria`: Categoría asignada.
 - `url`: Enlace directo a la imagen original de alta resolución.

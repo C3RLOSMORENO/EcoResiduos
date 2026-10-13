@@ -23,6 +23,11 @@ interface Archivo {
   creado: number;
 }
 
+/**
+ * Ruta dentro del bucket a partir de la URL pública guardada en la base.
+ *
+ * @returns La ruta, o null si la URL no es de este bucket.
+ */
 function rutaEnBucket(url: string | null): string | null {
   if (!url) return null;
   const inicio = url.indexOf(MARCA_URL);
@@ -30,6 +35,7 @@ function rutaEnBucket(url: string | null): string | null {
   return decodeURIComponent(url.slice(inicio + MARCA_URL.length).split('?')[0]);
 }
 
+/** Todos los archivos del bucket bajo `carpeta`, recorriendo las subcarpetas. */
 async function listarArchivos(supabase: SupabaseClient, carpeta = ''): Promise<Archivo[]> {
   const archivos: Archivo[] = [];
   for (let offset = 0; ; offset += TAMANO_PAGINA) {
@@ -51,6 +57,7 @@ async function listarArchivos(supabase: SupabaseClient, carpeta = ''): Promise<A
   }
 }
 
+/** Rutas del bucket que aparecen en `tabla.columna`, leídas por páginas. */
 async function rutasReferenciadas(
   supabase: SupabaseClient,
   tabla: string,
