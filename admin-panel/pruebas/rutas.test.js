@@ -63,7 +63,7 @@ test.beforeEach(() => {
 });
 
 test('sin sesión, cada ruta GET protegida redirige a /login recordando la página', async () => {
-    for (const ruta of [...RUTAS_GET, '/gestores/1/permiso', '/reportes/excel']) {
+    for (const ruta of [...RUTAS_GET, '/gestores/1/permiso', '/solicitudes/7/certificado', '/reportes/excel']) {
         const res = await request(app).get(ruta);
         assert.equal(res.status, 302, ruta);
         assert.match(res.headers.location, /^\/login\?/, ruta);
@@ -154,11 +154,20 @@ test('renovar la sesión desde el aviso responde JSON, y 401 si ya venció', asy
     assert.equal(vencida.status, 401);
 });
 
-test('ver permiso redirige al enlace firmado de 10 minutos', async () => {
+test('ver permiso sirve el PDF directamente sin filtrar la URL de almacenamiento', async () => {
     const res = await request(app).get('/gestores/1/permiso').set('Cookie', SESION);
-    assert.equal(res.status, 302);
-    assert.match(res.headers.location, /^https:\/\/almacenamiento\.test\/permisos\/registro\/abc\.pdf/);
-    assert.deepEqual(supabase.storageOps.find((o) => o.op === 'firmar').segundos, 600);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers['content-type'], 'application/pdf');
+    assert.match(res.headers['content-disposition'], /inline;\s*filename="permiso-1\.pdf"/);
+    assert.ok(!res.headers.location, 'no debe redirigir ni exponer el almacenamiento');
+});
+
+test('ver certificado sirve el PDF directamente sin filtrar la URL de almacenamiento', async () => {
+    const res = await request(app).get('/solicitudes/7/certificado').set('Cookie', SESION);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers['content-type'], 'application/pdf');
+    assert.match(res.headers['content-disposition'], /inline;\s*filename="certificado-7\.pdf"/);
+    assert.ok(!res.headers.location, 'no debe redirigir ni exponer el almacenamiento');
 });
 
 test('los datos de la base no se imprimen sin escapar (XSS)', async () => {

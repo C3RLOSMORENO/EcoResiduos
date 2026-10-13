@@ -20,29 +20,29 @@ const RECORRIDOS = {
             {
                 desde: 1,
                 elemento: '[data-recorrido="pendientes"]',
-                titulo: 'Empieza por aquí cada día',
-                texto: 'Cada tarjeta cuenta lo que espera tu decisión. Las resaltadas tienen casos pendientes.',
+                titulo: 'Bandeja de pendientes',
+                texto: 'Alertas que requieren decisión: gestores por auditar, incidencias y certificados demorados.',
                 lado: 'bottom'
             },
             {
                 desde: 1,
                 elemento: '[data-recorrido="gestores"]',
-                titulo: 'Tú decides quién recibe residuos',
-                texto: 'Revisa el permiso ambiental de cada empresa. Solo las aprobadas reciben solicitudes en la app.',
+                titulo: 'Auditoría de gestores',
+                texto: 'Valida la documentación ambiental y cobertura antes de autorizar a una empresa en la app.',
                 lado: 'top'
             },
             {
                 desde: 1,
                 elemento: '[data-recorrido="graficos"]',
-                titulo: 'Mide el avance de Santander',
-                texto: 'Solicitudes por estado y por municipio. Cada gráfico también se puede ver como tabla.',
+                titulo: 'Métricas y trazabilidad',
+                texto: 'Monitorea el flujo de solicitudes y la distribución territorial de residuos en Santander.',
                 lado: 'top'
             },
             {
                 desde: 1,
                 elemento: '#botonRecorrido',
-                titulo: '¿Lo quieres ver otra vez?',
-                texto: 'Repite este recorrido cuando quieras desde este botón.',
+                titulo: 'Ayuda bajo demanda',
+                texto: 'Reactiva este recorrido en cualquier momento sin interrumpir tus tareas en el panel.',
                 lado: 'bottom',
                 alineacion: 'end'
             }

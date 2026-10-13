@@ -94,6 +94,11 @@ function crearClienteFalso() {
                     async remove(rutas) {
                         cliente.storageOps.push({ bucket, op: 'borrar', rutas });
                         return { data: null, error: null };
+                    },
+                    async download(ruta) {
+                        cliente.storageOps.push({ bucket, op: 'descargar', ruta });
+                        const buffer = Buffer.from('%PDF-1.7 contenido');
+                        return { data: new Blob([buffer], { type: 'application/pdf' }), error: null };
                     }
                 };
             }

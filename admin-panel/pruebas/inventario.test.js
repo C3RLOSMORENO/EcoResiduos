@@ -37,7 +37,7 @@ const INVENTARIO = [
     'GET /autoridades', 'POST /autoridades', 'POST /autoridades/guardar', 'GET /autoridades/nuevo',
     'GET /autoridades/edit/:id', 'GET /autoridades/editar/:id', 'POST /autoridades/edit/:id', 'POST /autoridades/editar/:id',
     'POST /autoridades/delete/:id', 'POST /autoridades/eliminar/:id',
-    'GET /solicitudes', 'GET /solicitudes/:id', 'POST /solicitudes/:id/cancelar',
+    'GET /solicitudes', 'GET /solicitudes/:id', 'GET /solicitudes/:id/certificado', 'POST /solicitudes/:id/cancelar',
     'POST /solicitudes/:id/problema/no-recogido', 'POST /solicitudes/:id/estado',
     'GET /ciudadanos',
     'GET /reportes', 'GET /reportes/excel',

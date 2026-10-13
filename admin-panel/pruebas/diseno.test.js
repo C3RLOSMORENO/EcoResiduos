@@ -77,7 +77,8 @@ test('el certificado se muestra junto al estado, solo en lo recolectado', async 
     const filasHtml = html.split('<tr>').slice(2);
     assert.ok(!/Sin certificado|Certificado</.test(filasHtml[0]), 'una solicitud publicada no habla de certificado');
     assert.match(filasHtml[1], /Sin certificado/);
-    assert.match(filasHtml[2], /href="https:\/\/almacenamiento\.test\/c\.pdf"[^>]*target="_blank" rel="noopener noreferrer"/);
+    assert.match(filasHtml[2], /href="\/solicitudes\/3\/certificado"[^>]*target="_blank" rel="noopener noreferrer"/);
+    assert.ok(!html.includes('https://almacenamiento.test/c.pdf'), 'la URL de almacenamiento no se filtra en el HTML');
 });
 
 test('el enlace para ordenar no copia los parámetros de un aviso', async () => {

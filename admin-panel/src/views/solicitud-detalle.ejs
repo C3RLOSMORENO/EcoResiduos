@@ -138,7 +138,7 @@
         <h2 id="tituloCertificado" class="tarjeta-titulo">Certificado</h2>
         <% if (certificado) { %>
           <p><%= f.etiquetaCertificado(solicitud.certificado_tipo) %><%= solicitud.certificado_at ? ' · cargado el ' + f.fechaCorta(solicitud.certificado_at) : '' %></p>
-          <p><a class="btn-tonal w-fit" href="<%= certificado %>" target="_blank" rel="noopener noreferrer">
+          <p><a class="btn-tonal w-fit" href="/solicitudes/<%= solicitud.id %>/certificado" target="_blank" rel="noopener noreferrer">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>Ver PDF<span class="sr-only"> (se abre en una pestaña nueva)</span>
           </a></p>
         <% } else { %>

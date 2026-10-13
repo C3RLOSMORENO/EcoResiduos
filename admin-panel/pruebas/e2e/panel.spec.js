@@ -61,7 +61,7 @@ async function paginaQuieta(page) {
 test('recorrido del inicio: aparece la primera vez, se recorre completo y no vuelve a salir', async ({ page }) => {
     await iniciarSesion(page, '/dashboard');
 
-    const primero = page.getByRole('dialog', { name: 'Empieza por aquí cada día' });
+    const primero = page.getByRole('dialog', { name: 'Bandeja de pendientes' });
     await expect(primero).toBeVisible();
     await expect(primero).toContainText('1 de 4');
     await expect(primero.getByRole('button', { name: 'Saltar' })).toBeVisible();
@@ -69,11 +69,11 @@ test('recorrido del inicio: aparece la primera vez, se recorre completo y no vue
     // El foco entra a la tarjeta, en «Siguiente»: con Enter se avanza.
     await expect(primero.getByRole('button', { name: 'Siguiente' })).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('dialog', { name: 'Tú decides quién recibe residuos' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Auditoría de gestores' })).toBeVisible();
     await page.getByRole('button', { name: 'Anterior' }).click();
     await expect(primero).toBeVisible();
 
-    for (const titulo of ['Tú decides quién recibe residuos', 'Mide el avance de Santander', '¿Lo quieres ver otra vez?']) {
+    for (const titulo of ['Auditoría de gestores', 'Métricas y trazabilidad', 'Ayuda bajo demanda']) {
         await page.getByRole('button', { name: 'Siguiente' }).click();
         const paso = page.getByRole('dialog', { name: titulo });
         await expect(paso).toBeVisible();
@@ -98,7 +98,7 @@ test('recorrido del inicio: aparece la primera vez, se recorre completo y no vue
 
 test('recorrido del inicio: se salta en el primer paso y se repite con el botón de ayuda', async ({ page }) => {
     await iniciarSesion(page, '/dashboard');
-    const primero = page.getByRole('dialog', { name: 'Empieza por aquí cada día' });
+    const primero = page.getByRole('dialog', { name: 'Bandeja de pendientes' });
     await primero.getByRole('button', { name: 'Saltar' }).click();
     await expect(primero).toBeHidden();
 

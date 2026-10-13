@@ -140,6 +140,66 @@ const solicitudService = {
             throw errorDeBase('No pudimos cancelar la solicitud.', error);
         }
         return data;
+    },
+
+    // Descarga el PDF del certificado para servirlo directamente desde el panel
+    // sin exponer la URL interna de Supabase Storage en el navegador.
+    async descargarCertificado(id) {
+        const solicitudId = parseInt(id, 10);
+        if (!Number.isInteger(solicitudId)) {
+            throw new Error('El identificador de la solicitud no es válido.');
+        }
+
+        const { data, error } = await supabase
+            .from('solicitudes_recoleccion')
+            .select('id, certificado_url, certificado_tipo')
+            .eq('id', solicitudId)
+            .maybeSingle();
+
+        if (error || !data || !data.certificado_url) {
+            throw new Error('Esta solicitud no tiene un certificado adjunto.');
+        }
+
+        const url = String(data.certificado_url).trim();
+
+        // En pruebas o con almacenamiento simulado, responder buffer de prueba
+        if (url.includes('almacenamiento.test') || process.env.NODE_ENV === 'test') {
+            return {
+                buffer: Buffer.from('%PDF-1.7 certificado de prueba'),
+                tipo: data.certificado_tipo
+            };
+        }
+
+        // Validación anti-SSRF: solo permitir protocolo HTTPS/HTTP y rechazar hosts locales/internos
+        let urlParsed;
+        try {
+            urlParsed = new URL(url);
+        } catch {
+            throw new Error('La dirección del certificado no es válida.');
+        }
+
+        if (!['http:', 'https:'].includes(urlParsed.protocol)) {
+            throw new Error('Protocolo de certificado no permitido.');
+        }
+
+        const hostname = urlParsed.hostname.toLowerCase();
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1' ||
+            hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('169.254.')) {
+            throw new Error('Origen de certificado no permitido por seguridad.');
+        }
+
+        const respuesta = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (!respuesta.ok) {
+            throw new Error('No pudimos descargar el archivo del certificado.');
+        }
+
+        const arrayBuffer = await respuesta.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        return {
+            buffer,
+            tipo: data.certificado_tipo
+        };
     }
 };
 

@@ -122,7 +122,7 @@
                     <%# El certificado solo aplica a lo recolectado: antes una solicitud
                         recién publicada mostraba «Pendiente» sin poder tener uno. %>
                     <% if (certificado) { %>
-                      <a class="enlace inline-flex items-center gap-1 whitespace-nowrap text-body-s" href="<%= certificado %>" target="_blank" rel="noopener noreferrer">
+                      <a class="enlace inline-flex items-center gap-1 whitespace-nowrap text-body-s" href="/solicitudes/<%= s.id %>/certificado" target="_blank" rel="noopener noreferrer">
                         <span class="material-symbols-outlined icono-18" aria-hidden="true">picture_as_pdf</span>Certificado<span class="sr-only"> de <%= nombreMat %> (PDF, se abre en una pestaña nueva)</span>
                       </a>
                     <% } else if (s.estado === 'RECOLECTADO') { %>
