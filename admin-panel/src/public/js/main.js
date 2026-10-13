@@ -1159,7 +1159,7 @@
 
   // motivo: 'sesion' (venció la sesión) o 'envio' (se envió el formulario).
   function guardarBorradores(motivo) {
-    const formularios = $('form[data-conservar]');
+    const formularios = $$('form[data-conservar]');
     if (formularios.length === 0) return;
     const datos = {};
     formularios.forEach((form) => {
