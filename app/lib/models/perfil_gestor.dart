@@ -1,3 +1,4 @@
+/// Empresa gestora tal como está en `perfiles_gestor`.
 class PerfilGestor {
   final int id;
   final String? usuarioId;

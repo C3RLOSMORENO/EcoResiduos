@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
+/// Estado del permiso de ubicación y del GPS. Con [PermisoUbicacion.denegadoSiempre]
+/// solo se puede activar desde los ajustes del teléfono.
 enum PermisoUbicacion { concedido, sinDecidir, denegadoSiempre, gpsApagado }
 
 /// Ubicación del teléfono para ordenar gestores y solicitudes por cercanía.

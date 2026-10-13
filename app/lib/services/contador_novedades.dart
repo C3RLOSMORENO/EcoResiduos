@@ -17,6 +17,8 @@ abstract final class ContadorNovedades {
   static NotificacionesRepository? _repository;
   static VoidCallback? _cancelar;
 
+  /// Empieza a escuchar las notificaciones de la sesión actual. Se llama al
+  /// iniciar sesión; si ya escuchaba otra sesión, la deja primero.
   static void iniciar(NotificacionesRepository repository) {
     detener();
     _repository = repository;
@@ -27,6 +29,7 @@ abstract final class ContadorNovedades {
     actualizar();
   }
 
+  /// Vuelve a contar las no leídas. Si falla, deja el número anterior.
   static Future<void> actualizar() async {
     final repository = _repository;
     if (repository == null) return;
@@ -37,6 +40,7 @@ abstract final class ContadorNovedades {
     }
   }
 
+  /// Deja de escuchar y pone el contador en cero. Se llama al cerrar sesión.
   static void detener() {
     _cancelar?.call();
     _cancelar = null;

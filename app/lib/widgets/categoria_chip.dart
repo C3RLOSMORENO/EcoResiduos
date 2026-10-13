@@ -7,6 +7,7 @@ import '../theme/eco_theme.dart';
 const _canecaVerde = Color(0xFF2F8A1F);
 const _canecaNegra = Color(0xFF1A1C1A);
 
+/// Ícono de cada categoría de residuo.
 IconData iconoCategoria(Categoria categoria) {
   switch (categoria) {
     case Categoria.aprovechable:

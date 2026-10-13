@@ -15,6 +15,7 @@ Future<void> abrirVisorFoto(BuildContext context, String ruta) {
   );
 }
 
+/// Pantalla del visor. Se abre con [abrirVisorFoto]; [ruta] es la URL o la ruta de la foto.
 class VisorFoto extends StatefulWidget {
   const VisorFoto({super.key, required this.ruta});
 

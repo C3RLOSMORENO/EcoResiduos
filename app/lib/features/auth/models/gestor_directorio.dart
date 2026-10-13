@@ -1,3 +1,5 @@
+/// Empresa encontrada por su NIT al registrarse como gestor, con los datos que
+/// se precargan en el formulario.
 class GestorDirectorio {
   final int id;
   final String nit;

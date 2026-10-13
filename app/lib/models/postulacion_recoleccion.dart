@@ -15,6 +15,7 @@ enum TipoValor {
   final String etiqueta;
   final String etiquetaCorta;
 
+  /// El tipo que corresponde al valor de la base, o null si no hay o no se reconoce.
   static TipoValor? desde(String? valor) {
     for (final tipo in values) {
       if (tipo.valor == valor?.toUpperCase()) return tipo;

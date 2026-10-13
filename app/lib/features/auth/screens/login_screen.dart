@@ -9,6 +9,8 @@ import '../widgets/campo_contrasena.dart';
 import 'registro_screen.dart';
 import 'solicitar_recuperacion_screen.dart';
 
+/// Inicio de sesión con correo y contraseña, con enlaces al registro y a
+/// recuperar la contraseña. [authRepository] se reemplaza en las pruebas.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.authRepository});
 

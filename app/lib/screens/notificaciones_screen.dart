@@ -20,6 +20,7 @@ class NotificacionesScreen extends StatefulWidget {
   final NotificacionesRepository? repository;
   final SolicitudesRepository? solicitudes;
 
+  /// Abre la lista de notificaciones sobre la pantalla actual.
   static Future<void> show(BuildContext context) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificacionesScreen()));
 

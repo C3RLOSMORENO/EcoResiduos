@@ -25,6 +25,7 @@ class SelectorCascadaSheet extends StatefulWidget {
   /// Categoría marcada como «Sugerida» en el primer nivel.
   final String? categoriaSugerida;
 
+  /// Abre el selector y devuelve el material elegido, o null si se cerró sin elegir.
   static Future<MaterialResiduo?> show(
     BuildContext context, {
     required List<MaterialResiduo> materiales,

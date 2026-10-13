@@ -39,6 +39,7 @@ abstract final class EcoMotion {
   static const Duration estado = Duration(milliseconds: 250);
   static const Duration skeleton = Duration(milliseconds: 1200);
 
+  /// [base], o cero si el usuario pidió reducir el movimiento en el sistema.
   static Duration duracion(BuildContext context, Duration base) {
     return MediaQuery.of(context).disableAnimations ? Duration.zero : base;
   }

@@ -24,6 +24,7 @@ class CuentaBottomSheet extends StatefulWidget {
   /// Para pruebas; por defecto, la sesión actual.
   final SesionUsuario? sesion;
 
+  /// Abre la hoja de la cuenta desde la parte inferior de la pantalla.
   static Future<void> show(BuildContext context, {AuthRepository? authRepository}) {
     return showModalBottomSheet(
       context: context,

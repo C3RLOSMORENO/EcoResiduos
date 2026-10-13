@@ -185,6 +185,7 @@ class FilaDespues extends StatelessWidget {
   }
 }
 
+/// Un número con su etiqueta en la fila de cifras de la tarjeta.
 class Cifra {
   const Cifra({required this.valor, required this.etiqueta, this.icono, this.color});
 

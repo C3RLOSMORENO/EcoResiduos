@@ -70,6 +70,7 @@ class Gestor {
   final String? fotoPerfilPath;
   final String? portadaPath;
 
+  /// Copia del gestor con la distancia al usuario, en kilómetros.
   Gestor conDistancia(double? km) => Gestor(
     id: id,
     nombre: nombre,
