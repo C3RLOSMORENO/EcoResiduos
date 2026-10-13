@@ -9,6 +9,8 @@ import '../widgets/campo_contrasena.dart';
 import 'registro_screen.dart';
 import 'solicitar_recuperacion_screen.dart';
 
+/// Inicio de sesión con correo y contraseña, con enlaces al registro y a
+/// recuperar la contraseña. [authRepository] se reemplaza en las pruebas.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.authRepository});
 
@@ -82,10 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildCategoryChip(String label, IconData icon, Color color, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(EcoRadius.full),
-      ),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(EcoRadius.full)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -93,11 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -115,6 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final contentBgColor = isDark ? scheme.surface : const Color(0xFFF8F6EE); // Cream/Off-white
     final fieldBgColor = isDark ? scheme.surfaceContainerHigh : const Color(0xFFE6E3DB); // Input fields
     final textColorLight = Colors.white.withValues(alpha: 0.9);
+    // Los íconos del encabezado flotan sin parar; se dejan quietos si el
+    // usuario pidió reducir el movimiento en los ajustes de accesibilidad.
+    final animarFondo = !MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
       backgroundColor: contentBgColor,
@@ -133,22 +131,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     // Iconos decorativos de fondo (flotantes y tenues)
                     Positioned(
-                      top: 40, right: 20,
+                      top: 40,
+                      right: 20,
                       child: Icon(Icons.recycling_rounded, size: 80, color: Colors.white.withValues(alpha: 0.05))
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .moveY(begin: -5, end: 5, duration: 4.seconds, curve: Curves.easeInOut),
+                          .animate(onPlay: (c) => animarFondo ? c.repeat(reverse: true) : c.stop())
+                          .moveY(begin: -5, end: 5, duration: 4.seconds, curve: Curves.easeInOut),
                     ),
                     Positioned(
-                      top: 150, right: 30,
+                      top: 150,
+                      right: 30,
                       child: Icon(Icons.eco_rounded, size: 50, color: Colors.white.withValues(alpha: 0.04))
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .moveY(begin: 5, end: -5, duration: 3.seconds, curve: Curves.easeInOut),
+                          .animate(onPlay: (c) => animarFondo ? c.repeat(reverse: true) : c.stop())
+                          .moveY(begin: 5, end: -5, duration: 3.seconds, curve: Curves.easeInOut),
                     ),
                     Positioned(
-                      bottom: 80, right: 40,
-                      child: Icon(Icons.battery_charging_full_rounded, size: 60, color: Colors.white.withValues(alpha: 0.06))
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .moveX(begin: -5, end: 5, duration: 5.seconds, curve: Curves.easeInOut),
+                      bottom: 80,
+                      right: 40,
+                      child:
+                          Icon(
+                                Icons.battery_charging_full_rounded,
+                                size: 60,
+                                color: Colors.white.withValues(alpha: 0.06),
+                              )
+                              .animate(onPlay: (c) => animarFondo ? c.repeat(reverse: true) : c.stop())
+                              .moveX(begin: -5, end: 5, duration: 5.seconds, curve: Curves.easeInOut),
                     ),
 
                     SafeArea(
@@ -172,9 +178,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1),
-                            
+
                             const SizedBox(height: EcoSpace.s16),
-                            
+
                             // Titulo principal
                             Text(
                               'Lo que sobra,\nvuelve a servir.',
@@ -185,29 +191,46 @@ class _LoginScreenState extends State<LoginScreen> {
                                 letterSpacing: -0.5,
                               ),
                             ).animate().fadeIn(duration: 600.ms, delay: 200.ms).slideY(begin: 0.1),
-                            
+
                             const SizedBox(height: EcoSpace.s8),
-                            
+
                             // Subtítulo
                             Text(
                               'Identifica tus residuos, publícalos y conecta con gestores ambientales de Santander.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: textColorLight,
-                                height: 1.4,
-                              ),
+                              style: theme.textTheme.bodyMedium?.copyWith(color: textColorLight, height: 1.4),
                             ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
-                            
+
                             const SizedBox(height: EcoSpace.s16),
-                            
+
                             // Chips de categorias
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                _buildCategoryChip('Aprovechables', Icons.recycling_rounded, const Color(0xFFCDEBF5), const Color(0xFF003544)),
-                                _buildCategoryChip('Electrónicos', Icons.devices_rounded, const Color(0xFFE8DEFF), const Color(0xFF2F1A75)),
-                                _buildCategoryChip('Peligrosos', Icons.science_rounded, const Color(0xFFFFE08A), const Color(0xFF1F1600)),
-                                _buildCategoryChip('Escombros', Icons.construction_rounded, const Color(0xFFF0E2D6), const Color(0xFF3A2C20)),
+                                _buildCategoryChip(
+                                  'Aprovechables',
+                                  Icons.recycling_rounded,
+                                  const Color(0xFFCDEBF5),
+                                  const Color(0xFF003544),
+                                ),
+                                _buildCategoryChip(
+                                  'Electrónicos',
+                                  Icons.devices_rounded,
+                                  const Color(0xFFE8DEFF),
+                                  const Color(0xFF2F1A75),
+                                ),
+                                _buildCategoryChip(
+                                  'Peligrosos',
+                                  Icons.science_rounded,
+                                  const Color(0xFFFFE08A),
+                                  const Color(0xFF1F1600),
+                                ),
+                                _buildCategoryChip(
+                                  'Escombros',
+                                  Icons.construction_rounded,
+                                  const Color(0xFFF0E2D6),
+                                  const Color(0xFF3A2C20),
+                                ),
                               ],
                             ).animate().fadeIn(duration: 600.ms, delay: 400.ms).scaleXY(begin: 0.95),
                           ],
@@ -236,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           letterSpacing: -0.5,
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
-                      
+
                       const SizedBox(height: 4),
                       Text(
                         'Entra para seguir con tus residuos y\nrecolecciones.',
@@ -244,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
-                      
+
                       const SizedBox(height: EcoSpace.s12),
 
                       if (_aviso != _AvisoLogin.ninguno) ...[
@@ -272,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 18),
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 700.ms).slideY(begin: 0.1),
-                      
+
                       const SizedBox(height: EcoSpace.s12),
 
                       // Campo Contraseña
@@ -304,51 +327,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Botón principal
                       FilledButton(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(56),
-                          backgroundColor: scheme.primary,
-                          foregroundColor: scheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(EcoRadius.full), // Pastilla completa
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _cargando ? null : _entrar,
-                        child: _cargando
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('Entrar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward_rounded, size: 20),
-                                ],
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(56),
+                              backgroundColor: scheme.primary,
+                              foregroundColor: scheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(EcoRadius.full), // Pastilla completa
                               ),
-                      ).animate(target: _cargando ? 0 : 1).shimmer(duration: 2.5.seconds, color: Colors.white.withValues(alpha: 0.2)),
-                      
+                              elevation: 0,
+                            ),
+                            onPressed: _cargando ? null : _entrar,
+                            child: _cargando
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('Entrar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward_rounded, size: 20),
+                                    ],
+                                  ),
+                          )
+                          .animate(target: _cargando ? 0 : 1)
+                          .shimmer(duration: 2.5.seconds, color: Colors.white.withValues(alpha: 0.2)),
+
                       const SizedBox(height: EcoSpace.s12),
 
-                      // Enlace a registro
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // Enlace a registro. Wrap en lugar de Row: con letra grande
+                      // «Regístrate» pasa a la línea siguiente en vez de desbordarse.
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Text('¿No tienes cuenta?', style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
-                          )),
+                          Text(
+                            '¿No tienes cuenta?',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
+                            ),
+                          ),
                           TextButton(
                             onPressed: () => Navigator.push(
                               context,
                               PageRouteBuilder(
-                                pageBuilder: (context, animation, secondaryAnimation) => RegistroScreen(authRepository: _auth),
+                                pageBuilder: (context, animation, secondaryAnimation) =>
+                                    RegistroScreen(authRepository: _auth),
                                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                                   return FadeTransition(
                                     opacity: animation,
                                     child: SlideTransition(
-                                      position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(animation),
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0, 0.05),
+                                        end: Offset.zero,
+                                      ).animate(animation),
                                       child: child,
                                     ),
                                   );
@@ -378,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     final (icono, titulo, texto) = switch (_aviso) {
       _AvisoLogin.credenciales => (
         Icons.warning_amber_rounded,
@@ -397,12 +431,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(EcoSpace.s16),
       decoration: BoxDecoration(
-        color: sinActivar 
-            ? scheme.secondaryContainer.withValues(alpha: isDark ? 0.5 : 0.8) 
+        color: sinActivar
+            ? scheme.secondaryContainer.withValues(alpha: isDark ? 0.5 : 0.8)
             : scheme.errorContainer.withValues(alpha: isDark ? 0.5 : 0.8),
         borderRadius: BorderRadius.circular(EcoRadius.medium),
         border: Border.all(
-          color: sinActivar ? scheme.primary.withValues(alpha: 0.3) : scheme.error.withValues(alpha: 0.3)
+          color: sinActivar ? scheme.primary.withValues(alpha: 0.3) : scheme.error.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -418,7 +452,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(titulo, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    if (texto.isNotEmpty) 
+                    if (texto.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(texto, style: theme.textTheme.bodyMedium),
@@ -435,9 +469,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _reenviarEnlace,
                 icon: const Icon(Icons.send_outlined, size: 18),
                 label: const Text('Reenviar enlace'),
-                style: TextButton.styleFrom(
-                  foregroundColor: scheme.onSecondaryContainer,
-                ),
+                style: TextButton.styleFrom(foregroundColor: scheme.onSecondaryContainer),
               ),
             ),
         ],
@@ -452,17 +484,11 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height - 25);
-    
+
     // Curva principal (suave y asimétrica)
-    path.quadraticBezierTo(
-      size.width * 0.35, size.height, 
-      size.width * 0.65, size.height - 15,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.85, size.height - 25, 
-      size.width, size.height - 10,
-    );
-    
+    path.quadraticBezierTo(size.width * 0.35, size.height, size.width * 0.65, size.height - 15);
+    path.quadraticBezierTo(size.width * 0.85, size.height - 25, size.width, size.height - 10);
+
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -471,6 +497,3 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
-
-
-

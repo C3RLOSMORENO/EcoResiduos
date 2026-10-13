@@ -5,6 +5,7 @@ import '../models/notificacion.dart';
 
 /// Novedades del usuario autenticado (tabla `notificaciones`).
 abstract class NotificacionesRepository {
+  /// Las 50 notificaciones más recientes, de la más nueva a la más antigua.
   Future<List<Notificacion>> listar();
 
   Future<int> contarNoLeidas();
@@ -13,6 +14,7 @@ abstract class NotificacionesRepository {
 
   Future<void> marcarTodasLeidas();
 
+  /// Borra la notificación.
   Future<void> descartar(int id);
 
   /// Llama a [alCambiar] cada vez que llega o cambia una notificación propia.
@@ -20,6 +22,8 @@ abstract class NotificacionesRepository {
   VoidCallback escucharCambios(VoidCallback alCambiar);
 }
 
+/// [NotificacionesRepository] sobre la tabla `notificaciones` y Supabase Realtime.
+/// Sin sesión devuelve listas vacías y no hace nada.
 class SupabaseNotificacionesRepository implements NotificacionesRepository {
   SupabaseNotificacionesRepository({this.client});
 

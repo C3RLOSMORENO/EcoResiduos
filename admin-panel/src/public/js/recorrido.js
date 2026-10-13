@@ -40,6 +40,8 @@
     }
   }
 
+  // Anota que este navegador ya vio la versión actual y avisa al servidor.
+  // estado: 'visto', 'completado' u 'omitido'; paso: hasta dónde llegó.
   function guardar(estado, paso) {
     try {
       localStorage.setItem(claveLocal, String(datos.version));
@@ -69,6 +71,7 @@
     return Boolean(elemento) && elemento.getClientRects().length > 0 && getComputedStyle(elemento).visibility !== 'hidden';
   }
 
+  // Pasos que entraron después de versionVista y cuyo elemento se ve.
   function pasosDesde(versionVista) {
     return datos.pasos
       .filter((paso) => paso.desde > versionVista)
@@ -97,6 +100,8 @@
   // ------------------------------------------------------------------
   let activo = false;
 
+  // automatico: true cuando arranca solo al abrir la pantalla; false cuando
+  // se pidió con el botón de ayuda.
   function iniciar(pasos, automatico) {
     if (activo || !vale(pasos)) return;
     activo = true;

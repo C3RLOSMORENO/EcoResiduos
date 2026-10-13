@@ -1,3 +1,13 @@
+"""Arma dataset/ desde las fuentes descargadas en descargas_crudas/.
+
+Vacía dataset/, descarta las fotos de baja calidad, las duplicadas y las que
+ya están en dataset_prueba/, y copia hasta LIMITS fotos por categoría.
+construir_dataset_v2.py hace lo mismo con más filtros y reparte cada
+categoría entre fuentes.
+
+    python construir_dataset_ecoresiduos.py
+"""
+
 import os
 import sys
 import shutil
@@ -46,6 +56,10 @@ HAMMING_THRESHOLD = 6
 MIN_LAPLACIAN_VAR = 35.0
 
 def check_quality(img_path):
+    """Revisa resolución, brillo y contraste.
+
+    Devuelve ((imagen, hash perceptual), "ok") o (None, motivo del descarte).
+    """
     try:
         with Image.open(img_path) as im:
             im = im.convert("RGB")
@@ -80,12 +94,14 @@ def check_quality(img_path):
         return None, f"error_lectura: {e}"
 
 def is_duplicate(candidate_hash, hash_list):
+    """True si el hash está a HAMMING_THRESHOLD bits o menos de alguno de la lista."""
     for h in hash_list:
         if (candidate_hash - h) <= HAMMING_THRESHOLD:
             return True
     return False
 
 def collect_candidate_files():
+    """Candidatas de cada categoría a partir de las fuentes descargadas en descargas_crudas/."""
     candidates = {cat: [] for cat in CATEGORIES}
     
     # 1. RealWaste
@@ -202,6 +218,7 @@ def collect_candidate_files():
     return candidates
 
 def main():
+    """Vacía dataset/ y lo vuelve a armar sin duplicados ni fotos de dataset_prueba/, hasta LIMITS por categoría."""
     print("🚀 CONSTRUCCIÓN DEL DATASET FINAL DE EPRESIDUOS...")
     
     for cat in CATEGORIES:

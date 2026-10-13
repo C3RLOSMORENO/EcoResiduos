@@ -6,8 +6,15 @@ const { haceDias } = require('../utils/fechas');
 
 const contar = (tabla) => supabase.from(tabla).select('id', { count: 'exact', head: true });
 
-// Conteo que no tumba el tablero: si una consulta falla se muestra 0 y se
-// avisa una sola vez arriba.
+/**
+ * Conteo que no tumba el tablero: si una consulta falla se muestra 0 y se
+ * avisa una sola vez arriba.
+ *
+ * @param {PromiseLike<{count: ?number, error: ?object}>} promesa Consulta con count: 'exact'.
+ * @param {string[]} errores Lista donde se anota el nombre si la consulta falla.
+ * @param {string} nombre Lo que se contaba, para el aviso.
+ * @returns {Promise<number>}
+ */
 async function conteo(promesa, errores, nombre) {
     const { count, error } = await promesa;
     if (error) {
@@ -18,6 +25,13 @@ async function conteo(promesa, errores, nombre) {
 }
 
 const dashboardService = {
+    /**
+     * Cifras, pendientes y listas cortas del inicio en una sola ronda de consultas.
+     * Nunca lanza un error por una consulta fallida: la anota en `errores`.
+     *
+     * @returns {Promise<{kpis: object, pendientesAccion: object, chartData: object,
+     *     gestoresPendientes: object[], ultimasSolicitudes: object[], errores: string[]}>}
+     */
     async getDashboardKpis() {
         const errores = [];
         const c = (promesa, nombre) => conteo(promesa, errores, nombre);

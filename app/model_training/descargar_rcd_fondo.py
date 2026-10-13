@@ -1,3 +1,10 @@
+"""Completa RCD, FONDO y PELIGROSO con fotos de Wikimedia Commons.
+
+Quedan en descargas_crudas/wikimedia_expanded/<CATEGORIA>/.
+
+    python descargar_rcd_fondo.py
+"""
+
 import os
 import sys
 import time
@@ -44,6 +51,7 @@ CATEGORY_QUERIES = {
 }
 
 def search_wikimedia_paginated(query, target_count=50):
+    """Busca imágenes en Wikimedia Commons, página por página, hasta target_count resultados."""
     url = "https://commons.wikimedia.org/w/api.php"
     results = []
     seen = set()
@@ -103,6 +111,7 @@ def search_wikimedia_paginated(query, target_count=50):
     return results
 
 def download_and_save(item, output_path):
+    """Descarga la imagen, la reduce y la guarda si mide al menos 224 px. True si quedó guardada."""
     try:
         r = requests.get(item['url'], headers=HEADERS, timeout=15)
         if r.status_code != 200:
@@ -125,6 +134,7 @@ def download_and_save(item, output_path):
         return False
 
 def collect_category(category, max_images=600):
+    """Descarga las imágenes de las consultas de la categoría y devuelve cuántas guardó."""
     target_dir = RAW_BASE / "wikimedia_expanded" / category
     target_dir.mkdir(parents=True, exist_ok=True)
     
@@ -160,6 +170,7 @@ def collect_category(category, max_images=600):
     return saved
 
 def main():
+    """Completa RCD, FONDO y PELIGROSO desde Wikimedia Commons."""
     print("🚀 INICIANDO RECOLECCIÓN AMPLIADA DE WIKIMEDIA (RCD, FONDO, PELIGROSO)...")
     summary = {}
     for cat in ["RCD", "FONDO", "PELIGROSO"]:

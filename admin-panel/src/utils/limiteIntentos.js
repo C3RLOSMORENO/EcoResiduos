@@ -1,9 +1,21 @@
-// Cuenta intentos fallidos por clave (correo o IP) dentro de una ventana de
-// tiempo. Vive en memoria: alcanza para un solo servidor; si el panel corre
-// en varias instancias, cada una lleva su propia cuenta.
+/**
+ * Cuenta intentos fallidos por clave (correo o IP) dentro de una ventana de
+ * tiempo. Vive en memoria: alcanza para un solo servidor; si el panel corre
+ * en varias instancias, cada una lleva su propia cuenta.
+ *
+ * @param {object} opciones
+ * @param {number} opciones.maximo Intentos fallidos permitidos dentro de la ventana.
+ * @param {number} opciones.ventanaMs Duración de la ventana en milisegundos.
+ * @param {() => number} [opciones.ahora] Reloj; las pruebas lo reemplazan.
+ * @returns {{espera(clave: string): number, fallo(clave: string): void, limpiar(clave: string): void}}
+ */
 function crearLimite({ maximo, ventanaMs, ahora = () => Date.now() }) {
     const intentos = new Map();
 
+    /**
+     * @param {string} clave
+     * @returns {number[]} Instantes de los fallos que siguen dentro de la ventana.
+     */
     function vigentes(clave) {
         const limite = ahora() - ventanaMs;
         const lista = (intentos.get(clave) || []).filter((t) => t > limite);

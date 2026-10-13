@@ -30,6 +30,7 @@ class CategoriaColor {
   final Color container;
   final Color onContainer;
 
+  /// Mezcla dos juegos de colores, para la animación al cambiar de tema.
   static CategoriaColor lerp(CategoriaColor a, CategoriaColor b, double t) {
     return CategoriaColor(
       color: Color.lerp(a.color, b.color, t)!,
@@ -47,7 +48,10 @@ class EcoColores extends ThemeExtension<EcoColores> {
   final Map<Categoria, CategoriaColor> categorias;
   final Map<EstadoSolicitud, CategoriaColor> estados;
 
+  /// Colores de la categoría; los de Aprovechable si no está definida.
   CategoriaColor categoria(Categoria c) => categorias[c] ?? categorias[Categoria.aprovechable]!;
+
+  /// Colores del estado; los de Publicado si no está definido.
   CategoriaColor estado(EstadoSolicitud s) => estados[s] ?? estados[EstadoSolicitud.publicado]!;
 
   @override

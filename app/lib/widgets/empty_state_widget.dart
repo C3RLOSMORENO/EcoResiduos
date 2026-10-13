@@ -101,6 +101,7 @@ class EmptyStateWidget extends StatelessWidget {
   }
 }
 
+/// Color del ícono de un estado vacío: neutro, de error o de éxito.
 enum TonoEstado { neutro, error, exito }
 
 /// Envuelve un estado para que se pueda «jalar para refrescar» y quede

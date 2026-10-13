@@ -1,3 +1,10 @@
+"""Descarga y extrae RealWaste (UCI Machine Learning Repository, CC BY 4.0).
+
+Queda en descargas_crudas/realwaste/.
+
+    python descargar_realwaste.py
+"""
+
 import os
 import sys
 import requests
@@ -14,6 +21,7 @@ EXTRACT_DIR = RAW_DIR / "extracted"
 URL = "https://archive.ics.uci.edu/static/public/908/realwaste.zip"
 
 def download_file(url, target_path):
+    """Descarga el archivo por partes mostrando el progreso."""
     print(f"Descargando RealWaste desde {url}...")
     headers = {'User-Agent': 'Mozilla/5.0'}
     response = requests.get(url, stream=True, headers=headers, timeout=30)
@@ -33,12 +41,14 @@ def download_file(url, target_path):
     print("Descarga completa.")
 
 def extract_zip(zip_path, extract_dir):
+    """Extrae el .zip completo en extract_dir."""
     print(f"Extrayendo {zip_path} en {extract_dir}...")
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_dir)
     print("Extracción completa.")
 
 def main():
+    """Descarga y extrae RealWaste si aún no está en descargas_crudas/realwaste/."""
     if not ZIP_PATH.exists() or ZIP_PATH.stat().st_size < 1000:
         download_file(URL, ZIP_PATH)
     else:

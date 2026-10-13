@@ -1,3 +1,10 @@
+"""Recorta los objetos de TACO según TACO_CAT_MAPPING.
+
+Usa las anotaciones de descargas_crudas/taco/ y guarda los recortes en crops/.
+
+    python procesar_taco.py
+"""
+
 import os
 import sys
 import json
@@ -60,6 +67,7 @@ TACO_CAT_MAPPING = {
 }
 
 def main():
+    """Recorta los objetos de TACO según TACO_CAT_MAPPING en descargas_crudas/taco/crops/."""
     if not ANNOTATIONS_PATH.exists():
         print(f"No existe {ANNOTATIONS_PATH}")
         return

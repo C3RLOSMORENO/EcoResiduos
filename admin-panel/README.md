@@ -2,12 +2,12 @@
 
 <div align="center">
 
-![Node.js](https://img.shields.io/badge/Node.js-18.x+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20.3+-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![EJS](https://img.shields.io/badge/Templates-EJS-B4CA65?style=for-the-badge)
 ![WCAG](https://img.shields.io/badge/Accessibility-WCAG_2.1_AA-blue?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-99_Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-129_Passed-brightgreen?style=for-the-badge)
 
 **Sistema web de fiscalización documental, trazabilidad regional y mediación para autoridades ambientales y administradores**
 
@@ -74,7 +74,7 @@ admin-panel/
 │   ├── app.js                    # Configuración de Express, middlewares globales y rutas
 │   └── server.js                 # Punto de entrada y arranque del servidor HTTP
 │
-├── pruebas/                      # Suite de 99 pruebas de integración, seguridad y WCAG
+├── pruebas/                      # 129 pruebas de integración, seguridad y WCAG, más las de navegador (e2e/)
 ├── tailwind.config.js            # Configuración de diseño accesible conforme a WCAG 2.1 AA
 └── package.json                  # Dependencias y scripts de construcción
 ```
@@ -150,19 +150,19 @@ Los permisos ambientales se guardan en el bucket privado `permisos`, bajo la rut
    ```
 
 ```bash
-npm test             # 120 pruebas, unos segundos
+npm test             # 129 pruebas, unos segundos
 npm run lint
 npm run test:e2e     # recorridos en navegador
 ```
 
 ---
 
-## 5. Suite de Pruebas Automatizadas (99 Tests)
+## 5. Suite de Pruebas Automatizadas (129 pruebas y 7 recorridos en navegador)
 
-`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí inicia sesión, recorre y salta el recorrido guiado del inicio, aprueba un gestor, quita su logo, comprueba el esqueleto de carga y amplía la foto de una solicitud, en escritorio y en celular. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
+`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí inicia sesión, recorre y salta el recorrido guiado del inicio, aprueba un gestor, quita su logo, comprueba el esqueleto de carga, amplía la foto de una solicitud y guarda un formulario de edición, en escritorio y en celular. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
 
 ```bash
-npm test
+npx playwright install chromium
 ```
 
 ## Al hacer cambios

@@ -11,13 +11,21 @@ import '../models/gestor_directorio.dart';
 
 /// Autenticación, registro y perfil de la cuenta.
 abstract class AuthRepository {
+  /// Usuario de la sesión actual, o null si no hay sesión.
   User? get currentUser;
 
+  /// Inicia sesión con correo y contraseña. Si la cuenta es de un gestor, la
+  /// vincula con su empresa.
+  ///
+  /// Lanza [AuthException] con el mensaje en español (credenciales que no
+  /// coinciden, cuenta sin activar…).
   Future<AuthResponse> signIn({required String email, required String password});
 
   /// Vuelve a enviar el enlace de activación de la cuenta.
   Future<void> reenviarConfirmacion(String email);
 
+  /// Crea la cuenta de un generador. Supabase envía el enlace de activación al
+  /// correo; el perfil lo crea el servidor a partir de los metadatos.
   Future<AuthResponse> signUpGenerador({
     required String email,
     required String password,
@@ -65,24 +73,34 @@ abstract class AuthRepository {
     required List<int> materialesDeclarados,
   });
 
+  /// Envía al correo el código para restablecer la contraseña.
   Future<void> solicitarRecuperacionPassword(String email);
 
+  /// Comprueba el código de recuperación y, si es correcto, abre una sesión
+  /// con la que se puede cambiar la contraseña.
   Future<AuthResponse> verificarOtpRecuperacion({required String email, required String token});
 
+  /// Cambia la contraseña de la sesión actual.
   Future<UserResponse> actualizarPassword(String nuevaPassword);
 
+  /// Cierra la sesión en el dispositivo.
   Future<void> signOut();
 
   /// 'GENERADOR' o 'GESTOR'.
   Future<String> getRolUsuario();
 
+  /// Perfil del generador de la sesión, o null si no hay sesión o no tiene perfil.
   Future<PerfilGenerador?> getPerfilGenerador();
 
+  /// Empresa del gestor de la sesión, o null si no hay sesión o aún no está vinculada.
   Future<PerfilGestor?> getPerfilGestor();
 
+  /// Guarda el municipio en el perfil y en los metadatos de la cuenta.
   Future<void> actualizarMunicipio(String municipio);
 }
 
+/// [AuthRepository] sobre Supabase Auth. Los errores de Supabase se traducen
+/// a mensajes para el usuario.
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository({this.client});
 

@@ -242,7 +242,11 @@ class _GuiaEscaneoPainter extends CustomPainter {
     final guia = Rect.fromLTWH((size.width - lado) / 2, (size.height - lado) / 2 - 35, lado, lado);
     final recuadro = RRect.fromRectAndRadius(guia, const Radius.circular(_radio));
 
-    final velo = Path.combine(PathOperation.difference, Path()..addRect(Offset.zero & size), Path()..addRRect(recuadro));
+    final velo = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      Path()..addRRect(recuadro),
+    );
     canvas.drawPath(velo, Paint()..color = Colors.black.withValues(alpha: 0.5));
     canvas.drawRRect(
       recuadro,

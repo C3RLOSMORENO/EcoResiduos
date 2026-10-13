@@ -16,9 +16,14 @@ const OTRO = 'Otro / sin dato';
 
 const variable = (ranura) => `--eco-graf-${ranura}`;
 
-// Las categorías del catálogo ocupan las primeras ranuras en su orden; las
-// demás (orgánico, ordinario…) siguen en orden de aparición. «Sin categoría»
-// es gris: no es una categoría más.
+/**
+ * Las categorías del catálogo ocupan las primeras ranuras en su orden; las
+ * demás (orgánico, ordinario…) siguen en orden de aparición. «Sin categoría»
+ * es gris: no es una categoría más.
+ *
+ * @param {{clave: string}[]} categorias
+ * @returns {Object<string, string>} Ranura de color de cada categoría: '1'…'8' o 'neutro'.
+ */
 function ranurasCategorias(categorias) {
     let siguiente = CATEGORIAS_CATALOGO.length + 1;
     return Object.fromEntries(categorias.map(({ clave }) => {
@@ -31,6 +36,14 @@ function ranurasCategorias(categorias) {
     }));
 }
 
+/**
+ * De mayor a menor según `valor`, con «Otro / sin dato» al final y los empates
+ * por nombre.
+ *
+ * @param {{municipio: string}[]} filas
+ * @param {(fila: object) => number} valor
+ * @returns {object[]} Una copia ordenada; `filas` no cambia.
+ */
 function ordenarFilas(filas, valor) {
     return [...filas].sort((a, b) => {
         if ((a.municipio === OTRO) !== (b.municipio === OTRO)) return a.municipio === OTRO ? 1 : -1;
@@ -43,7 +56,12 @@ const municipioLider = (filas, valor) => filas.find((f) => f.municipio !== OTRO 
 
 const conCifra = (n, singular, varios) => `${formatoNumero(n)} ${Number(n) === 1 ? singular : varios}`;
 
-// Reporte: municipios × categorías, barras apiladas horizontales.
+/**
+ * Reporte: municipios × categorías, barras apiladas horizontales.
+ *
+ * @param {object} reporte Resultado de ReporteService.reciclajePorMunicipio.
+ * @returns {object} Resumen en texto y datos para Chart.js.
+ */
 function graficoReporte(reporte) {
     const ranuras = ranurasCategorias(reporte.categorias);
     const filas = ordenarFilas(reporte.filas, (f) => f.confirmadas);
@@ -85,8 +103,13 @@ function graficoReporte(reporte) {
     };
 }
 
-// Cifras destacadas del reporte: total, pendientes, municipio y categoría
-// principales.
+/**
+ * Cifras destacadas del reporte: total, pendientes, municipio y categoría
+ * principales.
+ *
+ * @param {object} reporte Resultado de ReporteService.reciclajePorMunicipio.
+ * @returns {object}
+ */
 function cifrasReporte(reporte) {
     const total = reporte.total.confirmadas;
     const lider = municipioLider(ordenarFilas(reporte.filas, (f) => f.confirmadas), (f) => f.confirmadas);
@@ -112,6 +135,12 @@ const ESTADOS = [
     { clave: 'solicitudesCanceladas', nombre: 'Canceladas', ranura: '7' }
 ];
 
+/**
+ * Barra de proporción con el estado de las solicitudes, para el inicio.
+ *
+ * @param {object} kpis Conteos de DashboardService (solicitudesPublicadas, …).
+ * @returns {{total: number, series: object[], resumen: string, datos: object}}
+ */
 function graficoEstados(kpis) {
     const series = ESTADOS.map((e) => ({ ...e, valor: Number(kpis[e.clave]) || 0 }));
     const total = series.reduce((suma, s) => suma + s.valor, 0);
@@ -132,7 +161,12 @@ function graficoEstados(kpis) {
     };
 }
 
-// Inicio: solicitudes por municipio, una sola serie en el color de la marca.
+/**
+ * Inicio: solicitudes por municipio, una sola serie en el color de la marca.
+ *
+ * @param {{municipiosLabels: string[], municipiosData: number[]}} chartData
+ * @returns {object} Resumen en texto y datos para Chart.js.
+ */
 function graficoMunicipios(chartData) {
     const filas = ordenarFilas(
         chartData.municipiosLabels.map((municipio, i) => ({ municipio, valor: Number(chartData.municipiosData[i]) || 0 })),

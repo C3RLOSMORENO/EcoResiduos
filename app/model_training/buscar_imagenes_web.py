@@ -150,15 +150,18 @@ CONSULTAS = {
 
 
 def _slug(texto):
+    """Texto en minúsculas con guiones, para nombrar los archivos por consulta."""
     return re.sub(r'[^a-z0-9]+', '-', texto.lower()).strip('-')[:40]
 
 
 def _util(resultado):
+    """False si la imagen viene de un sitio con marca de agua o de un generador de imágenes."""
     texto = f"{resultado['image']} {resultado.get('url', '')}".lower()
     return not any(d in texto for d in DOMINIOS_CON_MARCA_DE_AGUA + MARCAS_DE_IA)
 
 
 def buscar(consulta, cantidad):
+    """Hasta cantidad URL de imágenes distintas para la consulta, pidiendo varias páginas."""
     urls, vistas = [], set()
     for pagina in range(1, 11):
         for intento in range(4):
@@ -232,6 +235,7 @@ class Descargador:
 
 
 def main():
+    """Busca y descarga candidatas para las categorías que están bajo el mínimo."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--categorias', nargs='*', choices=sorted(CONSULTAS))
     parser.add_argument('--por-consulta', type=int, default=60, help='resultados a pedir por búsqueda')

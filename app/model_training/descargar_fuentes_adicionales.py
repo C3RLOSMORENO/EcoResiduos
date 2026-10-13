@@ -1,3 +1,10 @@
+"""Descarga GIZ E-Waste Database (RAEE) y Voxel51 Food Waste (ORGANICO).
+
+Quedan en descargas_crudas/gizewaste/ y descargas_crudas/voxel51_foodwaste/.
+
+    python descargar_fuentes_adicionales.py
+"""
+
 import os
 import sys
 import requests
@@ -19,6 +26,7 @@ HEADERS = {
 }
 
 def download_giz_ewaste(max_images=300):
+    """Descarga una muestra repartida de GIZ E-Waste Database (CC BY 4.0) para RAEE."""
     target_dir = RAW_DIR / "gizewaste"
     target_dir.mkdir(parents=True, exist_ok=True)
     
@@ -72,6 +80,7 @@ def download_giz_ewaste(max_images=300):
     print(f"✅ Descargadas {saved} imágenes de GIZ E-Waste en {target_dir}")
 
 def download_voxel51_foodwaste(max_images=300):
+    """Descarga una muestra de Voxel51 Food Waste (MIT) para ORGANICO."""
     target_dir = RAW_DIR / "voxel51_foodwaste"
     target_dir.mkdir(parents=True, exist_ok=True)
     
@@ -124,6 +133,7 @@ def download_voxel51_foodwaste(max_images=300):
     print(f"✅ Descargadas {saved} imágenes de Voxel51 Food Waste en {target_dir}")
 
 def main():
+    """Descarga las dos fuentes a descargas_crudas/."""
     download_giz_ewaste(300)
     download_voxel51_foodwaste(300)
 

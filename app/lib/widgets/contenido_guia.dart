@@ -12,6 +12,7 @@ TextStyle? estiloLectura(BuildContext context) {
   return theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurface);
 }
 
+/// Título de una sección de la guía.
 class TituloSeccion extends StatelessWidget {
   const TituloSeccion(this.texto, {super.key, this.color});
 

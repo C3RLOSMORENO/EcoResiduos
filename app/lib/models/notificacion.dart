@@ -28,6 +28,7 @@ class Notificacion {
 
   bool get leida => leidaAt != null;
 
+  /// Copia marcada como leída ahora, para actualizar la lista sin volver a consultar.
   Notificacion marcadaComoLeida() => Notificacion(
     id: id,
     tipo: tipo,

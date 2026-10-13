@@ -1,3 +1,10 @@
+"""Copia a dataset/ las fotos de los datasets organic, electronica, industry y medico.
+
+Cada carpeta de origen se asigna a una categoría de la Resolución 2184 de 2019.
+
+    python organizar_dataset.py
+"""
+
 import os
 import sys
 import shutil
@@ -57,11 +64,13 @@ ORGANIC_DATASET_MAPPING = {
 }
 
 def ensure_target_dirs():
+    """Crea en dataset/ una carpeta por categoría."""
     categories = ["ORGANICO", "APROVECHABLE", "ORDINARIO", "PELIGROSO", "RIESGO_BIOLOGICO", "RAEE", "RCD"]
     for cat in categories:
         (TARGET_DATASET_DIR / cat).mkdir(parents=True, exist_ok=True)
 
 def copy_organic_images():
+    """Copia las fotos del dataset «organic» (Garbage Classification) según ORGANIC_DATASET_MAPPING."""
     print("\n📦 1. Procesando dataset 'organic' (Garbage Classification)...")
     source_dir = DOWNLOADS_DATASET_DIR / "organic" / "images" / "images"
     if not source_dir.exists():
@@ -91,6 +100,7 @@ def copy_organic_images():
         print(f"  ✅ Total agregado a {cat}: {total} fotos")
 
 def copy_electronica_images():
+    """Reparte las fotos del dataset «electronica» entre RAEE y PELIGROSO (baterías)."""
     print("\n📦 2. Procesando dataset 'electronica' (RAEE y Baterías)...")
     source_dir = DOWNLOADS_DATASET_DIR / "electronica" / "modified-dataset"
     if not source_dir.exists():
@@ -123,6 +133,7 @@ def copy_electronica_images():
     print(f"  ✅ Agregado a PELIGROSO (Baterías): {peligroso_count} fotos")
 
 def copy_industry_images():
+    """Copia los recortes de WaRP-C a APROVECHABLE."""
     # WaRP-C son botellas, latas, cartón y envases de una planta de reciclaje:
     # según la norma son aprovechables, no escombros (RCD).
     print("\n📦 3. Procesando dataset 'industry' (WaRP-C → APROVECHABLE)...")
@@ -150,6 +161,7 @@ def copy_industry_images():
     print(f"  ✅ Agregado a APROVECHABLE: {count} fotos")
 
 def extract_medico_images():
+    """Extrae de medico.zip las clases de RIESGO_BIOLOGICO y de PELIGROSO."""
     print("\n📦 4. Extrayendo dataset 'medico.zip' (RIESGO_BIOLOGICO y PELIGROSO)...")
     zip_path = DOWNLOADS_DATASET_DIR / "medico.zip"
     if not zip_path.exists():
@@ -191,6 +203,7 @@ def extract_medico_images():
     print(f"  ✅ Agregado a PELIGROSO (Medicamentos/Ampollas): {peligro_count} fotos")
 
 def print_final_summary():
+    """Muestra cuántas imágenes quedaron en cada categoría."""
     print("\n📊 === RESUMEN FINAL DEL DATASET LISTO PARA ENTRENAR ===")
     total_imgs = 0
     for cat_dir in sorted(TARGET_DATASET_DIR.iterdir()):
@@ -201,6 +214,7 @@ def print_final_summary():
     print(f"\n🎉 Total general de imágenes: {total_imgs}")
 
 def main():
+    """Organiza todos los datasets descargados en dataset/."""
     print("🚀 INICIANDO ORGANIZACIÓN AUTOMÁTICA DE DATASETS...")
     ensure_target_dirs()
     copy_organic_images()

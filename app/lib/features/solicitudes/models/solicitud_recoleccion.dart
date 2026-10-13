@@ -11,6 +11,7 @@ enum TipoCertificado {
   final String valor;
   final String etiqueta;
 
+  /// El tipo que corresponde al valor de la base, o null si no hay o no se reconoce.
   static TipoCertificado? desde(String? valor) {
     for (final tipo in values) {
       if (tipo.valor == valor?.toUpperCase()) return tipo;

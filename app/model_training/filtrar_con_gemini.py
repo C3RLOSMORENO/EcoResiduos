@@ -124,6 +124,7 @@ class Modelos:
 
 
 def preparar(ruta):
+    """Reduce la imagen a 512 px como máximo y la devuelve en JPEG codificado en base64."""
     with Image.open(ruta) as im:
         im = im.convert('RGB')
         im.thumbnail((512, 512))
@@ -133,6 +134,13 @@ def preparar(ruta):
 
 
 def consultar_lote(clave, modelos, rutas, esperada):
+    """Pide a Gemini un veredicto por imagen del lote.
+
+    Reintenta ante errores de red y pasa al siguiente modelo cuando el actual
+    agota su cuota. Devuelve el modelo que respondió y un veredicto por ruta,
+    en el mismo orden ({} si Gemini no devolvió el de esa imagen). Lanza
+    RuntimeError si la API no responde después de 20 intentos.
+    """
     partes = [{'text': PROMPT.format(definiciones=DEFINICIONES, esperada=esperada, n=len(rutas))}]
     for i, ruta in enumerate(rutas, 1):
         partes += [{'text': f'Imagen {i}:'}, {'inline_data': {'mime_type': 'image/jpeg', 'data': preparar(ruta)}}]
@@ -173,6 +181,11 @@ def consultar_lote(clave, modelos, rutas, esperada):
 
 
 def aceptada(v, esperada):
+    """Decide si el veredicto de Gemini deja entrar la imagen.
+
+    Exige la categoría esperada con la confianza mínima y una foto real, sin
+    texto, sin personas en primer plano y sin escenas de desastre.
+    """
     try:
         confianza = int(v.get('confianza', 0))
     except (TypeError, ValueError):
@@ -191,10 +204,15 @@ def aceptada(v, esperada):
 
 
 def sha1(ruta):
+    """Huella del contenido del archivo, para no volver a consultar una imagen ya decidida."""
     return hashlib.sha1(ruta.read_bytes()).hexdigest()
 
 
 def cargar_decisiones(archivo):
+    """Decisiones guardadas por (sha1, categoría esperada).
+
+    Solo se reutilizan las del criterio actual (VERSION_CRITERIO) y los rechazos.
+    """
     if not archivo.exists():
         return {}
     with open(archivo, encoding='utf-8') as f:
@@ -206,11 +224,17 @@ def cargar_decisiones(archivo):
 
 
 def contar(categoria):
+    """Número de imágenes que ya tiene dataset/<categoria>."""
     carpeta = DATASET_DIR / categoria
     return len([f for f in carpeta.glob('*') if f.suffix.lower() in EXTENSIONES]) if carpeta.exists() else 0
 
 
 def aplicar(ruta, categoria, ok, revisar_dataset):
+    """Aplica el veredicto según el modo.
+
+    Con revisar_dataset, mueve la rechazada a rechazadas/; si no, copia la
+    aceptada a dataset/ sin pasar del máximo por categoría.
+    """
     if revisar_dataset and not ok and ruta.exists():
         destino = RECHAZADAS_DIR / categoria
         destino.mkdir(parents=True, exist_ok=True)
@@ -223,6 +247,7 @@ def aplicar(ruta, categoria, ok, revisar_dataset):
 
 
 def main():
+    """Revisa las candidatas (o dataset/ con --revisar-dataset) por categoría y lotes."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--revisar-dataset', action='store_true', help='revisar dataset/ en vez de las candidatas')
     parser.add_argument('--categorias', nargs='*', choices=sorted(CATEGORIAS))

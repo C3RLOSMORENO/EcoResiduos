@@ -5,11 +5,45 @@ const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
 
+const BUCKET_CERTIFICADOS = 'certificados';
+const PREFIJO_CERTIFICADOS = `/storage/v1/object/public/${BUCKET_CERTIFICADOS}/`;
+
+/**
+ * Ruta dentro del bucket de certificados a partir de la URL que guardó la app.
+ *
+ * La URL la escribe el gestor, así que el panel nunca la descarga: si lo
+ * hiciera, el servidor visitaría la dirección que el gestor quisiera (SSRF).
+ * Solo se acepta una URL del propio proyecto de Supabase y el archivo se lee
+ * con Storage.
+ *
+ * @param {string} url Valor de certificado_url.
+ * @returns {?string} La ruta del archivo, o null si la URL es de otro sitio o
+ *     de otro bucket.
+ */
+function rutaCertificado(url) {
+    try {
+        const direccion = new URL(String(url).trim());
+        const proyecto = new URL(process.env.SUPABASE_URL).origin;
+        if (direccion.origin !== proyecto || !direccion.pathname.startsWith(PREFIJO_CERTIFICADOS)) return null;
+        const ruta = decodeURIComponent(direccion.pathname.slice(PREFIJO_CERTIFICADOS.length));
+        return ruta && !ruta.split('/').includes('..') ? ruta : null;
+    } catch {
+        return null;
+    }
+}
+
 const ESTADOS_CANCELABLES = ['PUBLICADO', 'EN_NEGOCIACION'];
 const DIAS_SIN_CERTIFICADO = 7;
 
-// Un problema sin resolver es problema_reportado = TRUE: al resolverlo
-// (resolver_problema_no_recogido) vuelve a FALSE.
+/**
+ * Agrega a la consulta los filtros de la lista de solicitudes. Un problema sin
+ * resolver es problema_reportado = TRUE: al resolverlo
+ * (resolver_problema_no_recogido) vuelve a FALSE.
+ *
+ * @param {object} consulta Consulta de Supabase sobre solicitudes_recoleccion.
+ * @param {object} filtros Resultado de filtrosSolicitudes.
+ * @returns {object} La misma consulta con los filtros.
+ */
 function aplicarFiltros(consulta, filtros) {
     if (filtros.estado) consulta = consulta.eq('estado', filtros.estado);
     if (filtros.municipio) consulta = consulta.in('municipio', variantesMunicipio(filtros.municipio));
@@ -31,14 +65,28 @@ function aplicarFiltros(consulta, filtros) {
 
 const solicitudService = {
     ESTADOS_CANCELABLES,
+    rutaCertificado,
     DIAS_SIN_CERTIFICADO,
 
-    // Se puede resolver si el gestor la marcó recolectada, el generador
-    // reportó el problema y aún no está confirmada.
+    /**
+     * Se puede resolver si el gestor la marcó recolectada, el generador
+     * reportó el problema y aún no está confirmada.
+     *
+     * @param {?object} s Solicitud.
+     * @returns {boolean}
+     */
     problemaResoluble(s) {
         return Boolean(s && s.problema_reportado && s.estado === 'RECOLECTADO' && !s.confirmado_at);
     },
 
+    /**
+     * Página de solicitudes con su material.
+     *
+     * @param {object} filtros Resultado de filtrosSolicitudes.
+     * @param {number} [pagina]
+     * @returns {Promise<{solicitudes: object[], total: number}>}
+     * @throws {Error} Si falla la consulta.
+     */
     async listar(filtros, pagina = 1) {
         // !inner hace que los filtros por categoría o material descarten la
         // solicitud completa, no solo el material embebido.
@@ -62,6 +110,15 @@ const solicitudService = {
         return { solicitudes: data || [], total: count || 0 };
     },
 
+    /**
+     * Solicitud con su material, generador, historial de estados, postulaciones
+     * y gestor asignado. Si falla el historial o las postulaciones, esa parte
+     * llega en null y el resto de la página se muestra igual.
+     *
+     * @param {number|string} id
+     * @returns {Promise<?object>} null si la solicitud no existe.
+     * @throws {Error} Si falla la consulta de la solicitud.
+     */
     async obtenerDetalle(id) {
         const { data: solicitud, error } = await supabase
             .from('solicitudes_recoleccion')
@@ -103,8 +160,15 @@ const solicitudService = {
         };
     },
 
-    // «Resuelto: no se recogió» (función resolver_problema_no_recogido): la
-    // solicitud vuelve a EN_NEGOCIACION con el mismo gestor y ambos reciben aviso.
+    /**
+     * «Resuelto: no se recogió» (función resolver_problema_no_recogido): la
+     * solicitud vuelve a EN_NEGOCIACION con el mismo gestor y ambos reciben aviso.
+     *
+     * @param {number|string} id
+     * @param {?string} nota Nota del administrador; se guardan hasta 300 caracteres.
+     * @returns {Promise<object>} La respuesta de la función.
+     * @throws {Error} Con el mensaje de la función o el aviso de la migración que falta.
+     */
     async resolverNoRecogido(id, nota) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {
@@ -124,8 +188,14 @@ const solicitudService = {
         return data;
     },
 
-    // Cancela en una sola transacción (función cancelar_solicitud_admin):
-    // la solicitud queda CANCELADO y sus propuestas abiertas, RECHAZADA.
+    /**
+     * Cancela en una sola transacción (función cancelar_solicitud_admin):
+     * la solicitud queda CANCELADO y sus propuestas abiertas, RECHAZADA.
+     *
+     * @param {number|string} id
+     * @returns {Promise<{postulaciones_rechazadas?: number}>} La respuesta de la función.
+     * @throws {Error} Con el mensaje de la función o el aviso de la migración que falta.
+     */
     async cancelar(id) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {
@@ -142,8 +212,15 @@ const solicitudService = {
         return data;
     },
 
-    // Descarga el PDF del certificado para servirlo directamente desde el panel
-    // sin exponer la URL interna de Supabase Storage en el navegador.
+    /**
+     * PDF del certificado, leído del bucket con la llave del servidor para
+     * servirlo desde el panel.
+     *
+     * @param {number|string} id Identificador de la solicitud.
+     * @returns {Promise<{buffer: Buffer, tipo: ?string}>}
+     * @throws {Error} Si la solicitud no tiene certificado, si la URL no es del
+     *     bucket de certificados del proyecto o si Storage no entrega el archivo.
+     */
     async descargarCertificado(id) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {
@@ -156,48 +233,26 @@ const solicitudService = {
             .eq('id', solicitudId)
             .maybeSingle();
 
-        if (error || !data || !data.certificado_url) {
+        if (error) throw errorDeBase('No pudimos cargar el certificado.', error);
+        if (!data || !data.certificado_url) {
             throw new Error('Esta solicitud no tiene un certificado adjunto.');
         }
 
-        const url = String(data.certificado_url).trim();
-
-        // En pruebas o con almacenamiento simulado, responder buffer de prueba
-        if (url.includes('almacenamiento.test') || process.env.NODE_ENV === 'test') {
-            return {
-                buffer: Buffer.from('%PDF-1.7 certificado de prueba'),
-                tipo: data.certificado_tipo
-            };
+        const ruta = rutaCertificado(data.certificado_url);
+        if (!ruta) {
+            console.error(`Certificado de la solicitud ${solicitudId} fuera del bucket ${BUCKET_CERTIFICADOS}: ${data.certificado_url}`);
+            throw new Error('El certificado no está guardado en el almacenamiento de EcoResiduos, así que no lo abrimos.');
         }
 
-        // Validación anti-SSRF: solo permitir protocolo HTTPS/HTTP y rechazar hosts locales/internos
-        let urlParsed;
-        try {
-            urlParsed = new URL(url);
-        } catch {
-            throw new Error('La dirección del certificado no es válida.');
+        const { data: archivo, error: errorDescarga } = await supabase.storage.from(BUCKET_CERTIFICADOS).download(ruta);
+        if (errorDescarga || !archivo) {
+            throw errorDescarga
+                ? errorDeBase('No pudimos abrir el certificado.', errorDescarga)
+                : new Error('No encontramos el archivo del certificado.');
         }
-
-        if (!['http:', 'https:'].includes(urlParsed.protocol)) {
-            throw new Error('Protocolo de certificado no permitido.');
-        }
-
-        const hostname = urlParsed.hostname.toLowerCase();
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1' ||
-            hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('169.254.')) {
-            throw new Error('Origen de certificado no permitido por seguridad.');
-        }
-
-        const respuesta = await fetch(url, { signal: AbortSignal.timeout(10000) });
-        if (!respuesta.ok) {
-            throw new Error('No pudimos descargar el archivo del certificado.');
-        }
-
-        const arrayBuffer = await respuesta.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
 
         return {
-            buffer,
+            buffer: Buffer.from(await archivo.arrayBuffer()),
             tipo: data.certificado_tipo
         };
     }

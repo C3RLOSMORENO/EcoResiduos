@@ -6,6 +6,7 @@ const { fechaIsoBogota, fechaHora } = require('../utils/formato');
 const { renderLista } = require('../utils/errores');
 const { filtrosReporte, describirFiltrosReporte, enlaceExcelReporte } = require('../utils/filtros');
 
+/** GET /reportes: reciclaje por municipio con sus filtros. */
 exports.verReporte = (req, res) => {
     const filtros = filtrosReporte(req.query);
     return renderLista(res, 'reportes', {
@@ -25,6 +26,7 @@ exports.verReporte = (req, res) => {
     });
 };
 
+/** GET /reportes/excel: el mismo reporte en un archivo .xlsx. */
 exports.descargarExcel = async (req, res) => {
     const filtros = filtrosReporte(req.query);
     try {

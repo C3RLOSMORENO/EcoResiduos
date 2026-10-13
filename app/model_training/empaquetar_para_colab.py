@@ -17,6 +17,7 @@ SALIDA = SCRIPT_DIR / 'ecoresiduos_colab.zip'
 
 
 def main():
+    """Escribe el .zip con train.py, dataset/ y dataset_prueba/."""
     total = 0
     with zipfile.ZipFile(SALIDA, 'w', zipfile.ZIP_STORED) as z:
         z.write(SCRIPT_DIR / 'train.py', 'train.py')

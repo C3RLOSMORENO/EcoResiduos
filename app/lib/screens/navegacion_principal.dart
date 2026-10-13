@@ -21,6 +21,7 @@ class NavegacionPrincipal extends InheritedWidget {
 
   final ValueChanged<int> irA;
 
+  /// El más cercano en el árbol, o null si la pantalla está fuera de la navegación principal.
   static NavegacionPrincipal? of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<NavegacionPrincipal>();
 

@@ -1,3 +1,11 @@
+"""Completa RCD con fotos de Wikimedia Commons y de Unsplash.
+
+Registra el archivo, la URL, el autor y la licencia de cada foto en
+fuentes_individuales.csv, para la atribución de FUENTES.md.
+
+    python descargar_rcd_y_completar.py
+"""
+
 import os
 import sys
 import csv
@@ -26,6 +34,7 @@ HEADERS = {
 }
 
 def download_wikimedia_rcd():
+    """Descarga fotos de escombros de Wikimedia Commons, registra su autor y licencia, y devuelve cuántas guardó."""
     queries = [
         'rubble pile demolition',
         'broken bricks rubble',
@@ -132,6 +141,7 @@ def download_wikimedia_rcd():
     return saved
 
 def download_unsplash_rcd():
+    """Descarga fotos de escombros de Unsplash, registra su autor, y devuelve cuántas guardó."""
     # Descargar fotos de Unsplash con licencia libre para RCD
     # Búsqueda pública directa en Unsplash Source / API
     queries = ['rubble', 'demolition', 'broken-brick', 'construction-debris', 'concrete-rubble']
@@ -206,6 +216,7 @@ def download_unsplash_rcd():
     return saved
 
 def main():
+    """Completa RCD desde Wikimedia Commons y Unsplash."""
     download_wikimedia_rcd()
     download_unsplash_rcd()
 

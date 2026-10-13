@@ -4,6 +4,7 @@ const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosAutoridades } = require('../utils/filtros');
 
 const autoridadController = {
+    /** GET /autoridades: lista con búsqueda y paginación. */
     renderAutoridadesPage(req, res) {
         const pagina = leerPagina(req.query);
         const filtros = filtrosAutoridades(req.query);
@@ -17,6 +18,7 @@ const autoridadController = {
         });
     },
 
+    /** GET /autoridades/nuevo: formulario vacío. */
     renderNuevaAutoridad(req, res) {
         res.render('autoridad-edit', {
             titulo: 'Nueva autoridad ambiental',
@@ -26,6 +28,7 @@ const autoridadController = {
         });
     },
 
+    /** POST /autoridades: registra la autoridad. */
     async handleCreateAutoridad(req, res) {
         try {
             await autoridadService.createAutoridad(req.body);
@@ -35,6 +38,7 @@ const autoridadController = {
         }
     },
 
+    /** GET /autoridades/edit/:id: formulario con los datos actuales. */
     async renderEditAutoridad(req, res, next) {
         try {
             const autoridad = await autoridadService.getAutoridadById(req.params.id);
@@ -49,6 +53,7 @@ const autoridadController = {
         }
     },
 
+    /** POST /autoridades/edit/:id: guarda los cambios. */
     async handleUpdateAutoridad(req, res) {
         const { id } = req.params;
         try {
@@ -59,6 +64,7 @@ const autoridadController = {
         }
     },
 
+    /** POST /autoridades/delete/:id: elimina la autoridad. */
     async handleDeleteAutoridad(req, res) {
         try {
             await autoridadService.deleteAutoridad(req.params.id);

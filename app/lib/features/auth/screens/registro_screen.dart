@@ -350,12 +350,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
           children: [
             Row(
               children: [
-                  IconButton(
-                    onPressed: _volver,
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    padding: EdgeInsets.zero,
-                    alignment: Alignment.centerLeft,
-                  ),
+                IconButton(
+                  onPressed: _volver,
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                ),
                 Expanded(
                   child: Text(
                     isRol ? 'EcoResiduos' : titulo,
@@ -943,11 +943,11 @@ class _TarjetaRol extends StatelessWidget {
         color: elegido ? scheme.secondaryContainer : scheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(EcoRadius.medium),
         border: Border.all(
-          color: elegido ? scheme.primary : scheme.outlineVariant.withOpacity(0.5),
+          color: elegido ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.5),
           width: elegido ? 2 : 1,
         ),
         boxShadow: elegido
-            ? [BoxShadow(color: scheme.primary.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))]
+            ? [BoxShadow(color: scheme.primary.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4))]
             : [],
       ),
       clipBehavior: Clip.antiAlias,
@@ -966,7 +966,7 @@ class _TarjetaRol extends StatelessWidget {
                     duration: const Duration(milliseconds: 300),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: elegido ? scheme.primary.withOpacity(0.1) : Colors.transparent,
+                      color: elegido ? scheme.primary.withValues(alpha: 0.1) : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icono, size: 28, color: scheme.primary),
@@ -988,7 +988,7 @@ class _TarjetaRol extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Radio<bool>(value: valor, groupValue: grupo?.groupValue, onChanged: (_) => grupo?.onChanged(valor)),
+                  Radio<bool>(value: valor),
                 ],
               ),
             ),

@@ -5,6 +5,11 @@ const { errorDeBase, noEncontrado } = require('../utils/errores');
 
 const textoOpcional = (valor) => (valor && String(valor).trim() !== '' ? String(valor).trim() : null);
 
+/**
+ * @param {string} mensaje
+ * @param {string} codigo Para que el controlador distinga el caso (por ejemplo, TIENE_HISTORIA).
+ * @returns {Error}
+ */
 function errorConCodigo(mensaje, codigo) {
     const error = new Error(mensaje);
     error.codigo = codigo;
@@ -12,6 +17,13 @@ function errorConCodigo(mensaje, codigo) {
 }
 
 const materialService = {
+    /**
+     * Página del catálogo con búsqueda, categoría y orden.
+     *
+     * @param {{q?: string, categoria?: string, orden?: string, pagina?: number}} [opciones]
+     * @returns {Promise<{materiales: object[], total: number}>}
+     * @throws {Error} Si falla la consulta.
+     */
     async listarMateriales({ q, categoria, orden, pagina = 1 } = {}) {
         let consulta = supabase
             .from('materiales_residuos')
@@ -35,7 +47,13 @@ const materialService = {
         return { materiales: data || [], total: count || 0 };
     },
 
-    // Las solicitudes son historia: con ellas el material no se borra.
+    /**
+     * Las solicitudes son historia: con ellas el material no se borra.
+     *
+     * @param {number|string} id
+     * @returns {Promise<{solicitudes: number, gestores: number, tieneHistoria: boolean}>}
+     * @throws {Error} Si falla la consulta de solicitudes.
+     */
     async getDependencias(id) {
         const [solicitudes, gestores] = await Promise.all([
             supabase.from('solicitudes_recoleccion').select('id', { count: 'exact', head: true }).eq('material_id', id),
@@ -51,7 +69,12 @@ const materialService = {
         };
     },
 
-    // Consulta todos los materiales ordenados por identificador ascendente
+    /**
+     * Todo el catálogo, ordenado por identificador.
+     *
+     * @returns {Promise<object[]>}
+     * @throws {Error} Si falla la consulta.
+     */
     async getAllMateriales() {
         const { data, error } = await supabase
             .from('materiales_residuos')
@@ -65,6 +88,11 @@ const materialService = {
         return data || [];
     },
 
+    /**
+     * @param {number|string} id
+     * @returns {Promise<object>} El material con los campos que usa el formulario.
+     * @throws {Error} Con codigo NO_ENCONTRADO si no existe.
+     */
     async getMaterialById(id) {
         if (!id) {
             throw new Error('El identificador del material es obligatorio.');
@@ -93,7 +121,14 @@ const materialService = {
         };
     },
 
-    // Inserta un nuevo residuo verificando código alfanumérico y categoría oficial
+    /**
+     * Inserta un material después de validar el código oficial, el nombre, la
+     * categoría y la descripción.
+     *
+     * @param {object} [dto] Campos del formulario.
+     * @returns {Promise<object>} El material creado.
+     * @throws {Error} Con el mensaje para el formulario si un dato no es válido.
+     */
     async createMaterial(dto = {}) {
         const codigoLimpio = String(dto.codigo || '').trim().toUpperCase();
         const nombreComunLimpio = String(dto.nombre_comun || dto.nombre || '').trim();
@@ -142,6 +177,14 @@ const materialService = {
         return data;
     },
 
+    /**
+     * Mismas validaciones que createMaterial.
+     *
+     * @param {number|string} id
+     * @param {object} [dto] Campos del formulario.
+     * @returns {Promise<object>} El material actualizado.
+     * @throws {Error} Con el mensaje para el formulario si un dato no es válido.
+     */
     async updateMaterial(id, dto = {}) {
         if (!id) {
             throw new Error('El identificador del material es obligatorio para la actualización.');
@@ -195,8 +238,14 @@ const materialService = {
         return data;
     },
 
-    // Solo se elimina un material sin solicitudes; antes se quita de los
-    // gestores que lo tenían asignado.
+    /**
+     * Solo se elimina un material sin solicitudes; antes se quita de los
+     * gestores que lo tenían asignado.
+     *
+     * @param {number|string} id
+     * @returns {Promise<true>}
+     * @throws {Error} Con codigo TIENE_HISTORIA si el material tiene solicitudes.
+     */
     async deleteMaterial(id) {
         if (!id) {
             throw new Error('El identificador del material es obligatorio para eliminarlo.');

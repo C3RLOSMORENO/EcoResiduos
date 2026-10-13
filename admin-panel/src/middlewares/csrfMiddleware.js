@@ -11,18 +11,33 @@ const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const CAMPO = '_csrf';
 const CABECERA = 'X-CSRF-Token';
 
-// En producción, el prefijo __Host- obliga a que la cookie sea Secure, sin
-// Domain y con Path=/: un subdominio no puede sobrescribirla.
+/**
+ * En producción, el prefijo __Host- obliga a que la cookie sea Secure, sin
+ * Domain y con Path=/: un subdominio no puede sobrescribirla.
+ *
+ * @returns {string}
+ */
 function nombreCookie() {
     return process.env.NODE_ENV === 'production' ? '__Host-csrf' : 'csrf';
 }
 
+/**
+ * Compara dos tokens en tiempo constante.
+ *
+ * @param {*} a
+ * @param {*} b
+ * @returns {boolean} false también si alguno está vacío.
+ */
 function iguales(a, b) {
     const x = Buffer.from(String(a || ''));
     const y = Buffer.from(String(b || ''));
     return x.length > 0 && x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 
+/**
+ * @param {import('express').Request} req
+ * @returns {boolean} true si Sec-Fetch-Site u Origin indican otro sitio.
+ */
 function vieneDeOtroSitio(req) {
     const sitio = req.get('Sec-Fetch-Site');
     if (sitio && sitio !== 'same-origin' && sitio !== 'none') return true;
@@ -35,6 +50,12 @@ function vieneDeOtroSitio(req) {
     }
 }
 
+/**
+ * Responde 403 con JSON o con la página de error, según quién pidió.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 function rechazar(req, res) {
     const mensaje = 'Por seguridad no guardamos este envío. Recarga la página y vuelve a intentarlo.';
     if (req.get('X-Requested-With') === 'fetch') {
@@ -47,6 +68,14 @@ function rechazar(req, res) {
     });
 }
 
+/**
+ * Entrega el token en res.locals.csrfToken y, en los métodos que modifican
+ * datos, exige que el token enviado coincida con la cookie.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 function csrfMiddleware(req, res, next) {
     const nombre = nombreCookie();
     let token = req.cookies && req.cookies[nombre];

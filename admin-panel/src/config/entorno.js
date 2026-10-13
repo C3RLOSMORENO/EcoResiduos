@@ -10,15 +10,20 @@ const OBLIGATORIAS = {
     SUPABASE_SERVICE_ROLE_KEY: 'la llave service_role del proyecto'
 };
 
-// El .env de admin-panel/ y, si se arranca desde otra carpeta, el de esa
-// carpeta. dotenv no pisa una variable que ya venga del sistema.
+/**
+ * El .env de admin-panel/ y, si se arranca desde otra carpeta, el de esa
+ * carpeta. dotenv no pisa una variable que ya venga del sistema.
+ */
 function cargarEntorno() {
     dotenv.config({ path: path.resolve(__dirname, '../../.env') });
     dotenv.config();
 }
 
-// faltan: lo que impide arrancar. avisos: lo que conviene corregir en
-// producción pero no rompe el panel.
+/**
+ * @param {NodeJS.ProcessEnv} [entorno] Por defecto, process.env.
+ * @returns {{faltan: string[], avisos: string[]}} faltan: lo que impide
+ *     arrancar. avisos: lo que conviene corregir en producción pero no rompe el panel.
+ */
 function revisarEntorno(entorno = process.env) {
     const valor = (nombre) => String(entorno[nombre] || '').trim();
     const faltan = Object.keys(OBLIGATORIAS)

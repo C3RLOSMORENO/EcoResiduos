@@ -1,3 +1,5 @@
+// Rutas de /materiales: catálogo de residuos. /edit y /editar, y /delete y
+// /eliminar, llevan al mismo manejador.
 const express = require('express');
 const { validarIds } = require('../middlewares/validarId');
 

@@ -1,3 +1,6 @@
+// Rutas de /solicitudes. Desde el panel solo se cancela una solicitud o se
+// resuelve un problema reportado; los demás estados los cambian el generador y
+// el gestor en la app.
 const express = require('express');
 const { validarIds } = require('../middlewares/validarId');
 

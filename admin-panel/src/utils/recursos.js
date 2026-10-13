@@ -27,12 +27,22 @@ const CACHE_REVALIDAR = 'public, max-age=0, must-revalidate';
 // con una URL nueva sin reiniciar el servidor.
 const versiones = new Map();
 
+/**
+ * @param {string} ruta Ruta pública, por ejemplo /css/style.css.
+ * @returns {?string} Ruta del archivo en disco, o null si queda fuera de la carpeta pública.
+ */
 function archivoDe(ruta) {
     if (LIBRERIAS[ruta]) return LIBRERIAS[ruta];
     const archivo = path.join(PUBLICO, path.normalize(ruta));
     return archivo.startsWith(PUBLICO) ? archivo : null;
 }
 
+/**
+ * Huella corta del contenido del archivo, guardada mientras el archivo no cambie.
+ *
+ * @param {string} archivo Ruta del archivo en disco.
+ * @returns {?string} Los primeros 12 caracteres del SHA-256, o null si el archivo no existe.
+ */
 function version(archivo) {
     let datos;
     try {
@@ -48,14 +58,25 @@ function version(archivo) {
     return nueva;
 }
 
-// URL de un archivo estático con su versión: recurso('/css/style.css') →
-// '/css/style.css?v=3f2a…'. Si el archivo no existe, la ruta queda igual.
+/**
+ * URL de un archivo estático con su versión: recurso('/css/style.css') →
+ * '/css/style.css?v=3f2a…'. Si el archivo no existe, la ruta queda igual.
+ *
+ * @param {string} ruta
+ * @returns {string}
+ */
 function recurso(ruta) {
     const archivo = archivoDe(ruta);
     const v = archivo && version(archivo);
     return v ? `${ruta}?v=${v}` : ruta;
 }
 
+/**
+ * Caché larga si la URL trae versión; si no, revalidar en cada visita.
+ *
+ * @param {import('express').Request} req
+ * @returns {string} Valor para la cabecera Cache-Control.
+ */
 function cacheSegunVersion(req) {
     return req.query && req.query.v ? CACHE_LARGA : CACHE_REVALIDAR;
 }

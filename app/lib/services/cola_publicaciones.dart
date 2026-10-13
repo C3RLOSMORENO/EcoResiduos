@@ -63,6 +63,7 @@ abstract final class ColaPublicaciones {
   static final pendientes = ValueNotifier<List<PublicacionPendiente>>(const []);
   static bool _enviando = false;
 
+  /// Lee del teléfono las publicaciones que quedaron sin enviar.
   static Future<void> cargar() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -126,6 +127,7 @@ abstract final class ColaPublicaciones {
     return enviadas;
   }
 
+  /// Quita la publicación de la cola y borra su copia de la foto.
   static Future<void> descartar(PublicacionPendiente pendiente) async {
     await _guardar([
       for (final p in pendientes.value)

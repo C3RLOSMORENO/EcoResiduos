@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../theme/eco_theme.dart';
 
 /// Campo de contraseña con botón para mostrarla u ocultarla.
@@ -46,12 +46,9 @@ class _CampoContrasenaState extends State<CampoContrasena> {
         prefixIcon: const Icon(Icons.lock_outline_rounded),
         filled: widget.fillColor != null,
         fillColor: widget.fillColor,
-        border: widget.fillColor != null 
-          ? OutlineInputBorder(
-              borderRadius: BorderRadius.circular(EcoRadius.medium),
-              borderSide: BorderSide.none,
-            )
-          : null,
+        border: widget.fillColor != null
+            ? OutlineInputBorder(borderRadius: BorderRadius.circular(EcoRadius.medium), borderSide: BorderSide.none)
+            : null,
         contentPadding: const EdgeInsets.symmetric(vertical: 18),
         suffixIcon: IconButton(
           tooltip: _oculta ? 'Mostrar contraseña' : 'Ocultar contraseña',
@@ -73,6 +70,8 @@ String? validarContrasena(String? valor) {
 
 final _correoValido = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+/// Validador de [TextFormField] para el correo: devuelve el mensaje de error, o
+/// null si el correo es válido.
 String? validarCorreo(String? valor) {
   final texto = valor?.trim() ?? '';
   if (texto.isEmpty) return 'Escribe tu correo';

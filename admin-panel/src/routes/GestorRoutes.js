@@ -1,3 +1,6 @@
+// Rutas de /gestores: empresas gestoras, su verificación, sus materiales y su
+// permiso ambiental. /edit y /editar, /delete y /eliminar, y /estado/:id y
+// /:id/estado llevan al mismo manejador.
 const express = require('express');
 const { validarIds } = require('../middlewares/validarId');
 

@@ -2,11 +2,24 @@ const authService = require('../services/authService');
 const { DURACION_SESION_MS, guardarSesion, limpiarSesion } = require('../utils/sesion');
 const { conAviso } = require('../utils/web');
 
+/**
+ * Las peticiones de main.js llevan X-Requested-With: fetch y esperan JSON en
+ * lugar de una redirección.
+ *
+ * @param {import('express').Request} req
+ * @returns {boolean}
+ */
 function esPeticionFetch(req) {
     return req.get('X-Requested-With') === 'fetch';
 }
 
-// Redirige al inicio de sesión recordando la página para volver a ella.
+/**
+ * Redirige al inicio de sesión recordando la página para volver a ella.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {string} mensaje Aviso que se muestra en el login.
+ */
 function aLogin(req, res, mensaje) {
     if (esPeticionFetch(req)) {
         return res.status(401).json({ ok: false, mensaje });
@@ -16,6 +29,15 @@ function aLogin(req, res, mensaje) {
 }
 
 const authMiddleware = {
+    /**
+     * Deja pasar solo a un administrador con sesión válida. Si el access token
+     * venció, lo renueva con el refresh token; deja el usuario en req.user y en
+     * res.locals.user.
+     *
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     */
     async requireAuth(req, res, next) {
         res.set({
             'Cache-Control': 'no-store, no-cache, must-revalidate, private',

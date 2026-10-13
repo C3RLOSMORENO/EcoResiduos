@@ -1,3 +1,8 @@
+"""Saca recortes de piso vacío de las fotos de RealWaste para la categoría FONDO.
+
+    python extraer_fondos_realwaste.py
+"""
+
 import os
 import sys
 import random
@@ -15,6 +20,7 @@ OUT_DIR = RAW_DIR / "realwaste_fondos"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def is_uniform_floor(im_crop):
+    """True si el recorte parece el piso de concreto de RealWaste: brillo medio y poca variación."""
     arr = np.array(im_crop)
     # Piso gris de RealWaste tiene baja saturación y brillo medio
     gray = np.array(im_crop.convert("L"))
@@ -27,6 +33,7 @@ def is_uniform_floor(im_crop):
     return False
 
 def extract_realwaste_backgrounds(target_count=100):
+    """Guarda recortes de piso vacío de RealWaste como FONDO y devuelve cuántos guardó."""
     if not RW_BASE.exists():
         print(f"No existe {RW_BASE}")
         return 0

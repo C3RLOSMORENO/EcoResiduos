@@ -11,6 +11,11 @@ const USER_AGENT = 'EcoResiduos-PanelAdmin/1.0 (+https://github.com/C3RLOSMORENO
 let cola = Promise.resolve();
 let ultimaPeticion = 0;
 
+/**
+ * Encola la petición para que entre dos haya al menos INTERVALO_MS.
+ *
+ * @returns {Promise<void>}
+ */
 function esperarTurno() {
     const turno = cola.then(async () => {
         const espera = ultimaPeticion + INTERVALO_MS - Date.now();
@@ -21,7 +26,12 @@ function esperarTurno() {
     return turno;
 }
 
-// Coordenadas de la dirección o null si Nominatim no la encuentra o no responde.
+/**
+ * @param {string} direccion
+ * @param {string} municipio
+ * @returns {Promise<?{latitud: number, longitud: number}>} null si Nominatim no
+ *     encuentra la dirección o no responde.
+ */
 async function geocodificar(direccion, municipio) {
     try {
         await esperarTurno();
@@ -43,6 +53,12 @@ async function geocodificar(direccion, municipio) {
     return null;
 }
 
+/**
+ * @param {number|string} latitud
+ * @param {number|string} longitud
+ * @returns {boolean} true si son las coordenadas por defecto, es decir, que la
+ *     dirección no se pudo ubicar.
+ */
 function sinUbicar(latitud, longitud) {
     return Number(latitud) === LATITUD_DEFECTO && Number(longitud) === LONGITUD_DEFECTO;
 }

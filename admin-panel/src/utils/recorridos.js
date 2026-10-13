@@ -52,21 +52,38 @@ const RECORRIDOS = {
 
 const ESTADOS = ['visto', 'completado', 'omitido'];
 
-// Lo que se guardó de cada recorrido vive en los metadatos del usuario de
-// Supabase Auth, con una clave por pantalla: Supabase mezcla las claves de
-// primer nivel al actualizar, así guardar una pantalla no borra las demás.
+/**
+ * Lo que se guardó de cada recorrido vive en los metadatos del usuario de
+ * Supabase Auth, con una clave por pantalla: Supabase mezcla las claves de
+ * primer nivel al actualizar, así guardar una pantalla no borra las demás.
+ *
+ * @param {string} pantalla Clave de RECORRIDOS.
+ * @returns {string}
+ */
 function claveMetadatos(pantalla) {
     return `recorrido_panel_${pantalla}`;
 }
 
-// Última versión del recorrido que el usuario ya vio (0 si nunca).
+/**
+ * Última versión del recorrido que el usuario ya vio.
+ *
+ * @param {?object} usuario Usuario de Supabase Auth.
+ * @param {string} pantalla
+ * @returns {number} 0 si nunca lo vio.
+ */
 function versionVista(usuario, pantalla) {
     const guardado = usuario && usuario.user_metadata && usuario.user_metadata[claveMetadatos(pantalla)];
     const version = Number(guardado && guardado.version);
     return Number.isInteger(version) && version > 0 ? version : 0;
 }
 
-// Datos que necesita el navegador para mostrar el recorrido de una pantalla.
+/**
+ * Datos que necesita el navegador para mostrar el recorrido de una pantalla.
+ *
+ * @param {string} pantalla
+ * @param {?object} usuario Usuario de Supabase Auth.
+ * @returns {?object} null si la pantalla no tiene recorrido.
+ */
 function datosRecorrido(pantalla, usuario) {
     const recorrido = RECORRIDOS[pantalla];
     if (!recorrido) return null;
@@ -79,8 +96,14 @@ function datosRecorrido(pantalla, usuario) {
     };
 }
 
-// Valida lo que manda el navegador al terminar o saltar un recorrido.
-// Devuelve el registro a guardar o null si algo no cuadra.
+/**
+ * Valida lo que manda el navegador al terminar o saltar un recorrido.
+ *
+ * @param {string} pantalla
+ * @param {*} cuerpo req.body con version, estado y paso.
+ * @returns {?{version: number, estado: string, paso: number}} El registro a
+ *     guardar, o null si algo no cuadra.
+ */
 function registroValido(pantalla, cuerpo) {
     const recorrido = RECORRIDOS[pantalla];
     if (!recorrido || !cuerpo || typeof cuerpo !== 'object') return null;

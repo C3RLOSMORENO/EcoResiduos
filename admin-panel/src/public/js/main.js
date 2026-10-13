@@ -43,6 +43,9 @@
     iniciar();
   }
 
+  // Un error va arriba del contenido y se queda hasta la próxima acción; un
+  // aviso de éxito va en la esquina y se cierra solo. Las vistas la llaman
+  // como window.mostrarNotificacion.
   function mostrarNotificacion(mensaje, esError) {
     if (esError) {
       const region = $('#avisosAlerta');
@@ -136,6 +139,7 @@
   const raiz = document.documentElement;
   const botonTema = $('#botonTema');
 
+  // Lo que eligió el administrador; si no ha elegido, el tema del sistema.
   function temaOscuroActivo() {
     const elegido = raiz.getAttribute('data-tema');
     if (elegido) return elegido === 'oscuro';
@@ -214,6 +218,8 @@
     return campo.validationMessage;
   }
 
+  // El mensaje queda debajo del campo y enlazado con aria-describedby, para
+  // que el lector de pantalla lo lea al llegar al campo.
   function marcarError(campo, mensaje) {
     const id = `${campo.id}-error`;
     let error = document.getElementById(id);
@@ -244,6 +250,8 @@
     campo.removeAttribute('aria-invalid');
   }
 
+  // Marca todos los campos con error y lleva el foco al primero. Devuelve
+  // true si el formulario se puede enviar.
   function validarFormulario(form) {
     let primero = null;
     $$('input, select, textarea', form).forEach((campo) => {
@@ -272,6 +280,8 @@
   const dialogo = $('#dialogoConfirmar');
   let pendiente = null;
 
+  // El texto del diálogo sale de los data-confirmar-* del formulario o del
+  // botón que lo envió; los del botón tienen prioridad.
   function abrirConfirmacion(form, boton) {
     const datos = Object.assign({}, form.dataset, boton ? boton.dataset : {});
     $('#dialogoConfirmarTitulo').textContent = datos.confirmarTitulo || 'Confirmar';
@@ -486,6 +496,7 @@
       return [e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2];
     }
 
+    // Abre la foto del enlace al 100 %; al cerrar, el foco vuelve al enlace.
     function abrirVisor(enlace) {
       disparador = enlace;
       const titulo = enlace.dataset.visorTitulo || 'Foto';
@@ -657,6 +668,7 @@
     reportes: 'reportes'
   };
 
+  // Nombre del esqueleto para la URL de destino, o null si no lleva ninguno.
   function tipoEsqueleto(url) {
     const ruta = url.pathname.replace(/\/+$/, '') || '/';
     if (RUTAS_SIN_ESQUELETO.some((patron) => patron.test(ruta))) return null;
@@ -768,6 +780,8 @@
     return copia.textContent.replace(/\s+/g, ' ').trim();
   }
 
+  // Copia en cada celda el texto de su encabezado (data-etiqueta), que la
+  // vista en tarjetas muestra junto al dato.
   function prepararTabla(tabla) {
     const encabezados = $$('thead th', tabla);
     // Roles explícitos: algunos navegadores dejan de anunciarla como tabla
@@ -948,6 +962,7 @@
     return true;
   }
 
+  // Suma de la barra i contando solo las series visibles en la leyenda.
   function totalDeFila(grafico, i) {
     return grafico.data.datasets.reduce((suma, d, k) => suma + (grafico.isDatasetVisible(k) ? valorDe(d, i) : 0), 0);
   }
@@ -1115,6 +1130,9 @@
     };
   }
 
+  // Dibuja cada <canvas data-grafico> con los datos del <script> JSON que
+  // nombra. Se vuelve a llamar al cambiar de tema, porque los colores salen de
+  // las variables CSS.
   function dibujarGraficos() {
     if (!window.Chart) return;
     graficos.forEach((g) => g.destroy());
@@ -1159,7 +1177,7 @@
 
   // motivo: 'sesion' (venció la sesión) o 'envio' (se envió el formulario).
   function guardarBorradores(motivo) {
-    const formularios = $('form[data-conservar]');
+    const formularios = $$('form[data-conservar]');
     if (formularios.length === 0) return;
     const datos = {};
     formularios.forEach((form) => {
@@ -1199,6 +1217,7 @@
     let ultimaRenovacion = Date.now();
     let renovando = false;
 
+    // Guarda lo escrito y lleva al login, que después devuelve a esta página.
     const expirar = () => {
       guardarBorradores('sesion');
       const volver = encodeURIComponent(location.pathname + location.search);
@@ -1227,6 +1246,7 @@
       }
     }
 
+    // Con actividad se renueva como máximo una vez por minuto.
     const alActuar = () => {
       if (Date.now() - ultimaRenovacion > 60 * 1000 && !dialogoSesion.open) renovar();
     };

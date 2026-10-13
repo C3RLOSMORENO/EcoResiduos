@@ -3,6 +3,7 @@ const { leerPagina, paginacion, conAviso, rutaInterna } = require('../utils/web'
 const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosSolicitudes, describirFiltrosSolicitudes } = require('../utils/filtros');
 
+/** GET /solicitudes: lista con filtros y paginación. */
 exports.listarSolicitudes = (req, res) => {
     const filtros = filtrosSolicitudes(req.query);
     const pagina = leerPagina(req.query);
@@ -23,6 +24,7 @@ exports.listarSolicitudes = (req, res) => {
     });
 };
 
+/** GET /solicitudes/:id: detalle con historial, postulaciones y acciones. */
 exports.verSolicitud = async (req, res, next) => {
     try {
         const detalle = await SolicitudService.obtenerDetalle(req.params.id);
@@ -39,6 +41,7 @@ exports.verSolicitud = async (req, res, next) => {
     }
 };
 
+/** POST /solicitudes/:id/cancelar */
 exports.cancelar = async (req, res) => {
     const { id } = req.params;
     const destino = rutaInterna(req.body.redirectUrl, `/solicitudes/${id}`);
@@ -52,8 +55,10 @@ exports.cancelar = async (req, res) => {
     }
 };
 
-// Ruta anterior del selector libre de estados. Solo se conserva cancelar:
-// los demás cambios se saltaban las reglas de la app.
+/**
+ * POST /solicitudes/:id/estado: ruta anterior del selector libre de estados.
+ * Solo se conserva cancelar: los demás cambios se saltaban las reglas de la app.
+ */
 exports.cambiarEstado = async (req, res) => {
     const estado = String(req.body.estado || '').toUpperCase();
     if (estado === 'CANCELADO') {
@@ -63,6 +68,7 @@ exports.cambiarEstado = async (req, res) => {
     return res.redirect(conAviso(destino, 'Desde el panel solo se puede cancelar una solicitud. Los demás estados los cambian el generador y el gestor en la app.', 'error'));
 };
 
+/** POST /solicitudes/:id/problema/no-recogido */
 exports.resolverNoRecogido = async (req, res) => {
     const { id } = req.params;
     const destino = rutaInterna(req.body.redirectUrl, `/solicitudes/${id}`);
@@ -74,6 +80,7 @@ exports.resolverNoRecogido = async (req, res) => {
     }
 };
 
+/** GET /solicitudes/:id/certificado: el PDF del certificado, servido por el panel. */
 exports.verCertificado = async (req, res) => {
     const { id } = req.params;
     try {

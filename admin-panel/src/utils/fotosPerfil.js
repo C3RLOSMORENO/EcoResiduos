@@ -14,7 +14,12 @@ const COLUMNAS = {
     portada: 'portada_path'
 };
 
-// URL pública de una ruta del bucket, o null si no hay ruta o no es válida.
+/**
+ * URL pública de una ruta del bucket.
+ *
+ * @param {?string} ruta Valor de foto_perfil_path o portada_path.
+ * @returns {?string} La URL, o null si no hay ruta o no tiene la forma esperada.
+ */
 function urlFotoPerfil(ruta) {
     if (typeof ruta !== 'string' || !RUTA_VALIDA.test(ruta)) return null;
     let origen;
@@ -26,10 +31,15 @@ function urlFotoPerfil(ruta) {
     return `${origen}/storage/v1/object/public/${BUCKET}/${ruta}`;
 }
 
-// Las consultas con columnas escritas a mano piden también la foto. Si la
-// migración aún no se ha ejecutado, la columna no existe: se repite la
-// consulta sin ella y el panel sigue funcionando, con iniciales.
-// consultar recibe el texto a agregar a la lista de columnas.
+/**
+ * Las consultas con columnas escritas a mano piden también la foto. Si la
+ * migración aún no se ha ejecutado, la columna no existe: se repite la
+ * consulta sin ella y el panel sigue funcionando, con iniciales.
+ *
+ * @param {(columnaExtra: string) => Promise<object>} consultar Arma y ejecuta la
+ *     consulta; recibe el texto que se agrega a la lista de columnas.
+ * @returns {Promise<object>} La respuesta de Supabase ({ data, error, … }).
+ */
 async function conFotoSiExiste(consultar) {
     const respuesta = await consultar(`, ${COLUMNAS.perfil}`);
     if (respuesta && respuesta.error && faltaEnEsquema(respuesta.error)) return consultar('');

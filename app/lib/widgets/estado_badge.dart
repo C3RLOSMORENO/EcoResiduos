@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/eco_theme.dart';
 
+/// Ícono de cada estado; el mismo que usa el panel de administración.
 IconData iconoEstado(EstadoSolicitud estado) => switch (estado) {
   EstadoSolicitud.publicado => Icons.campaign_outlined,
   EstadoSolicitud.enNegociacion => Icons.handshake_outlined,
@@ -13,6 +14,7 @@ IconData iconoEstado(EstadoSolicitud estado) => switch (estado) {
   EstadoSolicitud.noSeleccionada => Icons.assignment_ind_outlined,
 };
 
+/// Nombre del estado para mostrar al usuario.
 String etiquetaDeEstado(EstadoSolicitud estado) => switch (estado) {
   EstadoSolicitud.publicado => 'Publicado',
   EstadoSolicitud.enNegociacion => 'En negociación',

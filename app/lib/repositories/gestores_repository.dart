@@ -13,9 +13,11 @@ abstract class GestoresRepository {
   /// Gestores que reciben [categoria], como máximo [limite], más cercanos primero.
   Future<List<Gestor>> getGestoresPorCategoria(String categoria, {int limite = 10});
 
+  /// Autoridades ambientales de Santander, para la pestaña de contactos.
   Future<List<AutoridadAmbiental>> getAutoridades();
 }
 
+/// [GestoresRepository] sobre las tablas públicas del directorio.
 class SupabaseGestoresRepository implements GestoresRepository {
   SupabaseGestoresRepository({this.client});
 

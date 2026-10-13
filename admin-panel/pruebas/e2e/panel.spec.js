@@ -194,3 +194,15 @@ test('ampliar la foto de una solicitud: se abre el visor, se acerca y al cerrar 
     await expect(visor).toBeHidden();
     await expect(enlace).toBeFocused();
 });
+
+test('guardar un formulario de edición guarda el borrador sin errores de JavaScript', async ({ page }) => {
+    await iniciarSesion(page, '/materiales/edit/1');
+    await page.getByLabel('Nombre', { exact: false }).first().fill('Aceite de cocina usado');
+
+    // Al enviar, main.js guarda el borrador por si el servidor responde con un
+    // error; si eso falla, afterEach lo detecta en la consola del navegador.
+    await Promise.all([
+        page.waitForURL(/msg=/),
+        page.locator('form[data-conservar] button[type="submit"]').click()
+    ]);
+});

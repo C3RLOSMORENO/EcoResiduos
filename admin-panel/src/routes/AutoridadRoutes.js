@@ -1,3 +1,5 @@
+// Rutas de /autoridades: autoridades ambientales que la app muestra a los
+// ciudadanos. /edit y /editar, y /delete y /eliminar, llevan al mismo manejador.
 const express = require('express');
 const { validarIds } = require('../middlewares/validarId');
 

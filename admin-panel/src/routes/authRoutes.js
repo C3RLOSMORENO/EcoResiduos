@@ -1,3 +1,5 @@
+// Inicio y cierre de sesión, restablecimiento de contraseña y renovación de la
+// sesión. Son las únicas rutas que no exigen sesión, salvo /sesion/renovar.
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');

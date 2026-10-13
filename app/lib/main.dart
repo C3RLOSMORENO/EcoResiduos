@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,9 +8,11 @@ import 'features/auth/screens/login_screen.dart';
 import 'screens/inicio_screen.dart';
 import 'theme/eco_theme.dart';
 
+/// Inicia Supabase y abre la app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  // La llave publicable puede ir en la app: los datos los protegen las
+  // políticas RLS de la base (supabase/migrations), no la llave.
   await Supabase.initialize(
     url: 'https://pjpuhhoaxkakvkmpyruk.supabase.co',
     publishableKey: 'sb_publishable_b3taKmvPTaoIa3nBffrr9A_YeJR2HL1',
@@ -19,6 +20,7 @@ Future<void> main() async {
   runApp(const EcoResiduosApp());
 }
 
+/// Raíz de la app: tema claro y oscuro, español de Colombia y [AuthGate] como inicio.
 class EcoResiduosApp extends StatelessWidget {
   const EcoResiduosApp({super.key});
 
