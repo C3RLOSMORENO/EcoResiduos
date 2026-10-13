@@ -21,6 +21,13 @@ void usarPantallaAlta(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
+/// Activa «reducir movimiento» para que las animaciones decorativas que se
+/// repiten no impidan que `pumpAndSettle` termine.
+void reducirMovimiento(WidgetTester tester) {
+  tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+}
+
 const carton = MaterialResiduo(
   id: 1,
   nombreComun: 'Cartón corrugado',

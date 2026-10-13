@@ -25,10 +25,16 @@ const _gestorDirectorio = GestorDirectorio(
 
 void main() {
   group('Login', () {
+    Future<void> abrirLogin(WidgetTester tester, FakeAuthRepository auth) async {
+      usarPantallaAlta(tester);
+      reducirMovimiento(tester);
+      await tester.pumpWidget(app(LoginScreen(authRepository: auth)));
+    }
+
     testWidgets('credenciales incorrectas muestran el aviso sin perder los datos', (tester) async {
       final auth = FakeAuthRepository()
         ..errorAlEntrar = const AuthException('El correo o la contraseña no coinciden.', code: 'invalid_credentials');
-      await tester.pumpWidget(app(LoginScreen(authRepository: auth)));
+      await abrirLogin(tester, auth);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'mariana@correo.co');
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
@@ -43,7 +49,7 @@ void main() {
     testWidgets('una cuenta sin activar ofrece reenviar el enlace', (tester) async {
       final auth = FakeAuthRepository()
         ..errorAlEntrar = const AuthException('Aún no has activado tu cuenta.', code: 'email_not_confirmed');
-      await tester.pumpWidget(app(LoginScreen(authRepository: auth)));
+      await abrirLogin(tester, auth);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'mariana@correo.co');
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
@@ -57,7 +63,7 @@ void main() {
 
     testWidgets('valida el correo antes de llamar al servidor', (tester) async {
       final auth = FakeAuthRepository();
-      await tester.pumpWidget(app(LoginScreen(authRepository: auth)));
+      await abrirLogin(tester, auth);
       await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'no-es-correo');
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();
@@ -69,6 +75,7 @@ void main() {
 
   group('Registro de gestor', () {
     Future<void> irAVerificacion(WidgetTester tester, FakeAuthRepository auth, {ArchivoPdf? permiso}) async {
+      usarPantallaAlta(tester);
       await tester.pumpWidget(
         app(
           RegistroScreen(
@@ -91,7 +98,6 @@ void main() {
     }
 
     testWidgets('con el NIT de una empresa registrada se llenan los datos y los materiales', (tester) async {
-      usarPantallaAlta(tester);
       final auth = FakeAuthRepository()..gestorDirectorio = _gestorDirectorio;
       await irAVerificacion(tester, auth);
       await verificarNit(tester, '900.456.789-2');
@@ -129,7 +135,6 @@ void main() {
     });
 
     testWidgets('un NIT que no encontramos registra la empresa con su permiso en PDF', (tester) async {
-      usarPantallaAlta(tester);
       final auth = FakeAuthRepository();
       await irAVerificacion(
         tester,
