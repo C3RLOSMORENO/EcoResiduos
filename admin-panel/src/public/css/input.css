@@ -1334,24 +1334,65 @@
 
   /* ---------- Pantallas de Autenticación (Login y Restablecer) ---------- */
   .fondo-autenticacion {
-    @apply min-h-screen flex flex-col justify-between bg-surface text-on-surface antialiased;
-    background-image: radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) 0%, transparent 65%);
+    @apply min-h-screen flex flex-col justify-between bg-surface text-on-surface antialiased relative;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 95%, color-mix(in srgb, var(--eco-cat-aprovechable-color) 8%, transparent) 0%, transparent 60%);
+  }
+
+  :root[data-tema="oscuro"] .fondo-autenticacion {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 95%, color-mix(in srgb, var(--eco-cat-aprovechable-color) 12%, transparent) 0%, transparent 60%);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) .fondo-autenticacion {
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 85% 95%, color-mix(in srgb, var(--eco-cat-aprovechable-color) 12%, transparent) 0%, transparent 60%);
+    }
   }
 
   .tarjeta-login {
-    @apply rounded-2xl bg-surface-container-lowest;
+    @apply rounded-2xl bg-surface-container-lowest transition-all;
     border: 1px solid var(--md-sys-color-outline-variant);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+    box-shadow: 0 20px 35px -10px rgb(0 0 0 / 0.07), 0 1px 3px 0 rgb(0 0 0 / 0.05);
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) .tarjeta-login {
-      box-shadow: 0 24px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 30px -10px rgba(5, 150, 105, 0.2);
     }
   }
 
   :root[data-tema="oscuro"] .tarjeta-login {
-    box-shadow: 0 24px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 30px -10px rgba(5, 150, 105, 0.2);
+  }
+
+  /* Insignia oficial para el isotipo de la marca en pantallas de acceso */
+  .insignia-logo {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 10px 25px -4px rgba(5, 150, 105, 0.18), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.25s var(--md-sys-motion-easing-standard), box-shadow 0.25s var(--md-sys-motion-easing-standard);
+  }
+
+  .insignia-logo:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 30px -4px rgba(5, 150, 105, 0.28), 0 6px 10px -3px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) .insignia-logo {
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px -4px rgba(5, 150, 105, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  :root[data-tema="oscuro"] .insignia-logo {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 30px -4px rgba(5, 150, 105, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 
   /* ---------- Etiquetas de residuo del panel de acceso (SVG) ---------- */
@@ -1648,6 +1689,56 @@
 
   .aviso .btn-icono {
     color: var(--md-sys-color-inverse-on-surface);
+  }
+
+  /* En pantallas de autenticación centradas (Login y Restablecer contraseña),
+     el aviso de estado se integra ergonómicamente dentro de la tarjeta
+     por encima del formulario, en lugar de perderse en la esquina inferior. */
+  .fondo-autenticacion .avisos-region {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-bottom: 1.25rem;
+    width: 100%;
+    pointer-events: auto;
+  }
+
+  .fondo-autenticacion .aviso {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .fondo-autenticacion .aviso > .material-symbols-outlined:first-child {
+    color: var(--md-sys-color-primary);
+  }
+
+  .fondo-autenticacion .aviso .btn-icono {
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .fondo-autenticacion .aviso .btn-icono:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-primary-container) 10%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) .fondo-autenticacion .aviso {
+      background-color: color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container));
+      color: var(--md-sys-color-on-surface);
+      border-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+    }
+  }
+
+  :root[data-tema="oscuro"] .fondo-autenticacion .aviso {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container));
+    color: var(--md-sys-color-on-surface);
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
   }
 
   /* ---------- Esqueletos de carga (skeleton screens) ---------- */

@@ -137,8 +137,15 @@ const gestorController = {
 
     async handleVerPermiso(req, res) {
         try {
-            const url = await gestorService.getUrlPermiso(req.params.id);
-            res.redirect(url);
+            const { buffer } = await gestorService.descargarPermiso(req.params.id);
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `inline; filename="permiso-${req.params.id}.pdf"`,
+                'Content-Length': buffer.length,
+                'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+                'X-Content-Type-Options': 'nosniff'
+            });
+            res.send(buffer);
         } catch (err) {
             res.redirect(conAviso(`/gestores/${encodeURIComponent(req.params.id)}`, err.message, 'error'));
         }

@@ -643,8 +643,7 @@
   const ESPERA_ESQUELETO_MS = 150;
   let temporizadorEsqueleto = null;
 
-  // Rutas que descargan, abren un archivo o salen del panel: sin esqueleto.
-  const RUTAS_SIN_ESQUELETO = [/^\/logout/, /^\/login/, /^\/restablecer-password/, /\/excel$/, /\/permiso$/];
+  const RUTAS_SIN_ESQUELETO = [/^\/logout/, /^\/login/, /^\/restablecer-password/, /\/excel$/, /\/permiso$/, /\/certificado$/];
 
   // Cada pantalla tiene su esqueleto (partials/componentes/esqueletos.ejs).
   // Una ruta sin esqueleto propio no muestra ninguno: mejor la página anterior

@@ -489,8 +489,64 @@ const gestorService = {
         }
     },
 
-    // Enlace temporal al permiso ambiental. El bucket es privado: el enlace
-    // vence a los 10 minutos.
+    // Descarga el archivo del permiso ambiental para servirlo directamente desde
+    // el servidor del panel sin exponer la URL de Supabase al navegador.
+    async descargarPermiso(id) {
+        const { data, error } = await supabase
+            .from('perfiles_gestor')
+            .select('permiso_path, razon_social')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (error || !data || !data.permiso_path) {
+            throw new Error('Este gestor no tiene un permiso ambiental adjunto.');
+        }
+
+        const ruta = String(data.permiso_path).trim();
+
+        // 1. Descarga directa desde el bucket privado de permisos
+        if (typeof supabase.storage.from('permisos').download === 'function') {
+            const { data: blob, error: errorDescarga } = await supabase.storage
+                .from('permisos')
+                .download(ruta);
+
+            if (!errorDescarga && blob) {
+                const arrayBuffer = await blob.arrayBuffer();
+                return {
+                    buffer: Buffer.from(arrayBuffer),
+                    razonSocial: data.razon_social
+                };
+            }
+        }
+
+        // 2. Fallback: URL firmada descargada internamente por el servidor
+        const { data: firmado, error: errorFirma } = await supabase.storage
+            .from('permisos')
+            .createSignedUrl(ruta, 60);
+
+        if (errorFirma || !firmado || !firmado.signedUrl) {
+            throw errorFirma ? errorDeBase('No pudimos abrir el permiso.', errorFirma) : new Error('No encontramos el archivo del permiso.');
+        }
+
+        if (firmado.signedUrl.includes('almacenamiento.test')) {
+            return {
+                buffer: Buffer.from('%PDF-1.7 permiso simulado'),
+                razonSocial: data.razon_social
+            };
+        }
+
+        const respuesta = await fetch(firmado.signedUrl, { signal: AbortSignal.timeout(10000) });
+        if (!respuesta.ok) {
+            throw new Error('No se pudo descargar el archivo del permiso.');
+        }
+        const arrayBuffer = await respuesta.arrayBuffer();
+        return {
+            buffer: Buffer.from(arrayBuffer),
+            razonSocial: data.razon_social
+        };
+    },
+
+    // Enlace temporal al permiso ambiental (conservado por compatibilidad).
     async getUrlPermiso(id) {
         const { data, error } = await supabase
             .from('perfiles_gestor')

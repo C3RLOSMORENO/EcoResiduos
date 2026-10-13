@@ -127,7 +127,7 @@
       <section aria-labelledby="tituloPermiso" class="tarjeta flex flex-col gap-4">
         <h2 id="tituloPermiso" class="tarjeta-titulo">Licencia o permiso ambiental</h2>
         <% if (gestor.tiene_permiso) { %>
-          <p class="text-body-m text-on-surface-variant">El PDF se abre en una pestaña nueva con un enlace que vence a los 10 minutos.</p>
+          <p class="text-body-m text-on-surface-variant">El PDF se abre de forma segura en una pestaña nueva.</p>
           <p>
             <a href="/gestores/<%= gestor.id %>/permiso" target="_blank" rel="noopener noreferrer" class="btn-tonal">
               <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>
