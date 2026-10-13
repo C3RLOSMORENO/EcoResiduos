@@ -23,8 +23,16 @@ const BORDE_CELDA = {
     top: linea(COLOR.borde), left: linea(COLOR.borde), bottom: linea(COLOR.borde), right: linea(COLOR.borde)
 };
 
-// Texto en varias columnas unidas. Excel no ajusta el alto de una celda unida,
-// así que se calcula por el largo del texto.
+/**
+ * Texto en varias columnas unidas. Excel no ajusta el alto de una celda unida,
+ * así que se calcula por el largo del texto.
+ *
+ * @param {import('exceljs').Worksheet} hoja
+ * @param {number} numeroFila
+ * @param {number} columnas Columnas que ocupa el texto, desde la primera.
+ * @param {string} texto
+ * @param {Partial<import('exceljs').Font>} [fuente]
+ */
 function escribirTexto(hoja, numeroFila, columnas, texto, fuente = {}) {
     hoja.mergeCells(numeroFila, 1, numeroFila, columnas);
     const celda = hoja.getCell(numeroFila, 1);
@@ -37,6 +45,14 @@ function escribirTexto(hoja, numeroFila, columnas, texto, fuente = {}) {
     hoja.getRow(numeroFila).height = lineas * 15 * ((fuente.size || 11) / 11);
 }
 
+/**
+ * Alineación, bordes y formato numérico de una fila de la tabla; la fila de
+ * total va además en negrita sobre el color primario.
+ *
+ * @param {import('exceljs').Row} fila
+ * @param {string} formato Formato numérico de Excel para las columnas de cifras.
+ * @param {boolean} esTotal
+ */
 function darFormatoFila(fila, formato, esTotal) {
     fila.height = esTotal ? 22 : 20;
     fila.eachCell((celda, columna) => {
@@ -51,8 +67,14 @@ function darFormatoFila(fila, formato, esTotal) {
     });
 }
 
-// Una hoja con título, filtros, la tabla con su fila de total y las notas para
-// leer las cifras. Se imprime en horizontal, a una página de ancho.
+/**
+ * Una hoja con título, filtros, la tabla con su fila de total y las notas para
+ * leer las cifras. Se imprime en horizontal, a una página de ancho.
+ *
+ * @param {import('exceljs').Workbook} libro
+ * @param {object} hojaDatos Nombre, título, encabezados, filas, total, formato,
+ *     notas y el texto para cuando no hay filas (vacio).
+ */
 function agregarHoja(libro, hojaDatos) {
     const { nombre, titulo, metadatos, leyenda, encabezados, filas, total, formato, notas, vacio } = hojaDatos;
     const hoja = libro.addWorksheet(nombre, {
@@ -97,10 +119,16 @@ function agregarHoja(libro, hojaDatos) {
     notas.forEach((nota) => escribirTexto(hoja, n++, columnas, `• ${nota}`));
 }
 
-// Reporte de reciclaje por municipio con los filtros de la pantalla. Lleva
-// solo cifras agregadas, sin datos personales. Los textos se escriben como
-// valores, nunca como fórmulas, así que un nombre que empiece con «=» no se
-// ejecuta al abrir el archivo.
+/**
+ * Reporte de reciclaje por municipio con los filtros de la pantalla. Lleva
+ * solo cifras agregadas, sin datos personales. Los textos se escriben como
+ * valores, nunca como fórmulas, así que un nombre que empiece con «=» no se
+ * ejecuta al abrir el archivo.
+ *
+ * @param {object} reporte Resultado de ReporteService.reciclajePorMunicipio.
+ * @param {string} descripcionFiltros Los filtros en una línea (describirFiltrosReporte).
+ * @returns {Promise<Buffer>} El archivo .xlsx.
+ */
 async function generarExcelReporte(reporte, descripcionFiltros) {
     const libro = new ExcelJS.Workbook();
     libro.creator = 'Panel EcoResiduos';

@@ -2,6 +2,12 @@
 // autenticada vuelve a contar los 15 minutos.
 const DURACION_SESION_MS = 15 * 60 * 1000;
 
+/**
+ * Opciones de las cookies de sesión. Secure solo en producción, porque en
+ * local el panel corre en http://localhost.
+ *
+ * @returns {import('express').CookieOptions}
+ */
 function opcionesCookie() {
     return {
         httpOnly: true,
@@ -12,11 +18,20 @@ function opcionesCookie() {
     };
 }
 
+/**
+ * Guarda los tokens de Supabase en cookies httpOnly y reinicia los 15 minutos.
+ *
+ * @param {import('express').Response} res
+ * @param {{accessToken?: string, refreshToken?: string}} tokens
+ */
 function guardarSesion(res, { accessToken, refreshToken }) {
     if (accessToken) res.cookie('sb_access_token', accessToken, opcionesCookie());
     if (refreshToken) res.cookie('sb_refresh_token', refreshToken, opcionesCookie());
 }
 
+/**
+ * @param {import('express').Response} res
+ */
 function limpiarSesion(res) {
     res.clearCookie('sb_access_token', { path: '/' });
     res.clearCookie('sb_refresh_token', { path: '/' });

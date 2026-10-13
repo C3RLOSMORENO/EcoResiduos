@@ -11,12 +11,17 @@ const MINUTO = 60 * 1000;
 const limitePorCorreo = crearLimite({ maximo: 5, ventanaMs: 15 * MINUTO });
 const limitePorIp = crearLimite({ maximo: 20, ventanaMs: 15 * MINUTO });
 
+/**
+ * @param {number} ms Milisegundos que faltan para poder intentar de nuevo.
+ * @returns {string}
+ */
 function mensajeEspera(ms) {
     const minutos = Math.max(1, Math.ceil(ms / MINUTO));
     return `Hiciste demasiados intentos seguidos. Espera ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'} y vuelve a intentarlo, o restablece tu contraseña.`;
 }
 
 const authController = {
+    /** GET /login. Con una sesión válida va directo al panel. */
     async renderLogin(req, res) {
         const token = req.cookies && req.cookies.sb_access_token;
         const volver = rutaInterna(req.query.volver, '');
@@ -35,6 +40,7 @@ const authController = {
         res.render('login', { titulo: 'Iniciar sesión', volver });
     },
 
+    /** POST /login: valida las credenciales con límite de intentos por correo y por IP. */
     async handleLogin(req, res) {
         const email = String(req.body.email || '').trim().toLowerCase();
         const password = String(req.body.password || '');
@@ -71,12 +77,15 @@ const authController = {
         }
     },
 
-    // Cerrar sesión solo por POST (con token CSRF): por GET bastaría un enlace
-    // o una imagen en otro sitio para sacar al administrador del panel.
+    /**
+     * GET /logout. Cerrar sesión solo por POST (con token CSRF): por GET bastaría
+     * un enlace o una imagen en otro sitio para sacar al administrador del panel.
+     */
     redirigirLogout(req, res) {
         res.redirect('/');
     },
 
+    /** POST /logout: borra las cookies y revoca la sesión en Supabase. */
     async handleLogout(req, res) {
         const token = req.cookies && req.cookies.sb_access_token;
         limpiarSesion(res);
@@ -90,6 +99,10 @@ const authController = {
         res.redirect(conAviso('/login', 'Cerraste sesión.'));
     },
 
+    /**
+     * GET /restablecer-password: la página habla directo con Supabase Auth, así
+     * que recibe la URL y la llave pública (anon) del proyecto.
+     */
     renderRestablecer(req, res) {
         res.render('restablecer-password', {
             titulo: 'Restablecer contraseña',
@@ -100,7 +113,7 @@ const authController = {
         });
     },
 
-    // La renovación real la hace requireAuth; aquí solo se confirma.
+    /** POST /sesion/renovar. La renovación real la hace requireAuth; aquí solo se confirma. */
     renovarSesion(req, res) {
         res.status(200).json({ ok: true });
     }

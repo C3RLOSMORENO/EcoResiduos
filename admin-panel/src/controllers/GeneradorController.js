@@ -3,6 +3,7 @@ const { leerPagina, paginacion } = require('../utils/web');
 const { renderLista } = require('../utils/errores');
 const { filtrosCiudadanos } = require('../utils/filtros');
 
+/** GET /ciudadanos: generadores registrados en la app, con búsqueda y municipio. */
 exports.listarGeneradores = (req, res) => {
     const pagina = leerPagina(req.query);
     const filtros = filtrosCiudadanos(req.query);

@@ -4,6 +4,7 @@ const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosMateriales } = require('../utils/filtros');
 
 const materialController = {
+    /** GET /materiales: catálogo con filtros y paginación. */
     renderMaterialesPage(req, res) {
         const pagina = leerPagina(req.query);
         const filtros = filtrosMateriales(req.query);
@@ -17,6 +18,7 @@ const materialController = {
         });
     },
 
+    /** GET /materiales/nuevo: formulario vacío. */
     renderNuevoMaterial(req, res) {
         res.render('material-edit', {
             titulo: 'Nuevo material',
@@ -27,6 +29,7 @@ const materialController = {
         });
     },
 
+    /** POST /materiales: agrega el material al catálogo. */
     async handleCreateMaterial(req, res) {
         try {
             await materialService.createMaterial(req.body);
@@ -36,6 +39,7 @@ const materialController = {
         }
     },
 
+    /** GET /materiales/edit/:id: formulario con los datos actuales y lo que impide borrarlo. */
     async renderEditMaterial(req, res, next) {
         try {
             const { id } = req.params;
@@ -55,6 +59,7 @@ const materialController = {
         }
     },
 
+    /** POST /materiales/edit/:id: guarda los cambios. */
     async handleUpdateMaterial(req, res) {
         const { id } = req.params;
         try {
@@ -65,6 +70,7 @@ const materialController = {
         }
     },
 
+    /** POST /materiales/delete/:id: elimina el material si no tiene solicitudes. */
     async handleDeleteMaterial(req, res) {
         const { id } = req.params;
         try {

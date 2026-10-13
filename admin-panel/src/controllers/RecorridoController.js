@@ -2,9 +2,11 @@ const recorridoService = require('../services/RecorridoService');
 const { RECORRIDOS, registroValido } = require('../utils/recorridos');
 
 const recorridoController = {
-    // El navegador avisa cuando muestra, termina o salta un recorrido. Si no
-    // se puede guardar, el panel sigue igual: el navegador ya lo anotó y no
-    // lo vuelve a mostrar en este equipo.
+    /**
+     * POST /recorridos/:pantalla. El navegador avisa cuando muestra, termina o
+     * salta un recorrido. Si no se puede guardar, el panel sigue igual: el
+     * navegador ya lo anotó y no lo vuelve a mostrar en este equipo.
+     */
     async guardar(req, res) {
         const pantalla = req.params.pantalla;
         if (!Object.prototype.hasOwnProperty.call(RECORRIDOS, pantalla)) {

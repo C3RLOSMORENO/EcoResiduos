@@ -64,30 +64,55 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 
 const clave = (valor) => String(valor || '').trim().toUpperCase();
 
+/**
+ * @param {?string} valor Código de la categoría (APROVECHABLE, RAEE…).
+ * @returns {string} Nombre para mostrar; el valor tal cual si no es conocido.
+ */
 function etiquetaCategoria(valor) {
     if (!clave(valor)) return 'Sin categoría';
     return CATEGORIAS[clave(valor)] || String(valor);
 }
 
+/**
+ * @param {?string} valor Estado de una solicitud o de una postulación.
+ * @returns {string} Nombre para mostrar; el valor tal cual si no es conocido.
+ */
 function etiquetaEstado(valor) {
     if (!clave(valor)) return 'Sin dato';
     return ESTADOS[clave(valor)] || String(valor);
 }
 
+/**
+ * @param {?string} valor Estado de verificación de un gestor.
+ * @returns {string} Nombre para mostrar; el valor tal cual si no es conocido.
+ */
 function etiquetaVerificacion(valor) {
     if (!clave(valor)) return 'Sin dato';
     return ESTADOS_VERIFICACION[clave(valor)] || String(valor);
 }
 
+/**
+ * @param {?string} valor COBRO_RECOLECCION o PAGO_APROVECHAMIENTO.
+ * @returns {string}
+ */
 function etiquetaTipoValor(valor) {
     return TIPOS_VALOR[clave(valor)] || 'Sin valor propuesto';
 }
 
+/**
+ * @param {?string} valor DISPOSICION_FINAL o APROVECHAMIENTO.
+ * @returns {string}
+ */
 function etiquetaCertificado(valor) {
     return TIPOS_CERTIFICADO[clave(valor)] || 'Certificado';
 }
 
-// Sufijo de las variables CSS --eco-cat-* (app: categoriaFromString).
+/**
+ * Sufijo de las variables CSS --eco-cat-* (app: categoriaFromString).
+ *
+ * @param {?string} valor Código de la categoría, incluidos los nombres antiguos.
+ * @returns {string}
+ */
 function claseCategoria(valor) {
     switch (clave(valor)) {
         case 'PELIGROSO':
@@ -112,7 +137,12 @@ function claseCategoria(valor) {
     }
 }
 
-// Sufijo de las variables CSS --eco-estado-* (app: estadoFromString).
+/**
+ * Sufijo de las variables CSS --eco-estado-* (app: estadoFromString).
+ *
+ * @param {?string} valor
+ * @returns {string}
+ */
 function claseEstado(valor) {
     switch (clave(valor)) {
         case 'EN_NEGOCIACION':
@@ -137,6 +167,13 @@ function claseEstado(valor) {
     }
 }
 
+/**
+ * Sufijo de --eco-estado-* para el estado de verificación de un gestor: se
+ * reutilizan los colores de los estados de solicitud.
+ *
+ * @param {?string} valor
+ * @returns {string}
+ */
 function claseVerificacion(valor) {
     switch (clave(valor)) {
         case 'APROBADO':
@@ -168,11 +205,21 @@ const ICONOS_ESTADO = {
 
 const iconoEstado = (valor) => ICONOS_ESTADO[clave(valor)] || 'radio_button_unchecked';
 
+/**
+ * @param {?string} unidad Código de la unidad (KG, TON, M3…).
+ * @returns {string} Abreviatura para mostrar junto a la cantidad.
+ */
 function unidadCorta(unidad) {
     return UNIDADES[clave(unidad)] || String(unidad || '').toLowerCase();
 }
 
-// Cifra sin decimales innecesarios, coma decimal y punto de miles.
+/**
+ * Cifra sin decimales innecesarios, coma decimal y punto de miles.
+ *
+ * @param {number|string} valor
+ * @param {number} [decimales] Decimales máximos cuando la cifra no es entera.
+ * @returns {string}
+ */
 function formatoNumero(valor, decimales = 1) {
     const n = Number(valor);
     if (!Number.isFinite(n)) return '0';
@@ -182,8 +229,14 @@ function formatoNumero(valor, decimales = 1) {
     }).format(n);
 }
 
-// «34,5 %», con espacio antes del signo (norma de la RAE y del SI) y un
-// decimal como máximo. Sin total no hay proporción que mostrar.
+/**
+ * «34,5 %», con espacio antes del signo (norma de la RAE y del SI) y un
+ * decimal como máximo. Sin total no hay proporción que mostrar.
+ *
+ * @param {number} parte
+ * @param {number} total
+ * @returns {string}
+ */
 function formatoPorcentaje(parte, total) {
     const p = Number(parte);
     const t = Number(total);
@@ -191,23 +244,45 @@ function formatoPorcentaje(parte, total) {
     return `${formatoNumero(Math.round((p / t) * 1000) / 10)} %`;
 }
 
+/**
+ * @param {?number} cantidad
+ * @param {?string} unidad Código de la unidad.
+ * @returns {string} «12,5 kg», o «Sin dato» si no hay cantidad.
+ */
 function formatoCantidad(cantidad, unidad) {
     if (cantidad === null || cantidad === undefined || cantidad === '') return 'Sin dato';
     return `${formatoNumero(cantidad)} ${unidadCorta(unidad)}`.trim();
 }
 
+/**
+ * @param {number|string} valor Se descartan los decimales.
+ * @returns {string} El entero con punto de miles: 1250000 → «1.250.000».
+ */
 function separarMiles(valor) {
     const entero = Math.trunc(Number(valor) || 0);
     const digitos = String(Math.abs(entero)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return entero < 0 ? `-${digitos}` : digitos;
 }
 
-// «$ 1.250.000», igual que formatoPesos en la app.
+/**
+ * «$ 1.250.000», igual que formatoPesos en la app.
+ *
+ * @param {?number} valor
+ * @returns {string}
+ */
 function formatoPesos(valor) {
     if (valor === null || valor === undefined || valor === '') return 'Sin valor';
     return `$ ${separarMiles(valor)}`;
 }
 
+/**
+ * Año, mes, día, hora y minuto de una fecha en hora de Colombia, sin depender
+ * de la zona horaria del servidor.
+ *
+ * @param {Date|string} fecha
+ * @returns {?{anio: number, mes: number, dia: number, hora: number, minuto: number}}
+ *     null si la fecha no es válida.
+ */
 function partesBogota(fecha) {
     const d = fecha instanceof Date ? fecha : new Date(fecha);
     if (Number.isNaN(d.getTime())) return null;
@@ -224,7 +299,12 @@ function partesBogota(fecha) {
     return { anio: valor('year'), mes: valor('month'), dia: valor('day'), hora: valor('hour'), minuto: valor('minute') };
 }
 
-// «12 sep 2026» en hora de Colombia.
+/**
+ * «12 sep 2026» en hora de Colombia.
+ *
+ * @param {?(Date|string)} fecha
+ * @returns {string}
+ */
 function fechaCorta(fecha) {
     if (!fecha) return 'Sin fecha';
     const p = partesBogota(fecha);
@@ -232,7 +312,12 @@ function fechaCorta(fecha) {
     return `${p.dia} ${MESES[p.mes - 1]} ${p.anio}`;
 }
 
-// «12 sep 2026, 8:05 p. m.» en hora de Colombia.
+/**
+ * «12 sep 2026, 8:05 p. m.» en hora de Colombia.
+ *
+ * @param {?(Date|string)} fecha
+ * @returns {string}
+ */
 function fechaHora(fecha) {
     if (!fecha) return 'Sin fecha';
     const p = partesBogota(fecha);
@@ -242,14 +327,24 @@ function fechaHora(fecha) {
     return `${fechaCorta(fecha)}, ${hora12}:${String(p.minuto).padStart(2, '0')} ${sufijo}`;
 }
 
-// Fecha ISO (AAAA-MM-DD) del día en Colombia.
+/**
+ * Fecha ISO (AAAA-MM-DD) del día en Colombia.
+ *
+ * @param {Date|string} [fecha] Por defecto, el momento actual.
+ * @returns {string} Vacío si la fecha no es válida.
+ */
 function fechaIsoBogota(fecha = new Date()) {
     const p = partesBogota(fecha);
     if (!p) return '';
     return `${p.anio}-${String(p.mes).padStart(2, '0')}-${String(p.dia).padStart(2, '0')}`;
 }
 
-// «FLORIDABLANCA» → «Floridablanca», «SABANA DE TORRES» → «Sabana de Torres».
+/**
+ * «FLORIDABLANCA» → «Floridablanca», «SABANA DE TORRES» → «Sabana de Torres».
+ *
+ * @param {?string} texto
+ * @returns {string}
+ */
 function capitalizar(texto) {
     if (!texto) return '';
     return String(texto)
@@ -259,30 +354,55 @@ function capitalizar(texto) {
         .join(' ');
 }
 
-// Nombre dentro de una frase que termina en punto, sin duplicarlo
-// («… S.A.S.» no queda «S.A.S..»).
+/**
+ * Nombre dentro de una frase que termina en punto, sin duplicarlo
+ * («… S.A.S.» no queda «S.A.S..»).
+ *
+ * @param {?string} texto
+ * @returns {string}
+ */
 function finFrase(texto) {
     return `${String(texto || '').replace(/[.\s]+$/, '')}.`;
 }
 
+/**
+ * @param {number} cantidad
+ * @param {string} singular Palabra para una unidad.
+ * @param {string} varios Palabra para cero o más de una.
+ * @returns {string} «1 solicitud», «3 solicitudes».
+ */
 function plural(cantidad, singular, varios) {
     return `${formatoNumero(cantidad)} ${Number(cantidad) === 1 ? singular : varios}`;
 }
 
+/**
+ * @param {*} valor
+ * @returns {string} El valor sin espacios sobrantes, o «Sin dato» si está vacío.
+ */
 function textoODato(valor) {
     const limpio = valor === null || valor === undefined ? '' : String(valor).trim();
     return limpio || 'Sin dato';
 }
 
-// Solo enlaces http(s): evita que una URL guardada como «javascript:» se
-// convierta en un enlace ejecutable.
+/**
+ * Solo enlaces http(s): evita que una URL guardada como «javascript:» se
+ * convierta en un enlace ejecutable.
+ *
+ * @param {?string} url
+ * @returns {?string}
+ */
 function urlSegura(url) {
     const texto = String(url || '').trim();
     return /^https?:\/\//i.test(texto) ? texto : null;
 }
 
-// Iniciales para el avatar: las mismas que muestra la app (utils/formato.dart).
-// Se saltan los conectores y lo que no empieza por letra (S.A.S., números).
+/**
+ * Iniciales para el avatar: las mismas que muestra la app (utils/formato.dart).
+ * Se saltan los conectores y lo que no empieza por letra (S.A.S., números).
+ *
+ * @param {?string} nombre
+ * @returns {string} Una o dos letras en mayúscula; «E» si no hay ninguna.
+ */
 function iniciales(nombre) {
     const palabras = String(nombre || '')
         .split(/\s+/)

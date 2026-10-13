@@ -1,3 +1,5 @@
+// Une las rutas del panel. Todo lo que no es inicio de sesión pasa por
+// requireAuth, que exige una sesión de administrador.
 const express = require('express');
 const router = express.Router();
 

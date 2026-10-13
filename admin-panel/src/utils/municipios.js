@@ -8,6 +8,13 @@ const MUNICIPIOS = [
     'Sabana de Torres'
 ];
 
+/**
+ * Texto en minúsculas, sin tildes y con un solo espacio entre palabras, para
+ * comparar nombres escritos de distintas formas.
+ *
+ * @param {string} texto
+ * @returns {string}
+ */
 function normalizar(texto) {
     return String(texto || '')
         .normalize('NFD')
@@ -17,17 +24,27 @@ function normalizar(texto) {
         .toLowerCase();
 }
 
-// Municipio admitido que corresponde al texto sin importar mayúsculas, tildes
-// ni espacios; null si no es uno de los 6.
+/**
+ * Municipio admitido que corresponde al texto, sin importar mayúsculas, tildes
+ * ni espacios.
+ *
+ * @param {string} texto Nombre escrito por el usuario o leído de la base.
+ * @returns {?string} El nombre como aparece en MUNICIPIOS, o null si no es uno de los 6.
+ */
 function municipioAdmitido(texto) {
     const buscado = normalizar(texto);
     if (!buscado) return null;
     return MUNICIPIOS.find((m) => normalizar(m) === buscado) || null;
 }
 
-// La base guarda el municipio como lo escribió cada cliente (la app y el panel
-// lo pasan a mayúsculas, con o sin tilde). Para filtrar en la consulta se
-// prueban las formas conocidas.
+/**
+ * La base guarda el municipio como lo escribió cada cliente (la app y el panel
+ * lo pasan a mayúsculas, con o sin tilde). Para filtrar en la consulta se
+ * prueban las formas conocidas.
+ *
+ * @param {string} nombre Municipio tal como aparece en MUNICIPIOS.
+ * @returns {string[]} Las formas distintas del nombre, sin repetidos.
+ */
 function variantesMunicipio(nombre) {
     const sinTildes = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return [...new Set([
@@ -40,7 +57,12 @@ function variantesMunicipio(nombre) {
     ])];
 }
 
-// Forma en que el panel guarda el municipio (igual que la app al registrar).
+/**
+ * Forma en que el panel guarda el municipio (igual que la app al registrar).
+ *
+ * @param {string} texto
+ * @returns {?string} El municipio en mayúsculas, o null si no es uno de los admitidos.
+ */
 function municipioParaGuardar(texto) {
     const admitido = municipioAdmitido(texto);
     return admitido ? admitido.toUpperCase() : null;

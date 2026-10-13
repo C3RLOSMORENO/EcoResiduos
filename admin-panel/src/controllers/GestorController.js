@@ -9,9 +9,13 @@ const { sinUbicar } = require('../services/geocodificador');
 
 const adminDe = (req) => (req.user && (req.user.email || req.user.id)) || null;
 
-// El catálogo completo para elegir materiales (no se pagina: son decenas),
-// con el texto en que busca el filtro del formulario: sin tildes ni
-// mayúsculas, para que «raee» encuentre «RAEE» y «electronico», «Electrónico».
+/**
+ * El catálogo completo para elegir materiales (no se pagina: son decenas),
+ * con el texto en que busca el filtro del formulario: sin tildes ni
+ * mayúsculas, para que «raee» encuentre «RAEE» y «electronico», «Electrónico».
+ *
+ * @returns {Promise<object[]>}
+ */
 async function catalogoMateriales() {
     const materiales = await materialService.getAllMateriales();
     return materiales.map((m) => ({
@@ -20,7 +24,12 @@ async function catalogoMateriales() {
     }));
 }
 
-// Materiales del gestor agrupados por categoría, en el orden en que llegan.
+/**
+ * Materiales del gestor agrupados por categoría, en el orden en que llegan.
+ *
+ * @param {object[]} materiales
+ * @returns {Object<string, object[]>}
+ */
 function agruparPorCategoria(materiales) {
     const grupos = {};
     materiales.forEach((m) => {
@@ -31,6 +40,7 @@ function agruparPorCategoria(materiales) {
 }
 
 const gestorController = {
+    /** GET /gestores: lista con filtros y paginación. */
     renderGestoresPage(req, res) {
         const pagina = leerPagina(req.query);
         const filtros = filtrosGestores(req.query);
@@ -44,6 +54,7 @@ const gestorController = {
         });
     },
 
+    /** GET /gestores/:id: datos, materiales, historial de decisiones y mapa. */
     async renderDetalleGestor(req, res, next) {
         try {
             const [gestor, dependencias, decisiones] = await Promise.all([
@@ -68,6 +79,7 @@ const gestorController = {
         }
     },
 
+    /** GET /gestores/nuevo: formulario vacío. */
     async renderNuevoGestor(req, res, next) {
         try {
             res.render('gestor-edit', {
@@ -83,6 +95,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores: registra la empresa y abre su detalle. */
     async handleCreateGestor(req, res) {
         try {
             const nuevo = await gestorService.createGestor(req.body);
@@ -93,6 +106,7 @@ const gestorController = {
         }
     },
 
+    /** GET /gestores/edit/:id: formulario con los datos actuales. */
     async renderEditGestor(req, res, next) {
         try {
             const { id } = req.params;
@@ -114,6 +128,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/edit/:id: guarda el formulario de edición. */
     async handleUpdateGestor(req, res) {
         const { id } = req.params;
         try {
@@ -124,6 +139,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/delete/:id: elimina la empresa si no tiene historia. */
     async handleDeleteGestor(req, res) {
         const { id } = req.params;
         try {
@@ -135,6 +151,7 @@ const gestorController = {
         }
     },
 
+    /** GET /gestores/:id/permiso: el PDF del permiso ambiental, servido por el panel. */
     async handleVerPermiso(req, res) {
         try {
             const { buffer } = await gestorService.descargarPermiso(req.params.id);
@@ -151,7 +168,10 @@ const gestorController = {
         }
     },
 
-    // Recibe el PDF como cuerpo application/pdf (lo envía main.js).
+    /**
+     * POST /gestores/:id/permiso: recibe el PDF como cuerpo application/pdf (lo
+     * envía main.js) y responde JSON a fetch o redirige al formulario.
+     */
     async handleSubirPermiso(req, res) {
         const { id } = req.params;
         const responder = (status, mensaje, ok) => {
@@ -177,6 +197,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/:id/estado: aprueba, rechaza, suspende o devuelve a revisión. */
     async handleUpdateEstado(req, res) {
         const { id } = req.params;
         const { estado, motivo } = req.body;
@@ -191,6 +212,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/:id/materiales/:materialId/verificar */
     async handleVerificarMaterial(req, res) {
         const { id, materialId } = req.params;
         try {
@@ -201,6 +223,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/:id/materiales/:materialId/quitar */
     async handleQuitarMaterial(req, res) {
         const { id, materialId } = req.params;
         try {
@@ -211,6 +234,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/:id/imagenes/quitar: quita el logo o la portada. */
     async handleQuitarImagen(req, res) {
         const { id } = req.params;
         const tipo = req.body && req.body.imagen;
@@ -222,6 +246,7 @@ const gestorController = {
         }
     },
 
+    /** POST /gestores/:id/materiales/verificar-todos */
     async handleVerificarTodos(req, res) {
         const { id } = req.params;
         try {

@@ -2,9 +2,16 @@ const supabase = require('../config/supabase');
 const { claveMetadatos } = require('../utils/recorridos');
 
 const recorridoService = {
-    // Guarda en los metadatos del usuario hasta qué versión vio el recorrido
-    // de una pantalla. Se guarda en la cuenta y no solo en el navegador: el
-    // administrador no vuelve a verlo en otro equipo.
+    /**
+     * Guarda en los metadatos del usuario hasta qué versión vio el recorrido
+     * de una pantalla. Se guarda en la cuenta y no solo en el navegador: el
+     * administrador no vuelve a verlo en otro equipo.
+     *
+     * @param {string} usuarioId UUID del usuario de Supabase Auth.
+     * @param {string} pantalla
+     * @param {{version: number, estado: string, paso: number}} registro Resultado de registroValido.
+     * @throws {Error} Si Supabase no lo guarda.
+     */
     async guardar(usuarioId, pantalla, { version, estado, paso }) {
         const { error } = await supabase.auth.admin.updateUserById(usuarioId, {
             user_metadata: {

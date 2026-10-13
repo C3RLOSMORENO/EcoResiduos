@@ -29,7 +29,11 @@ const opcionesServidor = {
 // las peticiones del servidor.
 const supabase = createClient(supabaseUrl, serviceKey, opcionesServidor);
 
-// Cliente nuevo por petición para iniciar sesión con correo y contraseña.
+/**
+ * Cliente nuevo por petición para iniciar sesión con correo y contraseña.
+ *
+ * @returns {import('@supabase/supabase-js').SupabaseClient}
+ */
 function crearClienteAuth() {
     return createClient(supabaseUrl, anonKey, opcionesServidor);
 }

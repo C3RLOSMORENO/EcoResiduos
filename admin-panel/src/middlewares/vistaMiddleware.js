@@ -12,7 +12,13 @@ const AVISOS_FIJOS = {
     'clave-actualizada': { tipo: 'exito', mensaje: 'Contraseña actualizada. Ya puedes iniciar sesión.' }
 };
 
-// Ayudas y avisos disponibles en todas las vistas.
+/**
+ * Ayudas y avisos disponibles en todas las vistas.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 function vistaMiddleware(req, res, next) {
     res.locals.f = formato;
     res.locals.MUNICIPIOS = MUNICIPIOS;

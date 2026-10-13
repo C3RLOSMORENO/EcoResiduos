@@ -4,7 +4,14 @@ const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase } = require('../utils/errores');
 
 class GeneradorService {
-    // Listado paginado. Solo los datos que necesita la lista (Ley 1581 de 2012).
+    /**
+     * Listado paginado. Solo los datos que necesita la lista (Ley 1581 de 2012).
+     *
+     * @param {{q?: string, municipio?: string, pagina?: number}} [opciones]
+     * @returns {Promise<{generadores: object[], total: number}>} Cada generador con
+     *     el número de publicaciones que ha hecho.
+     * @throws {Error} Si falla la consulta.
+     */
     async listar({ q, municipio, pagina = 1 } = {}) {
         let consulta = supabase
             .from('perfiles_generador')
@@ -34,7 +41,12 @@ class GeneradorService {
         };
     }
 
-    // Un conteo por generador de la página (máximo 25 consultas pequeñas).
+    /**
+     * Un conteo por generador de la página (máximo 25 consultas pequeñas).
+     *
+     * @param {number[]} ids
+     * @returns {Promise<Map<number, number>>}
+     */
     async contarPublicaciones(ids) {
         const conteos = await Promise.all(ids.map((id) => supabase
             .from('solicitudes_recoleccion')

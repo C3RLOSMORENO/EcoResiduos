@@ -9,7 +9,13 @@ const LOTE = 1000;
 // Orden de las columnas de unidades; las desconocidas van al final.
 const ORDEN_UNIDADES = Object.keys(UNIDADES);
 
-// PostgREST devuelve máximo 1000 filas por consulta: se lee por lotes.
+/**
+ * PostgREST devuelve máximo 1000 filas por consulta: se lee por lotes.
+ *
+ * @param {() => object} construir Crea la consulta de nuevo en cada lote, sin .range().
+ * @returns {Promise<object[]>} Todas las filas.
+ * @throws {Error} Si falla alguno de los lotes.
+ */
 async function leerTodo(construir) {
     const filas = [];
     for (let desde = 0; ; desde += LOTE) {
@@ -23,6 +29,12 @@ async function leerTodo(construir) {
 const categoriaDe = (s) => String((s.materiales_residuos && s.materiales_residuos.categoria) || '').toUpperCase() || 'SIN_CATEGORIA';
 const unidadDe = (s) => String(s.unidad_medida || '').toUpperCase() || 'SIN_UNIDAD';
 
+/**
+ * @param {string} municipio
+ * @param {string[]} categorias
+ * @param {string[]} unidades
+ * @returns {object} Una fila del reporte con todos los conteos en 0.
+ */
 function filaVacia(municipio, categorias, unidades) {
     return {
         municipio,
@@ -33,10 +45,16 @@ function filaVacia(municipio, categorias, unidades) {
     };
 }
 
-// Agrega las solicitudes por municipio. Cuenta recolecciones por categoría y
-// suma las cantidades declaradas por separado en cada unidad: nunca se
-// convierten ni se mezclan unidades. Es una función pura para poder probar
-// las reglas sin base de datos.
+/**
+ * Agrega las solicitudes por municipio. Cuenta recolecciones por categoría y
+ * suma las cantidades declaradas por separado en cada unidad: nunca se
+ * convierten ni se mezclan unidades. Es una función pura para poder probar
+ * las reglas sin base de datos.
+ *
+ * @param {object[]} confirmadas Solicitudes con confirmado_at.
+ * @param {object[]} sinConfirmar Recolectadas que siguen sin confirmar.
+ * @returns {{categorias: object[], unidades: object[], filas: object[], total: object, hayOtro: boolean}}
+ */
 function agregar(confirmadas, sinConfirmar) {
     const extras = [...new Set(confirmadas.map(categoriaDe).filter((c) => !CATEGORIAS_CATALOGO.includes(c)))];
     const categorias = [...CATEGORIAS_CATALOGO, ...extras];
@@ -84,6 +102,14 @@ const reporteService = {
     agregar,
     OTRO,
 
+    /**
+     * Recolecciones confirmadas por municipio y categoría, más las que siguen
+     * sin confirmar.
+     *
+     * @param {{desde?: string, hasta?: string, categoria?: string}} filtros Resultado de filtrosReporte.
+     * @returns {Promise<object>} El resultado de agregar.
+     * @throws {Error} Si falla alguna consulta.
+     */
     async reciclajePorMunicipio(filtros) {
         const fechas = rangoBogota(filtros.desde, filtros.hasta);
         const embebido = filtros.categoria ? 'materiales_residuos!inner(categoria)' : 'materiales_residuos(categoria)';

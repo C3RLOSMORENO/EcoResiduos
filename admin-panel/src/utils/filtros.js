@@ -9,6 +9,12 @@ const texto = (valor) => String(valor || '').trim();
 const mayusculas = (valor) => String(valor || '').toUpperCase();
 const unoDe = (valor, admitidos, porDefecto = '') => (admitidos.includes(valor) ? valor : porDefecto);
 
+/**
+ * Filtros de la lista de solicitudes.
+ *
+ * @param {object} [query] req.query.
+ * @returns {object} Cada filtro validado; vacío ('') cuando no se aplica.
+ */
 function filtrosSolicitudes(query = {}) {
     const fechas = rangoBogota(query.desde, query.hasta);
     const categoria = mayusculas(query.categoria);
@@ -31,8 +37,12 @@ function filtrosSolicitudes(query = {}) {
 // en ese mismo día en cualquier zona horaria.
 const diaDelFiltro = (dia) => fechaCorta(`${dia}T12:00:00-05:00`);
 
-// Los filtros aplicados en una frase corta, para el título de la tabla;
-// vacía si no hay ninguno.
+/**
+ * Los filtros aplicados en una frase corta, para el título de la tabla.
+ *
+ * @param {object} filtros Resultado de filtrosSolicitudes.
+ * @returns {string} Vacía si no hay ningún filtro.
+ */
 function describirFiltrosSolicitudes(filtros) {
     return [
         filtros.problema ? 'con problema reportado' : null,
@@ -47,6 +57,10 @@ function describirFiltrosSolicitudes(filtros) {
     ].filter(Boolean).join(' · ');
 }
 
+/**
+ * @param {object} [query] req.query.
+ * @returns {{q: string, municipio: string, estado: string, porVerificar: string, orden: string}}
+ */
 function filtrosGestores(query = {}) {
     return {
         q: texto(query.q),
@@ -57,6 +71,10 @@ function filtrosGestores(query = {}) {
     };
 }
 
+/**
+ * @param {object} [query] req.query.
+ * @returns {{q: string, categoria: string, orden: string}}
+ */
 function filtrosMateriales(query = {}) {
     return {
         q: texto(query.q),
@@ -65,6 +83,10 @@ function filtrosMateriales(query = {}) {
     };
 }
 
+/**
+ * @param {object} [query] req.query.
+ * @returns {{q: string, municipio: string}}
+ */
 function filtrosCiudadanos(query = {}) {
     return {
         q: texto(query.q),
@@ -72,10 +94,18 @@ function filtrosCiudadanos(query = {}) {
     };
 }
 
+/**
+ * @param {object} [query] req.query.
+ * @returns {{q: string}}
+ */
 function filtrosAutoridades(query = {}) {
     return { q: texto(query.q) };
 }
 
+/**
+ * @param {object} [query] req.query.
+ * @returns {{desde: string, hasta: string, categoria: string}}
+ */
 function filtrosReporte(query = {}) {
     const fechas = rangoBogota(query.desde, query.hasta);
     const categoria = mayusculas(query.categoria);
@@ -86,6 +116,12 @@ function filtrosReporte(query = {}) {
     };
 }
 
+/**
+ * Rango y categoría del reporte en una línea, para el encabezado y el Excel.
+ *
+ * @param {object} filtros Resultado de filtrosReporte.
+ * @returns {string}
+ */
 function describirFiltrosReporte(filtros) {
     return [
         filtros.desde ? `Confirmadas desde ${filtros.desde}` : 'Desde el inicio',
@@ -94,7 +130,12 @@ function describirFiltrosReporte(filtros) {
     ].join(' · ');
 }
 
-// Enlace de descarga del Excel con los mismos filtros que se ven en pantalla.
+/**
+ * Enlace de descarga del Excel con los mismos filtros que se ven en pantalla.
+ *
+ * @param {object} filtros Resultado de filtrosReporte.
+ * @returns {string}
+ */
 function enlaceExcelReporte(filtros) {
     const params = new URLSearchParams();
     ['desde', 'hasta', 'categoria'].forEach((clave) => {

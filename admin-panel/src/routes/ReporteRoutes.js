@@ -1,3 +1,4 @@
+// Rutas de /reportes: reciclaje por municipio en pantalla y en Excel.
 const express = require('express');
 const router = express.Router();
 const ReporteController = require('../controllers/ReporteController');

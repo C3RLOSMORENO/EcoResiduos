@@ -4,6 +4,14 @@ const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase, noEncontrado } = require('../utils/errores');
 
 const autoridadService = {
+    /**
+     * Página de autoridades ordenadas por nombre, con búsqueda por nombre, sigla
+     * o jurisdicción.
+     *
+     * @param {{q?: string, pagina?: number}} [opciones]
+     * @returns {Promise<{autoridades: object[], total: number}>}
+     * @throws {Error} Si falla la consulta.
+     */
     async listarAutoridades({ q, pagina = 1 } = {}) {
         let consulta = supabase
             .from('autoridades_ambientales')
@@ -25,7 +33,12 @@ const autoridadService = {
         return { autoridades: data || [], total: count || 0 };
     },
 
-    // Consulta autoridades ambientales registradas en el departamento de Santander
+    /**
+     * Todas las autoridades ambientales, ordenadas por identificador.
+     *
+     * @returns {Promise<object[]>}
+     * @throws {Error} Si falla la consulta.
+     */
     async getAllAutoridades() {
         const { data, error } = await supabase
             .from('autoridades_ambientales')
@@ -49,6 +62,11 @@ const autoridadService = {
         }));
     },
 
+    /**
+     * @param {number|string} id
+     * @returns {Promise<object>} La autoridad con los campos que usa el formulario.
+     * @throws {Error} Con codigo NO_ENCONTRADO si no existe.
+     */
     async getAutoridadById(id) {
         if (!id) {
             throw new Error('El identificador de la autoridad es obligatorio.');
@@ -78,7 +96,14 @@ const autoridadService = {
         };
     },
 
-    // Valida y registra una nueva entidad de control ambiental
+    /**
+     * Registra una autoridad. El nombre es obligatorio; si faltan la sigla, el
+     * correo o el sitio web, se completan con valores por defecto.
+     *
+     * @param {object} [dto] Campos del formulario.
+     * @returns {Promise<object[]>} La fila creada.
+     * @throws {Error} Si el nombre tiene menos de 3 caracteres o falla la base.
+     */
     async createAutoridad(dto = {}) {
         let siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
         const nombreLimpio = String(dto.nombre || '').trim();
@@ -128,6 +153,14 @@ const autoridadService = {
         return data;
     },
 
+    /**
+     * Mismas validaciones y valores por defecto que createAutoridad.
+     *
+     * @param {number|string} id
+     * @param {object} [dto] Campos del formulario.
+     * @returns {Promise<object[]>} La fila actualizada.
+     * @throws {Error} Si el nombre tiene menos de 3 caracteres o falla la base.
+     */
     async updateAutoridad(id, dto = {}) {
         if (!id) {
             throw new Error('El identificador de la autoridad es obligatorio para la actualización.');
@@ -182,6 +215,11 @@ const autoridadService = {
         return data;
     },
 
+    /**
+     * @param {number|string} id
+     * @returns {Promise<true>}
+     * @throws {Error} Si falla la base.
+     */
     async deleteAutoridad(id) {
         if (!id) {
             throw new Error('El identificador de la autoridad es obligatorio para eliminarla.');

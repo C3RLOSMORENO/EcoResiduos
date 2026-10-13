@@ -11,8 +11,15 @@ const CAUSAS_POR_CODIGO = {
     23514: 'Uno de los datos no cumple las reglas de la base.'
 };
 
-// mensaje: qué no se pudo hacer, en una frase que termina en punto
-// («No pudimos guardar el material.»).
+/**
+ * Error de Supabase convertido en un mensaje para el administrador. El
+ * detalle técnico se escribe en el registro del servidor.
+ *
+ * @param {string} mensaje Qué no se pudo hacer, en una frase que termina en
+ *     punto («No pudimos guardar el material.»).
+ * @param {?object} error Error devuelto por Supabase.
+ * @returns {Error}
+ */
 function errorDeBase(mensaje, error) {
     const codigo = error && error.code ? String(error.code) : '';
     const detalle = error ? [codigo, error.message].filter(Boolean).join(' ') : 'sin detalle';
@@ -26,17 +33,31 @@ function errorDeBase(mensaje, error) {
     return new Error(causa ? `${mensaje} ${causa}` : `${mensaje} Intenta de nuevo en unos minutos.`);
 }
 
-// El registro no existe: el controlador responde 404 en lugar de un error.
+/**
+ * El registro no existe: el controlador responde 404 en lugar de un error.
+ *
+ * @param {string} mensaje
+ * @returns {Error} Con codigo = 'NO_ENCONTRADO'.
+ */
 function noEncontrado(mensaje) {
     const error = new Error(mensaje);
     error.codigo = 'NO_ENCONTRADO';
     return error;
 }
 
-// Una pantalla de detalle o edición que no cargó: 404 si el registro no
-// existe; si falló la base, el error dentro del panel con «Reintentar», en la
-// misma dirección (antes se volvía a la lista y se perdía la página).
-// que: lo que no cargó, en minúscula («el gestor», «la solicitud 7»).
+/**
+ * Una pantalla de detalle o edición que no cargó: 404 si el registro no
+ * existe; si falló la base, el error dentro del panel con «Reintentar», en la
+ * misma dirección (antes se volvía a la lista y se perdía la página).
+ *
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @param {Error} err
+ * @param {object} opciones
+ * @param {string} opciones.activeTab Pestaña activa del menú.
+ * @param {string} opciones.que Lo que no cargó, en minúscula («el gestor», «la solicitud 7»).
+ * @param {{href: string, texto: string}} opciones.volver Enlace para regresar.
+ */
 function responderErrorCarga(res, next, err, { activeTab, que, volver }) {
     if (err && err.codigo === 'NO_ENCONTRADO') return next();
     const titulo = `No pudimos cargar ${que}`;
@@ -51,11 +72,18 @@ function responderErrorCarga(res, next, err, { activeTab, que, volver }) {
     });
 }
 
-// Una lista (o el inicio, o el reporte) con su estado de error: si la
-// consulta falla, la misma pantalla sin datos y el mensaje en errorCarga, que
-// la vista muestra con «Reintentar».
-// comunes: lo que la vista lleva siempre (título, pestaña, filtros…).
-// cargar: función que trae los datos; vacio: su reemplazo si falla.
+/**
+ * Una lista (o el inicio, o el reporte) con su estado de error: si la
+ * consulta falla, la misma pantalla sin datos y el mensaje en errorCarga, que
+ * la vista muestra con «Reintentar».
+ *
+ * @param {import('express').Response} res
+ * @param {string} vista Nombre de la plantilla EJS.
+ * @param {object} opciones
+ * @param {object} opciones.comunes Lo que la vista lleva siempre (título, pestaña, filtros…).
+ * @param {() => Promise<object>} opciones.cargar Trae los datos.
+ * @param {object} opciones.vacio Reemplazo de los datos si la consulta falla.
+ */
 async function renderLista(res, vista, { comunes, cargar, vacio }) {
     let datos;
     try {

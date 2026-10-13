@@ -35,8 +35,15 @@ function rutaCertificado(url) {
 const ESTADOS_CANCELABLES = ['PUBLICADO', 'EN_NEGOCIACION'];
 const DIAS_SIN_CERTIFICADO = 7;
 
-// Un problema sin resolver es problema_reportado = TRUE: al resolverlo
-// (resolver_problema_no_recogido) vuelve a FALSE.
+/**
+ * Agrega a la consulta los filtros de la lista de solicitudes. Un problema sin
+ * resolver es problema_reportado = TRUE: al resolverlo
+ * (resolver_problema_no_recogido) vuelve a FALSE.
+ *
+ * @param {object} consulta Consulta de Supabase sobre solicitudes_recoleccion.
+ * @param {object} filtros Resultado de filtrosSolicitudes.
+ * @returns {object} La misma consulta con los filtros.
+ */
 function aplicarFiltros(consulta, filtros) {
     if (filtros.estado) consulta = consulta.eq('estado', filtros.estado);
     if (filtros.municipio) consulta = consulta.in('municipio', variantesMunicipio(filtros.municipio));
@@ -61,12 +68,25 @@ const solicitudService = {
     rutaCertificado,
     DIAS_SIN_CERTIFICADO,
 
-    // Se puede resolver si el gestor la marcó recolectada, el generador
-    // reportó el problema y aún no está confirmada.
+    /**
+     * Se puede resolver si el gestor la marcó recolectada, el generador
+     * reportó el problema y aún no está confirmada.
+     *
+     * @param {?object} s Solicitud.
+     * @returns {boolean}
+     */
     problemaResoluble(s) {
         return Boolean(s && s.problema_reportado && s.estado === 'RECOLECTADO' && !s.confirmado_at);
     },
 
+    /**
+     * Página de solicitudes con su material.
+     *
+     * @param {object} filtros Resultado de filtrosSolicitudes.
+     * @param {number} [pagina]
+     * @returns {Promise<{solicitudes: object[], total: number}>}
+     * @throws {Error} Si falla la consulta.
+     */
     async listar(filtros, pagina = 1) {
         // !inner hace que los filtros por categoría o material descarten la
         // solicitud completa, no solo el material embebido.
@@ -90,6 +110,15 @@ const solicitudService = {
         return { solicitudes: data || [], total: count || 0 };
     },
 
+    /**
+     * Solicitud con su material, generador, historial de estados, postulaciones
+     * y gestor asignado. Si falla el historial o las postulaciones, esa parte
+     * llega en null y el resto de la página se muestra igual.
+     *
+     * @param {number|string} id
+     * @returns {Promise<?object>} null si la solicitud no existe.
+     * @throws {Error} Si falla la consulta de la solicitud.
+     */
     async obtenerDetalle(id) {
         const { data: solicitud, error } = await supabase
             .from('solicitudes_recoleccion')
@@ -131,8 +160,15 @@ const solicitudService = {
         };
     },
 
-    // «Resuelto: no se recogió» (función resolver_problema_no_recogido): la
-    // solicitud vuelve a EN_NEGOCIACION con el mismo gestor y ambos reciben aviso.
+    /**
+     * «Resuelto: no se recogió» (función resolver_problema_no_recogido): la
+     * solicitud vuelve a EN_NEGOCIACION con el mismo gestor y ambos reciben aviso.
+     *
+     * @param {number|string} id
+     * @param {?string} nota Nota del administrador; se guardan hasta 300 caracteres.
+     * @returns {Promise<object>} La respuesta de la función.
+     * @throws {Error} Con el mensaje de la función o el aviso de la migración que falta.
+     */
     async resolverNoRecogido(id, nota) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {
@@ -152,8 +188,14 @@ const solicitudService = {
         return data;
     },
 
-    // Cancela en una sola transacción (función cancelar_solicitud_admin):
-    // la solicitud queda CANCELADO y sus propuestas abiertas, RECHAZADA.
+    /**
+     * Cancela en una sola transacción (función cancelar_solicitud_admin):
+     * la solicitud queda CANCELADO y sus propuestas abiertas, RECHAZADA.
+     *
+     * @param {number|string} id
+     * @returns {Promise<{postulaciones_rechazadas?: number}>} La respuesta de la función.
+     * @throws {Error} Con el mensaje de la función o el aviso de la migración que falta.
+     */
     async cancelar(id) {
         const solicitudId = parseInt(id, 10);
         if (!Number.isInteger(solicitudId)) {

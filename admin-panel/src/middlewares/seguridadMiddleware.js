@@ -1,7 +1,11 @@
 const crypto = require('crypto');
 
-// Origen de Supabase (https://<proyecto>.supabase.co): de ahí vienen las
-// fotos de las solicitudes y ahí habla la página de restablecer contraseña.
+/**
+ * Origen de Supabase (https://<proyecto>.supabase.co): de ahí vienen las
+ * fotos de las solicitudes y ahí habla la página de restablecer contraseña.
+ *
+ * @returns {string} Vacío si SUPABASE_URL no es una URL.
+ */
 function origenSupabase() {
     try {
         return new URL(process.env.SUPABASE_URL).origin;
@@ -10,9 +14,15 @@ function origenSupabase() {
     }
 }
 
-// Content-Security-Policy: solo corre JavaScript del propio panel o el
-// script en línea que lleve el nonce de esta respuesta. Así, aunque un dato
-// se colara sin escapar, el navegador no lo ejecutaría.
+/**
+ * Content-Security-Policy: solo corre JavaScript del propio panel o el
+ * script en línea que lleve el nonce de esta respuesta. Así, aunque un dato
+ * se colara sin escapar, el navegador no lo ejecutaría.
+ *
+ * @param {string} nonce Valor al azar de esta respuesta.
+ * @param {boolean} produccion Agrega upgrade-insecure-requests.
+ * @returns {string}
+ */
 function politicaContenido(nonce, produccion) {
     const supabase = origenSupabase();
     const directivas = [
@@ -31,6 +41,14 @@ function politicaContenido(nonce, produccion) {
     return directivas.join('; ');
 }
 
+/**
+ * Cabeceras de seguridad de todas las respuestas. Deja el nonce en
+ * res.locals.nonce para los <script> en línea de las vistas.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 function seguridadMiddleware(req, res, next) {
     const produccion = process.env.NODE_ENV === 'production';
     const nonce = crypto.randomBytes(16).toString('base64');

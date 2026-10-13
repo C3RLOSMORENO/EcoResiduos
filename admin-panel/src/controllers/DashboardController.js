@@ -5,6 +5,7 @@ const { datosRecorrido } = require('../utils/recorridos');
 const { graficoEstados, graficoMunicipios } = require('../utils/graficos');
 
 const dashboardController = {
+    /** GET /dashboard: cifras, pendientes y gráficos del inicio. */
     renderDashboard(req, res) {
         return renderLista(res, 'dashboard', {
             comunes: { activeTab: 'dashboard', titulo: 'Inicio', recorrido: datosRecorrido('dashboard', req.user) },
