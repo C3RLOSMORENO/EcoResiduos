@@ -27,6 +27,14 @@ on:
       - 'v*'
     branches:
       - main
+      - 'feature/**'
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-apk.yml'
+
+  pull_request:
+    branches:
+      - main
     paths:
       - 'app/**'
       - '.github/workflows/build-apk.yml'
