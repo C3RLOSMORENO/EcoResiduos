@@ -10,6 +10,7 @@
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-Edge_Vision-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-246%20Passed%20(100%25)-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
+[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android%20(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
 **Plataforma de Trazabilidad Logística de Residuos, Clasificación por Visión Computacional en Dispositivo y Auditoría Ambiental**
 
@@ -277,7 +278,19 @@ sequenceDiagram
 
 ---
 
-### Paso 2: Ejecución de la Aplicación Móvil (Flutter)
+### Descarga Directa de la Aplicación Móvil (Android APK)
+
+Si deseas probar la aplicación directamente en un dispositivo Android sin compilar el código fuente:
+
+1. Ve a la sección de **[Releases del Repositorio](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)**.
+2. Descarga el archivo **`EcoResiduos.apk`**.
+3. En tu teléfono Android, abre el archivo descargado. Si Android te solicita permiso para instalar aplicaciones de fuentes desconocidas, habilítalo en los ajustes del navegador o gestor de archivos.
+4. Presiona **Instalar** y ¡listo!
+
+---
+
+### Paso 2: Ejecución Local de la Aplicación Móvil (Flutter)
+
 
 ```bash
 # Ingresar a la carpeta de la aplicación
