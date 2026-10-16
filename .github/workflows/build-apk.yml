@@ -1,0 +1,191 @@
+name: Compilar y Publicar APK Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Etiqueta de la versión (ej. v1.0.0). Dejar en blanco para usar la de pubspec.yaml'
+        required: false
+        default: ''
+      release_title:
+        description: 'Título de la versión'
+        required: false
+        default: ''
+      create_release:
+        description: 'Publicar en la sección de Releases de GitHub para descarga pública'
+        required: true
+        type: boolean
+        default: true
+      is_prerelease:
+        description: 'Marcar como versión preliminar (pre-release)'
+        required: false
+        type: boolean
+        default: false
+
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-apk.yml'
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Compilar APK (Release)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Aceptar licencias de Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Configurar variables de entorno (.env)
+        run: |
+          cd app
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+          else
+            echo "GEMINI_API_KEY=AQ.Ab8RN6KsK8jPSC_5qTJu-tIgom1Ziu-HG3Hsn6f3romNyGQIbg" > .env
+          fi
+
+      - name: Obtener dependencias de Flutter
+        run: |
+          cd app
+          flutter pub get
+
+      - name: Extraer versión de la aplicación
+        id: version
+        run: |
+          FULL_VERSION=$(grep '^version:' app/pubspec.yaml | sed 's/version: //' | tr -d ' ' | tr -d '\r')
+          VERSION_NAME=$(echo "$FULL_VERSION" | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo "$FULL_VERSION" | cut -d'+' -f2)
+          echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "date=$(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_ENV
+
+      - name: Ejecutar pruebas unitarias de Flutter
+        run: |
+          cd app
+          flutter test
+
+      - name: Compilar APK en modo Release
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
+        run: |
+          cd app
+          flutter build apk --release
+
+      - name: Preparar archivos APK para descarga
+        run: |
+          APK_DIR="app/build/app/outputs/flutter-apk"
+          cp "$APK_DIR/app-release.apk" "$APK_DIR/EcoResiduos.apk"
+          cp "$APK_DIR/app-release.apk" "$APK_DIR/EcoResiduos-v${{ env.VERSION_NAME }}.apk"
+          ls -la "$APK_DIR"
+
+      - name: Guardar APK como artefacto de GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoResiduos-v${{ env.VERSION_NAME }}-APK
+          path: |
+            app/build/app/outputs/flutter-apk/EcoResiduos.apk
+            app/build/app/outputs/flutter-apk/EcoResiduos-v${{ env.VERSION_NAME }}.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Determinar etiqueta de versión para GitHub Release
+        id: release_info
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          elif [ -n "${{ inputs.release_tag }}" ]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            TAG="v${{ env.VERSION_NAME }}"
+          fi
+          
+          if [ -n "${{ inputs.release_title }}" ]; then
+            TITLE="${{ inputs.release_title }}"
+          else
+            TITLE="EcoResiduos $TAG"
+          fi
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "TITLE=$TITLE" >> $GITHUB_ENV
+
+      - name: Publicar Release en GitHub para descarga pública
+        uses: softprops/action-gh-release@v2
+        if: |
+          startsWith(github.ref, 'refs/tags/') ||
+          github.ref == 'refs/heads/main' ||
+          (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.TITLE }}
+          draft: false
+          prerelease: ${{ inputs.is_prerelease || false }}
+          generate_release_notes: true
+          body: |
+            ## 📱 Aplicación Móvil EcoResiduos (Android)
+
+            ¡La versión de la aplicación está lista para descargar e instalar en dispositivos Android!
+
+            ### ⬇️ Enlaces de Descarga Directa
+            - **[Descargar EcoResiduos.apk (Recomendado)](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/EcoResiduos.apk)**
+            - **[Descargar EcoResiduos-v${{ env.VERSION_NAME }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/EcoResiduos-v${{ env.VERSION_NAME }}.apk)**
+
+            ---
+
+            ### ℹ️ Información de Compilación
+            - **Versión:** `${{ env.VERSION_NAME }}` (Build `${{ env.BUILD_NUMBER }}`)
+            - **Fecha de compilación:** `${{ env.date }}`
+            - **Commit:** `${{ github.sha }}`
+
+            ---
+
+            ### 📲 Instrucciones de Instalación
+            1. Haz clic en **EcoResiduos.apk** desde tu navegador en el celular Android para descargarlo.
+            2. Abre el archivo descargado.
+            3. Si Android muestra una advertencia de seguridad (*"Por seguridad, el teléfono no tiene permitido instalar apps desconocidas de esta fuente"*):
+               - Toca en **Ajustes / Configuración**.
+               - Activa el permiso **"Permitir desde esta fuente"**.
+               - Regresa y presiona **Instalar**.
+            4. ¡Listo! Abre **EcoResiduos** e inicia sesión o regístrate.
+          files: |
+            app/build/app/outputs/flutter-apk/EcoResiduos.apk
+            app/build/app/outputs/flutter-apk/EcoResiduos-v${{ env.VERSION_NAME }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

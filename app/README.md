@@ -7,12 +7,14 @@
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Flutter_SDK-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Tests](https://img.shields.io/badge/Flutter_Tests-117_Passed-brightgreen?style=for-the-badge)
+[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android%20(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
 **Aplicación cliente con inferencia de visión computacional en el borde (*Edge ML*) para la gestión de residuos en los 6 municipios priorizados de Santander**
 
 *(Bucaramanga, Floridablanca, Girón, Piedecuesta, Barrancabermeja y Sabana de Torres)*
 
 </div>
+
 
 ---
 
