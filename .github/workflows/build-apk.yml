@@ -152,6 +152,7 @@ jobs:
           github.ref == 'refs/heads/main' ||
           (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ env.TAG }}
           name: ${{ env.TITLE }}
           draft: false
