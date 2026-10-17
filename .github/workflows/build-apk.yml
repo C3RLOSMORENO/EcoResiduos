@@ -46,6 +46,13 @@ jobs:
   build-apk:
     name: Compilar APK (Release)
     runs-on: ubuntu-latest
+    env:
+      VERSION_NAME: ''
+      BUILD_NUMBER: ''
+      FULL_VERSION: ''
+      date: ''
+      TAG: ''
+      TITLE: ''
 
     steps:
       - name: Descargar código del repositorio
