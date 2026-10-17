@@ -21,6 +21,8 @@ function crearApp() {
     if (process.env.TRUST_PROXY) {
         const saltos = Number(process.env.TRUST_PROXY);
         app.set('trust proxy', Number.isInteger(saltos) ? saltos : process.env.TRUST_PROXY);
+    } else if (process.env.VERCEL) {
+        app.set('trust proxy', 1);
     }
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, 'views'));

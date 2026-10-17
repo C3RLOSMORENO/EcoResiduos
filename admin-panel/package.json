@@ -8,6 +8,7 @@
     },
     "scripts": {
         "start": "node server.js",
+        "build": "npm run build:css",
         "dev": "nodemon server.js",
         "dev:css": "tailwindcss -i ./src/public/css/input.css -o ./src/public/css/style.css --watch",
         "build:css": "tailwindcss -i ./src/public/css/input.css -o ./src/public/css/style.css --minify",
