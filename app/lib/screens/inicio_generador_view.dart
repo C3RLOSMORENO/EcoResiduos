@@ -9,14 +9,17 @@ import '../utils/sesion.dart';
 import '../widgets/categoria_chip.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
+import '../widgets/recorrido_bienvenida.dart';
 import '../widgets/tarjeta_siguiente_paso.dart';
 import 'navegacion_principal.dart';
 
 /// Inicio del generador (06): el siguiente paso primero y el resumen después.
 class InicioGeneradorView extends StatefulWidget {
-  const InicioGeneradorView({super.key, required this.repository});
+  const InicioGeneradorView({super.key, required this.repository, this.keyFab});
 
   final SolicitudesRepository repository;
+  /// Clave del FAB «Identificar» definida en InicioScreen, usada por el recorrido.
+  final GlobalKey? keyFab;
 
   @override
   State<InicioGeneradorView> createState() => _InicioGeneradorViewState();
@@ -24,6 +27,9 @@ class InicioGeneradorView extends StatefulWidget {
 
 class _InicioGeneradorViewState extends State<InicioGeneradorView> {
   late Future<_Resumen> _resumen = _cargar();
+  final _keyTarjeta = GlobalKey();
+  final _keyCifras = GlobalKey();
+  bool _recorridoAgendado = false;
 
   Future<_Resumen> _cargar() async {
     final publicaciones = await widget.repository.getMisPublicaciones();
@@ -72,6 +78,19 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
             );
           }
           if (!snapshot.hasData) return const InicioSkeleton();
+          if (!_recorridoAgendado) {
+            _recorridoAgendado = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              mostrarRecorridoSiNecesario(
+                context,
+                'GENERADOR',
+                keyTarjeta: _keyTarjeta,
+                keyCifras: _keyCifras,
+                keyFab: widget.keyFab,
+              );
+            });
+          }
           return RefreshIndicator(onRefresh: _recargar, child: _contenido(snapshot.data!));
         },
       ),
@@ -85,7 +104,8 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
 
     if (resumen.publicaciones.isEmpty) {
       bloques.add(
-        const TarjetaSiguientePaso(
+        TarjetaSiguientePaso(
+          key: _keyTarjeta,
           encabezado: 'PRIMER PASO',
           titulo: 'Empieza por tu primer residuo',
           detalle: 'Tómale una foto y te decimos qué es y qué gestor cercano lo recibe. Funciona sin internet.',
@@ -97,6 +117,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
         final publicados = resumen.contar('PUBLICADO');
         bloques.add(
           TarjetaSiguientePaso(
+            key: _keyTarjeta,
             encabezado: 'TODO AL DÍA',
             icono: Icons.task_alt,
             titulo: 'Todo al día',
@@ -110,6 +131,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
         final primero = pendientes.first;
         bloques.add(
           TarjetaSiguientePaso(
+            key: _keyTarjeta,
             contador: pendientes.length > 1 ? '1 DE ${pendientes.length}' : null,
             chip: CategoriaChip.fromString(primero.solicitud.material?.categoria),
             titulo: primero.titulo,
@@ -134,6 +156,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
       }
       bloques.add(
         FranjaCifras(
+          key: _keyCifras,
           cifras: [
             Cifra(
               valor: resumen.contar('PUBLICADO'),

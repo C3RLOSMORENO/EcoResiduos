@@ -3,10 +3,10 @@ import '../features/solicitudes/models/solicitud_recoleccion.dart';
 /// Quién paga a quién en la propuesta del gestor.
 enum TipoValor {
   /// El generador le paga al gestor por recoger el residuo.
-  cobroRecoleccion('COBRO_RECOLECCION', 'Valor cobrado por recolección externa', 'Cobra por recoger'),
+  cobroRecoleccion('COBRO_RECOLECCION', 'Cobro generado', 'Cobra por recoger'),
 
   /// El gestor le paga al generador por el material que aprovecha.
-  pagoAprovechamiento('PAGO_APROVECHAMIENTO', 'Valor pagado por aprovechamiento', 'Paga por el material');
+  pagoAprovechamiento('PAGO_APROVECHAMIENTO', 'Pago generado', 'Paga por el material');
 
   const TipoValor(this.valor, this.etiqueta, this.etiquetaCorta);
 
@@ -19,6 +19,24 @@ enum TipoValor {
   static TipoValor? desde(String? valor) {
     for (final tipo in values) {
       if (tipo.valor == valor?.toUpperCase()) return tipo;
+    }
+    return null;
+  }
+}
+
+/// Cómo se entrega el residuo: el gestor pasa a recogerlo o el generador lo lleva.
+enum ModalidadEntrega {
+  recoleccionDomicilio('RECOLECCION_DOMICILIO', 'El gestor recoge en tu dirección'),
+  entregaEnGestor('ENTREGA_EN_GESTOR', 'Tú llevas el material al punto del gestor');
+
+  const ModalidadEntrega(this.valor, this.etiqueta);
+
+  final String valor;
+  final String etiqueta;
+
+  static ModalidadEntrega? desde(String? valor) {
+    for (final m in values) {
+      if (m.valor == valor?.toUpperCase()) return m;
     }
     return null;
   }
@@ -41,6 +59,7 @@ class PostulacionRecoleccion {
   final String? gestorRazonSocial;
   final String? gestorMunicipio;
   final String? gestorTelefono;
+  final ModalidadEntrega? modalidadEntrega;
 
   const PostulacionRecoleccion({
     this.id,
@@ -55,6 +74,7 @@ class PostulacionRecoleccion {
     this.gestorRazonSocial,
     this.gestorMunicipio,
     this.gestorTelefono,
+    this.modalidadEntrega,
   });
 
   /// Instancia una postulación desde un mapa de base de datos.
@@ -87,6 +107,7 @@ class PostulacionRecoleccion {
       gestorRazonSocial: razonSocial,
       gestorMunicipio: municipio,
       gestorTelefono: telefono,
+      modalidadEntrega: ModalidadEntrega.desde(map['modalidad_entrega']?.toString()),
     );
   }
 
@@ -99,6 +120,7 @@ class PostulacionRecoleccion {
       if (propuesta != null && propuesta!.trim().isNotEmpty) 'propuesta': propuesta!.trim(),
       if (tipoValor != null) 'tipo_valor': tipoValor!.valor,
       if (valor != null) 'valor': valor,
+      if (modalidadEntrega != null) 'modalidad_entrega': modalidadEntrega!.valor,
     };
     if (!forInsert && id != null) {
       map['id'] = id;
@@ -120,6 +142,7 @@ class PostulacionRecoleccion {
     String? gestorRazonSocial,
     String? gestorMunicipio,
     String? gestorTelefono,
+    ModalidadEntrega? modalidadEntrega,
   }) {
     return PostulacionRecoleccion(
       id: id ?? this.id,
@@ -134,6 +157,7 @@ class PostulacionRecoleccion {
       gestorRazonSocial: gestorRazonSocial ?? this.gestorRazonSocial,
       gestorMunicipio: gestorMunicipio ?? this.gestorMunicipio,
       gestorTelefono: gestorTelefono ?? this.gestorTelefono,
+      modalidadEntrega: modalidadEntrega ?? this.modalidadEntrega,
     );
   }
 

@@ -2,6 +2,7 @@ const autoridadService = require('../services/AutoridadService');
 const { leerPagina, paginacion, conAviso } = require('../utils/web');
 const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosAutoridades } = require('../utils/filtros');
+const { datosRecorrido } = require('../utils/recorridos');
 
 const autoridadController = {
     /** GET /autoridades: lista con búsqueda y paginación. */
@@ -9,7 +10,7 @@ const autoridadController = {
         const pagina = leerPagina(req.query);
         const filtros = filtrosAutoridades(req.query);
         return renderLista(res, 'autoridades', {
-            comunes: { titulo: 'Autoridades ambientales', activeTab: 'autoridades', filtros },
+            comunes: { titulo: 'Autoridades ambientales', activeTab: 'autoridades', recorrido: datosRecorrido('autoridades', req.user), filtros },
             cargar: async () => {
                 const { autoridades, total } = await autoridadService.listarAutoridades({ ...filtros, pagina });
                 return { autoridades, pag: paginacion({ total, pagina, ruta: '/autoridades', query: req.query }) };

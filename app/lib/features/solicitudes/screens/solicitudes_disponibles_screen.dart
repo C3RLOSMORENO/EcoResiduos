@@ -10,6 +10,7 @@ import '../../../widgets/chip_menu.dart';
 import '../../../widgets/eco_top_app_bar.dart';
 import '../../../widgets/empty_state_widget.dart';
 import '../../../widgets/materiales_en_verificacion.dart';
+import '../../../widgets/recorrido_bienvenida.dart';
 import '../../../widgets/skeleton_loading.dart';
 import '../../../widgets/solicitud_card.dart';
 import '../models/solicitud_recoleccion.dart';
@@ -46,6 +47,9 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
   String? _municipio;
   String? _categoria;
   double? _distanciaMaxima;
+  final _keyFiltros = GlobalKey();
+  final _keyLista = GlobalKey();
+  bool _recorridoAgendado = false;
 
   @override
   void initState() {
@@ -192,7 +196,34 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
     final visibles = _visibles;
     final categorias = {for (final s in _solicitudes!) ?s.material?.categoria.toUpperCase()}.toList();
 
+    if (!_recorridoAgendado) {
+      _recorridoAgendado = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        mostrarRecorridoPantallaSiNecesario(context, 'solicitudes_gestor', [
+          CoachMarkPaso(
+            keyObjetivo: _keyFiltros,
+            titulo: 'Filtra por lo que importa',
+            descripcion:
+                'Municipio: solo solicitudes de esa zona. '
+                'Categoría: filtra por tipo de material. '
+                'Distancia: radio en km desde tu ubicación. '
+                'Los filtros se combinan entre sí.',
+          ),
+          CoachMarkPaso(
+            keyObjetivo: _keyLista,
+            titulo: 'Tu siguiente oportunidad',
+            descripcion:
+                'Cada tarjeta muestra residuo, municipio, distancia y fecha de publicación. '
+                'Tócala para ver el detalle y enviar tu propuesta: precio, modalidad de entrega y mensaje al generador.',
+            nota: 'Solo ves los materiales que declaraste.',
+          ),
+        ]);
+      });
+    }
+
     return ListView(
+      key: _keyLista,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, EcoSpace.s24),
       children: [
@@ -211,6 +242,7 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
         ),
         const SizedBox(height: EcoSpace.s12),
         SingleChildScrollView(
+          key: _keyFiltros,
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [

@@ -9,6 +9,7 @@ import '../widgets/contenido_guia.dart';
 import '../widgets/categoria_chip.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
+import '../widgets/recorrido_bienvenida.dart';
 import '../widgets/skeleton_loading.dart';
 import 'flujo_identificacion.dart';
 import 'guia_manejo_general_screen.dart';
@@ -45,6 +46,9 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
   late final SolicitudesRepository _repository = widget.repository ?? SupabaseSolicitudesRepository();
   late Future<List<MaterialResiduo>> _catalogo = _repository.getMateriales();
   List<String> _recientes = const [];
+  final _keyBuscar = GlobalKey();
+  final _keyGuia = GlobalKey();
+  bool _recorridoAgendado = false;
 
   static const _claveRecientes = 'busquedas_recientes';
 
@@ -108,12 +112,36 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
       future: _catalogo,
       builder: (context, snapshot) {
         final catalogo = snapshot.data;
+        if (catalogo != null && !_recorridoAgendado) {
+          _recorridoAgendado = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            mostrarRecorridoPantallaSiNecesario(context, 'residuos', [
+              CoachMarkPaso(
+                keyObjetivo: _keyBuscar,
+                titulo: 'Busca cualquier residuo',
+                descripcion:
+                    'Escribe "pilas", "cartón" o "plástico". '
+                    'Obtienes la ficha del material: instrucciones de separación, normativa vigente y gestores que lo reciben.',
+                nota: 'Funciona sin conexión a internet.',
+              ),
+              CoachMarkPaso(
+                keyObjetivo: _keyGuia,
+                titulo: 'Normativa y guías',
+                descripcion:
+                    'Resolución 2184/2019, Decreto 1076/2015, Ley RAEE y más. '
+                    'Consulta las normas que definen cómo separar y qué gestor debe recibir cada material.',
+              ),
+            ]);
+          });
+        }
         return ListView(
           padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, 96 + EcoSpace.s16),
           children: [
             _barraBusqueda(catalogo ?? const []),
             const SizedBox(height: EcoSpace.s16),
             InkWell(
+              key: _keyGuia,
               borderRadius: BorderRadius.circular(EcoRadius.medium),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuiaManejoGeneralScreen())),
               child: Container(
@@ -184,7 +212,9 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
   }
 
   Widget _barraBusqueda(List<MaterialResiduo> catalogo) {
-    return SearchAnchor.bar(
+    return KeyedSubtree(
+      key: _keyBuscar,
+      child: SearchAnchor.bar(
       barHintText: 'Busca un residuo: pilas, cartón…',
       barElevation: const WidgetStatePropertyAll(0),
       barBackgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
@@ -196,6 +226,7 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
         if (texto.length < 2) return _sugerenciasIniciales(controller);
         return _resultados(catalogo, texto, controller);
       },
+    ),
     );
   }
 

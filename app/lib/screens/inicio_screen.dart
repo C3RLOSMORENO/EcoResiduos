@@ -36,6 +36,10 @@ class _InicioScreenState extends State<InicioScreen> {
   String? _rol;
   int _indice = Pestana.inicio;
 
+  // GlobalKeys pasadas a las vistas para los coach marks.
+  final _keyFab = GlobalKey();
+  final _keyNav = GlobalKey();
+
   /// Solo se construye la pestaña activa, y cada visita la crea de nuevo para
   /// que muestre datos al día (p. ej. tras publicar o aceptar una postulación).
   final _visitas = List<int>.filled(4, 0);
@@ -108,6 +112,7 @@ class _InicioScreenState extends State<InicioScreen> {
         body: KeyedSubtree(key: ValueKey('$_indice-${_visitas[_indice]}'), child: pestanas[_indice]),
         floatingActionButton: conIdentificar
             ? FloatingActionButton.extended(
+                key: _keyFab,
                 heroTag: 'identificar',
                 onPressed: () => abrirIdentificacion(context),
                 icon: const Icon(Icons.photo_camera_outlined),
@@ -115,6 +120,7 @@ class _InicioScreenState extends State<InicioScreen> {
               )
             : null,
         bottomNavigationBar: NavigationBar(
+          key: _keyNav,
           selectedIndex: _indice,
           onDestinationSelected: _irA,
           destinations: esGestor ? _destinosGestor : _destinosGenerador,
@@ -124,14 +130,14 @@ class _InicioScreenState extends State<InicioScreen> {
   }
 
   List<Widget> _pestanasGenerador() => [
-    InicioGeneradorView(repository: _repository),
+    InicioGeneradorView(repository: _repository, keyFab: _keyFab),
     ResiduosScreen(repository: _repository),
     const GestoresAsociadosScreen(),
     MisPublicacionesScreen(repository: _repository),
   ];
 
   List<Widget> _pestanasGestor() => [
-    InicioGestorView(repository: _repository),
+    InicioGestorView(repository: _repository, keyNav: _keyNav),
     SolicitudesDisponiblesScreen(repository: _repository),
     MisPostulacionesScreen(repository: _repository),
     const GestoresAsociadosScreen(incluirResiduos: true),

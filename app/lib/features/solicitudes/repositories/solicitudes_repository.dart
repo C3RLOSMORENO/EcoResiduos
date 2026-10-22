@@ -62,6 +62,7 @@ abstract class SolicitudesRepository {
     required int valor,
     int? gestorId,
     String? propuesta,
+    ModalidadEntrega? modalidadEntrega,
   });
 
   /// Postulación del gestor autenticado a una solicitud, o null si no se ha postulado.
@@ -463,6 +464,7 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
     required int valor,
     int? gestorId,
     String? propuesta,
+    ModalidadEntrega? modalidadEntrega,
   }) async {
     final client = _supabase;
     if (client == null) throw Exception('Cliente de Supabase no disponible.');
@@ -478,6 +480,7 @@ class SupabaseSolicitudesRepository implements SolicitudesRepository {
       propuesta: propuesta,
       tipoValor: tipoValor,
       valor: valor,
+      modalidadEntrega: modalidadEntrega,
     );
     await client.from('postulaciones_recoleccion').insert(postulacion.toMap(forInsert: true));
   }

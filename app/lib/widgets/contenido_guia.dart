@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/guia_categorias.dart';
 import '../theme/eco_theme.dart';
+import '../utils/enlaces.dart';
 
 /// Piezas de lectura compartidas por la ficha del material, el manejo seguro
 /// y la guía general, para que el texto tenga el mismo tamaño en todas.
@@ -173,6 +174,22 @@ class RecuadroNormativa extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                 ),
+              ),
+            ),
+          ],
+          if (guia.urlNormativa != null) ...[
+            const SizedBox(height: EcoSpace.s8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s8, vertical: 0),
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: scheme.primary,
+                ),
+                onPressed: () => abrirDocumento(context, guia.urlNormativa!),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('Ver norma oficial'),
               ),
             ),
           ],

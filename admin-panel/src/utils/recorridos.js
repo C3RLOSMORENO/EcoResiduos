@@ -47,6 +47,116 @@ const RECORRIDOS = {
                 alineacion: 'end'
             }
         ]
+    },
+
+    solicitudes: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="solicitudes-alertas"]',
+                titulo: 'Alertas de seguimiento',
+                texto: 'Filtra solicitudes con problema reportado o sin certificado hace 7+ días: son las que necesitan acción.',
+                lado: 'bottom'
+            },
+            {
+                desde: 1,
+                elemento: '[data-recorrido="solicitudes-tabla"]',
+                titulo: 'Historial de cada residuo',
+                texto: 'Cada fila lleva al detalle: postulaciones, gestor asignado, valor acordado y certificado de aprovechamiento.',
+                lado: 'top'
+            }
+        ]
+    },
+
+    gestores: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="gestores-nuevo"]',
+                titulo: 'Registrar una empresa nueva',
+                texto: 'Agrega empresas que no se registraron desde la app. Las que sí lo hicieron llegan aquí en Pendiente.',
+                lado: 'bottom',
+                alineacion: 'end'
+            },
+            {
+                desde: 1,
+                elemento: '[data-recorrido="gestores-tabla"]',
+                titulo: 'Auditoría de permisos',
+                texto: 'Revisa el permiso antes de aprobar. Solo empresas aprobadas con materiales verificados son visibles en la app.',
+                lado: 'top'
+            }
+        ]
+    },
+
+    reportes: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="reportes-filtros"]',
+                titulo: 'Informes por período y municipio',
+                texto: 'Ajusta el rango de fechas y filtra por municipio o categoría para obtener los datos que necesitas.',
+                lado: 'bottom'
+            },
+            {
+                desde: 1,
+                elemento: '[data-recorrido="reportes-descarga"]',
+                titulo: 'Exportar a Excel',
+                texto: 'Descarga los datos del período filtrado en formato Excel, listo para entregar a la autoridad ambiental.',
+                lado: 'bottom',
+                alineacion: 'end'
+            }
+        ]
+    },
+
+    generadores: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="ciudadanos"]',
+                titulo: 'Solo lectura y protegido',
+                texto: 'Consulta generadores y su actividad. Sus datos personales los gestiona cada usuario en la app.',
+                lado: 'bottom'
+            }
+        ]
+    },
+
+    materiales: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="materiales-nuevo"]',
+                titulo: 'Ampliar el catálogo',
+                texto: 'Agrega residuos. Este catálogo lo usa el reconocedor IA y la lista que declaran los gestores al registrarse.',
+                lado: 'bottom',
+                alineacion: 'end'
+            },
+            {
+                desde: 1,
+                elemento: '[data-recorrido="materiales-tabla"]',
+                titulo: 'Código y categoría',
+                texto: 'El código aparece en la ficha de cada residuo en la app. La categoría define qué gestores lo reciben.',
+                lado: 'top'
+            }
+        ]
+    },
+
+    autoridades: {
+        version: 1,
+        pasos: [
+            {
+                desde: 1,
+                elemento: '[data-recorrido="autoridades-nuevo"]',
+                titulo: 'Mantener el directorio al día',
+                texto: 'Agrega o edita entidades de control. La app las muestra a todos los usuarios para que sepan a quién reportar.',
+                lado: 'bottom',
+                alineacion: 'end'
+            }
+        ]
     }
 };
 
