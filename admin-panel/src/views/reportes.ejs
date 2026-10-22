@@ -1,4 +1,4 @@
-<%- include('partials/header', { activeTab: 'reportes', titulo: 'Reportes' }) %>
+<%- include('partials/header', { activeTab: 'reportes', titulo: 'Reportes', recorrido: recorrido }) %>
 
 <div class="flex flex-col gap-6">
   <div class="flex flex-wrap items-end justify-between gap-4">
@@ -6,7 +6,7 @@
       <h1 class="titulo-pagina">Reciclaje por municipio</h1>
       <p class="mt-1 text-body-l text-on-surface-variant">Cuánto se recicla en cada municipio, para la dirección y las autoridades ambientales.</p>
     </div>
-    <a href="<%= enlaceExcel %>" class="no-imprimir btn-filled" download>
+    <a href="<%= enlaceExcel %>" class="no-imprimir btn-filled" download data-recorrido="reportes-descarga">
       <span class="material-symbols-outlined icono-20" aria-hidden="true">download</span>
       Descargar Excel
     </a>
@@ -17,7 +17,7 @@
     <p>Filtros aplicados: <%= descripcion %>.</p>
   </div>
 
-  <form method="GET" action="/reportes" class="no-imprimir tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Filtrar el reporte" data-validar>
+  <form method="GET" action="/reportes" class="no-imprimir tarjeta grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Filtrar el reporte" data-validar data-recorrido="reportes-filtros">
     <div class="campo">
       <label for="reporteDesde" class="campo-etiqueta">Confirmadas desde</label>
       <input type="date" id="reporteDesde" name="desde" value="<%= filtros.desde %>" class="campo-control">

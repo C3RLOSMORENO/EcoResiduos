@@ -46,8 +46,8 @@ const TIPOS_VALOR = {
 };
 
 const TIPOS_CERTIFICADO = {
-    DISPOSICION_FINAL: 'Certificado de disposición final',
-    APROVECHAMIENTO: 'Certificado de aprovechamiento'
+    DISPOSICION_FINAL: 'Certificado o acta de disposición final',
+    APROVECHAMIENTO: 'Certificado o acta de aprovechamiento'
 };
 
 const UNIDADES = {

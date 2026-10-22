@@ -188,7 +188,7 @@ class IdentificacionService {
     'APROVECHABLE': 'Residuo aprovechable',
     'ORGANICO': 'Residuo orgánico',
     'ORDINARIO': 'Residuo ordinario',
-    'RAEE': 'Residuo electrónico (RAEE)',
+    'RAEE': 'Residuo de aparatos eléctricos y electrónicos (RAEE)',
     'PELIGROSO': 'Residuo peligroso',
     'RIESGO_BIOLOGICO': 'Residuo de riesgo biológico',
     'RCD': 'Residuo de construcción (RCD)',

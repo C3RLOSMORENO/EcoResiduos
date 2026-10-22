@@ -12,6 +12,7 @@ class PerfilGestor {
   final double? latitud;
   final double? longitud;
   final String estadoVerificacion;
+  final String? horario;
   final bool disponible;
   final DateTime? createdAt;
   final List<int>? materialIds;
@@ -28,6 +29,7 @@ class PerfilGestor {
     required this.telefonoContacto,
     this.latitud,
     this.longitud,
+    this.horario,
     this.estadoVerificacion = 'PENDIENTE',
     this.disponible = true,
     this.createdAt,
@@ -57,6 +59,7 @@ class PerfilGestor {
       telefonoContacto: (map['telefono_contacto'] ?? '').toString(),
       latitud: map['latitud'] != null ? double.tryParse(map['latitud'].toString()) : null,
       longitud: map['longitud'] != null ? double.tryParse(map['longitud'].toString()) : null,
+      horario: (map['horario'] ?? map['horario_atencion'])?.toString(),
       estadoVerificacion: (map['estado_verificacion'] ?? 'PENDIENTE').toString().toUpperCase(),
       disponible: map['disponible'] is bool ? map['disponible'] as bool : true,
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
@@ -97,6 +100,7 @@ class PerfilGestor {
     String? telefonoContacto,
     double? latitud,
     double? longitud,
+    String? horario,
     String? estadoVerificacion,
     bool? disponible,
     DateTime? createdAt,
@@ -114,6 +118,7 @@ class PerfilGestor {
       telefonoContacto: telefonoContacto ?? this.telefonoContacto,
       latitud: latitud ?? this.latitud,
       longitud: longitud ?? this.longitud,
+      horario: horario ?? this.horario,
       estadoVerificacion: estadoVerificacion ?? this.estadoVerificacion,
       disponible: disponible ?? this.disponible,
       createdAt: createdAt ?? this.createdAt,

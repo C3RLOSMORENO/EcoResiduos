@@ -194,6 +194,7 @@ class FakeSolicitudesRepository implements SolicitudesRepository {
     required int valor,
     int? gestorId,
     String? propuesta,
+    ModalidadEntrega? modalidadEntrega,
   }) async {
     llamadas.add('postular:$solicitudId');
     propuestaEnviada = propuesta;
@@ -359,4 +360,18 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> actualizarMunicipio(String municipio) async => llamadas.add('municipio:$municipio');
+
+  @override
+  Future<void> actualizarInfoContactoGestor({
+    required String emailContacto,
+    required String telefonoContacto,
+    required String direccion,
+  }) async =>
+      llamadas.add('infoContacto:$emailContacto');
+
+  @override
+  Future<void> actualizarHorario(String? horario) async => llamadas.add('horario:$horario');
+
+  @override
+  Future<void> renovarPermisoAmbiental(ArchivoPdf pdf) async => llamadas.add('renovarPermiso:${pdf.nombre}');
 }

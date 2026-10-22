@@ -1,4 +1,4 @@
-<%- include('partials/header', { activeTab: 'gestores', titulo: 'Gestores' }) %>
+<%- include('partials/header', { activeTab: 'gestores', titulo: 'Gestores', recorrido: recorrido }) %>
 
 <div class="flex flex-col gap-6">
   <div class="flex flex-wrap items-end justify-between gap-4">
@@ -6,7 +6,7 @@
       <h1 class="titulo-pagina">Gestores</h1>
       <p class="mt-1 text-body-l text-on-surface-variant">Empresas autorizadas que recolectan los residuos: revisa su permiso, sus materiales y su estado.</p>
     </div>
-    <a href="/gestores/nuevo" class="btn-filled">
+    <a href="/gestores/nuevo" class="btn-filled" data-recorrido="gestores-nuevo">
       <span class="material-symbols-outlined icono-20" aria-hidden="true">add</span>
       Nuevo gestor
     </a>
@@ -60,7 +60,7 @@
       <% } %>
     </div>
   <% } else { %>
-    <div>
+    <div data-recorrido="gestores-tabla">
       <div class="tabla-contenedor" role="region" aria-labelledby="captionGestores" tabindex="0">
         <table class="tabla">
           <caption id="captionGestores">Gestores registrados<%= filtros.estado ? ' · ' + f.etiquetaVerificacion(filtros.estado) : '' %><%= filtros.municipio ? ' · ' + filtros.municipio : '' %></caption>

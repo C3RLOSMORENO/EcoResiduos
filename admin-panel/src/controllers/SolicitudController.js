@@ -2,6 +2,7 @@ const SolicitudService = require('../services/SolicitudService');
 const { leerPagina, paginacion, conAviso, rutaInterna } = require('../utils/web');
 const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosSolicitudes, describirFiltrosSolicitudes } = require('../utils/filtros');
+const { datosRecorrido } = require('../utils/recorridos');
 
 /** GET /solicitudes: lista con filtros y paginación. */
 exports.listarSolicitudes = (req, res) => {
@@ -11,6 +12,7 @@ exports.listarSolicitudes = (req, res) => {
         comunes: {
             titulo: 'Solicitudes',
             activeTab: 'solicitudes',
+            recorrido: datosRecorrido('solicitudes', req.user),
             filtros,
             descripcionFiltros: describirFiltrosSolicitudes(filtros),
             estadosCancelables: SolicitudService.ESTADOS_CANCELABLES,

@@ -11,14 +11,17 @@ import '../widgets/categoria_chip.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/materiales_en_verificacion.dart';
+import '../widgets/recorrido_bienvenida.dart';
 import '../widgets/tarjeta_siguiente_paso.dart';
 import 'navegacion_principal.dart';
 
 /// Inicio del gestor (07). Sin FAB: su acción siempre es sobre una solicitud.
 class InicioGestorView extends StatefulWidget {
-  const InicioGestorView({super.key, required this.repository});
+  const InicioGestorView({super.key, required this.repository, this.keyNav});
 
   final SolicitudesRepository repository;
+  /// Clave del NavigationBar definida en InicioScreen, usada por el recorrido.
+  final GlobalKey? keyNav;
 
   @override
   State<InicioGestorView> createState() => _InicioGestorViewState();
@@ -26,6 +29,9 @@ class InicioGestorView extends StatefulWidget {
 
 class _InicioGestorViewState extends State<InicioGestorView> {
   late Future<_ResumenGestor> _resumen = _cargar();
+  final _keyTarjeta = GlobalKey();
+  final _keyCifras = GlobalKey();
+  bool _recorridoAgendado = false;
 
   // Se vuelve a consultar al volver a la app y cada vez que llega una
   // notificación: así el gestor pasa a su inicio normal en cuanto el
@@ -115,6 +121,19 @@ class _InicioGestorViewState extends State<InicioGestorView> {
               ),
             );
           }
+          if (!_recorridoAgendado) {
+            _recorridoAgendado = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              mostrarRecorridoSiNecesario(
+                context,
+                'GESTOR',
+                keyTarjeta: _keyTarjeta,
+                keyCifras: _keyCifras,
+                keyNav: widget.keyNav,
+              );
+            });
+          }
           return RefreshIndicator(onRefresh: _recargar, child: _contenido(resumen));
         },
       ),
@@ -132,6 +151,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
       final s = aceptada.solicitud!;
       bloques.add(
         TarjetaSiguientePaso(
+          key: _keyTarjeta,
           contador: totalPendientes > 1 ? '1 DE $totalPendientes' : null,
           chip: CategoriaChip.fromString(s.material?.categoria),
           titulo: 'Te aceptaron la recolección de ${_material(s)}',
@@ -158,6 +178,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
     } else if (disponibles > 0) {
       bloques.add(
         TarjetaSiguientePaso(
+          key: _keyTarjeta,
           titulo: disponibles == 1
               ? 'Hay 1 solicitud de tus materiales'
               : 'Hay $disponibles solicitudes de tus materiales',
@@ -168,7 +189,8 @@ class _InicioGestorViewState extends State<InicioGestorView> {
       );
     } else {
       bloques.add(
-        const TarjetaSiguientePaso(
+        TarjetaSiguientePaso(
+          key: _keyTarjeta,
           encabezado: 'TODO AL DÍA',
           icono: Icons.task_alt,
           titulo: 'Todo al día',
@@ -179,6 +201,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
 
     bloques.add(
       FranjaCifras(
+        key: _keyCifras,
         cifras: [
           Cifra(
             valor: disponibles,

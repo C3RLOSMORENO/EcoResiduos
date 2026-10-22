@@ -12,6 +12,7 @@ import '../widgets/chip_menu.dart';
 import '../widgets/eco_top_app_bar.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/gestor_card.dart';
+import '../widgets/recorrido_bienvenida.dart';
 import '../widgets/skeleton_loading.dart';
 import 'autoridad_detalle_screen.dart';
 import 'gestor_detalle_screen.dart';
@@ -37,6 +38,30 @@ enum _Segmento { residuos, gestores, autoridades }
 class _GestoresAsociadosScreenState extends State<GestoresAsociadosScreen> {
   late final GestoresRepository _repository = widget.repository ?? SupabaseGestoresRepository();
   late _Segmento _segmento = widget.segmentoInicial == 1 ? _Segmento.autoridades : _Segmento.gestores;
+  final _keySegmentos = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final pantalla = widget.incluirResiduos ? 'directorio_gestor' : 'gestores_generador';
+      final desc = widget.incluirResiduos
+          ? 'Gestores: empresas con sus materiales y contacto. '
+              'Autoridades: entidades de control ambiental de tu municipio. '
+              'Residuos: catálogo de materiales con instrucciones de separación y normativa.'
+          : 'Gestores: empresas certificadas, qué materiales reciben y cómo contactarlas. '
+              'Autoridades: entidades ambientales de tu municipio para consultar o reportar.';
+      mostrarRecorridoPantallaSiNecesario(context, pantalla, [
+        CoachMarkPaso(
+          keyObjetivo: _keySegmentos,
+          titulo: 'Directorio en secciones',
+          descripcion: desc,
+          nota: 'Toca cada sección para cambiar.',
+        ),
+      ]);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +75,7 @@ class _GestoresAsociadosScreenState extends State<GestoresAsociadosScreen> {
             child: SizedBox(
               width: double.infinity,
               child: SegmentedButton<_Segmento>(
+                key: _keySegmentos,
                 segments: [
                   for (final s in segmentos)
                     ButtonSegment(

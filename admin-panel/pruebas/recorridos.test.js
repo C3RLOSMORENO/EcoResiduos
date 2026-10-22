@@ -79,10 +79,14 @@ test('si el inicio no carga, no se ofrece el recorrido', async (t) => {
     assert.ok(!html.includes('/vendor/driver.js'));
 });
 
-test('las demás pantallas no tienen botón de recorrido', async () => {
+test('las demás pantallas también tienen su recorrido', async () => {
+    // Cada pantalla principal tiene ahora su propio tour (añadido junto al botón de ayuda global).
     const html = (await request(app).get('/solicitudes').set('Cookie', SESION)).text;
-    assert.ok(!html.includes('botonRecorrido'));
-    assert.ok(!html.includes('datosRecorrido'));
+    assert.ok(html.includes('botonRecorrido'), 'solicitudes debe tener el botón de ayuda');
+    assert.ok(html.includes('datosRecorrido'), 'solicitudes debe incluir los datos del recorrido');
+    const datos = datosRecorrido(html);
+    assert.equal(datos.pantalla, 'solicitudes');
+    assert.ok(Array.isArray(datos.pasos) && datos.pasos.length > 0, 'solicitudes debe tener pasos');
 });
 
 test('al terminar se guarda en la cuenta y la página siguiente ya lo sabe', async () => {

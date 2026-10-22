@@ -7,6 +7,7 @@ import '../../../utils/enlaces.dart';
 import '../../../utils/formato.dart';
 import '../../../widgets/eco_top_app_bar.dart';
 import '../../../widgets/empty_state_widget.dart';
+import '../../../widgets/recorrido_bienvenida.dart';
 import '../../../widgets/skeleton_loading.dart';
 import '../../../widgets/solicitud_card.dart';
 import '../repositories/solicitudes_repository.dart';
@@ -30,6 +31,8 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
   List<PostulacionRecoleccion>? _postulaciones;
   Object? _error;
   bool _ocupado = false;
+  final _keyPestanas = GlobalKey();
+  bool _recorridoAgendado = false;
 
   static const _pestanas = [
     ('Enviadas', 'PROPUESTA'),
@@ -110,12 +113,31 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
     final postulaciones = _postulaciones ?? const <PostulacionRecoleccion>[];
     int contar(String estado) => postulaciones.where((p) => p.estado == estado).length;
 
+    if (_postulaciones != null && !_recorridoAgendado) {
+      _recorridoAgendado = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        mostrarRecorridoPantallaSiNecesario(context, 'postulaciones_gestor', [
+          CoachMarkPaso(
+            keyObjetivo: _keyPestanas,
+            titulo: 'Cuatro estados de tus propuestas',
+            descripcion:
+                'Enviadas: esperando respuesta del generador. '
+                'Aceptadas: coordina la recogida y súbela cuando la completes. '
+                'Asignada a otro: el generador eligió a otro gestor. '
+                'Rechazadas: propuestas descartadas.',
+          ),
+        ]);
+      });
+    }
+
     return DefaultTabController(
       length: _pestanas.length,
       child: Scaffold(
         appBar: EcoTopAppBar(
           titulo: 'Postulaciones',
           bottom: TabBar(
+            key: _keyPestanas,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [

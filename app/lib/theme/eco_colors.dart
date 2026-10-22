@@ -346,7 +346,7 @@ const ecoDarkColorScheme = ColorScheme(
 const Map<String, String> catLabel = {
   'APROVECHABLE': 'Aprovechable',
   'PELIGROSO': 'Peligroso (RESPEL)',
-  'RAEE': 'RAEE',
+  'RAEE': 'Eléctricos y Electrónicos (RAEE)',
   'RCD': 'Escombros (RCD)',
   'RIESGO_BIOLOGICO': 'Riesgo biológico',
   'ORGANICO': 'Orgánico',

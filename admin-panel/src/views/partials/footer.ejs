@@ -9,5 +9,11 @@
   <%- include('componentes/dialogo-sesion') %>
   <%- include('componentes/esqueletos') %>
   <%- include('componentes/visor-imagen') %>
+  <% if (typeof recorrido !== 'undefined' && recorrido) { %>
+    <script type="application/json" id="datosRecorrido"><%- jsonParaScript(recorrido) %></script>
+    <link rel="stylesheet" href="<%= recurso('/vendor/driver.css') %>">
+    <script src="<%= recurso('/vendor/driver.js') %>" defer></script>
+    <script src="<%= recurso('/js/recorrido.js') %>" defer></script>
+  <% } %>
 </body>
 </html>

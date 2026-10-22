@@ -135,14 +135,14 @@
       </section>
 
       <section aria-labelledby="tituloCertificado" class="tarjeta flex flex-col gap-3">
-        <h2 id="tituloCertificado" class="tarjeta-titulo">Certificado</h2>
+        <h2 id="tituloCertificado" class="tarjeta-titulo">Certificado o acta expedida por el gestor</h2>
         <% if (certificado) { %>
-          <p><%= f.etiquetaCertificado(solicitud.certificado_tipo) %><%= solicitud.certificado_at ? ' · cargado el ' + f.fechaCorta(solicitud.certificado_at) : '' %></p>
+          <p><%= f.etiquetaCertificado(solicitud.certificado_tipo) %><%= solicitud.certificado_at ? ' · expedido y cargado el ' + f.fechaCorta(solicitud.certificado_at) : '' %></p>
           <p><a class="btn-tonal w-fit" href="/solicitudes/<%= solicitud.id %>/certificado" target="_blank" rel="noopener noreferrer">
-            <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>Ver PDF<span class="sr-only"> (se abre en una pestaña nueva)</span>
+            <span class="material-symbols-outlined icono-20" aria-hidden="true">picture_as_pdf</span>Ver certificado o acta (PDF)<span class="sr-only"> (se abre en una pestaña nueva)</span>
           </a></p>
         <% } else { %>
-          <p class="text-on-surface-variant">Pendiente. <%= solicitud.estado === 'RECOLECTADO' ? 'El gestor debe cargar el certificado de disposición final o de aprovechamiento.' : 'Se carga después de la recolección.' %></p>
+          <p class="text-on-surface-variant">Pendiente. <%= solicitud.estado === 'RECOLECTADO' ? 'El gestor debe expedir y cargar el certificado o acta de disposición final o de aprovechamiento.' : 'Se expide y carga después de la recolección.' %></p>
         <% } %>
       </section>
     </div>

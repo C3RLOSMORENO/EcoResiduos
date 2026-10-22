@@ -16,12 +16,12 @@ void main() {
       await tester.pumpWidget(app(DetalleSolicitudScreen(solicitud: solicitud(), repository: repo, rol: 'GENERADOR')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Valor cobrado por recolección externa'), findsOneWidget);
+      expect(find.text('Cobro generado'), findsOneWidget);
       expect(find.text('\$ 50.000'), findsOneWidget);
 
       await tester.tap(find.text('Aceptar'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Valor cobrado por recolección externa: \$ 50.000'), findsOneWidget);
+      expect(find.textContaining('Cobro generado: \$ 50.000'), findsOneWidget);
     });
 
     testWidgets('descarga el certificado cuando el gestor lo carga', (tester) async {
@@ -44,7 +44,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Certificado de aprovechamiento'), findsOneWidget);
+      expect(find.text('Certificado o acta de aprovechamiento'), findsOneWidget);
       expect(find.text('Ver PDF'), findsOneWidget);
       expect(find.text('Reemplazar'), findsNothing);
     });
@@ -63,7 +63,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Certificado pendiente'), findsOneWidget);
+      expect(find.text('Certificado o acta pendiente'), findsOneWidget);
     });
 
     testWidgets('acepta una postulación y avisa que las demás quedan asignadas a otro gestor', (tester) async {
@@ -192,7 +192,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Valor cobrado por recolección externa'), findsOneWidget);
+      expect(find.text('Cobro generado'), findsAtLeastNWidgets(1));
       await tester.tap(find.text('Postularme para recolección'));
       await tester.pumpAndSettle();
 
@@ -216,13 +216,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Valor pagado por aprovechamiento'), findsOneWidget);
-      expect(find.text('Falta cargar el certificado'), findsOneWidget);
+      expect(find.text('Pago generado'), findsOneWidget);
+      expect(find.text('Falta expedir y cargar el certificado o acta'), findsOneWidget);
 
-      await tester.tap(find.text('Cargar certificado (PDF)'));
+      await tester.tap(find.text('Cargar certificado o acta expedida (PDF)'));
       await tester.pumpAndSettle();
 
-      expect(find.text('¿Qué certificado vas a cargar?'), findsOneWidget);
+      expect(find.text('¿Qué certificado o acta expediste para cargar?'), findsOneWidget);
       expect(find.text('Elegir PDF'), findsOneWidget);
     });
 

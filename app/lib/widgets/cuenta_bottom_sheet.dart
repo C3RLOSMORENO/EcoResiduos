@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/auth/screens/restablecer_password_screen.dart';
 import '../features/solicitudes/screens/mis_materiales_screen.dart';
+import '../services/archivo_pdf.dart';
 import '../services/foto_perfil_service.dart';
 import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
@@ -47,9 +49,18 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   String? _telefono;
   String? _municipio;
   String? _documento;
-  bool _eligiendoMunicipio = false;
+  String? _direccion;
+  String? _emailContacto;
+  String? _horario;
+
+  _VistaActual _vista = _VistaActual.cuenta;
   String? _municipioNuevo;
+  _CampoEditable? _campoActual;
   bool _guardando = false;
+
+  // Un único controlador reutilizable para la sub-vista de editar un campo.
+  final _ctrlCampo = TextEditingController();
+  final _ctrlSolicitud = TextEditingController();
 
   /// Imagen que se está subiendo o quitando; null si ninguna.
   ImagenPerfil? _cambiandoImagen;
@@ -64,6 +75,13 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     _cargarPerfil();
   }
 
+  @override
+  void dispose() {
+    _ctrlCampo.dispose();
+    _ctrlSolicitud.dispose();
+    super.dispose();
+  }
+
   Future<void> _cargarPerfil() async {
     try {
       if (_sesion.esGestor) {
@@ -74,6 +92,9 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
           _telefono = perfil.telefonoContacto;
           _municipio = perfil.municipio;
           _documento = perfil.nit;
+          _direccion = perfil.direccion;
+          _emailContacto = perfil.emailContacto;
+          _horario = perfil.horario;
         });
       } else {
         final perfil = await _auth.getPerfilGenerador();
@@ -99,11 +120,109 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       await _auth.actualizarMunicipio(nuevo);
       setState(() {
         _municipio = nuevo;
-        _eligiendoMunicipio = false;
+        _vista = _VistaActual.cuenta;
       });
     } catch (e) {
       debugPrint('No se pudo actualizar el municipio: $e');
       messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar el municipio.')));
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  void _abrirEditarCampo(_CampoEditable campo) {
+    _ctrlCampo.text = switch (campo) {
+      _CampoEditable.email => _emailContacto ?? '',
+      _CampoEditable.telefono => _telefono ?? '',
+      _CampoEditable.direccion => _direccion ?? '',
+      _CampoEditable.horario => _horario ?? '',
+    };
+    setState(() {
+      _campoActual = campo;
+      _vista = _VistaActual.editarCampo;
+    });
+  }
+
+  Future<void> _guardarCampo() async {
+    final campo = _campoActual;
+    if (campo == null) return;
+    final nuevo = _ctrlCampo.text.trim();
+    if (nuevo.isEmpty && campo != _CampoEditable.horario) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El campo no puede estar vacío.')));
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _guardando = true);
+    try {
+      if (campo == _CampoEditable.horario) {
+        await _auth.actualizarHorario(nuevo.isEmpty ? null : nuevo);
+      } else {
+        await _auth.actualizarInfoContactoGestor(
+          emailContacto: campo == _CampoEditable.email ? nuevo : (_emailContacto ?? ''),
+          telefonoContacto: campo == _CampoEditable.telefono ? nuevo : (_telefono ?? ''),
+          direccion: campo == _CampoEditable.direccion ? nuevo : (_direccion ?? ''),
+        );
+      }
+      setState(() {
+        switch (campo) {
+          case _CampoEditable.email: _emailContacto = nuevo;
+          case _CampoEditable.telefono: _telefono = nuevo;
+          case _CampoEditable.direccion: _direccion = nuevo;
+          case _CampoEditable.horario: _horario = nuevo.isEmpty ? null : nuevo;
+        }
+        _vista = _VistaActual.cuenta;
+      });
+      messenger.showSnackBar(const SnackBar(content: Text('Guardado correctamente.')));
+    } catch (e) {
+      debugPrint('No se pudo actualizar: $e');
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar los cambios. Revisa tu conexión.')));
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  Future<void> _enviarSolicitud() async {
+    final texto = _ctrlSolicitud.text.trim();
+    if (texto.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escribe qué necesitas cambiar.')));
+      return;
+    }
+    final asunto = Uri.encodeComponent('Solicitud cambio datos · ${_documento ?? _nombre}');
+    final cuerpo = Uri.encodeComponent('Empresa: $_nombre\nNIT: ${_documento ?? '—'}\n\n$texto');
+    final uri = Uri.parse('mailto:$_adminEmail?subject=$asunto&body=$cuerpo');
+    try {
+      await launchUrl(uri);
+      if (mounted) setState(() => _vista = _VistaActual.cuenta);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir el correo. Contáctanos directamente.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _subirPermiso() async {
+    final messenger = ScaffoldMessenger.of(context);
+    ArchivoPdf? pdf;
+    try {
+      pdf = await elegirPdf();
+    } on PdfInvalido catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.mensaje)));
+      return;
+    }
+    if (pdf == null || !mounted) return;
+    setState(() => _guardando = true);
+    try {
+      await _auth.renovarPermisoAmbiental(pdf);
+      if (!mounted) return;
+      messenger.showSnackBar(const SnackBar(content: Text('Permiso ambiental actualizado. El administrador lo revisará.')));
+    } catch (e) {
+      debugPrint('No se pudo subir el permiso: $e');
+      if (mounted) {
+        messenger.showSnackBar(const SnackBar(content: Text('No pudimos subir el permiso. Revisa tu conexión.')));
+      }
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -181,7 +300,12 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       duration: EcoMotion.duracion(context, EcoMotion.estado),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s16),
-        child: _eligiendoMunicipio ? _vistaMunicipio() : _vistaCuenta(),
+        child: switch (_vista) {
+          _VistaActual.municipio => _vistaMunicipio(),
+          _VistaActual.editarCampo => _vistaEditarCampo(),
+          _VistaActual.solicitarCambio => _vistaSolicitarCambio(),
+          _VistaActual.cuenta => _vistaCuenta(),
+        },
       ),
     );
   }
@@ -220,22 +344,86 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             ],
           ),
           const SizedBox(height: EcoSpace.s16),
-          _Dato(etiqueta: 'Correo', valor: _sesion.correo),
-          if (_telefono?.isNotEmpty ?? false) _Dato(etiqueta: 'Teléfono', valor: _telefono!),
+          _Dato(etiqueta: 'Correo de acceso', valor: _sesion.correo),
+          if (_sesion.esGestor)
+            _Dato(
+              etiqueta: 'Correo de contacto',
+              valor: _emailContacto?.isNotEmpty == true ? _emailContacto! : 'Sin definir',
+              accion: TextButton(
+                onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.email),
+                child: const Text('Cambiar'),
+              ),
+            ),
+          _Dato(
+            etiqueta: 'Teléfono',
+            valor: _telefono?.isNotEmpty == true ? _telefono! : 'Sin definir',
+            accion: _sesion.esGestor
+                ? TextButton(
+                    onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.telefono),
+                    child: const Text('Cambiar'),
+                  )
+                : null,
+          ),
           _Dato(
             etiqueta: 'Municipio',
             valor: municipioAdmitido(_municipio) ?? capitalizar(_municipio ?? 'Sin definir'),
             accion: TextButton(
               onPressed: () => setState(() {
                 _municipioNuevo = municipioAdmitido(_municipio);
-                _eligiendoMunicipio = true;
+                _vista = _VistaActual.municipio;
               }),
               child: const Text('Cambiar'),
             ),
           ),
           if (_documento?.isNotEmpty ?? false)
             _Dato(etiqueta: _sesion.esGestor ? 'NIT' : 'Documento', valor: _documento!),
+          if (_sesion.esGestor)
+            _Dato(
+              etiqueta: 'Dirección',
+              valor: _direccion?.isNotEmpty == true ? _direccion! : 'Sin definir',
+              accion: TextButton(
+                onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.direccion),
+                child: const Text('Cambiar'),
+              ),
+            ),
+          if (_sesion.esGestor)
+            _Dato(
+              etiqueta: 'Horario de atención',
+              valor: _horario?.isNotEmpty == true ? _horario! : 'Sin definir',
+              accion: TextButton(
+                onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.horario),
+                child: const Text('Cambiar'),
+              ),
+            ),
           const Divider(height: EcoSpace.s24),
+          if (_sesion.esGestor)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.support_agent_outlined),
+              title: const Text('Solicitar cambio al administrador'),
+              subtitle: const Text('NIT, razón social u otros datos de empresa'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _guardando
+                  ? null
+                  : () => setState(() {
+                        _ctrlSolicitud.clear();
+                        _vista = _VistaActual.solicitarCambio;
+                      }),
+            ),
+          if (_sesion.esGestor)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: _guardando
+                  ? const SizedBox.square(
+                      dimension: 24,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    )
+                  : const Icon(Icons.upload_file_outlined),
+              title: const Text('Actualizar permiso ambiental'),
+              subtitle: const Text('PDF · máx. 10 MB'),
+              trailing: _guardando ? null : const Icon(Icons.chevron_right),
+              onTap: _guardando ? null : _subirPermiso,
+            ),
           if (_sesion.esGestor)
             _OpcionImagenPerfil(
               icono: Icons.wallpaper_outlined,
@@ -293,7 +481,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             IconButton(
               tooltip: 'Volver',
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => setState(() => _eligiendoMunicipio = false),
+              onPressed: () => setState(() => _vista = _VistaActual.cuenta),
             ),
             Text('Tu municipio', style: theme.textTheme.headlineSmall),
           ],
@@ -321,7 +509,113 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       ],
     );
   }
+
+  Widget _vistaEditarCampo() {
+    final theme = Theme.of(context);
+    final campo = _campoActual!;
+    final (titulo, hint, tipo, multilinea) = switch (campo) {
+      _CampoEditable.email => ('Correo de contacto', 'contacto@empresa.com', TextInputType.emailAddress, false),
+      _CampoEditable.telefono => ('Teléfono', '3001234567', TextInputType.phone, false),
+      _CampoEditable.direccion => ('Dirección', 'Calle 35 # 12-40', TextInputType.streetAddress, false),
+      _CampoEditable.horario => ('Horario de atención', 'Lun a sáb 7:00–17:00', TextInputType.multiline, true),
+    };
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Volver',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _guardando ? null : () => setState(() => _vista = _VistaActual.cuenta),
+              ),
+              Text('Cambiar $titulo', style: theme.textTheme.headlineSmall),
+            ],
+          ),
+          const SizedBox(height: EcoSpace.s16),
+          TextField(
+            controller: _ctrlCampo,
+            decoration: InputDecoration(labelText: titulo, hintText: hint),
+            keyboardType: tipo,
+            textInputAction: multilinea ? TextInputAction.newline : TextInputAction.done,
+            minLines: multilinea ? 2 : 1,
+            maxLines: multilinea ? 4 : 1,
+            enabled: !_guardando,
+            autofocus: true,
+            onSubmitted: multilinea ? null : (_) => _guardarCampo(),
+          ),
+          if (campo == _CampoEditable.horario) ...[
+            const SizedBox(height: EcoSpace.s4),
+            Text(
+              'Se muestra en tu ficha del directorio. Deja en blanco para no mostrar horario.',
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+          const SizedBox(height: EcoSpace.s24),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            onPressed: _guardando ? null : _guardarCampo,
+            child: Text(_guardando ? 'Guardando…' : 'Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vistaSolicitarCambio() {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Volver',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => setState(() => _vista = _VistaActual.cuenta),
+              ),
+              Text('Solicitar cambio', style: theme.textTheme.headlineSmall),
+            ],
+          ),
+          const SizedBox(height: EcoSpace.s8),
+          Text(
+            'Para cambiar el NIT, la razón social u otros datos de empresa que no puedes editar desde la app, escríbenos qué necesitas. El administrador lo revisará.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: EcoSpace.s16),
+          TextField(
+            controller: _ctrlSolicitud,
+            minLines: 3,
+            maxLines: 6,
+            maxLength: 300,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: '¿Qué necesitas cambiar?',
+              hintText: 'Ej.: Actualizar el NIT porque hubo una corrección.',
+            ),
+          ),
+          const SizedBox(height: EcoSpace.s16),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            onPressed: _enviarSolicitud,
+            icon: const Icon(Icons.send_outlined),
+            label: const Text('Enviar solicitud'),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+const _adminEmail = 'soporte@ecoresiduos.co';
+
+enum _VistaActual { cuenta, municipio, editarCampo, solicitarCambio }
+
+enum _CampoEditable { email, telefono, direccion, horario }
 
 class _Dato extends StatelessWidget {
   const _Dato({required this.etiqueta, required this.valor, this.accion});

@@ -6,6 +6,7 @@ const { etiquetaVerificacion, etiquetaCategoria } = require('../utils/formato');
 const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosGestores } = require('../utils/filtros');
 const { sinUbicar } = require('../services/geocodificador');
+const { datosRecorrido } = require('../utils/recorridos');
 
 const adminDe = (req) => (req.user && (req.user.email || req.user.id)) || null;
 
@@ -45,7 +46,7 @@ const gestorController = {
         const pagina = leerPagina(req.query);
         const filtros = filtrosGestores(req.query);
         return renderLista(res, 'gestores', {
-            comunes: { titulo: 'Gestores', activeTab: 'gestores', filtros },
+            comunes: { titulo: 'Gestores', activeTab: 'gestores', recorrido: datosRecorrido('gestores', req.user), filtros },
             cargar: async () => {
                 const { gestores, total } = await gestorService.listarGestores({ ...filtros, pagina });
                 return { gestores, pag: paginacion({ total, pagina, ruta: '/gestores', query: req.query }) };
