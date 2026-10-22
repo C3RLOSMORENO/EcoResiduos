@@ -126,17 +126,19 @@ class CategoriaTile extends StatelessWidget {
 /// Banda de color de la categoría para cabeceras de fichas. En riesgo
 /// biológico lleva franjas diagonales para no confundirse con un error.
 class CategoriaBanner extends StatelessWidget {
-  const CategoriaBanner({super.key, required this.categoria, this.height = 48, this.trailing});
+  const CategoriaBanner({super.key, required this.categoria, this.height = 48, this.trailing, this.label});
 
   final Categoria categoria;
   final double height;
   final Widget? trailing;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final colores = Theme.of(context).extension<EcoColores>() ?? ecoColoresLight;
     final color = colores.categoria(categoria);
     final theme = Theme.of(context);
+    final texto = label ?? etiquetaDeCategoria(categoria);
 
     return CustomPaint(
       painter: categoria == Categoria.riesgoBiologico
@@ -152,7 +154,7 @@ class CategoriaBanner extends StatelessWidget {
             const SizedBox(width: EcoSpace.s8),
             Expanded(
               child: Text(
-                etiquetaDeCategoria(categoria).toUpperCase(),
+                texto.toUpperCase(),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontFamily: theme.textTheme.headlineSmall?.fontFamily,
                   color: color.onColor,

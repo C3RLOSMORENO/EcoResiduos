@@ -18,6 +18,7 @@ class GuiaCategoria {
     required this.normativa,
     required this.codigoColor,
     required this.articuloClave,
+    this.urlNormativa,
   });
 
   /// Definición técnica precisa del residuo.
@@ -46,21 +47,77 @@ class GuiaCategoria {
 
   /// Resumen del principio regulatorio aplicable.
   final String articuloClave;
+
+  /// URL oficial de la norma (SUIN-Juriscol o MinAmbiente). Puede ser null si
+  /// no se ha definido un enlace estable para la categoría.
+  final String? urlNormativa;
 }
 
 /// Categorías que reciben los gestores de la app, con ejemplos para quien
 /// no conoce el nombre técnico.
 const categoriasPublicables = {
-  'APROVECHABLE': 'Cartón, PET, vidrio, metales',
-  'PELIGROSO': 'Pilas, aceites, químicos, luminarias',
-  'RAEE': 'Celulares, computadores, electrodomésticos',
-  'RCD': 'Concreto, ladrillo, madera de obra',
-  'RIESGO_BIOLOGICO': 'Hospitalarios, corto-punzantes',
+  'APROVECHABLE': 'Plásticos, cartón, papel, vidrio, metales limpios',
+  'PELIGROSO': 'Pilas, baterías, aceites, químicos, luminarias',
+  'RAEE': 'Computadores, celulares, electrodomésticos, cables',
+  'RCD': 'Escombros, concreto, ladrillo, maderas de obra',
+  'RIESGO_BIOLOGICO': 'Cortopunzantes, gasas, biosanitarios',
 };
+
+/// Subcategorías y ejemplos representativos para orientar al generador tras la captura.
+const subcategoriasPorCategoria = <Categoria, List<String>>{
+  Categoria.raee: [
+    'Computadores, portátiles y periféricos (teclados, mouse)',
+    'Celulares, tabletas y accesorios de carga',
+    'Grandes electrodomésticos (neveras, lavadoras, estufas)',
+    'Pequeños electrodomésticos (licuadoras, planchas, microondas)',
+    'Televisores, monitores y equipos de audio/video',
+    'Cables, adaptadores y componentes electrónicos',
+  ],
+  Categoria.aprovechable: [
+    'Plásticos limpios (botellas PET, envases PEAD, tapas)',
+    'Papel y cartón secos (cajas plegadas, archivo, periódico)',
+    'Vidrio (botellas y frascos enteros limpios)',
+    'Metales y chatarra (latas de aluminio, hojalata)',
+    'Envases tipo Tetra Pak limpios y escurridos',
+  ],
+  Categoria.peligroso: [
+    'Pilas y baterías alcalinas, botón o plomo-ácido',
+    'Aceites usados de motor y lubricantes',
+    'Pinturas, solventes, barnices y productos químicos',
+    'Luminarias, tubos fluorescentes y bombillos con mercurio',
+    'Aerosoles y recipientes a presión con restos químicos',
+  ],
+  Categoria.rcd: [
+    'Material pétreo (concreto, mortero, gravas y arenas)',
+    'Cerámicos, ladrillos, tejas y bloques de arcilla',
+    'Maderas limpias de formaleta y obra',
+    'Drywall y paneles de yeso',
+    'Tierra limpia y restos de excavación',
+  ],
+  Categoria.riesgoBiologico: [
+    'Cortopunzantes (agujas, lancetas, bisturís en guardián)',
+    'Biosanitarios (gasas, apósitos, algodones con fluidos, guantes)',
+    'Materiales de curación y elementos de bioseguridad',
+  ],
+  Categoria.organico: [
+    'Restos de frutas, verduras y cáscaras vegetales',
+    'Restos de café, té y comida preparada',
+    'Cortes de césped, hojarasca y podas de jardín',
+  ],
+  Categoria.ordinario: [
+    'Papel higiénico, servilletas y pañales usados',
+    'Papeles metalizados, plastificados o encerados',
+    'Colillas de cigarrillo y barrido de pisos',
+  ],
+};
+
+// Enlace canónico a la Resolución 2184 de 2019 (Código Nacional de Colores).
+const _urlRes2184 = 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Resoluciones/30039705';
 
 const guiasPorCategoria = <Categoria, GuiaCategoria>{
   Categoria.aprovechable: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 (MinAmbiente) / Decreto 1077 de 2015',
+    urlNormativa: _urlRes2184,
     codigoColor: 'Caneca o Bolsa Blanca (Aprovechables limpios)',
     articuloClave:
         'Separación en la fuente obligatoria de materiales limpios y secos para reincorporación al ciclo productivo.',
@@ -86,6 +143,7 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.peligroso: GuiaCategoria(
     normativa: 'Decreto 1076 de 2015 (Título 6 - RESPEL) / Ley 1252 de 2008',
+    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=30019960',
     codigoColor: 'Canal Posconsumo / Gestor Licenciado (CRETIB)',
     articuloClave:
         'Prohibición estricta de disposición en rellenos sanitarios o espacio público; manejo exclusivo por gestores autorizados.',
@@ -111,6 +169,7 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.raee: GuiaCategoria(
     normativa: 'Ley 1672 de 2013 (Gestión Integral de RAEE) / Decreto 284 de 2018',
+    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=1687564',
     codigoColor: 'Punto Posconsumo RAEE / Desensamble Técnico',
     articuloClave:
         'Principio de Responsabilidad Extendida del Productor (REP) y prohibición de disposición en rellenos sanitarios.',
@@ -132,10 +191,11 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     entregar:
         'A través de puntos posconsumo de fabricantes (Red Verde, EcoCómputo), jornadas de recolección de las autoridades ambientales o gestores de RAEE autorizados.',
     consejoResultado:
-        'Clasificado como RAEE (Ley 1672/2013). Debe entregarse completo, sin desarmar, en puntos posconsumo autorizados o con gestores especializados.',
+        'Clasificado como Aparato Eléctrico o Electrónico - RAEE (Ley 1672/2013). Debe entregarse completo, sin desarmar, en puntos posconsumo autorizados o con gestores especializados.',
   ),
   Categoria.rcd: GuiaCategoria(
     normativa: 'Resolución 1257 de 2021 (Modifica Res. 0472/2017 MinAmbiente)',
+    urlNormativa: 'https://www.minambiente.gov.co/document/resolucion-1257-de-2021/',
     codigoColor: 'Acopio en Obra / Escombrera o Planta RCD Autorizada',
     articuloClave:
         'Obligación del generador de garantizar transporte en volquetas registradas y entrega exclusiva en Sitios de Disposición Final o Plantas RCD con Licencia.',
@@ -161,6 +221,7 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.riesgoBiologico: GuiaCategoria(
     normativa: 'Resolución 1164 de 2002 (Manual MPGIRH) / Decreto 780 de 2016 y Decreto 1076 de 2015',
+    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=1614508',
     codigoColor: 'Bolsa y Caneca Roja / Guardián de Seguridad para Cortopunzantes',
     articuloClave:
         'Manejo riguroso de bioseguridad, rotulado obligatorio de riesgo biológico y tratamiento mediante autoclave o incineración autorizada.',
@@ -186,6 +247,7 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.organico: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 (Código Nacional de Colores)',
+    urlNormativa: _urlRes2184,
     codigoColor: 'Caneca o Bolsa Verde (Orgánicos aprovechables)',
     articuloClave: 'Aprovechamiento biológico mediante compostaje, lombricultura o generación de biomasa.',
     queEs:
@@ -210,6 +272,7 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.ordinario: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 / Decreto 1077 de 2015 (Servicio Público de Aseo)',
+    urlNormativa: _urlRes2184,
     codigoColor: 'Caneca o Bolsa Negra (No aprovechables)',
     articuloClave:
         'Disposición final técnica y sanitaria en relleno sanitario autorizado (ej. Parque Tecnológico El Carrasco).',

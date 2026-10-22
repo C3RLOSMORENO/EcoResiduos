@@ -10,6 +10,7 @@ import '../../../widgets/categoria_chip.dart';
 import '../../../widgets/eco_top_app_bar.dart';
 import '../../../widgets/empty_state_widget.dart';
 import '../../../widgets/publicaciones_pendientes.dart';
+import '../../../widgets/recorrido_bienvenida.dart';
 import '../../../widgets/skeleton_loading.dart';
 import '../../../widgets/solicitud_card.dart';
 import '../models/solicitud_recoleccion.dart';
@@ -37,6 +38,9 @@ class MisPublicacionesScreen extends StatefulWidget {
 class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with SingleTickerProviderStateMixin {
   late final SolicitudesRepository _repository;
   late final TabController _tabs = TabController(length: 2, vsync: this)..addListener(_alCambiarPestana);
+  final _keyPestanas = GlobalKey();
+  final _keyFabPublicar = GlobalKey();
+  bool _recorridoAgendado = false;
 
   List<SolicitudRecoleccion>? _publicaciones;
   Map<int, ResumenPostulaciones> _postulaciones = const {};
@@ -114,10 +118,35 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
   @override
   Widget build(BuildContext context) {
     final mostrarFab = _tabs.index == 1 || (!_sinPublicaciones && _error == null);
+    if (_publicaciones != null && !_recorridoAgendado) {
+      _recorridoAgendado = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        mostrarRecorridoPantallaSiNecesario(context, 'actividad_generador', [
+          CoachMarkPaso(
+            keyObjetivo: _keyPestanas,
+            titulo: 'Publicaciones y escaneos',
+            descripcion:
+                'Publicaciones: residuos que pusiste a disposición de gestores, con su estado actual. '
+                'Escaneos: historial de identificaciones con la cámara, aunque no los hayas publicado.',
+          ),
+          CoachMarkPaso(
+            keyObjetivo: _keyFabPublicar,
+            titulo: 'Publica sin identificar',
+            descripcion:
+                'Si ya sabes qué material es y qué gestor lo recibe, '
+                'publica directamente sin pasar por la cámara. '
+                'Elige categoría, cantidad y preferencia de entrega.',
+            forma: FormaSpotlight.circulo,
+          ),
+        ]);
+      });
+    }
     return Scaffold(
       appBar: EcoTopAppBar(
         titulo: 'Actividad',
         bottom: TabBar(
+          key: _keyPestanas,
           controller: _tabs,
           tabs: const [
             Tab(text: 'Publicaciones'),
@@ -127,6 +156,7 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
       ),
       floatingActionButton: mostrarFab
           ? FloatingActionButton.extended(
+              key: _keyFabPublicar,
               heroTag: 'publicar',
               onPressed: _publicar,
               icon: const Icon(Icons.add),

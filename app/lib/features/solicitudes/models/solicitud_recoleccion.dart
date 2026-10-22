@@ -2,8 +2,8 @@ import 'material_residuo.dart';
 
 /// Certificado que el gestor entrega al terminar la recolección.
 enum TipoCertificado {
-  disposicionFinal('DISPOSICION_FINAL', 'Certificado de disposición final'),
-  aprovechamiento('APROVECHAMIENTO', 'Certificado de aprovechamiento');
+  disposicionFinal('DISPOSICION_FINAL', 'Certificado o acta de disposición final'),
+  aprovechamiento('APROVECHAMIENTO', 'Certificado o acta de aprovechamiento');
 
   const TipoCertificado(this.valor, this.etiqueta);
 

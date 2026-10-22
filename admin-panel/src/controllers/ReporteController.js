@@ -5,6 +5,7 @@ const { conAviso } = require('../utils/web');
 const { fechaIsoBogota, fechaHora } = require('../utils/formato');
 const { renderLista } = require('../utils/errores');
 const { filtrosReporte, describirFiltrosReporte, enlaceExcelReporte } = require('../utils/filtros');
+const { datosRecorrido } = require('../utils/recorridos');
 
 /** GET /reportes: reciclaje por municipio con sus filtros. */
 exports.verReporte = (req, res) => {
@@ -13,6 +14,7 @@ exports.verReporte = (req, res) => {
         comunes: {
             titulo: 'Reportes',
             activeTab: 'reportes',
+            recorrido: datosRecorrido('reportes', req.user),
             filtros,
             descripcion: describirFiltrosReporte(filtros),
             enlaceExcel: enlaceExcelReporte(filtros),

@@ -2,6 +2,7 @@ const materialService = require('../services/MaterialService');
 const { leerPagina, paginacion, conAviso } = require('../utils/web');
 const { responderErrorCarga, renderLista } = require('../utils/errores');
 const { filtrosMateriales } = require('../utils/filtros');
+const { datosRecorrido } = require('../utils/recorridos');
 
 const materialController = {
     /** GET /materiales: catálogo con filtros y paginación. */
@@ -9,7 +10,7 @@ const materialController = {
         const pagina = leerPagina(req.query);
         const filtros = filtrosMateriales(req.query);
         return renderLista(res, 'materiales', {
-            comunes: { titulo: 'Materiales', activeTab: 'materiales', filtros },
+            comunes: { titulo: 'Materiales', activeTab: 'materiales', recorrido: datosRecorrido('materiales', req.user), filtros },
             cargar: async () => {
                 const { materiales, total } = await materialService.listarMateriales({ ...filtros, pagina });
                 return { materiales, pag: paginacion({ total, pagina, ruta: '/materiales', query: req.query }) };

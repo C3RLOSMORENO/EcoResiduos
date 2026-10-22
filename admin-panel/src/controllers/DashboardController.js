@@ -34,7 +34,8 @@ const dashboardController = {
                 gestoresPendientes: [],
                 ultimasSolicitudes: [],
                 erroresCarga: [],
-                resumenReciclaje: null
+                resumenReciclaje: null,
+                recorrido: null
             }
         });
     }

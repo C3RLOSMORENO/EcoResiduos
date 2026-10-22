@@ -52,7 +52,11 @@ class ResultadoScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CategoriaBanner(categoria: categoria, height: 56),
+                    CategoriaBanner(
+                      categoria: categoria,
+                      height: 56,
+                      label: categoria == Categoria.raee ? 'Eléctricos y Electrónicos (RAEE)' : null,
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(EcoSpace.s16),
                       child: Column(
@@ -60,7 +64,17 @@ class ResultadoScreen extends StatelessWidget {
                         children: [
                           _Confianza(valor: item.confianza),
                           const SizedBox(height: EcoSpace.s16),
-                          Text(guia.consejoResultado, style: theme.textTheme.bodyLarge),
+                          Text(
+                            item.nombre,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: scheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: EcoSpace.s8),
+                          Text(guia.consejoResultado, style: theme.textTheme.bodyMedium),
+                          const SizedBox(height: EcoSpace.s16),
+                          _SubcategoriasSeccion(categoria: categoria),
                           if (item.confianza < IdentificacionService.confianzaAlta && item.alternativas.isNotEmpty) ...[
                             const SizedBox(height: EcoSpace.s16),
                             OpcionesIa(
@@ -270,6 +284,80 @@ class OpcionesIa extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Muestra las subcategorías y ejemplos representativos que abarca la categoría identificada.
+class _SubcategoriasSeccion extends StatelessWidget {
+  const _SubcategoriasSeccion({required this.categoria});
+
+  final Categoria categoria;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final colores = theme.extension<EcoColores>() ?? ecoColoresLight;
+    final color = colores.categoria(categoria);
+    final subcategorias = subcategoriasPorCategoria[categoria] ?? const [];
+
+    if (subcategorias.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(EcoRadius.medium),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      padding: const EdgeInsets.all(EcoSpace.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.checklist_rounded, size: 20, color: color.color),
+              const SizedBox(width: EcoSpace.s8),
+              Expanded(
+                child: Text(
+                  'Subcategorías y qué incluye:',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: EcoSpace.s8),
+          for (final sub in subcategorias)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: TextStyle(
+                      color: color.color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      sub,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
