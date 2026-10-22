@@ -97,6 +97,21 @@ abstract class AuthRepository {
 
   /// Guarda el municipio en el perfil y en los metadatos de la cuenta.
   Future<void> actualizarMunicipio(String municipio);
+
+  /// Actualiza los datos de contacto editables del gestor (correo, teléfono,
+  /// dirección). No toca NIT ni razón social: esos requieren revisión admin.
+  Future<void> actualizarInfoContactoGestor({
+    required String emailContacto,
+    required String telefonoContacto,
+    required String direccion,
+  });
+
+  /// Actualiza el horario de atención del gestor. Null o cadena vacía borra el campo.
+  Future<void> actualizarHorario(String? horario);
+
+  /// Sube un nuevo PDF de permiso ambiental para el gestor de la sesión y
+  /// reemplaza el existente en `perfiles_gestor.permiso_path`.
+  Future<void> renovarPermisoAmbiental(ArchivoPdf pdf);
 }
 
 /// [AuthRepository] sobre Supabase Auth. Los errores de Supabase se traducen
@@ -331,6 +346,48 @@ class SupabaseAuthRepository implements AuthRepository {
     final tabla = await getRolUsuario() == 'GESTOR' ? 'perfiles_gestor' : 'perfiles_generador';
     await _client.from(tabla).update({'municipio': municipio}).eq('usuario_id', user.id);
     await _client.auth.updateUser(UserAttributes(data: {'municipio': municipio}));
+  }
+
+  @override
+  Future<void> actualizarInfoContactoGestor({
+    required String emailContacto,
+    required String telefonoContacto,
+    required String direccion,
+  }) async {
+    final user = currentUser;
+    if (user == null) return;
+    await _client.from('perfiles_gestor').update({
+      'email_contacto': emailContacto.trim().toLowerCase(),
+      'telefono_contacto': telefonoContacto.trim(),
+      'direccion': direccion.trim(),
+    }).eq('usuario_id', user.id);
+  }
+
+  @override
+  Future<void> actualizarHorario(String? horario) async {
+    final user = currentUser;
+    if (user == null) return;
+    final valor = horario?.trim();
+    await _client
+        .from('perfiles_gestor')
+        .update({'horario': valor == null || valor.isEmpty ? null : valor})
+        .eq('usuario_id', user.id);
+  }
+
+  @override
+  Future<void> renovarPermisoAmbiental(ArchivoPdf pdf) async {
+    final user = currentUser;
+    if (user == null) throw Exception('No hay sesión activa.');
+
+    final perfil = await getPerfilGestor();
+    if (perfil == null) throw Exception('No se encontró el perfil del gestor.');
+
+    final ruta = 'renovacion/${perfil.id}/${DateTime.now().millisecondsSinceEpoch}.pdf';
+    await _client.storage
+        .from('permisos')
+        .uploadBinary(ruta, pdf.bytes, fileOptions: const FileOptions(contentType: 'application/pdf'));
+
+    await _client.from('perfiles_gestor').update({'permiso_path': ruta}).eq('usuario_id', user.id);
   }
 
   AuthException _traducir(AuthException e) {

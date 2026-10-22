@@ -1,4 +1,4 @@
-<%- include('partials/header', { activeTab: 'materiales', titulo: 'Materiales' }) %>
+<%- include('partials/header', { activeTab: 'materiales', titulo: 'Materiales', recorrido: recorrido }) %>
 
 <div class="flex flex-col gap-6">
   <div class="flex flex-wrap items-end justify-between gap-4">
@@ -6,7 +6,7 @@
       <h1 class="titulo-pagina">Materiales</h1>
       <p class="mt-1 text-body-l text-on-surface-variant">Catálogo de residuos que los generadores pueden publicar y los gestores recibir.</p>
     </div>
-    <a href="/materiales/nuevo" class="btn-filled">
+    <a href="/materiales/nuevo" class="btn-filled" data-recorrido="materiales-nuevo">
       <span class="material-symbols-outlined icono-20" aria-hidden="true">add</span>
       Nuevo material
     </a>
@@ -47,7 +47,7 @@
       <% } %>
     </div>
   <% } else { %>
-    <div>
+    <div data-recorrido="materiales-tabla">
       <div class="tabla-contenedor" role="region" aria-labelledby="captionMateriales" tabindex="0">
         <table class="tabla">
           <caption id="captionMateriales">Catálogo de materiales<%= filtros.categoria ? ' · ' + f.etiquetaCategoria(filtros.categoria) : '' %></caption>

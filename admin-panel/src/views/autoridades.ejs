@@ -1,4 +1,4 @@
-<%- include('partials/header', { activeTab: 'autoridades', titulo: 'Autoridades ambientales' }) %>
+<%- include('partials/header', { activeTab: 'autoridades', titulo: 'Autoridades ambientales', recorrido: recorrido }) %>
 
 <div class="flex flex-col gap-6">
   <div class="flex flex-wrap items-end justify-between gap-4">
@@ -6,7 +6,7 @@
       <h1 class="titulo-pagina">Autoridades ambientales</h1>
       <p class="mt-1 text-body-l text-on-surface-variant">Directorio de entidades de control que la app muestra a generadores y gestores.</p>
     </div>
-    <a href="/autoridades/nuevo" class="btn-filled">
+    <a href="/autoridades/nuevo" class="btn-filled" data-recorrido="autoridades-nuevo">
       <span class="material-symbols-outlined icono-20" aria-hidden="true">add</span>
       Nueva autoridad
     </a>
