@@ -25,7 +25,7 @@
         { cifra: pendientesAccion.gestoresPorRevisar, titulo: 'Gestores por revisar', texto: 'Empresas registradas desde la app que esperan aprobación.', href: '/gestores?estado=PENDIENTE', icono: 'how_to_reg' },
         { cifra: pendientesAccion.materialesPorVerificar, titulo: 'Materiales por verificar', texto: 'Materiales nuevos de gestores ya aprobados.', href: '/gestores?estado=APROBADO&por_verificar=1', icono: 'fact_check' },
         { cifra: pendientesAccion.problemasReportados, titulo: 'Problemas reportados', texto: 'Recolecciones que el generador reportó con problemas.', href: '/solicitudes?problema=1', icono: 'report' },
-        { cifra: pendientesAccion.sinCertificado, titulo: 'Sin certificado hace más de 7 días', texto: 'Recolecciones sin certificado de disposición o aprovechamiento.', href: '/solicitudes?sin_certificado=1', icono: 'description' }
+        { cifra: pendientesAccion.sinCertificado, titulo: 'Sin certificado o acta hace más de 7 días', texto: 'Recolecciones sin certificado o acta expedida por el gestor.', href: '/solicitudes?sin_certificado=1', icono: 'description' }
       ];
     %>
     <ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4" role="list">
@@ -283,11 +283,6 @@
     <script type="application/json" id="datosMunicipios"><%- jsonParaScript(graficoMunicipios.datos) %></script>
   <% } %>
   <script src="<%= recurso('/vendor/chart.umd.js') %>"></script>
-  <% if (recorrido) { %>
-    <script type="application/json" id="datosRecorrido"><%- jsonParaScript(recorrido) %></script>
-    <script src="<%= recurso('/vendor/driver.js') %>" defer></script>
-    <script src="<%= recurso('/js/recorrido.js') %>" defer></script>
-  <% } %>
   <% } %>
 </div>
 

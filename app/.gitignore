@@ -52,3 +52,7 @@ app.*.map.json
 # Temporary test scripts
 check_models.dart
 test_gemini.dart
+
+# IDE / tooling artifacts
+*.tmp
+flutter_*.png

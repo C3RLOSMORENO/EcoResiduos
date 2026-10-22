@@ -6,7 +6,7 @@ const globals = require('globals');
 
 module.exports = [
     {
-        ignores: ['node_modules/', 'src/public/css/']
+        ignores: ['node_modules/', 'src/public/css/', 'src/public/vendor/']
     },
     js.configs.recommended,
     {
