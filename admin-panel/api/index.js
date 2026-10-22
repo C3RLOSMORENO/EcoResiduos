@@ -55,18 +55,8 @@ if (faltan.length > 0) {
 }
 
 module.exports = (req, res) => {
-    // Vercel reescribe todas las rutas hacia la función serverless (/api o /api/index.js).
-    // La URL real pedida por el navegador viene en x-forwarded-url o x-matched-path.
-    // Restauramos req.url y req.originalUrl para que Express sirva los archivos estáticos y reconozca las rutas (/login, /dashboard, etc.).
-    const urlOriginal = req.headers['x-forwarded-url'] ||
-                        req.headers['x-original-url'] ||
-                        req.headers['x-rewrite-url'] ||
-                        req.headers['x-matched-path'];
-
-    if (urlOriginal && !urlOriginal.startsWith('/api/index')) {
-        req.url = urlOriginal;
-        req.originalUrl = urlOriginal;
-    }
-
+    // Con el rewrite de vercel.json, Vercel ya entrega en req.url la ruta que
+    // pidió el navegador (/login, /css/style.css…). No hay que tocarla:
+    // x-matched-path trae la ruta de la función (/api/...), no la del navegador.
     return handler(req, res);
 };
