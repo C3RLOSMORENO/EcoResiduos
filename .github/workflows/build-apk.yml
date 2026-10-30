@@ -3,12 +3,21 @@ name: Compilar y Publicar APK Android
 on:
   workflow_dispatch:
     inputs:
+      version_bump:
+        description: 'Tipo de incremento si no especificas etiqueta manual'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: 'patch'
       release_tag:
-        description: 'Etiqueta de la versión (ej. v1.0.0). Dejar en blanco para usar la de pubspec.yaml'
+        description: 'Etiqueta manual (ej. v1.2.0). Dejar en blanco para calcular automáticamente'
         required: false
         default: ''
       release_title:
-        description: 'Título de la versión'
+        description: 'Título de la versión (opcional)'
         required: false
         default: ''
       create_release:
@@ -78,29 +87,84 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: Configurar variables de entorno (.env)
-        run: |
-          cd app
-          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
-            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
-          else
-            echo "GEMINI_API_KEY=AQ.Ab8RN6KsK8jPSC_5qTJu-tIgom1Ziu-HG3Hsn6f3romNyGQIbg" > .env
-          fi
-
       - name: Obtener dependencias de Flutter
         run: |
           cd app
           flutter pub get
 
-      - name: Extraer versión de la aplicación
+      - name: Calcular versión semántica y número de compilación
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+          INPUT_BUMP: ${{ inputs.version_bump }}
+          INPUT_TITLE: ${{ inputs.release_title }}
         run: |
-          FULL_VERSION=$(grep '^version:' app/pubspec.yaml | sed 's/version: //' | tr -d ' ' | tr -d '\r')
-          VERSION_NAME=$(echo "$FULL_VERSION" | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$FULL_VERSION" | cut -d'+' -f2)
+          PUBSPEC_RAW=$(grep '^version:' app/pubspec.yaml | sed 's/version: //' | tr -d ' ' | tr -d '\r')
+          PUBSPEC_VER=$(echo "$PUBSPEC_RAW" | cut -d'+' -f1)
+          PUBSPEC_BUILD=$(echo "$PUBSPEC_RAW" | cut -d'+' -f2)
+          if ! [[ "$PUBSPEC_BUILD" =~ ^[0-9]+$ ]]; then PUBSPEC_BUILD=1; fi
+
+          # Obtener todas las versiones publicadas (tags git + releases de GitHub) en formato X.Y.Z
+          TAGS_GIT=$(git tag -l 'v*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          TAGS_GH=$(gh release list --limit 100 --json tagName --jq '.[].tagName' 2>/dev/null | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          ALL_VERSIONS=$(printf "%s\n%s\n" "$TAGS_GIT" "$TAGS_GH" | sort -uV | sed '/^$/d')
+          LATEST_PUBLISHED=$(echo "$ALL_VERSIONS" | tail -n 1)
+
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION_NAME=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          elif [ -n "$INPUT_TAG" ]; then
+            VERSION_NAME=$(echo "$INPUT_TAG" | sed 's/^v//')
+          elif [ -z "$LATEST_PUBLISHED" ]; then
+            VERSION_NAME="$PUBSPEC_VER"
+          else
+            # Si pubspec.yaml tiene una versión mayor que la última publicada y aún no existe, se respeta pubspec.yaml.
+            # Si la versión de pubspec.yaml ya fue publicada (ej. 1.0.0), se incrementa automáticamente desde la última publicada.
+            HIGHEST=$(printf "%s\n%s\n" "$LATEST_PUBLISHED" "$PUBSPEC_VER" | sort -V | tail -n 1)
+            ALREADY_EXISTS=$(echo "$ALL_VERSIONS" | grep -Fx "$PUBSPEC_VER" || true)
+
+            if [ "$HIGHEST" = "$PUBSPEC_VER" ] && [ -z "$ALREADY_EXISTS" ]; then
+              VERSION_NAME="$PUBSPEC_VER"
+            else
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_PUBLISHED"
+              BUMP="${INPUT_BUMP:-patch}"
+              case "$BUMP" in
+                major)
+                  MAJOR=$((MAJOR + 1))
+                  MINOR=0
+                  PATCH=0
+                  ;;
+                minor)
+                  MINOR=$((MINOR + 1))
+                  PATCH=0
+                  ;;
+                *)
+                  PATCH=$((PATCH + 1))
+                  ;;
+              esac
+              VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
+            fi
+          fi
+
+          # El buildNumber (versionCode en Android) siempre crece en cada ejecución para permitir actualizar sin desinstalar
+          BUILD_NUMBER=$((PUBSPEC_BUILD + GITHUB_RUN_NUMBER))
+          FULL_VERSION="${VERSION_NAME}+${BUILD_NUMBER}"
+          TAG="v${VERSION_NAME}"
+
+          if [ -n "$INPUT_TITLE" ]; then
+            TITLE="$INPUT_TITLE"
+          else
+            TITLE="EcoResiduos $TAG"
+          fi
+
+          echo "Última versión publicada: ${LATEST_PUBLISHED:-ninguna}"
+          echo "Nueva versión calculada:  $FULL_VERSION ($TAG)"
+
           echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "TITLE=$TITLE" >> $GITHUB_ENV
           echo "date=$(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_ENV
 
       - name: Ejecutar pruebas unitarias de Flutter
@@ -113,7 +177,7 @@ jobs:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
         run: |
           cd app
-          flutter build apk --release
+          flutter build apk --release --build-name="${{ env.VERSION_NAME }}" --build-number="${{ env.BUILD_NUMBER }}"
 
       - name: Preparar archivos APK para descarga
         run: |
@@ -131,26 +195,6 @@ jobs:
             app/build/app/outputs/flutter-apk/EcoResiduos-v${{ env.VERSION_NAME }}.apk
           if-no-files-found: error
           retention-days: 30
-
-      - name: Determinar etiqueta de versión para GitHub Release
-        id: release_info
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            TAG="${{ github.ref_name }}"
-          elif [ -n "${{ inputs.release_tag }}" ]; then
-            TAG="${{ inputs.release_tag }}"
-          else
-            TAG="v${{ env.VERSION_NAME }}"
-          fi
-          
-          if [ -n "${{ inputs.release_title }}" ]; then
-            TITLE="${{ inputs.release_title }}"
-          else
-            TITLE="EcoResiduos $TAG"
-          fi
-
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "TITLE=$TITLE" >> $GITHUB_ENV
 
       - name: Publicar Release en GitHub para descarga pública
         uses: softprops/action-gh-release@v2
