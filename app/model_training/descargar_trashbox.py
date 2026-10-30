@@ -89,11 +89,11 @@ def download_and_save_image(file_info, target_path):
 
 def main():
     """Descarga las carpetas de TrashBox listadas en MAPPING a su categoría."""
-    print("🚀 DESCARGANDO DATASET TRASHBOX (Medical Waste y E-Waste)...")
+    print("DESCARGANDO DATASET TRASHBOX (Medical Waste y E-Waste)...")
     summary = {}
     
     for (parent, subfolder), (target_cat, prefix) in MAPPING.items():
-        print(f"\n📂 Obteniendo lista de archivos para {parent}/{subfolder} -> {target_cat}...")
+        print(f"\nObteniendo lista de archivos para {parent}/{subfolder} -> {target_cat}...")
         files = get_folder_files(parent, subfolder)
         print(f"  Encontrados: {len(files)} archivos")
         
@@ -112,11 +112,11 @@ def main():
                 if fut.result():
                     saved += 1
                     
-        print(f"  ✅ Guardadas: {saved} fotos en {target_cat}")
+        print(f"  Guardadas: {saved} fotos en {target_cat}")
         summary[f"{target_cat} ({subfolder})"] = saved
         time.sleep(1)
         
-    print("\n📊 Resumen TrashBox:")
+    print("\nResumen TrashBox:")
     for k, v in summary.items():
         print(f"  {k}: {v} fotos")
 

@@ -88,7 +88,7 @@ class Modelos:
     def __init__(self, clave, forzado=None):
         self.lista = [forzado] if forzado else self._disponibles(clave)
         if not self.lista:
-            raise SystemExit('❌ La API no ofrece ningún modelo «flash». Pasa uno con --modelo.')
+            raise SystemExit('La API no ofrece ningún modelo «flash». Pasa uno con --modelo.')
 
     @staticmethod
     def _disponibles(clave):
@@ -114,7 +114,7 @@ class Modelos:
     def descartar(self, modelo):
         if modelo in self.lista:
             self.lista.remove(modelo)
-            print(f'  🔁 {modelo} no está disponible hoy' + (f'; sigo con {self.lista[0]}' if self.lista else ''))
+            print(f'  {modelo} no está disponible hoy' + (f'; sigo con {self.lista[0]}' if self.lista else ''))
 
     def rotar(self, modelo):
         """Pasa un modelo saturado al final de la fila sin descartarlo."""
@@ -258,9 +258,9 @@ def main():
 
     clave = get_api_key()
     if not clave:
-        raise SystemExit('❌ No se encontró GEMINI_API_KEY (en app/.env o como variable de entorno).')
+        raise SystemExit('No se encontró GEMINI_API_KEY (en app/.env o como variable de entorno).')
     modelos = Modelos(clave, args.modelo)
-    print(f'🤖 Modelos en orden: {", ".join(modelos.lista)}')
+    print(f'Modelos en orden: {", ".join(modelos.lista)}')
 
     origen = DATASET_DIR if args.revisar_dataset else CANDIDATAS_DIR
     categorias = args.categorias or sorted(c for c in CATEGORIAS if (origen / c).exists())
@@ -293,7 +293,7 @@ def main():
                         aplicar(ruta, categoria, previa['decision'] == 'aceptada', args.revisar_dataset)
                     else:
                         pendientes.append(ruta)
-                print(f'\n📂 {categoria}: {len(pendientes)} por revisar ({stats["ya revisadas"]} ya revisadas)')
+                print(f'\n{categoria}: {len(pendientes)} por revisar ({stats["ya revisadas"]} ya revisadas)')
 
                 vistas = {}
                 for inicio in range(0, len(pendientes), LOTE):
@@ -318,7 +318,7 @@ def main():
                     salida.flush()
                     print(f'  … {min(inicio + LOTE, len(pendientes))}/{len(pendientes)} · {stats["aceptadas"]} aceptadas')
 
-                print(f'  ✅ {stats} · rechazadas vistas como: {vistas} · ahora hay {contar(categoria)} en dataset/{categoria}')
+                print(f'  {stats} · rechazadas vistas como: {vistas} · ahora hay {contar(categoria)} en dataset/{categoria}')
         except CuotaAgotada:
             print('\n⏸️  Todos los modelos agotaron la cuota gratis de hoy. El avance quedó guardado: '
                   'vuelve a ejecutar mañana o activa la facturación en AI Studio para seguir ya.')

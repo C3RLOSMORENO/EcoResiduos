@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../legal/politica_datos.dart';
 import '../../../models/perfil_generador.dart';
 import '../../../models/perfil_gestor.dart';
 import '../../../services/archivo_pdf.dart';
@@ -182,6 +183,8 @@ class SupabaseAuthRepository implements AuthRepository {
         password: password,
         data: {
           'rol': 'GENERADOR',
+          // La pantalla no deja registrarse sin marcar la autorización (Ley 1581).
+          'autorizacion_datos_version': versionPoliticaDatos,
           'nombre_completo_o_empresa': nombre.trim(),
           'documento_nit': documento.trim(),
           'telefono': telefono.trim(),
@@ -226,6 +229,8 @@ class SupabaseAuthRepository implements AuthRepository {
         password: password,
         data: {
           'rol': 'GESTOR',
+          // La pantalla no deja registrarse sin marcar la autorización (Ley 1581).
+          'autorizacion_datos_version': versionPoliticaDatos,
           'gestor_id': gestorDirectorio.id,
           'nit': gestorDirectorio.nit,
           'razon_social': razonSocial.trim(),
@@ -273,6 +278,8 @@ class SupabaseAuthRepository implements AuthRepository {
         password: password,
         data: {
           'rol': 'GESTOR',
+          // La pantalla no deja registrarse sin marcar la autorización (Ley 1581).
+          'autorizacion_datos_version': versionPoliticaDatos,
           'registro_nuevo': true,
           'nit': normalizarNit(nit),
           'razon_social': razonSocial.trim(),
@@ -408,7 +415,7 @@ class SupabaseAuthRepository implements AuthRepository {
       return AuthException('El código no coincide. Revisa el correo más reciente.', code: e.code);
     }
     if (mensaje.contains('password')) {
-      return AuthException('La contraseña debe tener al menos 8 caracteres y un número.', code: e.code);
+      return AuthException('La contraseña debe tener al menos 8 caracteres, con letras y números.', code: e.code);
     }
     return AuthException(e.message, code: e.code);
   }

@@ -270,7 +270,7 @@ def assemble_balanced_dataset():
 
     Ninguna fuente pasa de MAX_FUENTE_UNICA y no entran duplicados ni fotos de dataset_prueba/.
     """
-    print("🚀 ENSAMBLANDO DATASET V2 CON REGLAS ESTRICTAS...")
+    print("ENSAMBLANDO DATASET V2 CON REGLAS ESTRICTAS...")
     
     # Limpiar dataset previo
     for cat in CATEGORIES:
@@ -300,7 +300,7 @@ def assemble_balanced_dataset():
         cat_sources = candidates[cat]
         target_dir = TARGET_DATASET / cat
         
-        print(f"\n📂 Procesando categoría: {cat}")
+        print(f"\nProcesando categoría: {cat}")
         for sname, flist in cat_sources.items():
             print(f"   Fuente '{sname}': {len(flist)} candidatos")
             
@@ -365,13 +365,13 @@ def assemble_balanced_dataset():
             "total": len(accepted_files),
             "fuentes": dict(source_counts)
         }
-        print(f"  ✅ {cat}: {len(accepted_files)} fotos admitidas -> {dict(source_counts)}")
+        print(f"  {cat}: {len(accepted_files)} fotos admitidas -> {dict(source_counts)}")
         
     print("\n" + "=" * 65)
-    print("📊 RESUMEN FINAL DATASET V2")
+    print("RESUMEN FINAL DATASET V2")
     print("=" * 65)
     for cat, info in final_stats.items():
-        print(f"  📁 {cat:18s}: {info['total']:4d} fotos | {info['fuentes']}")
+        print(f"  {cat:18s}: {info['total']:4d} fotos | {info['fuentes']}")
     print("=" * 65)
 
 if __name__ == "__main__":

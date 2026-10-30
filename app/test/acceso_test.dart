@@ -3,6 +3,7 @@ import 'package:ecoresiduos/features/auth/screens/login_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/registro_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/restablecer_password_screen.dart';
 import 'package:ecoresiduos/features/auth/screens/verificar_recuperacion_screen.dart';
+import 'package:ecoresiduos/features/auth/widgets/casilla_autorizacion_datos.dart';
 import 'package:ecoresiduos/services/archivo_pdf.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -74,6 +75,13 @@ void main() {
   });
 
   group('Registro de gestor', () {
+    Future<void> autorizarDatos(WidgetTester tester) async {
+      final casilla = find.byType(CasillaAutorizacionDatos);
+      await tester.ensureVisible(casilla);
+      await tester.tap(find.descendant(of: casilla, matching: find.byType(Checkbox)));
+      await tester.pump();
+    }
+
     Future<void> irAVerificacion(WidgetTester tester, FakeAuthRepository auth, {ArchivoPdf? permiso}) async {
       usarPantallaAlta(tester);
       await tester.pumpWidget(
@@ -109,6 +117,14 @@ void main() {
       expect(find.text('Girón'), findsOneWidget);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+
+      // Sin la autorización de datos (Ley 1581) no se avanza.
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Para crear la cuenta debes autorizar el tratamiento de tus datos.'), findsOneWidget);
+      expect(find.textContaining('Marcamos los que tu empresa ya tiene registrados'), findsNothing);
+
+      await autorizarDatos(tester);
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Marcamos los que tu empresa ya tiene registrados'), findsOneWidget);
@@ -157,6 +173,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'gerencia@recuperadora.co');
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+      await autorizarDatos(tester);
 
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();

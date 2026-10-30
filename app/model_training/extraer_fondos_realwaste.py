@@ -72,7 +72,7 @@ def extract_realwaste_backgrounds(target_count=100):
         except Exception:
             continue
             
-    print(f"✅ Extraídos {saved} recortes de fondo de piso limpio desde RealWaste en {OUT_DIR}")
+    print(f"Extraídos {saved} recortes de fondo de piso limpio desde RealWaste en {OUT_DIR}")
     return saved
 
 if __name__ == "__main__":

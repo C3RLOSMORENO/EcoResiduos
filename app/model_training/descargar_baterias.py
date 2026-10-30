@@ -62,7 +62,7 @@ def download_image(hf_path, idx):
 
 def main():
     """Descarga todas las fotos de baterías a descargas_crudas/battery_hazard/."""
-    print("🚀 Descargando imágenes de baterías para PELIGROSO...")
+    print("Descargando imágenes de baterías para PELIGROSO...")
     files = get_battery_file_list()
     print(f"Total imágenes de baterías encontradas: {len(files)}")
     
@@ -73,7 +73,7 @@ def main():
             if f.result():
                 saved += 1
                 
-    print(f"✅ Descargadas {saved} fotos de baterías en {TARGET_DIR}")
+    print(f"Descargadas {saved} fotos de baterías en {TARGET_DIR}")
 
 if __name__ == "__main__":
     main()

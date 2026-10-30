@@ -123,7 +123,7 @@ def main():
         except Exception:
             continue
             
-    print(f"✅ Descargados {saved} recortes válidos de Brick en {CROPS_DIR}")
+    print(f"Descargados {saved} recortes válidos de Brick en {CROPS_DIR}")
 
 if __name__ == "__main__":
     main()

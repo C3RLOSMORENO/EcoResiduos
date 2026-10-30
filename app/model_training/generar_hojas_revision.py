@@ -95,20 +95,20 @@ def create_contact_sheet(category, batch_idx, image_files):
 def main():
     """Genera las hojas de todas las categorías de dataset/."""
     REVISION_DIR.mkdir(parents=True, exist_ok=True)
-    print("🎨 Generando hojas de contacto 10x10 para revisión visual...")
+    print("Generando hojas de contacto 10x10 para revisión visual...")
     
     total_sheets = 0
     for cat in CATEGORIES:
         cat_dir = DATASET_DIR / cat
         if not cat_dir.exists():
-            print(f"⚠️  Carpeta {cat} no existe.")
+            print(f" Carpeta {cat} no existe.")
             continue
             
         img_files = sorted(list(cat_dir.glob("*.jpg")) + list(cat_dir.glob("*.png")))
         total_imgs = len(img_files)
         
         if total_imgs == 0:
-            print(f"⚠️  {cat}: 0 imágenes.")
+            print(f" {cat}: 0 imágenes.")
             continue
             
         # Divide in batches of 100
@@ -117,9 +117,9 @@ def main():
             out_file = create_contact_sheet(cat, b_idx, batch)
             total_sheets += 1
             
-        print(f"  📄 {cat:18s}: {len(batches)} hoja(s) creada(s) para {total_imgs} fotos")
+        print(f"  {cat:18s}: {len(batches)} hoja(s) creada(s) para {total_imgs} fotos")
         
-    print(f"\n✅ Total de hojas de contacto generadas: {total_sheets} en {REVISION_DIR}")
+    print(f"\nTotal de hojas de contacto generadas: {total_sheets} en {REVISION_DIR}")
 
 if __name__ == "__main__":
     main()

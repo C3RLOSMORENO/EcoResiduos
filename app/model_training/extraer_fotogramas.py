@@ -84,7 +84,7 @@ def main():
     args = parser.parse_args()
 
     if not VIDEOS_DIR.exists():
-        print(f"❌ Crea la carpeta '{VIDEOS_DIR}' con una subcarpeta por categoría (APROVECHABLE, RAEE, ...).")
+        print(f"Crea la carpeta '{VIDEOS_DIR}' con una subcarpeta por categoría (APROVECHABLE, RAEE, ...).")
         return
 
     total = 0
@@ -96,7 +96,7 @@ def main():
             total += guardadas
             print(f'  {carpeta.name}/{video.name}: {guardadas} fotos ({descartadas} movidas o repetidas)')
 
-    print(f'✅ {total} fotos nuevas en {DATASET_DIR}')
+    print(f'{total} fotos nuevas en {DATASET_DIR}')
 
 
 if __name__ == '__main__':

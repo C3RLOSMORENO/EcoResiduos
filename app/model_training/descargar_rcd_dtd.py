@@ -38,7 +38,7 @@ def extract_zip_safely(zip_path, target_folder):
             
             with z.open(item) as src, open(out_file, 'wb') as dst:
                 dst.write(src.read())
-    print(f"✅ Extracción segura completada en {target_folder}")
+    print(f"Extracción segura completada en {target_folder}")
 
 def download_file(url, target_path):
     """Descarga el archivo por partes mostrando el progreso."""
@@ -56,7 +56,7 @@ def download_file(url, target_path):
             if chunk:
                 f.write(chunk)
                 bar.update(len(chunk))
-    print(f"✅ Descarga completada: {target_path.name}")
+    print(f"Descarga completada: {target_path.name}")
 
 def extract_dtd_safely(tar_path, target_folder):
     """Extrae las imágenes del Describable Textures Dataset en una carpeta por textura."""
@@ -77,7 +77,7 @@ def extract_dtd_safely(tar_path, target_folder):
                 if f:
                     with open(out_file, 'wb') as dst:
                         dst.write(f.read())
-    print(f"✅ Extracción DTD completada en {target_folder}")
+    print(f"Extracción DTD completada en {target_folder}")
 
 def main():
     """Extrae el dataset de demolición y descarga y extrae DTD para RCD y FONDO."""

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Logo e isotipo oficial de EcoResiduos con acabado premium.
+/// Logo de EcoResiduos (assets/branding/app_icon.png). Con [showBadge] va sobre
+/// una placa blanca redondeada con sombra, para que se vea sobre fondos oscuros.
 class EcoLogo extends StatelessWidget {
   const EcoLogo({super.key, this.width = 134, this.showBadge = true});
 

@@ -30,7 +30,7 @@ def download_giz_ewaste(max_images=300):
     target_dir = RAW_DIR / "gizewaste"
     target_dir.mkdir(parents=True, exist_ok=True)
     
-    print("\n📦 Descargando GIZ/E-Waste-Database (CC BY 4.0)...")
+    print("\nDescargando GIZ/E-Waste-Database (CC BY 4.0)...")
     r = requests.get('https://huggingface.co/api/datasets/GIZ/E-Waste-Database', headers=HEADERS)
     if r.status_code != 200:
         print("Error al consultar API de GIZ E-Waste")
@@ -77,14 +77,14 @@ def download_giz_ewaste(max_images=300):
             if f.result():
                 saved += 1
                 
-    print(f"✅ Descargadas {saved} imágenes de GIZ E-Waste en {target_dir}")
+    print(f"Descargadas {saved} imágenes de GIZ E-Waste en {target_dir}")
 
 def download_voxel51_foodwaste(max_images=300):
     """Descarga una muestra de Voxel51 Food Waste (MIT) para ORGANICO."""
     target_dir = RAW_DIR / "voxel51_foodwaste"
     target_dir.mkdir(parents=True, exist_ok=True)
     
-    print("\n🥗 Descargando Voxel51/food-waste-dataset (MIT)...")
+    print("\nDescargando Voxel51/food-waste-dataset (MIT)...")
     r = requests.get('https://huggingface.co/api/datasets/Voxel51/food-waste-dataset', headers=HEADERS)
     if r.status_code != 200:
         print("Error al consultar API de Voxel51")
@@ -130,7 +130,7 @@ def download_voxel51_foodwaste(max_images=300):
             if f.result():
                 saved += 1
                 
-    print(f"✅ Descargadas {saved} imágenes de Voxel51 Food Waste en {target_dir}")
+    print(f"Descargadas {saved} imágenes de Voxel51 Food Waste en {target_dir}")
 
 def main():
     """Descarga las dos fuentes a descargas_crudas/."""

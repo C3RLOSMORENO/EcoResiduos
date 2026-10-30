@@ -6,9 +6,10 @@ const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
 const { errorDeBase } = require('../utils/errores');
 const { ESTADOS_GESTOR } = require('../utils/formato');
 const { BUCKET: BUCKET_FOTOS, COLUMNAS: COLUMNAS_FOTO } = require('../utils/fotosPerfil');
+const { TAMANO_MAXIMO_SUBIDA: TAMANO_MAXIMO_PERMISO, entregaDePdf } = require('../utils/archivos');
+const { normalizarNit, normalizarTelefono, normalizarCorreo, textoObligatorio } = require('../utils/validacion');
 
 const ESTADOS_VALIDOS = ESTADOS_GESTOR;
-const { TAMANO_MAXIMO_SUBIDA: TAMANO_MAXIMO_PERMISO, entregaDePdf } = require('../utils/archivos');
 
 const SELECT_MATERIALES = `
     gestor_material (
@@ -115,20 +116,14 @@ function mapearGestor(row) {
  * @throws {Error} Con el mensaje para el formulario si un dato no es válido.
  */
 function validarDatos(dto, { exigirMunicipioAdmitido }) {
-    const nit = String(dto.nit || '').replace(/[\s.]/g, '').split('-')[0].trim();
-    const razonSocial = String(dto.razon_social || '').trim().toUpperCase();
+    const nit = normalizarNit(dto.nit);
+    const razonSocial = textoObligatorio(dto.razon_social, 'la razón social', { min: 3, max: 150 }).toUpperCase();
     const municipioTexto = String(dto.municipio || '').trim();
-    const direccion = String(dto.direccion || '').trim();
     const representante = textoOpcional(dto.representante_legal || dto.contacto);
-    const telefono = String(dto.telefono_contacto || dto.telefono || '').trim();
-    const email = String(dto.email_contacto || dto.email || '').trim().toLowerCase();
+    if (representante && representante.length > 150) {
+        throw new Error('El representante legal no puede pasar de 150 caracteres.');
+    }
 
-    if (!/^\d{8,15}$/.test(nit)) {
-        throw new Error('El NIT es obligatorio y debe tener entre 8 y 15 dígitos (sin dígito de verificación, puntos ni guiones).');
-    }
-    if (razonSocial.length < 3) {
-        throw new Error('La razón social es obligatoria y debe tener al menos 3 caracteres.');
-    }
     let municipio = municipioParaGuardar(municipioTexto);
     if (!municipio) {
         if (exigirMunicipioAdmitido || !municipioTexto) {
@@ -137,15 +132,9 @@ function validarDatos(dto, { exigirMunicipioAdmitido }) {
         // Gestores antiguos con un municipio fuera de la lista: se conserva tal cual.
         municipio = municipioTexto.toUpperCase();
     }
-    if (direccion.length < 5) {
-        throw new Error('La dirección es obligatoria y debe tener al menos 5 caracteres.');
-    }
-    if (!telefono) {
-        throw new Error('El teléfono de contacto es obligatorio.');
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        throw new Error('El correo de contacto no tiene un formato válido (ejemplo: contacto@empresa.com).');
-    }
+    const direccion = textoObligatorio(dto.direccion, 'la dirección', { min: 5, max: 200 });
+    const telefono = normalizarTelefono(dto.telefono_contacto || dto.telefono);
+    const email = normalizarCorreo(dto.email_contacto || dto.email);
     return { nit, razonSocial, municipio, direccion, representante, telefono, email };
 }
 

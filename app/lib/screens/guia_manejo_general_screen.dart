@@ -6,7 +6,6 @@ import '../widgets/categoria_chip.dart';
 import '../widgets/contenido_guia.dart';
 
 /// Guía de manejo y marco normativo oficial colombiano por categoría (13).
-/// Diseñada con proporciones armónicas, tipografía legible y jerarquía visual clara.
 class GuiaManejoGeneralScreen extends StatefulWidget {
   const GuiaManejoGeneralScreen({super.key, this.categoriaInicial});
 

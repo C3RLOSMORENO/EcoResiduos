@@ -37,5 +37,8 @@
         "postcss": "^8.5.26",
         "supertest": "^7.3.0",
         "tailwindcss": "^3.4.19"
+    },
+    "overrides": {
+        "uuid": "11.1.1"
     }
 }

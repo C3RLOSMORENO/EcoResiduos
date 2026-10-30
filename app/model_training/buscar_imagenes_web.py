@@ -246,7 +246,7 @@ def main():
         if len([f for f in (DATASET_DIR / c).glob('*') if f.suffix.lower() in EXTENSIONES]) < MINIMO[c]
     ]
     if not categorias:
-        print('✅ Todas las categorías tienen el mínimo. Usa --categorias para buscar igual.')
+        print('Todas las categorías tienen el mínimo. Usa --categorias para buscar igual.')
         return
 
     CRUDAS_DIR.mkdir(parents=True, exist_ok=True)
@@ -259,7 +259,7 @@ def main():
         for categoria in categorias:
             descargador = Descargador(categoria)
             antes = descargador.guardadas
-            print(f'\n🔎 {categoria} ({len(CONSULTAS[categoria])} búsquedas)')
+            print(f'\n{categoria} ({len(CONSULTAS[categoria])} búsquedas)')
             for consulta in CONSULTAS[categoria]:
                 urls = buscar(consulta, args.por_consulta)
                 with ThreadPoolExecutor(max_workers=12) as pool:
@@ -267,7 +267,7 @@ def main():
                 registro.writerows(resultados)
                 salida.flush()
                 print(f'  «{consulta}»: {len(resultados)} de {len(urls)}')
-            print(f'  ✅ {descargador.guardadas - antes} candidatas nuevas en {descargador.destino}')
+            print(f'  {descargador.guardadas - antes} candidatas nuevas en {descargador.destino}')
 
     print('\nSiguiente paso: python filtrar_con_gemini.py')
 

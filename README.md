@@ -2,368 +2,246 @@
 
 <div align="center">
 
-![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![Dart](https://img.shields.io/badge/Dart-3.5+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.12-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-Edge_Vision-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-264%20Passed%20(100%25)-brightgreen?style=for-the-badge)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-277%20Passed-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
-[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android%20(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
+[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
-**Plataforma de Trazabilidad Logística de Residuos, Clasificación por Visión Computacional en Dispositivo y Auditoría Ambiental**
+**Clasificación de residuos con la cámara, coordinación de su recolección con empresas gestoras autorizadas y seguimiento para las autoridades ambientales**
 
-*Alcance Territorial Acotado: Bucaramanga, Floridablanca, Girón, Piedecuesta, Barrancabermeja y Sabana de Torres (Santander, Colombia)*
+*Bucaramanga, Floridablanca, Girón, Piedecuesta, Barrancabermeja y Sabana de Torres (Santander, Colombia)*
 
 </div>
 
 ---
 
-## 1. Descripción General del Sistema
+## 1. Qué es
 
-**EcoResiduos** es una plataforma de software diseñada para la articulación logística y trazabilidad de residuos sólidos entre generadores (residenciales, comerciales e industriales), empresas gestoras debidamente acreditadas y autoridades ambientales con jurisdicción territorial (**CDMB**, **AMB** y **CAS**).
+**EcoResiduos** conecta a quienes generan residuos (hogares, comercios e industrias) con empresas gestoras autorizadas, y le da a las autoridades ambientales (**CDMB**, **AMB** y **CAS**) una vista de lo que se recoge en su jurisdicción. Tiene tres partes:
 
-El sistema se enfoca en tres componentes técnicos fundamentales:
-1. **Clasificación Asistida en el Borde (*Edge AI*):** Modelo de visión artificial embebido directamente en el cliente móvil para orientar la separación en la fuente bajo la Resolución 2184 de 2019, ejecutándose sin requerir conectividad de datos.
-2. **Intermediación y Negociación Transaccional:** Registro georreferenciado de solicitudes de retiro de material, recepción de ofertas técnico-económicas por parte de gestores autorizados y confirmación conforme de entrega.
-3. **Fiscalización Documental y Custodia:** Validación de licencias ambientales y custodia digital de certificados de disposición final o aprovechamiento en formato PDF.
-
----
-
-## 2. Delimitación Territorial y Alcance Operativo
-
-El sistema **no cubre la totalidad del departamento de Santander**, sino que restringe su alcance técnico y operativo a seis (6) municipios priorizados debido a su articulación con los planes de gestión integral de residuos sólidos (PGIRS) y la jurisdicción de las Corporaciones Autónomas Regionales participantes:
-
-```
-┌──────────────────┬──────────────────────────────┬──────────────────────────────┬───────────────────────────────┐
-│ Municipio        │ Subregión Departamental      │ Autoridad Ambiental Urbana   │ Corporación Regional (CAR)    │
-├──────────────────┼──────────────────────────────┼──────────────────────────────┼───────────────────────────────┤
-│ Bucaramanga      │ Área Metropolitana (AMB)     │ Área Metropolitana (AMB)     │ CDMB                          │
-│ Floridablanca    │ Área Metropolitana (AMB)     │ Área Metropolitana (AMB)     │ CDMB                          │
-│ Girón            │ Área Metropolitana (AMB)     │ Área Metropolitana (AMB)     │ CDMB                          │
-│ Piedecuesta      │ Área Metropolitana (AMB)     │ Área Metropolitana (AMB)     │ CDMB                          │
-│ Barrancabermeja  │ Magdalena Medio Santandereano│ Secretaría de Medio Ambiente │ CAS                           │
-│ Sabana de Torres │ Magdalena Medio Santandereano│ Administración Municipal     │ CAS                           │
-└──────────────────┴──────────────────────────────┴──────────────────────────────┴───────────────────────────────┘
-```
-
-> **Nota de Delimitación:** Toda solicitud de recolección y todo registro de empresa gestora requiere asociar uno de estos seis municipios validados dentro de las reglas de negocio del sistema. Los 81 municipios restantes de Santander se encuentran fuera del alcance del presente proyecto.
+1. **App móvil** ([`app/`](app/README.md)): identifica el residuo con la cámara, sin conexión, e indica cómo separarlo según la Resolución 2184 de 2019. Con ella el ciudadano publica la solicitud de recolección, compara ofertas y recibe el certificado; la empresa gestora hace ofertas, marca la recolección y carga el certificado.
+2. **Panel de administración** ([`admin-panel/`](admin-panel/README.md)): verifica las licencias de las empresas gestoras, administra el catálogo de materiales, resuelve problemas reportados y genera reportes por municipio. Incluye un asistente que responde preguntas sobre los datos.
+3. **Base de datos** ([`supabase/`](supabase/migrations/00000000000000_schema_completo.sql)): PostgreSQL en Supabase, con las reglas de negocio y de acceso dentro de la base.
 
 ---
 
-## 3. Marco Regulatorio y Estándares Técnicos
+## 2. Alcance
 
-La plataforma implementa los lineamientos de la normativa ambiental colombiana vigente:
+El sistema opera solo en seis municipios de Santander. Toda solicitud y todo registro de empresa gestora debe estar en uno de ellos; los demás municipios del departamento quedan fuera del alcance.
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 MARCO NORMATIVO COLOMBIANO                             │
-├──────────────────────────┬─────────────────────────────┬───────────────────────────────┤
-│ Regulación               │ Ámbito de Aplicación        │ Implementación en el Sistema  │
-├──────────────────────────┼─────────────────────────────┼───────────────────────────────┤
-│ Resolución 2184 de 2019  │ Código Nacional de Colores  │ Blanco (Aprovechables)        │
-│ (MinAmbiente)            │ para Separación en Fuente   │ Verde (Orgánicos)             │
-│                          │                             │ Negro (No Aprovechables)      │
-├──────────────────────────┼─────────────────────────────┼───────────────────────────────┤
-│ Decreto 1076 de 2015     │ Decreto Único Reglamentario │ Control documental de         │
-│ (Sector Ambiente)        │ del Sector Ambiental        │ licencias expedidas por CAR   │
-├──────────────────────────┼─────────────────────────────┼───────────────────────────────┤
-│ Ley 1252 de 2008         │ Gestión Integral de         │ Trazabilidad estricta y       │
-│ y Decreto 4741 de 2005   │ Residuos Peligrosos (RESPEL)│ custodia de certificados      │
-├──────────────────────────┼─────────────────────────────┼───────────────────────────────┤
-│ Ley 1672 de 2013         │ Gestión Integral de Residuos│ Canalización hacia programas  │
-│ y Decreto 284 de 2018    │ Eléctricos y Electrónicos   │ posconsumo autorizados        │
-├──────────────────────────┼─────────────────────────────┼───────────────────────────────┤
-│ Resolución 0472 de 2017  │ Residuos de Construcción y  │ Cubicaje en M3 y articulación │
-│ y Resolución 1257 de 2021│ Demolición (RCD / Escombros)│ con plantas de agregados      │
-└──────────────────────────┴─────────────────────────────┴───────────────────────────────┘
-```
+| Municipio | Subregión | Autoridad ambiental urbana | Corporación Autónoma Regional |
+|---|---|---|---|
+| Bucaramanga | Área Metropolitana | AMB | CDMB |
+| Floridablanca | Área Metropolitana | AMB | CDMB |
+| Girón | Área Metropolitana | AMB | CDMB |
+| Piedecuesta | Área Metropolitana | AMB | CDMB |
+| Barrancabermeja | Magdalena Medio | Secretaría de Medio Ambiente | CAS |
+| Sabana de Torres | Magdalena Medio | Administración municipal | CAS |
 
 ---
 
-## 4. Arquitectura del Software
+## 3. Marco normativo
 
-El sistema implementa una **Arquitectura Desacoplada de Tres Niveles basada en Backend-as-a-Service (BaaS) con Computación en el Borde (*Edge Computing*) y Servidor de Auditoría Web (MVC)**. 
+| Norma | Tema | Cómo se aplica |
+|---|---|---|
+| Resolución 2184 de 2019 (MinAmbiente) | Código de colores para la separación en la fuente | Blanco (aprovechables), verde (orgánicos) y negro (no aprovechables) en la clasificación y las guías de la app. |
+| Decreto 1076 de 2015 | Decreto único del sector ambiente | Verificación de las licencias y permisos ambientales de las empresas gestoras. |
+| Ley 1252 de 2008 y Decreto 4741 de 2005 | Residuos peligrosos (RESPEL) | Categoría propia y certificados de disposición final. |
+| Ley 1672 de 2013 y Decreto 284 de 2018 | Residuos de aparatos eléctricos y electrónicos (RAEE) | Categoría propia y gestores especializados. |
+| Resoluciones 0472 de 2017 y 1257 de 2021 | Residuos de construcción y demolición (RCD) | Cantidades en metros cúbicos. |
+| Ley 1581 de 2012 y Decreto 1377 de 2013 | Protección de datos personales | Autorización al registrarse, [política de tratamiento](app/lib/legal/politica_datos.dart) y canal para consultas y reclamos. |
+| Resolución 1519 de 2020 (MinTIC) | Accesibilidad web (WCAG 2.1 AA) | Objetivo del panel, verificado con pruebas y [declaración de accesibilidad](admin-panel/src/views/accesibilidad.ejs). |
 
-No corresponde a una arquitectura de microservicios distribuidos independientes (tipo contenedores con intermediarios de mensajería asíncrona como Kafka o RabbitMQ), sino a una **arquitectura monorepo modular desacoplada**, donde cada subsistema cumple un rol específico dentro del ciclo de vida del dato:
+---
+
+## 4. Arquitectura
+
+Es un monorepositorio con tres partes que se comunican a través de Supabase. No son microservicios: la app y el panel leen y escriben en la misma base, y la base decide qué puede ver o cambiar cada usuario.
 
 ```mermaid
 flowchart TD
-    subgraph Actores["Actores del Ecosistema"]
-        GEN["Generador de Residuos<br/>(Hogares, Comercios, Industrias)"]
-        GES["Empresa Gestora Ambiental<br/>(Acreditada por CAR)"]
-        ADM["Auditor Ambiental / Admin<br/>(CDMB, AMB, CAS)"]
+    GEN["Ciudadano o empresa generadora"] --> APP
+    GES["Empresa gestora"] --> APP
+    ADM["Administrador / autoridad ambiental"] --> PANEL
+
+    subgraph APP["App móvil (Flutter)"]
+        TFL["Clasificador MobileNetV3<br/>(en el teléfono, sin conexión)"]
+        COLA["Cola de publicaciones<br/>sin conexión"]
     end
 
-    subgraph Tier1["Nivel 1: Cliente Móvil y Computación en el Borde (Flutter / Dart)"]
-        UI["Capa de Presentación Declarativa<br/>(Material 3 / Public Sans)"]
-        TFL["Motor de Inferencia en Memoria (C++)<br/>MobileNetV3 Edge Vision (Offline)"]
-        REPO["Capa de Abstracción de Repositorios"]
-        SQLITE["Almacenamiento Local (shared_preferences)<br/>Cola de Publicaciones sin Conexión"]
+    subgraph SUPA["Supabase"]
+        AUTH["Auth<br/>(cuentas y sesiones)"]
+        DB[("PostgreSQL<br/>seguridad por fila (RLS)<br/>funciones transaccionales")]
+        STOR["Storage<br/>(fotos, permisos, certificados)"]
     end
 
-    subgraph Tier2["Nivel 2: Servicios de Persistencia y Lógica Transaccional (Supabase / PostgreSQL)"]
-        AUTH["Control de Identidad y Sesión (Supabase Auth, JWT)"]
-        DB[(PostgreSQL 15+ con Aislamiento RLS)]
-        RPC["Lógica de Negocio Transaccional ACID<br/>(Funciones SECURITY DEFINER con FOR UPDATE)"]
-        STOR["Almacenamiento de Objetos<br/>(Evidencias y Certificados PDF)"]
-        EDGE["Edge Functions Serverless<br/>(Mantenimiento y Tareas Asíncronas)"]
+    subgraph PANEL["Panel (Node.js + Express)"]
+        MVC["Controladores y servicios<br/>(llave de servidor)"]
+        IA["Asistente<br/>(Gemini, solo cifras)"]
     end
 
-    subgraph Tier3["Nivel 3: Panel Administrativo y Mediación Web (Node.js / Express / EJS)"]
-        PIPE["Tubería de Seguridad Perimetral<br/>(CSP L3 + Nonces, Anti-CSRF, Rate Limit)"]
-        MVC["Controladores MVC y Servicios<br/>(Acceso Privilegiado service_role)"]
-        SSR["Renderizado en Servidor EJS<br/>(Accesibilidad WCAG 2.1 AA)"]
-    end
-
-    GEN --> UI
-    GES --> UI
-    UI --> TFL
-    UI --> REPO
-    REPO <--> SQLITE
-    REPO <--> AUTH
-    REPO <--> DB
-    REPO <--> RPC
-    REPO <--> STOR
-
-    ADM --> PIPE
-    PIPE --> MVC
-    MVC --> SSR
+    APP <--> AUTH
+    APP <--> DB
+    APP <--> STOR
     MVC <--> DB
     MVC <--> STOR
-    EDGE <--> STOR
+    MVC --> IA
 ```
 
-### Especificación de Niveles Arquitectónicos
-
-| Nivel del Sistema | Subsistema | Patrón Arquitectónico | Responsabilidad de Ingeniería | Protocolo / Interfaz |
-|---|---|---|---|---|
-| **Nivel 1: Edge Client** | Cliente Móvil (`app/`) | *Feature-First Layered Architecture* + *Repository Pattern* | Captura de imagen, inferencia visual autónoma sin red, publicación georreferenciada y encolamiento transaccional offline. | Inferencia en memoria C++, HTTPS / TLS 1.3, WebSockets. |
-| **Nivel 2: BaaS / Persistencia** | Capa Central (`supabase/`) | *BaaS Relacional con Aislamiento Zero-Trust* | Control de acceso basado en identidad, ejecución atómica de ofertas y adjudicaciones (ACID), almacenamiento seguro y triggers inmutables. | SQL ANSI, PostgREST API, RPC Functions, S3 Storage API. |
-| **Nivel 3: Administrative Web** | Panel Web (`admin-panel/`) | *Model-View-Controller (MVC)* con SSR y *Middleware Pipeline* | Fiscalización documental de licencias ambientales, administración del catálogo de residuos, mediación de novedades y reportería regional. | HTTPS / TLS 1.3, Cookies HttpOnly/Strict, CSP Nonces. |
+| Parte | Organización | Puntos clave |
+|---|---|---|
+| App (`app/`) | Por funcionalidades, con repositorios entre las pantallas y Supabase | Clasificación en el teléfono, cola sin conexión, notificaciones en tiempo real. |
+| Base de datos (`supabase/`) | Una migración única e idempotente | Seguridad por fila (RLS) en cada tabla; los cambios de estado críticos pasan por funciones `SECURITY DEFINER` que bloquean la fila (`FOR UPDATE`) para evitar condiciones de carrera. |
+| Panel (`admin-panel/`) | Modelo-Vista-Controlador con vistas en el servidor (EJS) | CSP con nonce, protección CSRF, sesión en cookies `HttpOnly`; corre en Vercel o en cualquier servidor Node. |
 
 ---
 
-## 5. Estructura del Monorepo
+## 5. Estructura del repositorio
 
 ```
 EcoResiduos/
-├── app/                              # Aplicación móvil cliente (Flutter / Dart)
-│   ├── assets/models/                # Modelo MobileNetV3 cuantizado y etiquetas
-│   ├── lib/features/auth/            # Autenticación, registro y verificación de directorio
-│   ├── lib/features/solicitudes/     # Ciclo de publicación, negociación y recolección
-│   ├── lib/models/                   # Entidades de dominio
-│   ├── lib/services/                 # Servicios de visión artificial y geolocalización
-│   └── test/                         # Suite de 117 pruebas unitarias y de widgets
-│
-├── admin-panel/                      # Panel web de auditoría (Node.js / Express / EJS)
-│   ├── src/controllers/              # Controladores de negocio y mediación
-│   ├── src/middlewares/              # Cabeceras CSP, mitigación CSRF y control de sesiones
-│   ├── src/views/                    # Plantillas del servidor con protección XSS
-│   ├── pruebas/                      # 147 pruebas de integración y accesibilidad, más las de navegador
-│   └── tailwind.config.js            # Tokens visuales y diseño accesible
-│
-└── supabase/
-    └── migrations/                   # Esquema relacional, políticas RLS y triggers ACID
+├── app/                      # App móvil (Flutter). Ver app/README.md
+│   ├── assets/models/        # Modelo MobileNetV3 (.tflite) y etiquetas
+│   ├── lib/                  # Código de la app
+│   ├── model_training/       # Construcción del dataset y entrenamiento del modelo
+│   └── test/                 # 124 pruebas
+├── admin-panel/              # Panel web (Node.js + Express). Ver admin-panel/README.md
+│   ├── api/                  # Entrada en Vercel
+│   ├── src/                  # Controladores, servicios, vistas y estilos
+│   └── pruebas/              # 153 pruebas y 9 recorridos en navegador
+├── supabase/
+│   ├── migrations/           # Esquema completo: tablas, RLS, funciones, triggers y buckets
+│   └── functions/            # Función que borra fotos huérfanas del almacenamiento
+└── .github/workflows/        # Integración continua, APK y consulta para mantener activo Supabase
 ```
 
 ---
 
-## 6. Módulo de Visión Computacional en el Dispositivo
+## 6. Clasificación con la cámara
 
-La inferencia visual se ejecuta enteramente en la memoria del dispositivo móvil utilizando la biblioteca nativa en C++ `tflite_flutter`, garantizando privacidad total y disponibilidad sin conexión.
+El modelo es un **MobileNetV3 Large** entrenado por el equipo con transferencia de aprendizaje ([`app/model_training/`](app/model_training/)), exportado a TensorFlow Lite y ejecutado en el teléfono con `tflite_flutter`. Recibe imágenes de 224 × 224 píxeles y distingue 8 clases: `APROVECHABLE`, `ORGANICO`, `ORDINARIO`, `PELIGROSO`, `RAEE`, `RCD`, `RIESGO_BIOLOGICO` y `FONDO` (la foto no muestra un residuo).
 
-```mermaid
-flowchart LR
-    A["Entrada de Cámara"] --> B["Normalización<br/>224 × 224 RGB"]
-    B --> C["Tensor Float32<br/>[0, 255]"]
-    C --> D["Inferencia MobileNetV3<br/>(TFLite Local)"]
-    D --> E["Probabilidades<br/>(Softmax)"]
-    E --> F{"Clase FONDO"}
-    F -- Sí --> G["Descarte: Sin Residuo"]
-    F -- No --> H["Resultado Clasificado"]
-```
-
-### Especificaciones Técnicas del Modelo
-
-| Parámetro | Especificación |
-|---|---|
-| **Arquitectura de Red** | MobileNetV3 Large con Transfer Learning y Fine-Tuning |
-| **Formato de Ejecución** | TensorFlow Lite (`.tflite`) optimizado para procesadores móviles |
-| **Dimensión de Entrada** | $1 \times 224 \times 224 \times 3$ (Canales RGB normalizados) |
-| **Espacio de Clasificación** | 8 Clases (`APROVECHABLE`, `ORGANICO`, `ORDINARIO`, `PELIGROSO`, `RAEE`, `RCD`, `RIESGO_BIOLOGICO`, `FONDO`) |
-| **Mecanismo Anti-Ruido** | Clase `FONDO` para discriminación de capturas que no contienen residuos |
-| **Latencia Típica** | Inferior a 200 ms por cuadro |
-| **Conectividad Requerida** | Ninguna (Operación autónoma sin internet) |
+Cada foto se clasifica en cuatro versiones (recorte central, espejo, foto completa y recorte al 75 %) y se promedian los resultados. Con menos de 40 % de confianza, o si gana `FONDO`, la app no adivina: lo dice y ofrece alternativas. El detalle está en el [README de la app](app/README.md#3-clasificación-con-la-cámara).
 
 ---
 
-## 7. Flujo Operativo de Recolección y Trazabilidad
+## 7. Flujo de una recolección
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Gen as Generador
-    participant App as App Móvil (Flutter)
-    participant Model as Motor IA (TFLite)
-    participant DB as Backend Relacional (PostgreSQL)
-    actor Gest as Gestor Autorizado
-    actor Admin as Auditor (Panel Web)
+    participant App as App móvil
+    participant DB as Supabase
+    actor Gest as Empresa gestora
+    actor Admin as Administrador
 
-    Gen->>App: Captura imagen del residuo
-    App->>Model: Inferencia local en dispositivo
-    Model-->>App: Retorna clasificación probabilística
-    Gen->>App: Publica solicitud con ubicación GPS
-    App->>DB: Registra solicitud en estado PUBLICADO
-    DB-->>Gest: Notifica a gestores autorizados en la zona
-    Gest->>App: Envía propuesta técnica y económica
-    Gen->>App: Acepta cotización seleccionada
-    App->>DB: Transacción atómica a estado EN_NEGOCIACION
-    Gest->>Gen: Retiro físico del residuo en sitio
-    Gest->>App: Confirma recolección y adjunta certificado PDF
-    App->>DB: Actualiza solicitud a estado RECOLECTADO
-    Gen->>App: Confirma recepción conforme del servicio
-    Admin->>DB: Audita licencias, historial y certificados
+    Gen->>App: Toma la foto del residuo
+    App->>App: Clasifica en el teléfono
+    Gen->>App: Publica la solicitud con dirección y ubicación
+    App->>DB: Solicitud en estado PUBLICADO
+    DB-->>Gest: Aviso a las empresas aprobadas que reciben ese material
+    Gest->>App: Envía su oferta
+    Gen->>App: Elige una oferta
+    App->>DB: Solicitud EN_NEGOCIACION (transacción con bloqueo de fila)
+    Gest->>Gen: Recoge el residuo
+    Gest->>App: Marca la recolección y carga el certificado
+    App->>DB: Solicitud RECOLECTADO
+    Gen->>App: Confirma la entrega (o se confirma sola a las 72 h)
+    Admin->>DB: Revisa licencias, problemas reportados y certificados
 ```
 
 ---
 
-## 8. Pila Tecnológica
+## 8. Tecnologías
 
-| Capa / Subsistema | Tecnología | Propósito de Ingeniería |
+| Parte | Tecnología | Uso |
 |---|---|---|
-| **Aplicación Móvil** | Flutter 3.24+ / Dart 3.5+ | Cliente multiplataforma reactivo para generadores y empresas gestoras. |
-| **Motor de Inferencia** | TensorFlow Lite (`tflite_flutter`) | Clasificación visual en tiempo real en el hardware del teléfono. |
-| **Geolocalización** | `geolocator` | Georreferenciación precisa y cálculo de distancias de atención. |
-| **Panel Administrativo** | Node.js 24 & Express | Sistema de auditoría, control de expedientes y reportes regionales. |
-| **Capa de Presentación Web** | EJS & Tailwind CSS | Renderizado en servidor con diseño accesible conforme a WCAG 2.1 AA. |
-| **Motor de Base de Datos** | PostgreSQL 15+ (Supabase) | Esquema relacional con integridad referencial, triggers y aislamiento RLS. |
-| **Autenticación** | Supabase Auth (JWT) | Control de sesiones seguro basado en tokens y roles de usuario. |
-| **Almacenamiento de Archivos**| Supabase Storage | Gestión de evidencias fotográficas, licencias y certificados en PDF. |
+| App móvil | Flutter 3.47 / Dart 3.12 | Android, con temas claro y oscuro. |
+| Clasificación | TensorFlow Lite (`tflite_flutter`) | Modelo propio ejecutado en el teléfono. |
+| Ubicación | `geolocator` | Ubicación de la publicación y distancia a las solicitudes. |
+| Panel | Node.js 24, Express, EJS y Tailwind CSS | Vistas generadas en el servidor. |
+| Base de datos | PostgreSQL en Supabase | Tablas, seguridad por fila, funciones y triggers. |
+| Autenticación | Supabase Auth | Cuentas, sesiones y recuperación de contraseña. |
+| Archivos | Supabase Storage | Fotos, permisos ambientales y certificados en PDF. |
+| Asistente del panel | Google Gemini | Respuestas sobre los datos del panel, con consultas de solo lectura. |
 
 ---
 
-## 9. Guía de Puesta en Marcha
+## 9. Puesta en marcha
 
-### Prerrequisitos de Entorno
+### Requisitos
 
-- [Git](https://git-scm.com/) instalado en el sistema operativo.
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) versión 3.24 o superior.
-- [Node.js](https://nodejs.org/) versión 24.x con npm.
-- Un proyecto configurado en [Supabase](https://supabase.com/).
+- [Flutter](https://docs.flutter.dev/get-started/install) estable (3.47 o superior).
+- [Node.js](https://nodejs.org/) 24.x con npm.
+- Un proyecto en [Supabase](https://supabase.com/).
 
----
+### Paso 1: Base de datos
 
-### Paso 1: Configuración de Base de Datos (Supabase)
+1. Abre el **SQL Editor** de Supabase y ejecuta completo [`supabase/migrations/00000000000000_schema_completo.sql`](supabase/migrations/00000000000000_schema_completo.sql). Es una sola migración idempotente: crea tablas, funciones, políticas RLS y buckets, y se puede volver a ejecutar sin perder datos.
+2. Comprueba en **Storage** que existan los buckets:
+   - `escaneos_ia`: fotos de los residuos (público).
+   - `fotos_perfil`: logo y portada de los gestores (público).
+   - `certificados`: certificados en PDF (público).
+   - `permisos`: licencias ambientales (privado, solo el servidor lo lee).
+3. En **Authentication → Providers → Email**, configura *Minimum password length* en **8** y *Password requirements* en **Letters and digits**. Así se aplica la misma regla de contraseñas que en la app aunque alguien llame a la API directamente.
 
-1. Abre el **SQL Editor** de Supabase y ejecuta completo el archivo [`supabase/migrations/00000000000000_schema_completo.sql`](supabase/migrations/00000000000000_schema_completo.sql). Es una sola migración idempotente: crea tablas, funciones, políticas RLS y buckets, y se puede volver a ejecutar sin perder datos.
+### Paso 2: App móvil
 
-2. Comprueba en **Storage** que existan los buckets (la migración los crea):
-   - `escaneos_ia`: Fotografías de los residuos publicados y escaneados (público).
-   - `fotos_perfil`: Logo y portada de los gestores (público).
-   - `certificados`: Certificados de disposición final y aprovechamiento en PDF (público).
-   - `permisos`: Documentos de licencias ambientales (bucket privado con acceso exclusivo de servidor).
-
----
-
-### Descarga Directa de la Aplicación Móvil (Android APK)
-
-Si deseas probar la aplicación directamente en un dispositivo Android sin compilar el código fuente:
-
-1. Ve a la sección de **[Releases del Repositorio](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)**.
-2. Descarga el archivo **`EcoResiduos.apk`**.
-3. En tu teléfono Android, abre el archivo descargado. Si Android te solicita permiso para instalar aplicaciones de fuentes desconocidas, habilítalo en los ajustes del navegador o gestor de archivos.
-4. Presiona **Instalar** y ¡listo!
-
----
-
-### Paso 2: Ejecución Local de la Aplicación Móvil (Flutter)
-
+Para probarla sin compilar, descarga `EcoResiduos.apk` de [Releases](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest) e instálalo en un teléfono Android (permite instalar desde fuentes desconocidas si lo pide). Para ejecutarla desde el código:
 
 ```bash
-# Ingresar a la carpeta de la aplicación
 cd app
-
-# Instalar dependencias de Flutter
 flutter pub get
-
-# Ejecutar en el dispositivo o emulador conectado
 flutter run
 ```
 
----
-
-### Paso 3: Ejecución del Panel Administrativo (Node.js / Express)
+### Paso 3: Panel de administración
 
 ```bash
-# Ingresar a la carpeta del panel
 cd admin-panel
-
-# Crear archivo de variables de entorno
-cp .env.example .env
-
-# Instalar dependencias y compilar estilos CSS
+cp .env.example .env      # llena las variables (README del panel)
 npm install
 npm run build:css
-
-# Iniciar el servidor en modo desarrollo
-npm run dev
+npm run dev               # http://localhost:3000
 ```
 
-El panel estará disponible en `http://localhost:3000`. Las variables de entorno están explicadas en el [README del panel](admin-panel/README.md#variables-de-entorno).
+### Paso 4: Producción
 
----
-
-### Paso 4: Despliegue en Producción
-
-El panel se despliega en **Vercel** (Root Directory: `admin-panel`) o en cualquier servidor con Node 24. Las instrucciones completas, las variables obligatorias y las particularidades de cada opción están en el [README del panel, sección 5](admin-panel/README.md#5-despliegue-en-producción).
+El panel se despliega en **Vercel** (Root Directory: `admin-panel`) o en cualquier servidor con Node 24. Las variables obligatorias y los pasos están en el [README del panel, sección 5](admin-panel/README.md#5-despliegue-en-producción).
 
 Para que el plan gratis de Supabase no pause el proyecto por inactividad, el flujo [`mantener-supabase.yml`](.github/workflows/mantener-supabase.yml) hace una consulta cada 3 días; se activa agregando los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY` en GitHub.
 
 ---
 
-## 10. Suites de Pruebas Automatizadas
+## 10. Pruebas
 
-El proyecto mantiene **264 pruebas automatizadas**, más 9 recorridos en navegador con Playwright, que garantizan la estabilidad y no regresión:
+| Parte | Pruebas | Comando |
+|---|---|---|
+| App móvil | 124 | `cd app && flutter analyze && flutter test` |
+| Panel | 153, más 9 recorridos en navegador (escritorio y celular) | `cd admin-panel && npm run lint && npm test && npm run test:e2e` |
 
-```
-┌───────────────────────────────────────────────┬──────────────┬──────────────┐
-│ Suite de Pruebas                              │ Cantidad     │ Estado       │
-├───────────────────────────────────────────────┼──────────────┼──────────────┤
-│ App Móvil (Flutter / Dart)                    │ 117 Tests    │ 100% Pass ✅ │
-│ Panel Administrativo (Node.js / Express / EJS)│ 147 Tests    │ 100% Pass ✅ │
-├───────────────────────────────────────────────┼──────────────┼──────────────┤
-│ Total Pruebas Automatizadas                   │ 264 Tests    │ 100% Pass ✅ │
-└───────────────────────────────────────────────┴──────────────┴──────────────┘
-```
-
-### Ejecutar Pruebas de la Aplicación Móvil (117 Tests)
-```bash
-cd app
-flutter test
-```
-
-### Ejecutar Pruebas del Panel Administrativo (147 Tests)
-```bash
-cd admin-panel
-npm test
-npm run test:e2e   # recorridos en navegador (escritorio y celular)
-```
+La integración continua ([`ci.yml`](.github/workflows/ci.yml)) corre el análisis y las pruebas de ambas partes en cada cambio.
 
 ---
 
-## 11. Seguridad y Privacidad
+## 11. Seguridad y datos personales
 
-- **Políticas Row Level Security (RLS):** Cada consulta está restringida en el motor de base de datos para que los generadores y gestores solo accedan a sus propios registros.
-- **Transacciones ACID:** Los cambios de estado críticos se realizan a través de funciones almacenadas `SECURITY DEFINER` con bloqueos pesimistas (`FOR UPDATE`), previniendo condiciones de carrera.
-- **Seguridad Web:** El panel implementa Content Security Policy (CSP) con nonces criptográficos dinámicos, cookies `HttpOnly` (`SameSite=Lax` las de sesión y `Strict` la de CSRF), protección contra falsificación de petición (CSRF) y reportes en Excel que escriben cada celda como valor, nunca como fórmula, para evitar la inyección de fórmulas.
-- **Privacidad de Imágenes:** La clasificación con IA ocurre 100 % en el teléfono: la foto nunca se envía a un servicio de inteligencia artificial externo y el modelo funciona sin conexión. Para el historial de escaneos y las publicaciones, la foto sí se guarda en el bucket `escaneos_ia` de Supabase, dentro de una carpeta con el identificador del usuario; ese bucket es público para que la app pueda mostrarla, así que quien tenga la URL exacta puede verla (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
+- **Seguridad por fila (RLS):** la base solo deja ver y cambiar a cada usuario lo que le corresponde, aunque alguien use la llave pública fuera de la app.
+- **Transacciones:** aceptar una oferta, marcar una recolección o cancelar se hace con funciones de la base que bloquean la fila, para que dos acciones simultáneas no dejen la solicitud en un estado inválido.
+- **Validación en la base:** cantidades mayores que cero, NIT único por empresa y estados permitidos, además de la validación de la app y el panel.
+- **Panel:** CSP con nonce por petición, protección CSRF, cookies `HttpOnly`, contraseña de administrador de al menos 12 caracteres y reportes en Excel que escriben cada celda como valor (sin inyección de fórmulas).
+- **Datos personales (Ley 1581 de 2012):** nadie se registra sin autorizar el tratamiento de sus datos; quien ya tenía cuenta lo autoriza la próxima vez que entra. La política está publicada en el panel (`/privacidad`) y en la app.
+- **Fotos:** la clasificación ocurre en el teléfono y no se envía a ningún servicio de inteligencia artificial. Las fotos de escaneos y publicaciones sí se guardan en Supabase, en un bucket público para que la app pueda mostrarlas; quien tenga la URL exacta puede verlas (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
 
 ---
 
-## 12. Autoría y Licencia
+## 12. Autoría
 
-Proyecto de grado desarrollado para la gestión ambiental integral y el impulso de la economía circular en municipios seleccionados de Santander, Colombia.
+Proyecto de grado de la Universidad de Santander (UDES) para la gestión de residuos y la economía circular en seis municipios de Santander.
 
 - **Repositorio:** [C3RLOSMORENO/EcoResiduos](https://github.com/C3RLOSMORENO/EcoResiduos)

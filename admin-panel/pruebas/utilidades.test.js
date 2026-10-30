@@ -117,3 +117,42 @@ test('el reporte cuenta recolecciones por categoría y suma cantidades sin conve
     assert.equal(reporte.total.sinConfirmar, 2);
     assert.equal(reporte.filas.length, 7, 'los 6 municipios más «Otro / sin dato»');
 });
+
+test('dígito de verificación del NIT con NIT reales (algoritmo módulo 11 de la DIAN)', () => {
+    const { digitoVerificacion, normalizarNit } = require('../src/utils/validacion');
+    for (const [nit, dv] of [['890903938', 8], ['899999068', 1], ['800197268', 4], ['860034313', 7]]) {
+        assert.equal(digitoVerificacion(nit), dv, nit);
+    }
+    assert.equal(normalizarNit('890.903.938-8'), '890903938');
+    assert.equal(normalizarNit('890903938'), '890903938', 'sin dígito de verificación también vale');
+    assert.throws(() => normalizarNit('890903938-7'), /no corresponde/);
+    assert.throws(() => normalizarNit('1234567'), /entre 8 y 15/);
+});
+
+test('teléfonos colombianos: celular, fijo de 10 o de 7 dígitos, 01 8000 y extensión', () => {
+    const { normalizarTelefono } = require('../src/utils/validacion');
+    const validos = [
+        ['300 123 4567', '3001234567'],
+        ['+57 300-123-4567', '3001234567'],
+        ['573001234567', '3001234567'],
+        ['(607) 634 5678', '6076345678'],
+        ['601 765 4321', '6017654321'],
+        ['634 5678', '6076345678'],
+        ['01 8000 123456', '018000123456'],
+        ['607 6970000 ext 123', '6076970000 ext. 123'],
+        ['6017654321 Extensión 45', '6017654321 ext. 45']
+    ];
+    for (const [entrada, guardado] of validos) assert.equal(normalizarTelefono(entrada), guardado, entrada);
+    for (const malo of ['', 'abc', '12345', '2001234567', '30012345678', 'Sin registrar']) {
+        assert.throws(() => normalizarTelefono(malo), /celular/, malo);
+    }
+});
+
+test('el sitio web solo acepta http o https y completa el protocolo', () => {
+    const { normalizarSitioWeb } = require('../src/utils/validacion');
+    assert.equal(normalizarSitioWeb('www.cdmb.gov.co'), 'https://www.cdmb.gov.co');
+    assert.equal(normalizarSitioWeb('http://cas.gov.co'), 'http://cas.gov.co');
+    for (const malo of ['javascript:alert(1)', 'ftp://x.co', 'localhost', '', `https://${'a'.repeat(260)}.co`]) {
+        assert.throws(() => normalizarSitioWeb(malo), /sitio web/, malo);
+    }
+});

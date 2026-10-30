@@ -137,7 +137,7 @@ def download_wikimedia_rcd():
         for r in all_records:
             writer.writerow(r)
             
-    print(f"✅ Descargados {saved} escombros de Wikimedia.")
+    print(f"Descargados {saved} escombros de Wikimedia.")
     return saved
 
 def download_unsplash_rcd():
@@ -212,7 +212,7 @@ def download_unsplash_rcd():
         for r in all_records:
             writer.writerow(r)
             
-    print(f"✅ Descargados {saved} escombros de Unsplash.")
+    print(f"Descargados {saved} escombros de Unsplash.")
     return saved
 
 def main():

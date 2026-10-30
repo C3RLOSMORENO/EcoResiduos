@@ -71,10 +71,10 @@ def ensure_target_dirs():
 
 def copy_organic_images():
     """Copia las fotos del dataset «organic» (Garbage Classification) según ORGANIC_DATASET_MAPPING."""
-    print("\n📦 1. Procesando dataset 'organic' (Garbage Classification)...")
+    print("\n1. Procesando dataset 'organic' (Garbage Classification)...")
     source_dir = DOWNLOADS_DATASET_DIR / "organic" / "images" / "images"
     if not source_dir.exists():
-        print(f"⚠️ No se encontró: {source_dir}")
+        print(f"No se encontró: {source_dir}")
         return
 
     count_per_cat = {}
@@ -97,14 +97,14 @@ def copy_organic_images():
         print(f"  -> {folder_name} ({count} fotos) ==> {target_cat}")
 
     for cat, total in count_per_cat.items():
-        print(f"  ✅ Total agregado a {cat}: {total} fotos")
+        print(f"  Total agregado a {cat}: {total} fotos")
 
 def copy_electronica_images():
     """Reparte las fotos del dataset «electronica» entre RAEE y PELIGROSO (baterías)."""
-    print("\n📦 2. Procesando dataset 'electronica' (RAEE y Baterías)...")
+    print("\n2. Procesando dataset 'electronica' (RAEE y Baterías)...")
     source_dir = DOWNLOADS_DATASET_DIR / "electronica" / "modified-dataset"
     if not source_dir.exists():
-        print(f"⚠️ No se encontró: {source_dir}")
+        print(f"No se encontró: {source_dir}")
         return
 
     raee_dir = TARGET_DATASET_DIR / "RAEE"
@@ -129,17 +129,17 @@ def copy_electronica_images():
                         shutil.copy2(src_file, dst_file)
                         raee_count += 1
 
-    print(f"  ✅ Agregado a RAEE: {raee_count} fotos")
-    print(f"  ✅ Agregado a PELIGROSO (Baterías): {peligroso_count} fotos")
+    print(f"  Agregado a RAEE: {raee_count} fotos")
+    print(f"  Agregado a PELIGROSO (Baterías): {peligroso_count} fotos")
 
 def copy_industry_images():
     """Copia los recortes de WaRP-C a APROVECHABLE."""
     # WaRP-C son botellas, latas, cartón y envases de una planta de reciclaje:
     # según la norma son aprovechables, no escombros (RCD).
-    print("\n📦 3. Procesando dataset 'industry' (WaRP-C → APROVECHABLE)...")
+    print("\n3. Procesando dataset 'industry' (WaRP-C → APROVECHABLE)...")
     source_dir = DOWNLOADS_DATASET_DIR / "industry" / "Warp-C" / "train_crops"
     if not source_dir.exists():
-        print(f"⚠️ No se encontró: {source_dir}")
+        print(f"No se encontró: {source_dir}")
         return
 
     aprovechable_dir = TARGET_DATASET_DIR / "APROVECHABLE"
@@ -158,14 +158,14 @@ def copy_industry_images():
         if count >= MAX_WARP:
             break
 
-    print(f"  ✅ Agregado a APROVECHABLE: {count} fotos")
+    print(f"  Agregado a APROVECHABLE: {count} fotos")
 
 def extract_medico_images():
     """Extrae de medico.zip las clases de RIESGO_BIOLOGICO y de PELIGROSO."""
-    print("\n📦 4. Extrayendo dataset 'medico.zip' (RIESGO_BIOLOGICO y PELIGROSO)...")
+    print("\n4. Extrayendo dataset 'medico.zip' (RIESGO_BIOLOGICO y PELIGROSO)...")
     zip_path = DOWNLOADS_DATASET_DIR / "medico.zip"
     if not zip_path.exists():
-        print(f"⚠️ No se encontró: {zip_path}")
+        print(f"No se encontró: {zip_path}")
         return
 
     riesgo_biologico_dir = TARGET_DATASET_DIR / "RIESGO_BIOLOGICO"
@@ -199,23 +199,23 @@ def extract_medico_images():
                             dst.write(src.read())
                         peligro_count += 1
 
-    print(f"  ✅ Agregado a RIESGO_BIOLOGICO: {bio_count} fotos")
-    print(f"  ✅ Agregado a PELIGROSO (Medicamentos/Ampollas): {peligro_count} fotos")
+    print(f"  Agregado a RIESGO_BIOLOGICO: {bio_count} fotos")
+    print(f"  Agregado a PELIGROSO (Medicamentos/Ampollas): {peligro_count} fotos")
 
 def print_final_summary():
     """Muestra cuántas imágenes quedaron en cada categoría."""
-    print("\n📊 === RESUMEN FINAL DEL DATASET LISTO PARA ENTRENAR ===")
+    print("\n=== RESUMEN FINAL DEL DATASET LISTO PARA ENTRENAR ===")
     total_imgs = 0
     for cat_dir in sorted(TARGET_DATASET_DIR.iterdir()):
         if cat_dir.is_dir():
             count = len([f for f in cat_dir.glob("*") if f.is_file()])
             total_imgs += count
-            print(f"  📁 {cat_dir.name}: {count} imágenes")
-    print(f"\n🎉 Total general de imágenes: {total_imgs}")
+            print(f"  {cat_dir.name}: {count} imágenes")
+    print(f"\nTotal general de imágenes: {total_imgs}")
 
 def main():
     """Organiza todos los datasets descargados en dataset/."""
-    print("🚀 INICIANDO ORGANIZACIÓN AUTOMÁTICA DE DATASETS...")
+    print("INICIANDO ORGANIZACIÓN AUTOMÁTICA DE DATASETS...")
     ensure_target_dirs()
     copy_organic_images()
     copy_electronica_images()

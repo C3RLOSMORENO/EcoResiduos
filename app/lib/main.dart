@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'features/auth/screens/autorizacion_datos_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'screens/inicio_screen.dart';
 import 'theme/eco_theme.dart';
@@ -39,7 +40,8 @@ class EcoResiduosApp extends StatelessWidget {
   }
 }
 
-/// Muestra el login o la app según haya una sesión activa.
+/// Muestra el login o la app según haya una sesión activa. Con sesión, antes
+/// de la app se comprueba la autorización de datos personales (Ley 1581).
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -70,6 +72,10 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     final usuario = _usuario;
     if (usuario == null) return const LoginScreen();
-    return InicioScreen(key: ValueKey(usuario.id));
+    return PuertaAutorizacionDatos(
+      key: ValueKey(usuario.id),
+      usuarioId: usuario.id,
+      child: InicioScreen(key: ValueKey(usuario.id)),
+    );
   }
 }

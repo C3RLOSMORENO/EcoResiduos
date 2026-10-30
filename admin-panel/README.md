@@ -7,7 +7,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![EJS](https://img.shields.io/badge/Templates-EJS-B4CA65?style=for-the-badge)
 ![WCAG](https://img.shields.io/badge/Accessibility-WCAG_2.1_AA-blue?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-147_Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-153_Passed-brightgreen?style=for-the-badge)
 
 **Sistema web de fiscalización documental, trazabilidad regional y mediación para autoridades ambientales y administradores**
 
@@ -27,6 +27,8 @@ El **Panel Administrativo** de EcoResiduos es una plataforma web desarrollada en
 - **Trazabilidad y Mediación de Novedades:** Panel de mediación de incidentes reportados por generadores o gestores durante la recolección física.
 - **Consolidación Estadística y Reportes:** Generación de métricas de recolección por municipio y descarga del reporte en Excel (.xlsx), con los filtros aplicados, las notas para leer las cifras y solo datos agregados.
 - **Asistente conversacional (burbuja flotante):** Desde cualquier pantalla, el administrador abre el asistente con el botón de abajo a la derecha y pregunta en lenguaje natural («¿cuántos gestores reciben aceite usado?», «¿cuántas publicaciones se completaron este mes?») y recibe la respuesta con las cifras reales de la base. Usa Gemini con llamadas a funciones: el modelo solo puede elegir entre ocho consultas de solo lectura con parámetros validados ([`src/services/consultasAsistente.js`](src/services/consultasAsistente.js)); nunca escribe SQL ni recibe datos personales de los ciudadanos (Ley 1581 de 2012), y cada respuesta indica qué consultas usó. El tema se limita en el código: en la primera ronda el modelo está obligado a clasificar la pregunta, y si no trata del panel (política, noticias, «ignora tus reglas»…) el servidor responde con un texto fijo sin que el modelo redacte nada. Si un modelo de Gemini está saturado o sin cuota, la pregunta se repite con el siguiente de la lista.
+- **Datos personales (Ley 1581 de 2012):** La política de tratamiento se publica en [`/privacidad`](src/views/privacidad.ejs), con el mismo texto que la app; una prueba revisa que no se desincronicen.
+- **Validación de datos:** Teléfonos colombianos (celular, fijo de 10 o 7 dígitos, 01 8000 y extensión), NIT con dígito de verificación de la DIAN, correo, sitio web y longitudes máximas, en [`src/utils/validacion.js`](src/utils/validacion.js). Si falta un dato, el formulario lo dice: nunca se completa con un valor inventado.
 - **Accesibilidad:** Objetivo WCAG 2.1 nivel AA, la referencia de la Resolución 1519 de 2020 de MinTIC, verificado con pruebas automáticas. Además, un botón flotante (abajo a la derecha, también en el inicio de sesión, o con Alt + Shift + A) ofrece preferencias de visualización: tamaño de texto hasta 150 %, alto contraste, espaciado de texto de WCAG 1.4.12, fuente Atkinson Hyperlegible, enlaces subrayados, sin animaciones, máscara de lectura y lectura en voz alta. La declaración pública está en [`/accesibilidad`](src/views/accesibilidad.ejs).
 
 ---
@@ -75,7 +77,7 @@ admin-panel/
 │   ├── utils/                    # Excel, fechas, filtros, íconos, límites de archivos…
 │   ├── views/                    # Plantillas EJS
 │   └── public/                   # CSS compilado, JavaScript del navegador e imágenes
-├── pruebas/                      # 147 pruebas de integración, seguridad y WCAG, más las de navegador (e2e/)
+├── pruebas/                      # 153 pruebas de integración, seguridad y WCAG, más las de navegador (e2e/)
 ├── vercel.json                   # Configuración del despliegue en Vercel
 ├── tailwind.config.js            # Tokens de diseño (colores y tipografía de la app)
 └── package.json                  # Dependencias y scripts
@@ -118,6 +120,7 @@ Los permisos ambientales se guardan en el bucket privado `permisos`, bajo la rut
 
 - **Límites en memoria.** El bloqueo de intentos de inicio de sesión y el límite de preguntas del asistente se guardan en la memoria del proceso. En un servidor único funcionan bien; en Vercel cada instancia lleva su propia cuenta y se reinicia con frecuencia, así que la protección efectiva contra fuerza bruta es sobre todo la de Supabase Auth.
 - **Buckets públicos.** Las fotos de los residuos (`escaneos_ia`) y los certificados (`certificados`) están en buckets públicos porque la app los muestra con su URL directa: quien tenga la URL exacta puede verlos. Las rutas incluyen el identificador aleatorio del usuario, así que no se pueden adivinar, pero no están protegidas por sesión.
+- **Teléfono de las publicaciones.** Mientras una solicitud está publicada, todas las empresas aprobadas para ese material ven el teléfono del ciudadano, no solo la que él elija. Está informado en la política de datos; mostrarlo solo después de elegir la empresa sería una mejora de minimización de datos.
 - **Geocodificación.** Nominatim permite una consulta por segundo; si no responde, el gestor queda ubicado en el centro de Bucaramanga hasta que se edite su dirección.
 
 ---
@@ -152,12 +155,16 @@ npm run dev               # http://localhost:3000
 | `GEMINI_MODELO` | No | Modelos de Gemini separados por coma, en orden de preferencia. |
 | `PORT` | No | Puerto local (por defecto 3000). |
 
+### Contraseñas
+
+La regla general se configura en Supabase (**Authentication → Providers → Email**): mínimo 8 caracteres, con letras y números, para todas las cuentas. La cuenta de administrador debe tener al menos 12; el panel lo exige al restablecerla. La verificación en dos pasos (TOTP) de Supabase Auth sería la siguiente mejora, pero requiere agregar al inicio de sesión del panel la pantalla del segundo código: activarla sin eso no protege nada.
+
 Al arrancar, el panel revisa estas variables y dice cuál falta.
 
 ### Pruebas
 
 ```bash
-npm test             # 147 pruebas, unos segundos
+npm test             # 153 pruebas, unos segundos
 npm run lint
 npm run test:e2e     # 9 recorridos en navegador, en escritorio y en celular
 ```
