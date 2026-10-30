@@ -66,3 +66,37 @@ test('cada página tiene un solo h1 y cada gráfico describe sus datos en texto 
         }
     }
 });
+
+test('las preferencias de accesibilidad están en todas las pantallas, también sin sesión', async () => {
+    for (const ruta of ['/dashboard', '/gestores', '/accesibilidad']) {
+        const html = (await request(app).get(ruta).set('Cookie', SESION)).text;
+        assert.match(html, /id="botonAccesibilidad"/, `${ruta}: falta el botón de accesibilidad`);
+        assert.match(html, /src="\/js\/accesibilidad\.js\?v=/);
+    }
+    const login = (await request(app).get('/login')).text;
+    assert.match(login, /id="botonAccesibilidad"/, 'el inicio de sesión también debe tenerlo');
+    assert.match(login, /href="\/accesibilidad"/);
+});
+
+test('la declaración de accesibilidad es pública y cita la norma y sus limitaciones', async () => {
+    const respuesta = await request(app).get('/accesibilidad');
+    assert.equal(respuesta.status, 200);
+    assert.equal((respuesta.text.match(/<h1[\s>]/g) || []).length, 1);
+    assert.match(respuesta.text, /WCAG\) 2\.1/);
+    assert.match(respuesta.text, /Resolución 1519 de 2020/);
+    assert.match(respuesta.text, /Limitaciones conocidas/);
+});
+
+test('las preferencias guardadas se aplican antes de pintar y el CSS las interpreta', async () => {
+    const html = (await request(app).get('/login')).text;
+    const cabeza = html.slice(0, html.indexOf('</head>'));
+    assert.match(cabeza, /localStorage\.getItem\('accesibilidad'\)/, 'head.ejs debe aplicar las preferencias antes del CSS');
+
+    // Espaciado con los valores mínimos de WCAG 1.4.12 y tamaño de texto hasta 150 %.
+    assert.match(CSS, /\[data-espaciado\][^{]*\{[^}]*letter-spacing:\.12em!important/);
+    assert.match(CSS, /\[data-espaciado\][^{]*\{[^}]*word-spacing:\.16em!important/);
+    assert.match(CSS, /\[data-espaciado\][^{]*\{[^}]*line-height:1\.5!important/);
+    assert.match(CSS, /\[data-texto="150"\]\{--zoom:1\.5\}/);
+    assert.match(CSS, /\[data-texto\] body\{zoom:var\(--zoom\)\}/);
+    assert.match(CSS, /\[data-contraste\]\{--md-sys-color-on-surface-variant:var\(--md-sys-color-on-surface\)/);
+});

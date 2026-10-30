@@ -881,7 +881,7 @@
       const archivo = campo.files && campo.files[0];
       if (!archivo) return marcarError(campo, 'Elige el PDF del permiso ambiental.');
       if (archivo.type !== 'application/pdf' && !/\.pdf$/i.test(archivo.name)) return marcarError(campo, 'El archivo debe ser un PDF.');
-      if (archivo.size > 10 * 1024 * 1024) return marcarError(campo, 'El PDF supera los 10 MB.');
+      if (archivo.size > 4 * 1024 * 1024) return marcarError(campo, 'El PDF supera los 4 MB. Comprímelo antes de subirlo.');
       limpiarError(campo);
 
       const boton = $('button[type="submit"]', formPermiso);

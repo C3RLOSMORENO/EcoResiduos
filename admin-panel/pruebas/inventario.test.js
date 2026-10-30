@@ -21,7 +21,7 @@ const SESION = `sb_access_token=token-admin; ${COOKIE_CSRF}`;
 
 // Si agregas o quitas una ruta, actualiza esta lista y el inventario.
 const INVENTARIO = [
-    'GET /', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout',
+    'GET /', 'GET /accesibilidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout',
     'GET /restablecer-password', 'POST /sesion/renovar', 'GET /componentes',
     'GET /dashboard',
     'GET /gestores', 'POST /gestores', 'POST /gestores/guardar', 'GET /gestores/nuevo',
@@ -41,10 +41,11 @@ const INVENTARIO = [
     'POST /solicitudes/:id/problema/no-recogido', 'POST /solicitudes/:id/estado',
     'GET /ciudadanos',
     'GET /reportes', 'GET /reportes/excel',
-    'POST /recorridos/:pantalla'
+    'POST /recorridos/:pantalla',
+    'POST /asistente/preguntar'
 ];
 
-const PUBLICAS = new Set(['GET /', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout', 'GET /restablecer-password']);
+const PUBLICAS = new Set(['GET /', 'GET /accesibilidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout', 'GET /restablecer-password']);
 
 // Lee las rutas tal como están escritas en src/routes/, con el prefijo con el
 // que index.js monta cada archivo.

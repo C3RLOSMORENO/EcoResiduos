@@ -1,0 +1,51 @@
+<%# Asistente flotante: botón abajo a la derecha en todas las pantallas con sesión. Lo maneja public/js/asistente.js. %>
+<div class="asistente-flotante no-imprimir">
+  <button type="button" id="botonAsistente" class="asistente-boton" aria-expanded="false" aria-controls="panelAsistente" aria-label="Abrir el asistente" title="Asistente" hidden>
+    <span class="material-symbols-outlined" aria-hidden="true">smart_toy</span>
+  </button>
+
+  <section id="panelAsistente" class="asistente-panel" aria-labelledby="tituloAsistente" hidden>
+    <header class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-primary" aria-hidden="true">smart_toy</span>
+      <div class="min-w-0 flex-1">
+        <h2 id="tituloAsistente" class="text-title-m text-on-surface">Asistente</h2>
+        <p class="text-label-s text-on-surface-variant">Cifras reales del panel</p>
+      </div>
+      <button type="button" id="nuevaConversacion" class="btn-icono" aria-label="Empezar una conversación nueva" title="Conversación nueva">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      </button>
+      <button type="button" id="cerrarAsistente" class="btn-icono" aria-label="Cerrar el asistente" title="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div id="conversacion" class="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-relevant="additions">
+      <% if (!asistente.activo) { %>
+        <div class="flex items-start gap-2 rounded-lg bg-surface-container-high p-3 text-body-m text-on-surface" role="status">
+          <span class="material-symbols-outlined icono-20 text-on-surface-variant" aria-hidden="true">info</span>
+          <p>El asistente no está activado: falta la variable GEMINI_API_KEY en el servidor.</p>
+        </div>
+      <% } %>
+      <div id="sugerencias" class="flex flex-col gap-2">
+        <p class="text-body-m text-on-surface-variant">Pregunta en tus palabras por gestores, solicitudes, recolecciones, certificados o materiales. Por ejemplo:</p>
+        <ul class="flex flex-col items-start gap-2" role="list">
+          <% asistente.sugerencias.forEach(function (s) { %>
+            <li><button type="button" class="btn-outlined text-left" data-pregunta="<%= s %>" <%= asistente.activo ? '' : 'disabled' %>><%= s %></button></li>
+          <% }); %>
+        </ul>
+      </div>
+    </div>
+
+    <form id="formAsistente" action="/asistente/preguntar" method="POST" class="flex flex-col gap-1 border-t border-outline-variant px-4 py-3" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="preguntaAsistente" class="sr-only">Tu pregunta</label>
+      <div class="flex items-end gap-2">
+        <textarea id="preguntaAsistente" name="pregunta" rows="2" maxlength="1000" placeholder="Escribe tu pregunta…" class="campo-control flex-1 resize-none" aria-describedby="ayudaAsistente" <%= asistente.activo ? '' : 'disabled' %>></textarea>
+        <button type="submit" id="botonPreguntar" class="btn-filled" aria-label="Enviar pregunta" <%= asistente.activo ? '' : 'disabled' %>>
+          <span class="material-symbols-outlined icono-20" aria-hidden="true">send</span>
+        </button>
+      </div>
+      <p id="ayudaAsistente" class="text-label-s text-on-surface-variant">Enter envía; Mayús + Enter, salto de línea. Revisa las cifras importantes en su pantalla.</p>
+    </form>
+  </section>
+</div>

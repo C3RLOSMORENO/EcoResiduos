@@ -21,6 +21,15 @@
     try { tema = localStorage.getItem('theme'); } catch (e) {}
     if (tema === 'dark') raiz.setAttribute('data-tema', 'oscuro');
     if (tema === 'light') raiz.setAttribute('data-tema', 'claro');
+    // Preferencias de accesibilidad (public/js/accesibilidad.js).
+    var prefs = null;
+    try { prefs = JSON.parse(localStorage.getItem('accesibilidad') || 'null'); } catch (e) {}
+    if (prefs && typeof prefs === 'object') {
+      if (['115', '130', '150'].indexOf(prefs.texto) !== -1) raiz.setAttribute('data-texto', prefs.texto);
+      ['contraste', 'espaciado', 'legible', 'enlaces', 'animaciones'].forEach(function (opcion) {
+        if (prefs[opcion] === true) raiz.setAttribute('data-' + opcion, '');
+      });
+    }
   })();
 </script>
 <link rel="stylesheet" href="<%= conVersion('/css/style.css') %>">

@@ -1418,11 +1418,12 @@ END $$;
 
 -- ─── Storage: buckets y políticas ─────────────────────────────────────────────
 
--- escaneos_ia: fotos de residuos tomadas por la app.
-UPDATE storage.buckets SET
-    public = TRUE, file_size_limit = 5242880,
-    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp']
-WHERE id = 'escaneos_ia';
+-- escaneos_ia: fotos de residuos tomadas por la app. Se crea si no existe
+-- (antes solo se actualizaba y en un proyecto nuevo no quedaba creado).
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('escaneos_ia', 'escaneos_ia', TRUE, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public,
+    file_size_limit = EXCLUDED.file_size_limit, allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 DROP POLICY IF EXISTS "escaneos_ia: subir en carpeta propia"  ON storage.objects;
 DROP POLICY IF EXISTS "escaneos_ia: leer carpeta propia"      ON storage.objects;

@@ -17,12 +17,17 @@ const OBLIGATORIAS = {
 function cargarEntorno() {
     dotenv.config({ path: path.resolve(__dirname, '../../.env') });
     dotenv.config();
+    // En Vercel (producción y vistas previas) siempre hay HTTPS: sin NODE_ENV
+    // las cookies saldrían sin Secure y sin el prefijo __Host-.
+    if (!process.env.NODE_ENV && ['production', 'preview'].includes(process.env.VERCEL_ENV)) {
+        process.env.NODE_ENV = 'production';
+    }
 }
 
 /**
  * @param {NodeJS.ProcessEnv} [entorno] Por defecto, process.env.
  * @returns {{faltan: string[], avisos: string[]}} faltan: lo que impide
- *     arrancar. avisos: lo que conviene corregir en producción pero no rompe el panel.
+ *     arrancar. avisos: lo que conviene revisar pero no rompe el panel.
  */
 function revisarEntorno(entorno = process.env) {
     const valor = (nombre) => String(entorno[nombre] || '').trim();
@@ -36,12 +41,18 @@ function revisarEntorno(entorno = process.env) {
 
     const avisos = [];
     if (valor('NODE_ENV') === 'production') {
+        // Sin secreto fijo cada instancia (o cada reinicio) firma los avisos
+        // con uno distinto, y «Gestor aprobado» y similares desaparecen al azar.
         if (!valor('SECRETO_PANEL')) {
-            avisos.push('SECRETO_PANEL está vacía: los avisos se firman con un secreto al azar que cambia en cada reinicio y no sirve con varias instancias.');
+            faltan.push('SECRETO_PANEL: una cadena larga y aleatoria para firmar los avisos (ver .env.example)');
         }
-        if (!valor('TRUST_PROXY')) {
+        // En Vercel el proxy se configura solo (crearApp.js).
+        if (!valor('TRUST_PROXY') && !valor('VERCEL')) {
             avisos.push('TRUST_PROXY está vacía: si el panel está detrás de un proxy (Render, Railway, Nginx), el límite de intentos de inicio de sesión ve a todos con la misma IP.');
         }
+    }
+    if (!valor('GEMINI_API_KEY')) {
+        avisos.push('GEMINI_API_KEY está vacía: el asistente aparece desactivado.');
     }
     return { faltan, avisos };
 }

@@ -179,7 +179,7 @@
       <h2 id="tituloPermisoForm" class="tarjeta-titulo">Permiso ambiental (PDF)</h2>
       <p class="text-body-m text-on-surface-variant">
         <%= gestor.tiene_permiso ? 'Ya tiene un permiso adjunto. Si subes otro, lo reemplaza.' : 'Este gestor no tiene permiso adjunto.' %>
-        Solo PDF de máximo 10 MB.
+        Solo PDF de máximo 4 MB.
       </p>
       <form id="formPermiso" action="/gestores/<%= gestor.id %>/permiso" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

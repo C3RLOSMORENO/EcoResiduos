@@ -4,6 +4,7 @@ const { jsonParaScript, PARAMETROS_AVISO, avisoAutentico } = require('../utils/w
 const { recurso } = require('../utils/recursos');
 const { URL_ICONOS } = require('../utils/iconos');
 const { urlFotoPerfil } = require('../utils/fotosPerfil');
+const asistenteService = require('../services/AsistenteService');
 
 // Avisos que arma el navegador (no el servidor), así que no pueden ir
 // firmados: la URL solo trae el código y el texto vive aquí.
@@ -28,6 +29,7 @@ function vistaMiddleware(req, res, next) {
     res.locals.urlFotoPerfil = urlFotoPerfil;
     res.locals.query = req.query || {};
     res.locals.rutaActual = req.path;
+    res.locals.asistente = { activo: asistenteService.configurado(), sugerencias: asistenteService.SUGERENCIAS };
 
     // URL actual sin el aviso, para volver a ella después de una acción.
     const params = new URLSearchParams();

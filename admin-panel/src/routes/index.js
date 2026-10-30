@@ -12,9 +12,12 @@ const solicitudRoutes = require('./SolicitudRoutes');
 const generadorRoutes = require('./GeneradorRoutes');
 const reporteRoutes = require('./ReporteRoutes');
 const recorridoRoutes = require('./RecorridoRoutes');
+const asistenteRoutes = require('./AsistenteRoutes');
 const { requireAuth } = require('../middlewares/authMiddleware');
 
 router.use('/', authRoutes);
+// Pública: debe poder leerse sin iniciar sesión.
+router.get('/accesibilidad', (req, res) => res.render('accesibilidad'));
 
 router.get('/', (req, res) => {
     const conSesion = req.cookies && (req.cookies.sb_access_token || req.cookies.sb_refresh_token);
@@ -29,6 +32,7 @@ router.use('/solicitudes', requireAuth, solicitudRoutes);
 router.use('/ciudadanos', requireAuth, generadorRoutes);
 router.use('/reportes', requireAuth, reporteRoutes);
 router.use('/recorridos', requireAuth, recorridoRoutes);
+router.use('/asistente', requireAuth, asistenteRoutes);
 router.get('/componentes', requireAuth, (req, res) => {
     res.render('componentes', { titulo: 'Componentes', activeTab: '' });
 });

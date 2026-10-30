@@ -86,7 +86,11 @@ exports.resolverNoRecogido = async (req, res) => {
 exports.verCertificado = async (req, res) => {
     const { id } = req.params;
     try {
-        const { buffer } = await SolicitudService.descargarCertificado(id);
+        const { buffer, url } = await SolicitudService.descargarCertificado(id);
+        if (url) {
+            res.set('Cache-Control', 'no-store');
+            return res.redirect(url);
+        }
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="certificado-${id}.pdf"`,
@@ -94,8 +98,8 @@ exports.verCertificado = async (req, res) => {
             'Cache-Control': 'private, no-cache, no-store, must-revalidate',
             'X-Content-Type-Options': 'nosniff'
         });
-        res.send(buffer);
+        return res.send(buffer);
     } catch (error) {
-        res.redirect(conAviso(`/solicitudes/${encodeURIComponent(id)}`, error.message, 'error'));
+        return res.redirect(conAviso(`/solicitudes/${encodeURIComponent(id)}`, error.message, 'error'));
     }
 };

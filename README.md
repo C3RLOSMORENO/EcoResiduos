@@ -4,11 +4,11 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.5+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18.x+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-Edge_Vision-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-246%20Passed%20(100%25)-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-264%20Passed%20(100%25)-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
 [![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android%20(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
@@ -100,11 +100,11 @@ flowchart TD
         UI["Capa de Presentación Declarativa<br/>(Material 3 / Public Sans)"]
         TFL["Motor de Inferencia en Memoria (C++)<br/>MobileNetV3 Edge Vision (Offline)"]
         REPO["Capa de Abstracción de Repositorios"]
-        SQLITE["Base de Datos Local (SQLite)<br/>Cola de Sincronización Offline"]
+        SQLITE["Almacenamiento Local (shared_preferences)<br/>Cola de Publicaciones sin Conexión"]
     end
 
     subgraph Tier2["Nivel 2: Servicios de Persistencia y Lógica Transaccional (Supabase / PostgreSQL)"]
-        AUTH["Control de Identidad y Sesión (JWT RS256)"]
+        AUTH["Control de Identidad y Sesión (Supabase Auth, JWT)"]
         DB[(PostgreSQL 15+ con Aislamiento RLS)]
         RPC["Lógica de Negocio Transaccional ACID<br/>(Funciones SECURITY DEFINER con FOR UPDATE)"]
         STOR["Almacenamiento de Objetos<br/>(Evidencias y Certificados PDF)"]
@@ -161,7 +161,7 @@ EcoResiduos/
 │   ├── src/controllers/              # Controladores de negocio y mediación
 │   ├── src/middlewares/              # Cabeceras CSP, mitigación CSRF y control de sesiones
 │   ├── src/views/                    # Plantillas del servidor con protección XSS
-│   ├── pruebas/                      # 129 pruebas de integración y accesibilidad, más las de navegador
+│   ├── pruebas/                      # 147 pruebas de integración y accesibilidad, más las de navegador
 │   └── tailwind.config.js            # Tokens visuales y diseño accesible
 │
 └── supabase/
@@ -236,7 +236,7 @@ sequenceDiagram
 | **Aplicación Móvil** | Flutter 3.24+ / Dart 3.5+ | Cliente multiplataforma reactivo para generadores y empresas gestoras. |
 | **Motor de Inferencia** | TensorFlow Lite (`tflite_flutter`) | Clasificación visual en tiempo real en el hardware del teléfono. |
 | **Geolocalización** | `geolocator` | Georreferenciación precisa y cálculo de distancias de atención. |
-| **Panel Administrativo** | Node.js (v18+) & Express | Sistema de auditoría, control de expedientes y reportes regionales. |
+| **Panel Administrativo** | Node.js 24 & Express | Sistema de auditoría, control de expedientes y reportes regionales. |
 | **Capa de Presentación Web** | EJS & Tailwind CSS | Renderizado en servidor con diseño accesible conforme a WCAG 2.1 AA. |
 | **Motor de Base de Datos** | PostgreSQL 15+ (Supabase) | Esquema relacional con integridad referencial, triggers y aislamiento RLS. |
 | **Autenticación** | Supabase Auth (JWT) | Control de sesiones seguro basado en tokens y roles de usuario. |
@@ -250,30 +250,19 @@ sequenceDiagram
 
 - [Git](https://git-scm.com/) instalado en el sistema operativo.
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) versión 3.24 o superior.
-- [Node.js](https://nodejs.org/) versión 18.x o superior con npm.
+- [Node.js](https://nodejs.org/) versión 24.x con npm.
 - Un proyecto configurado en [Supabase](https://supabase.com/).
 
 ---
 
 ### Paso 1: Configuración de Base de Datos (Supabase)
 
-1. Ejecuta los archivos SQL en orden secuencial desde `supabase/migrations/` en el editor SQL de Supabase:
-   - `20260924000000_reglas_negocio_postulaciones_materiales.sql`
-   - `20260925000000_seguridad_rls_y_perfiles.sql`
-   - `20260926000000_storage_fotos.sql`
-   - `20260927000000_notificaciones_historial_horario.sql`
-   - `20260928000000_horario_autoridades.sql`
-   - `20260930000000_certificado_recoleccion.sql`
-   - `20261001000000_valor_postulacion_y_certificado.sql`
-   - `20261002000000_registro_gestor_nuevo.sql`
-   - `20261003000000_cancelar_solicitud_admin.sql`
-   - `20261003000100_motivo_verificacion_y_avisos_gestor.sql`
-   - `20261003000200_resolucion_problemas_reportados.sql`
+1. Abre el **SQL Editor** de Supabase y ejecuta completo el archivo [`supabase/migrations/00000000000000_schema_completo.sql`](supabase/migrations/00000000000000_schema_completo.sql). Es una sola migración idempotente: crea tablas, funciones, políticas RLS y buckets, y se puede volver a ejecutar sin perder datos.
 
-2. Comprueba que los buckets de almacenamiento existan:
-   - `escaneos_ia`: Fotografías de los residuos publicados y escaneados.
-   - `fotos_perfil`: Logo y portada de los gestores.
-   - `certificados`: Certificados de disposición final y aprovechamiento en PDF.
+2. Comprueba en **Storage** que existan los buckets (la migración los crea):
+   - `escaneos_ia`: Fotografías de los residuos publicados y escaneados (público).
+   - `fotos_perfil`: Logo y portada de los gestores (público).
+   - `certificados`: Certificados de disposición final y aprovechamiento en PDF (público).
    - `permisos`: Documentos de licencias ambientales (bucket privado con acceso exclusivo de servidor).
 
 ---
@@ -322,22 +311,30 @@ npm run build:css
 npm run dev
 ```
 
-El panel estará disponible en `http://localhost:3000`.
+El panel estará disponible en `http://localhost:3000`. Las variables de entorno están explicadas en el [README del panel](admin-panel/README.md#variables-de-entorno).
+
+---
+
+### Paso 4: Despliegue en Producción
+
+El panel se despliega en **Vercel** (Root Directory: `admin-panel`) o en cualquier servidor con Node 24. Las instrucciones completas, las variables obligatorias y las particularidades de cada opción están en el [README del panel, sección 5](admin-panel/README.md#5-despliegue-en-producción).
+
+Para que el plan gratis de Supabase no pause el proyecto por inactividad, el flujo [`mantener-supabase.yml`](.github/workflows/mantener-supabase.yml) hace una consulta cada 3 días; se activa agregando los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY` en GitHub.
 
 ---
 
 ## 10. Suites de Pruebas Automatizadas
 
-El proyecto mantiene **246 pruebas automatizadas**, más 7 recorridos en navegador con Playwright, que garantizan la estabilidad y no regresión:
+El proyecto mantiene **264 pruebas automatizadas**, más 9 recorridos en navegador con Playwright, que garantizan la estabilidad y no regresión:
 
 ```
 ┌───────────────────────────────────────────────┬──────────────┬──────────────┐
 │ Suite de Pruebas                              │ Cantidad     │ Estado       │
 ├───────────────────────────────────────────────┼──────────────┼──────────────┤
 │ App Móvil (Flutter / Dart)                    │ 117 Tests    │ 100% Pass ✅ │
-│ Panel Administrativo (Node.js / Express / EJS)│ 129 Tests    │ 100% Pass ✅ │
+│ Panel Administrativo (Node.js / Express / EJS)│ 147 Tests    │ 100% Pass ✅ │
 ├───────────────────────────────────────────────┼──────────────┼──────────────┤
-│ Total Pruebas Automatizadas                   │ 246 Tests    │ 100% Pass ✅ │
+│ Total Pruebas Automatizadas                   │ 264 Tests    │ 100% Pass ✅ │
 └───────────────────────────────────────────────┴──────────────┴──────────────┘
 ```
 
@@ -347,7 +344,7 @@ cd app
 flutter test
 ```
 
-### Ejecutar Pruebas del Panel Administrativo (129 Tests)
+### Ejecutar Pruebas del Panel Administrativo (147 Tests)
 ```bash
 cd admin-panel
 npm test
@@ -361,7 +358,7 @@ npm run test:e2e   # recorridos en navegador (escritorio y celular)
 - **Políticas Row Level Security (RLS):** Cada consulta está restringida en el motor de base de datos para que los generadores y gestores solo accedan a sus propios registros.
 - **Transacciones ACID:** Los cambios de estado críticos se realizan a través de funciones almacenadas `SECURITY DEFINER` con bloqueos pesimistas (`FOR UPDATE`), previniendo condiciones de carrera.
 - **Seguridad Web:** El panel implementa Content Security Policy (CSP) con nonces criptográficos dinámicos, cookies `HttpOnly` (`SameSite=Lax` las de sesión y `Strict` la de CSRF), protección contra falsificación de petición (CSRF) y reportes en Excel que escriben cada celda como valor, nunca como fórmula, para evitar la inyección de fórmulas.
-- **Privacidad de Imágenes:** El procesamiento visual opera 100% en la memoria local del teléfono, garantizando que ninguna captura sea transmitida a servicios externos para su análisis.
+- **Privacidad de Imágenes:** La clasificación con IA ocurre 100 % en el teléfono: la foto nunca se envía a un servicio de inteligencia artificial externo y el modelo funciona sin conexión. Para el historial de escaneos y las publicaciones, la foto sí se guarda en el bucket `escaneos_ia` de Supabase, dentro de una carpeta con el identificador del usuario; ese bucket es público para que la app pueda mostrarla, así que quien tenga la URL exacta puede verla (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
 
 ---
 

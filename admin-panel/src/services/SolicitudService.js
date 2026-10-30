@@ -4,6 +4,7 @@ const { rango, faltaEnEsquema } = require('../utils/web');
 const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
+const { entregaDePdf } = require('../utils/archivos');
 
 const BUCKET_CERTIFICADOS = 'certificados';
 const PREFIJO_CERTIFICADOS = `/storage/v1/object/public/${BUCKET_CERTIFICADOS}/`;
@@ -214,10 +215,10 @@ const solicitudService = {
 
     /**
      * PDF del certificado, leído del bucket con la llave del servidor para
-     * servirlo desde el panel.
+     * servirlo desde el panel (o un enlace firmado si pasa de 4 MB).
      *
      * @param {number|string} id Identificador de la solicitud.
-     * @returns {Promise<{buffer: Buffer, tipo: ?string}>}
+     * @returns {Promise<{buffer?: Buffer, url?: string, tipo: ?string}>}
      * @throws {Error} Si la solicitud no tiene certificado, si la URL no es del
      *     bucket de certificados del proyecto o si Storage no entrega el archivo.
      */
@@ -251,10 +252,7 @@ const solicitudService = {
                 : new Error('No encontramos el archivo del certificado.');
         }
 
-        return {
-            buffer: Buffer.from(await archivo.arrayBuffer()),
-            tipo: data.certificado_tipo
-        };
+        return { ...(await entregaDePdf(supabase, BUCKET_CERTIFICADOS, ruta, archivo)), tipo: data.certificado_tipo };
     }
 };
 

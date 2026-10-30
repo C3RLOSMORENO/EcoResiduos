@@ -8,11 +8,12 @@ const router = express.Router();
 validarIds(router, 'id', 'materialId');
 const gestorController = require('../controllers/GestorController');
 
-// El PDF del permiso llega como cuerpo binario de máximo 10 MB.
-const cuerpoPdf = express.raw({ type: 'application/pdf', limit: '10mb' });
+// El PDF del permiso llega como cuerpo binario de máximo 4 MB, el límite de
+// las funciones serverless (utils/archivos.js).
+const cuerpoPdf = express.raw({ type: 'application/pdf', limit: '4mb' });
 function errorCuerpoPdf(err, req, res, next) {
     if (err && err.type === 'entity.too.large') {
-        req.errorPdf = 'El PDF supera los 10 MB.';
+        req.errorPdf = 'El PDF supera los 4 MB. Comprímelo antes de subirlo.';
         return next();
     }
     return next(err);

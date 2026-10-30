@@ -1,0 +1,38 @@
+name: Mantener activo Supabase
+
+# El plan gratis de Supabase pausa el proyecto tras unos 7 días sin
+# actividad, y entonces la app y el panel dejan de cargar. Este flujo hace una
+# consulta liviana cada 3 días para que no pase.
+#
+# Requiere dos secretos en GitHub (Settings > Secrets and variables > Actions):
+#   SUPABASE_URL       https://<proyecto>.supabase.co
+#   SUPABASE_ANON_KEY  la llave pública (sb_publishable_… o anon), la misma de la app
+# Sin ellos el flujo termina sin hacer nada.
+
+on:
+  schedule:
+    - cron: '0 13 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consulta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consultar el catálogo de materiales
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Faltan los secretos SUPABASE_URL y SUPABASE_ANON_KEY: no se hace nada."
+            exit 0
+          fi
+          estado=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/materiales_residuos?select=id&limit=1")
+          echo "Supabase respondió $estado"
+          [ "$estado" = "200" ]
