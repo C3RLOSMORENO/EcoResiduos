@@ -1,0 +1,82 @@
+name: Verificación Continua (CI)
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  panel:
+    name: Panel de Administración (Lint y Pruebas)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: admin-panel
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: admin-panel/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar estilo de código (ESLint)
+        run: npm run lint
+
+      - name: Compilar hojas de estilo (Tailwind CSS)
+        run: npm run build
+
+      - name: Ejecutar pruebas del panel
+        run: npm test
+
+  app:
+    name: Aplicación Móvil Flutter (Análisis y Pruebas)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Crear archivo .env de prueba
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env 2>/dev/null || echo "SUPABASE_URL=https://ejemplo.supabase.co" > .env
+          fi
+
+      - name: Instalar dependencias de Flutter
+        run: flutter pub get
+
+      - name: Analizar código Dart (flutter analyze)
+        run: flutter analyze
+
+      - name: Ejecutar pruebas unitarias y de widgets (flutter test)
+        run: flutter test
+
