@@ -1,7 +1,9 @@
 const { cargarEntorno, revisarEntorno } = require('../src/config/entorno');
 
 cargarEntorno();
-const { faltan } = revisarEntorno();
+const { faltan, avisos } = revisarEntorno();
+// Quedan en los registros de la función (Vercel > Logs).
+avisos.forEach((aviso) => console.warn(`Aviso de configuración: ${aviso}`));
 
 let handler;
 
@@ -24,15 +26,15 @@ if (faltan.length > 0) {
     p { color: #cbd5e1; line-height: 1.6; font-size: 0.95rem; }
     ul { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
     li { color: #fcd34d; font-family: ui-monospace, monospace; font-size: 0.9rem; margin: 0.5rem 0; }
-    .footer { font-size: 0.85rem; color: #94a3b8; margin-top: 1.5rem; border-top: 1px solid #334155; pt: 1rem; }
+    .footer { font-size: 0.85rem; color: #94a3b8; margin-top: 1.5rem; border-top: 1px solid #334155; padding-top: 1rem; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>🌱 EcoResiduos · Falta Configuración</h1>
-    <p>El panel administrativo arrancó en Vercel, pero necesita las variables de conexión a Supabase. Agrégalas en <strong>Vercel &gt; Settings &gt; Environment Variables</strong>:</p>
+    <p>El panel administrativo arrancó en Vercel, pero le faltan variables de entorno. Agrégalas en <strong>Vercel &gt; Settings &gt; Environment Variables</strong>:</p>
     <ul>
-      ${faltan.map((f) => `<li>${f}</li>`).join('')}
+      ${faltan.map((f) => `<li>${f.split(':')[0]}</li>`).join('')}
     </ul>
     <p>Una vez agregadas, realiza un <strong>Redeploy</strong> en Vercel para que tomen efecto.</p>
     <div class="footer">EcoResiduos · Sistema de Gestión y Auditoría Ambiental</div>
@@ -45,11 +47,13 @@ if (faltan.length > 0) {
         const crearApp = require('../src/crearApp');
         handler = crearApp();
     } catch (err) {
+        // El detalle va solo a los registros: en la respuesta revelaría rutas
+        // y nombres internos del servidor.
         console.error('Error al inicializar crearApp:', err);
         handler = (req, res) => {
             res.statusCode = 500;
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.end(`Error al inicializar el servidor: ${err.message}\n${err.stack}`);
+            res.end('El panel no pudo iniciar. Revisa los registros del despliegue.');
         };
     }
 }

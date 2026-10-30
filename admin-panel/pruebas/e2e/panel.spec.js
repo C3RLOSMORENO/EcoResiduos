@@ -206,3 +206,76 @@ test('guardar un formulario de edición guarda el borrador sin errores de JavaSc
         page.locator('form[data-conservar] button[type="submit"]').click()
     ]);
 });
+
+test('asistente flotante: se abre, responde, sigue al cambiar de pantalla y se cierra con Escape', async ({ page }) => {
+    await page.route('**/asistente/preguntar', async (ruta) => {
+        const { historial } = ruta.request().postDataJSON();
+        expect(ruta.request().headers()['x-csrf-token']).toBeTruthy();
+        await ruta.fulfill({ json: { ok: true, respuesta: `Tienen 47 gestores aprobados (${historial.length} mensaje).`, consultas: ['Gestores'] } });
+    });
+    await iniciarSesion(page, '/solicitudes/7');
+
+    const boton = page.getByRole('button', { name: 'Abrir el asistente' });
+    await boton.click();
+    const panel = page.getByRole('region', { name: 'Asistente' });
+    await expect(panel).toBeVisible();
+    await expect(page.getByLabel('Tu pregunta')).toBeFocused();
+
+    await panel.getByRole('button', { name: '¿Cuántos gestores tenemos aprobados?' }).click();
+    await expect(panel.getByRole('log')).toContainText('Tienen 47 gestores aprobados (1 mensaje).');
+    await expect(panel.getByRole('log')).toContainText('Consultó: Gestores');
+    if (process.env.CAPTURA_ASISTENTE) await page.screenshot({ path: `${process.env.CAPTURA_ASISTENTE}-${test.info().project.name}.png` });
+
+    // Al pasar a otra pantalla la conversación sigue abierta y con sus mensajes.
+    await page.goto('/materiales/edit/1');
+    await expect(page.getByRole('region', { name: 'Asistente' })).toContainText('Tienen 47 gestores aprobados');
+
+    await page.getByLabel('Tu pregunta').fill('¿Y en Girón?');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('log')).toContainText('(3 mensaje)');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('region', { name: 'Asistente' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Abrir el asistente' })).toBeFocused();
+});
+
+test('accesibilidad: se abre con el botón o con Alt+Shift+A, cambia el texto y el contraste, y se recuerda', async ({ page }) => {
+    await iniciarSesion(page, '/solicitudes/7');
+    const html = page.locator('html');
+
+    await page.getByRole('button', { name: 'Accesibilidad' }).click();
+    const panel = page.getByRole('region', { name: 'Preferencias de accesibilidad' });
+    await expect(panel).toBeVisible();
+
+    await panel.getByRole('button', { name: 'Aumentar el tamaño del texto' }).click();
+    await expect(html).toHaveAttribute('data-texto', '115');
+    await expect(panel.locator('#valorTamano')).toHaveText('115 %');
+
+    const contraste = panel.getByRole('button', { name: 'Alto contraste' });
+    await contraste.click();
+    await expect(contraste).toHaveAttribute('aria-pressed', 'true');
+    await expect(html).toHaveAttribute('data-contraste', '');
+    if (process.env.CAPTURA_ASISTENTE) await page.screenshot({ path: `${process.env.CAPTURA_ASISTENTE}-accesibilidad-${test.info().project.name}.png` });
+
+    // Abrir el asistente cierra este panel: solo uno a la vez. En el celular
+    // el panel ocupa la pantalla y tapa el botón del asistente.
+    if (page.viewportSize().width >= 600) {
+        await page.getByRole('button', { name: 'Abrir el asistente' }).click();
+        await expect(panel).toBeHidden();
+        await page.keyboard.press('Escape');
+    }
+
+    // Al recargar se aplica antes de pintar.
+    await page.reload();
+    await expect(html).toHaveAttribute('data-texto', '115');
+    await expect(html).toHaveAttribute('data-contraste', '');
+
+    await page.keyboard.press('Alt+Shift+A');
+    await expect(panel).toBeVisible();
+    await panel.getByRole('button', { name: 'Restablecer todo' }).click();
+    await expect(html).not.toHaveAttribute('data-texto', /.+/);
+    await expect(html).not.toHaveAttribute('data-contraste', /.*/);
+    await page.keyboard.press('Escape');
+    await expect(panel).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Accesibilidad' })).toBeFocused();
+});

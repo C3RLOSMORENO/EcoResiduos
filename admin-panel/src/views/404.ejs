@@ -21,5 +21,9 @@
       </div>
     </div>
   </main>
+  <% if (typeof recurso === 'function') { %>
+    <%- include('partials/componentes/accesibilidad') %>
+    <script src="<%= recurso('/js/accesibilidad.js') %>" defer></script>
+  <% } %>
 </body>
 </html>

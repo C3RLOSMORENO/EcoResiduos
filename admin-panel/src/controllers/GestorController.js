@@ -155,7 +155,11 @@ const gestorController = {
     /** GET /gestores/:id/permiso: el PDF del permiso ambiental, servido por el panel. */
     async handleVerPermiso(req, res) {
         try {
-            const { buffer } = await gestorService.descargarPermiso(req.params.id);
+            const { buffer, url } = await gestorService.descargarPermiso(req.params.id);
+            if (url) {
+                res.set('Cache-Control', 'no-store');
+                return res.redirect(url);
+            }
             res.set({
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `inline; filename="permiso-${req.params.id}.pdf"`,
@@ -163,9 +167,9 @@ const gestorController = {
                 'Cache-Control': 'private, no-cache, no-store, must-revalidate',
                 'X-Content-Type-Options': 'nosniff'
             });
-            res.send(buffer);
+            return res.send(buffer);
         } catch (err) {
-            res.redirect(conAviso(`/gestores/${encodeURIComponent(req.params.id)}`, err.message, 'error'));
+            return res.redirect(conAviso(`/gestores/${encodeURIComponent(req.params.id)}`, err.message, 'error'));
         }
     },
 

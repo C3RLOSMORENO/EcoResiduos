@@ -1,0 +1,76 @@
+<%# Preferencias de accesibilidad: botón flotante abajo a la derecha (debajo del asistente) en todas las pantallas, también antes de iniciar sesión. Lo maneja public/js/accesibilidad.js; head.ejs aplica lo guardado antes de pintar. %>
+<div class="accesibilidad-flotante no-imprimir">
+  <button type="button" id="botonAccesibilidad" class="accesibilidad-boton" aria-expanded="false" aria-controls="panelAccesibilidad" aria-keyshortcuts="Alt+Shift+A" title="Accesibilidad (Alt + Shift + A)" hidden>
+    <span class="material-symbols-outlined" aria-hidden="true">accessibility_new</span>
+    <span class="sr-only">Accesibilidad</span>
+  </button>
+
+  <section id="panelAccesibilidad" class="accesibilidad-panel" aria-labelledby="tituloAccesibilidad" hidden>
+    <header class="flex items-center gap-3 bg-primary px-4 py-3 text-on-primary">
+      <span class="material-symbols-outlined" aria-hidden="true">accessibility_new</span>
+      <div class="min-w-0 flex-1">
+        <h2 id="tituloAccesibilidad" class="text-title-m">Preferencias de accesibilidad</h2>
+        <p class="text-label-s opacity-90">Alt + Shift + A · se guardan en este navegador</p>
+      </div>
+      <button type="button" id="cerrarAccesibilidad" class="accesibilidad-cerrar" aria-label="Cerrar preferencias de accesibilidad" title="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <a href="/accesibilidad" class="btn-tonal justify-center">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">description</span>
+        Declaración de accesibilidad
+      </a>
+
+      <div class="accesibilidad-mosaico accesibilidad-mosaico-ancho" role="group" aria-labelledby="etiquetaTamano">
+        <span id="etiquetaTamano" class="flex items-center gap-2 text-label-l text-on-surface">
+          <span class="material-symbols-outlined icono-20" aria-hidden="true">text_fields</span>
+          Tamaño del texto
+        </span>
+        <div class="flex items-center gap-3">
+          <button type="button" class="accesibilidad-paso" data-paso="-1" aria-label="Reducir el tamaño del texto">
+            <span class="material-symbols-outlined icono-20" aria-hidden="true">remove</span>
+          </button>
+          <output id="valorTamano" class="min-w-[3.5rem] text-center text-title-m text-on-surface" aria-live="polite">100 %</output>
+          <button type="button" class="accesibilidad-paso" data-paso="1" aria-label="Aumentar el tamaño del texto">
+            <span class="material-symbols-outlined icono-20" aria-hidden="true">add</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <% [
+          ['contraste', 'contrast', 'Alto contraste'],
+          ['espaciado', 'format_line_spacing', 'Espaciado de texto'],
+          ['legible', 'font_download', 'Fuente legible'],
+          ['enlaces', 'link', 'Subrayar enlaces'],
+          ['animaciones', 'motion_photos_off', 'Detener animaciones'],
+          ['mascara', 'vertical_align_center', 'Máscara de lectura']
+        ].forEach(function (o) { %>
+          <button type="button" class="accesibilidad-mosaico" data-opcion="<%= o[0] %>" aria-pressed="false">
+            <span class="material-symbols-outlined" aria-hidden="true"><%= o[1] %></span>
+            <span class="text-label-l"><%= o[2] %></span>
+          </button>
+        <% }); %>
+      </div>
+
+      <button type="button" id="botonLeer" class="accesibilidad-mosaico accesibilidad-mosaico-ancho" aria-describedby="ayudaLeer" hidden>
+        <span class="flex items-center gap-2 text-label-l">
+          <span class="material-symbols-outlined" aria-hidden="true" data-icono-leer>record_voice_over</span>
+          <span data-texto-leer>Leer en voz alta</span>
+        </span>
+        <span id="ayudaLeer" class="text-body-s text-on-surface-variant">Lee el texto seleccionado o, si no hay, la pantalla.</span>
+      </button>
+    </div>
+
+    <div class="border-t border-outline-variant px-4 py-3">
+      <button type="button" id="restablecerAccesibilidad" class="btn-text w-full justify-center">
+        <span class="material-symbols-outlined icono-20" aria-hidden="true">restart_alt</span>
+        Restablecer todo
+      </button>
+    </div>
+  </section>
+
+  <div id="mascaraLectura" class="mascara-lectura" aria-hidden="true" hidden></div>
+</div>

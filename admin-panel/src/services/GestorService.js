@@ -8,7 +8,7 @@ const { ESTADOS_GESTOR } = require('../utils/formato');
 const { BUCKET: BUCKET_FOTOS, COLUMNAS: COLUMNAS_FOTO } = require('../utils/fotosPerfil');
 
 const ESTADOS_VALIDOS = ESTADOS_GESTOR;
-const TAMANO_MAXIMO_PERMISO = 10 * 1024 * 1024;
+const { TAMANO_MAXIMO_SUBIDA: TAMANO_MAXIMO_PERMISO, entregaDePdf } = require('../utils/archivos');
 
 const SELECT_MATERIALES = `
     gestor_material (
@@ -615,10 +615,11 @@ const gestorService = {
 
     /**
      * PDF del permiso ambiental, leído del bucket privado con la llave del
-     * servidor: el navegador no recibe ninguna URL de Supabase.
+     * servidor: el navegador no recibe ninguna URL de Supabase, salvo que el
+     * archivo pase de 4 MB (utils/archivos.js).
      *
      * @param {number|string} id Identificador del gestor.
-     * @returns {Promise<{buffer: Buffer, razonSocial: string}>}
+     * @returns {Promise<{buffer?: Buffer, url?: string, razonSocial: string}>}
      * @throws {Error} Si el gestor no tiene permiso o Storage no entrega el archivo.
      */
     async descargarPermiso(id) {
@@ -643,15 +644,13 @@ const gestorService = {
                 : new Error('No encontramos el archivo del permiso.');
         }
 
-        return {
-            buffer: Buffer.from(await archivo.arrayBuffer()),
-            razonSocial: data.razon_social
-        };
+        const ruta = String(data.permiso_path).trim();
+        return { ...(await entregaDePdf(supabase, 'permisos', ruta, archivo)), razonSocial: data.razon_social };
     },
 
     /**
      * Sube o reemplaza el permiso desde el panel. Se valida en el servidor que
-     * sea un PDF real de máximo 10 MB.
+     * sea un PDF real de máximo 4 MB (utils/archivos.js).
      *
      * @param {number|string} id
      * @param {Buffer} contenido Cuerpo de la petición.
@@ -663,7 +662,7 @@ const gestorService = {
             throw new Error('Adjunta el permiso ambiental en PDF.');
         }
         if (contenido.length > TAMANO_MAXIMO_PERMISO) {
-            throw new Error('El PDF supera los 10 MB.');
+            throw new Error('El PDF supera los 4 MB. Comprímelo o pídele a la empresa que lo cargue desde la app.');
         }
         if (contenido.subarray(0, 5).toString('latin1') !== '%PDF-') {
             throw new Error('El archivo no es un PDF válido.');

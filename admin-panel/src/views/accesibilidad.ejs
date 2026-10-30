@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <%- include('partials/head', { titulo: 'Declaración de accesibilidad' }) %>
+  <meta name="description" content="Declaración de accesibilidad del panel de administración de EcoResiduos">
+</head>
+<body class="flex min-h-screen flex-col">
+  <a href="#contenido" class="saltar">Saltar al contenido</a>
+
+  <header class="flex items-center gap-3 border-b border-outline-variant px-4 py-3 md:px-8">
+    <a href="/dashboard" class="flex items-center gap-2 font-display text-title-l text-on-surface no-underline">
+      <img src="<%= recurso('/images/isotipo-192.png') %>" alt="" width="32" height="32" class="h-8 w-8 object-contain">
+      EcoResiduos
+    </a>
+    <button type="button" id="botonTema" class="btn-icono ml-auto" aria-pressed="false" aria-label="Modo oscuro">
+      <span class="material-symbols-outlined" aria-hidden="true" data-icono-tema>dark_mode</span>
+    </button>
+  </header>
+
+  <main id="contenido" tabindex="-1" class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8 md:px-8">
+    <div>
+      <h1 class="titulo-pagina">Declaración de accesibilidad</h1>
+      <p class="mt-2 text-body-l text-on-surface-variant">Panel de administración de EcoResiduos · Actualizada el 30 de octubre de 2026</p>
+    </div>
+
+    <section class="flex flex-col gap-3" aria-labelledby="tituloCompromiso">
+      <h2 id="tituloCompromiso" class="text-headline-s text-on-surface">Compromiso y norma de referencia</h2>
+      <p class="text-body-l text-on-surface">El panel se diseña para que pueda usarlo cualquier persona, incluidas las personas con discapacidad visual, auditiva, motriz o cognitiva. El objetivo es el nivel <strong>AA de las Pautas de Accesibilidad para el Contenido Web (WCAG) 2.1</strong> del W3C, que es el estándar que adopta en Colombia el Anexo 1 de la <strong>Resolución 1519 de 2020</strong> del Ministerio de Tecnologías de la Información y las Comunicaciones. Donde aplica, también se siguen criterios nuevos de WCAG 2.2.</p>
+      <p class="text-body-l text-on-surface">Marco normativo: Ley 1346 de 2009 (aprueba la Convención de las Naciones Unidas sobre los derechos de las personas con discapacidad), Ley Estatutaria 1618 de 2013 y NTC 5854 de 2011. La Resolución 1519 obliga a las entidades públicas; EcoResiduos la toma como referencia porque el panel está pensado para las autoridades ambientales (CDMB, AMB y CAS).</p>
+    </section>
+
+    <section class="flex flex-col gap-3" aria-labelledby="tituloVerificacion">
+      <h2 id="tituloVerificacion" class="text-headline-s text-on-surface">Cómo se verifica</h2>
+      <p class="text-body-l text-on-surface">Cada cambio del panel pasa por pruebas automáticas que revisan, entre otros:</p>
+      <ul class="flex list-disc flex-col gap-1 pl-6 text-body-l text-on-surface">
+        <li>Enlace «Saltar al contenido» al inicio de cada página (WCAG 2.4.1).</li>
+        <li>Un solo título principal por página y regiones con nombres distintos (WCAG 1.3.1).</li>
+        <li>Gráficos que describen sus datos en texto visible (WCAG 1.1.1).</li>
+        <li>Tablas que se desplazan sin mover la página hacia el lado (WCAG 1.4.10, reajuste del contenido).</li>
+        <li>El foco del teclado no queda tapado por la barra fija (WCAG 2.4.11).</li>
+        <li>El nombre accesible de los controles contiene su texto visible (WCAG 2.5.3).</li>
+        <li>Recorridos completos en un navegador real, en escritorio y en celular, que fallan ante cualquier error.</li>
+      </ul>
+    </section>
+
+    <section class="flex flex-col gap-3" aria-labelledby="tituloPreferencias">
+      <h2 id="tituloPreferencias" class="text-headline-s text-on-surface">Preferencias de visualización</h2>
+      <p class="text-body-l text-on-surface">El botón <strong>Accesibilidad</strong> (abajo a la derecha, o <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd>) permite ajustar el panel a cada persona: tamaño del texto hasta 150 %, alto contraste, espaciado de texto con los valores de WCAG 1.4.12, fuente Atkinson Hyperlegible, enlaces subrayados, sin animaciones, máscara de lectura y lectura en voz alta. Las preferencias se guardan en el navegador.</p>
+      <p class="text-body-l text-on-surface">Estas opciones complementan el diseño accesible; no lo reemplazan. El panel también funciona con el zoom del navegador, el modo oscuro, la navegación por teclado y los lectores de pantalla.</p>
+    </section>
+
+    <section class="flex flex-col gap-3" aria-labelledby="tituloLimitaciones">
+      <h2 id="tituloLimitaciones" class="text-headline-s text-on-surface">Limitaciones conocidas</h2>
+      <ul class="flex list-disc flex-col gap-1 pl-6 text-body-l text-on-surface">
+        <li>Las pruebas automáticas no reemplazan una evaluación con personas con discapacidad, que aún no se ha hecho.</li>
+        <li>Los certificados y permisos en PDF los cargan los gestores; su accesibilidad depende de quien los genera.</li>
+        <li>La lectura en voz alta usa las voces del sistema operativo y puede no estar disponible en todos los navegadores.</li>
+      </ul>
+    </section>
+
+    <section class="flex flex-col gap-3" aria-labelledby="tituloContacto">
+      <h2 id="tituloContacto" class="text-headline-s text-on-surface">Reportar una barrera</h2>
+      <p class="text-body-l text-on-surface">Si encuentras algo que no puedes usar, escríbenos a <a href="mailto:soporte@ecoresiduos.com?subject=Barrera%20de%20accesibilidad" class="text-primary underline">soporte@ecoresiduos.com</a> indicando la pantalla y lo que intentabas hacer.</p>
+    </section>
+
+    <p><a href="/dashboard" class="btn-filled">Volver al panel</a></p>
+  </main>
+
+  <%- include('partials/componentes/accesibilidad') %>
+  <script src="<%= recurso('/js/accesibilidad.js') %>" defer></script>
+</body>
+</html>

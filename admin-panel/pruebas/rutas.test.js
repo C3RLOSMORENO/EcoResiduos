@@ -248,3 +248,31 @@ test('los avisos firmados se anuncian en regiones status o alert', async () => {
     const error = await request(app).get(conAviso('/materiales', '<b>Falló</b>', 'error')).set('Cookie', SESION);
     assert.match(error.text, /role="alert"[\s\S]*?data-aviso-error[\s\S]*?&lt;b&gt;Falló&lt;\/b&gt;/);
 });
+
+test('un PDF de más de 4 MB se abre con un enlace firmado corto: no cabe en una respuesta serverless', async () => {
+    const { VIGENCIA_ENLACE_S } = require('../src/utils/archivos');
+    const original = supabase.storage.from;
+    supabase.storage.from = (bucket) => ({
+        ...original(bucket),
+        async download() { return { data: new Blob([Buffer.alloc(5 * 1024 * 1024)]), error: null }; }
+    });
+    try {
+        for (const [ruta, bucket] of [['/gestores/1/permiso', 'permisos'], ['/solicitudes/7/certificado', 'certificados']]) {
+            supabase.storageOps.length = 0;
+            const res = await request(app).get(ruta).set('Cookie', SESION);
+            assert.equal(res.status, 302, ruta);
+            assert.ok(res.headers.location.startsWith(`https://almacenamiento.test/${bucket}/`), res.headers.location);
+            assert.equal(res.headers['cache-control'], 'no-store');
+            const firma = supabase.storageOps.find((o) => o.op === 'firmar');
+            assert.equal(firma.segundos, VIGENCIA_ENLACE_S);
+        }
+    } finally {
+        supabase.storage.from = original;
+    }
+});
+
+test('el permiso que se sube desde el panel no puede pasar de 4 MB', async () => {
+    const gestorService = require('../src/services/GestorService');
+    const grande = Buffer.concat([Buffer.from('%PDF-1.7'), Buffer.alloc(4 * 1024 * 1024)]);
+    await assert.rejects(() => gestorService.subirPermiso(1, grande), /supera los 4 MB/);
+});

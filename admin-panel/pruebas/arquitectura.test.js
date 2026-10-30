@@ -39,7 +39,7 @@ test('el enlace del Excel lleva los mismos filtros que el reporte en pantalla', 
 
 test('al arrancar se dice qué variable falta y qué conviene corregir en producción', () => {
     const completo = { SUPABASE_URL: 'https://p.supabase.co', SUPABASE_ANON_KEY: 'a', SUPABASE_SERVICE_ROLE_KEY: 's' };
-    assert.deepEqual(revisarEntorno(completo), { faltan: [], avisos: [] });
+    assert.deepEqual(revisarEntorno({ ...completo, GEMINI_API_KEY: 'g' }), { faltan: [], avisos: [] });
 
     const { faltan } = revisarEntorno({ SUPABASE_URL: 'proyecto', SUPABASE_ANON_KEY: '  ' });
     assert.equal(faltan.length, 3);
@@ -47,10 +47,14 @@ test('al arrancar se dice qué variable falta y qué conviene corregir en produc
     assert.match(faltan.join('\n'), /SUPABASE_SERVICE_ROLE_KEY/);
     assert.match(faltan.join('\n'), /no es una dirección web/);
 
-    const { avisos } = revisarEntorno({ ...completo, NODE_ENV: 'production' });
-    assert.equal(avisos.length, 2);
-    assert.match(avisos[0], /SECRETO_PANEL/);
-    assert.deepEqual(revisarEntorno({ ...completo, NODE_ENV: 'production', SECRETO_PANEL: 'x', TRUST_PROXY: '1' }).avisos, []);
+    const conLlave = { ...completo, GEMINI_API_KEY: 'g' };
+    const produccion = revisarEntorno({ ...conLlave, NODE_ENV: 'production' });
+    assert.match(produccion.faltan.join(' '), /SECRETO_PANEL/, 'en producción SECRETO_PANEL es obligatoria');
+    assert.equal(produccion.avisos.length, 1);
+    assert.match(produccion.avisos[0], /TRUST_PROXY/);
+    assert.deepEqual(revisarEntorno({ ...conLlave, NODE_ENV: 'production', SECRETO_PANEL: 'x', TRUST_PROXY: '1' }), { faltan: [], avisos: [] });
+    assert.deepEqual(revisarEntorno({ ...conLlave, NODE_ENV: 'production', SECRETO_PANEL: 'x', VERCEL: '1' }).avisos, [], 'en Vercel el proxy se configura solo');
+    assert.match(revisarEntorno(completo).avisos.join(' '), /GEMINI_API_KEY/);
 });
 
 test('capas: los controladores no hablan con Supabase y las vistas no calculan filtros', () => {

@@ -5,6 +5,9 @@ const PUERTO = Number(process.env.PUERTO_E2E || 3998);
 // Supabase «vive» en este mismo servidor: así se pueden servir los logos y
 // portadas del bucket público fotos_perfil, y la CSP los admite.
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || `http://localhost:${PUERTO}`;
+// El asistente aparece activo; la prueba responde la pregunta en el navegador
+// y nunca se llama a Gemini.
+process.env.GEMINI_API_KEY = 'llave-e2e';
 
 const express = require('express');
 const { instalarSupabaseFalso } = require('../apoyo/supabaseFalso');

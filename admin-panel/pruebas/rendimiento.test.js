@@ -30,7 +30,7 @@ test('los estáticos con versión se guardan un año; sin versión se revalidan'
     for (const url of [css[1], js[1], chart[1]]) {
         const res = await request(app).get(url);
         assert.equal(res.status, 200, url);
-        assert.equal(res.headers['cache-control'], 'public, max-age=31536000, immutable', url);
+        assert.equal(res.headers['cache-control'], 'public, max-age=31536000, s-maxage=31536000, immutable', url);
     }
     const sinVersion = await request(app).get('/css/style.css');
     assert.equal(sinVersion.headers['cache-control'], 'public, max-age=0, must-revalidate');
@@ -83,7 +83,7 @@ test('la fuente de íconos se pide solo con los íconos que usa el panel, y no f
     assert.deepEqual(faltan, [], `agrega a src/utils/iconos.js: ${faltan.join(', ')}`);
 
     const html = (await request(app).get('/dashboard').set('Cookie', SESION)).text;
-    assert.match(html, /family=Material\+Symbols\+Outlined[^"]*&amp;icon_names=account_balance,add,[a-z_,]+&amp;display=block/);
+    assert.match(html, /family=Material\+Symbols\+Outlined[^"]*&amp;icon_names=accessibility_new,account_balance,add,[a-z_,]+&amp;display=block/);
     // Solo los pesos que se usan (medidos en todas las pantallas) y display=swap.
     assert.match(html, /family=Barlow\+Condensed:wght@600;700&family=Public\+Sans:wght@400;600;700&display=swap/);
 });

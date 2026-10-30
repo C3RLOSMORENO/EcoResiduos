@@ -1999,6 +1999,174 @@
   .sr-only-foco:not(:focus) {
     @apply sr-only;
   }
+
+  /* ---------- Botones flotantes ----------
+     Columna abajo a la derecha: el asistente arriba y la accesibilidad
+     abajo, los dos de 56 px. Los paneles se abren a la izquierda de la
+     columna, sin taparla; en el celular ocupan toda la pantalla. z 55: por
+     encima de los avisos (z 50) mientras están abiertos. */
+  .asistente-boton,
+  .accesibilidad-boton {
+    @apply capa-estado fixed z-40 flex items-center justify-center rounded-2xl;
+    width: 56px;
+    height: 56px;
+    right: 16px;
+    border: 0;
+    cursor: pointer;
+    box-shadow: var(--md-sys-elevation-level3);
+  }
+
+  .asistente-boton {
+    @apply bg-primary-container text-on-primary-container;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Sin sesión no hay asistente: la accesibilidad queda sola en la esquina. */
+  .accesibilidad-boton {
+    @apply bg-primary text-on-primary;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .accesibilidad-boton .material-symbols-outlined {
+    font-size: 32px;
+  }
+
+  .asistente-boton[aria-expanded="true"],
+  .accesibilidad-boton[aria-expanded="true"] {
+    box-shadow: 0 0 0 3px var(--md-sys-color-surface), 0 0 0 5px var(--md-sys-color-primary);
+  }
+
+  .asistente-panel,
+  .accesibilidad-panel {
+    @apply fixed flex flex-col overflow-hidden rounded-xl bg-surface-container-low;
+    right: 88px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: min(400px, calc((100vw - 104px) / var(--zoom, 1)));
+    /* Deja libre la barra superior (cerrar sesión, tema). */
+    height: min(620px, calc((100vh - 96px) / var(--zoom, 1)));
+    z-index: 55;
+    box-shadow: var(--md-sys-elevation-level3);
+  }
+
+  .asistente-panel[hidden],
+  .accesibilidad-panel[hidden] {
+    display: none;
+  }
+
+  /* Los avisos dejan libre la columna de los botones. */
+  body:has(.accesibilidad-flotante) .avisos-region {
+    right: 88px;
+  }
+
+  .accesibilidad-cerrar {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-on-primary;
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .accesibilidad-cerrar:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-primary) 12%, transparent);
+  }
+
+  .accesibilidad-mosaico {
+    @apply capa-estado flex flex-col items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface p-3 text-center text-on-surface;
+    min-height: 88px;
+    cursor: pointer;
+  }
+
+  .accesibilidad-mosaico[aria-pressed="true"] {
+    @apply border-primary bg-primary-container text-on-primary-container;
+    box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+  }
+
+  .accesibilidad-mosaico-ancho {
+    @apply flex-row flex-wrap justify-between text-left;
+    min-height: 0;
+    flex-shrink: 0;
+    cursor: default;
+  }
+
+  button.accesibilidad-mosaico-ancho {
+    @apply flex-col items-start;
+    cursor: pointer;
+  }
+
+  .accesibilidad-paso {
+    @apply capa-estado flex h-10 w-10 items-center justify-center rounded-full border border-outline bg-surface text-on-surface;
+    cursor: pointer;
+  }
+
+  .accesibilidad-paso:disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  /* Máscara de lectura: oscurece todo menos una franja que sigue al puntero. */
+  .mascara-lectura {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 96px;
+    z-index: 60;
+    pointer-events: none;
+    transform: translateY(calc(50vh - 48px));
+    box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
+  }
+
+  .mascara-lectura[hidden] {
+    display: none;
+  }
+
+  /* Cada preferencia es un atributo en <html> (head.ejs y accesibilidad.js). */
+  /* --zoom también lo usan los paneles flotantes: su alto y ancho se
+     dividen entre él para que, agrandados, sigan cabiendo en la pantalla. */
+  :root[data-texto="115"] { --zoom: 1.15; }
+  :root[data-texto="130"] { --zoom: 1.3; }
+  :root[data-texto="150"] { --zoom: 1.5; }
+  :root[data-texto] body { zoom: var(--zoom); }
+
+  :root[data-contraste] {
+    --md-sys-color-on-surface-variant: var(--md-sys-color-on-surface);
+    --md-sys-color-outline: var(--md-sys-color-on-surface);
+    --md-sys-color-outline-variant: var(--md-sys-color-on-surface);
+  }
+
+  /* Valores de WCAG 1.4.12 (espaciado del texto). */
+  :root[data-espaciado] body *:not(.material-symbols-outlined) {
+    line-height: 1.5 !important;
+    letter-spacing: 0.12em !important;
+    word-spacing: 0.16em !important;
+  }
+
+  :root[data-legible] body *:not(.material-symbols-outlined) {
+    font-family: 'Atkinson Hyperlegible', 'Public Sans', system-ui, sans-serif !important;
+  }
+
+  :root[data-enlaces] a {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+  }
+
+  :root[data-animaciones] *,
+  :root[data-animaciones] *::before,
+  :root[data-animaciones] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  @media (max-width: 599px) {
+    .asistente-panel,
+    .accesibilidad-panel {
+      inset: 0;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+    }
+  }
 }
 
 /* Sin JavaScript, en ventana compacta la navegación se muestra arriba. */

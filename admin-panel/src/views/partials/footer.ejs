@@ -1,7 +1,7 @@
     </main>
 
     <footer class="no-imprimir px-4 py-6 text-center text-body-s text-on-surface-variant md:px-6 lg:px-8">
-      EcoResiduos · Panel de administración · Santander, Colombia
+      EcoResiduos · Panel de administración · Santander, Colombia · <a href="/accesibilidad" class="underline">Declaración de accesibilidad</a>
     </footer>
   </div>
 
@@ -9,6 +9,12 @@
   <%- include('componentes/dialogo-sesion') %>
   <%- include('componentes/esqueletos') %>
   <%- include('componentes/visor-imagen') %>
+  <%- include('componentes/accesibilidad') %>
+  <script src="<%= recurso('/js/accesibilidad.js') %>" defer></script>
+  <% if (typeof user !== 'undefined' && user && typeof asistente !== 'undefined') { %>
+    <%- include('componentes/asistente') %>
+    <script src="<%= recurso('/js/asistente.js') %>" defer></script>
+  <% } %>
   <% if (typeof recorrido !== 'undefined' && recorrido) { %>
     <script type="application/json" id="datosRecorrido"><%- jsonParaScript(recorrido) %></script>
     <link rel="stylesheet" href="<%= recurso('/vendor/driver.css') %>">

@@ -75,7 +75,10 @@
   </main>
 
   <footer class="py-6 text-center text-body-s text-on-surface-variant opacity-70">
-    <p>EcoResiduos · Panel de administración · Santander</p>
+    <p>EcoResiduos · Panel de administración · Santander · <a href="/accesibilidad" class="underline">Accesibilidad</a></p>
   </footer>
+
+  <%- include('partials/componentes/accesibilidad') %>
+  <script src="<%= recurso('/js/accesibilidad.js') %>" defer></script>
 </body>
 </html>

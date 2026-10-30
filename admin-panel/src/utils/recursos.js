@@ -19,7 +19,9 @@ const LIBRERIAS = {
 };
 
 const UN_ANO_S = 365 * 24 * 60 * 60;
-const CACHE_LARGA = `public, max-age=${UN_ANO_S}, immutable`;
+// s-maxage: la CDN delante del panel (Vercel, Cloudflare…) también lo guarda y
+// no vuelve a pedirlo al servidor; es seguro porque la URL cambia con el archivo.
+const CACHE_LARGA = `public, max-age=${UN_ANO_S}, s-maxage=${UN_ANO_S}, immutable`;
 const CACHE_REVALIDAR = 'public, max-age=0, must-revalidate';
 
 // La versión se recalcula solo si el archivo cambió (fecha y tamaño): en
