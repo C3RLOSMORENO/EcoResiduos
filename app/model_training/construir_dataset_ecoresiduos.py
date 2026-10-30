@@ -219,7 +219,7 @@ def collect_candidate_files():
 
 def main():
     """Vacía dataset/ y lo vuelve a armar sin duplicados ni fotos de dataset_prueba/, hasta LIMITS por categoría."""
-    print("🚀 CONSTRUCCIÓN DEL DATASET FINAL DE EPRESIDUOS...")
+    print("CONSTRUCCIÓN DEL DATASET FINAL DE ECORESIDUOS...")
     
     for cat in CATEGORIES:
         d = TARGET_DATASET / cat
@@ -287,19 +287,19 @@ def main():
             stats[cat]["aceptadas"] += 1
             stats[cat]["por_fuente"][src_name] = stats[cat]["por_fuente"].get(src_name, 0) + 1
             
-        print(f"  ✅ {cat}: {stats[cat]['aceptadas']} admitidas | {stats[cat]['descartadas_calidad']} desc. calidad | {stats[cat]['descartadas_duplicado']} desc. duplicados")
+        print(f"  {cat}: {stats[cat]['aceptadas']} admitidas | {stats[cat]['descartadas_calidad']} desc. calidad | {stats[cat]['descartadas_duplicado']} desc. duplicados")
         
     print("\n" + "=" * 65)
-    print("🎉 RESUMEN FINAL DEL DATASET PROCESADO (app/model_training/dataset/)")
+    print("RESUMEN FINAL DEL DATASET PROCESADO (app/model_training/dataset/)")
     print("=" * 65)
     total_final = 0
     for cat in CATEGORIES:
         count = stats[cat]["aceptadas"]
         total_final += count
         src_breakdown = ", ".join(f"{k}: {v}" for k, v in stats[cat]["por_fuente"].items())
-        print(f"  📁 {cat:18s}: {count:4d} fotos  [{src_breakdown}]")
+        print(f"  {cat:18s}: {count:4d} fotos  [{src_breakdown}]")
     print("-" * 65)
-    print(f"  🌟 TOTAL GENERAL   : {total_final:4d} imágenes")
+    print(f"  TOTAL GENERAL   : {total_final:4d} imágenes")
     print("=" * 65)
 
 if __name__ == "__main__":

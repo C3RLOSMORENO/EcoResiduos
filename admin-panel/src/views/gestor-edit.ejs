@@ -68,7 +68,8 @@
         </div>
         <div class="campo">
           <label for="telefono_contacto" class="campo-etiqueta">Teléfono <span class="campo-obligatorio">(obligatorio)</span></label>
-          <input type="tel" id="telefono_contacto" name="telefono_contacto" required maxlength="30" value="<%= gestor.telefono_contacto || '' %>" data-format="phone" autocomplete="tel" class="campo-control">
+          <input type="tel" id="telefono_contacto" name="telefono_contacto" required maxlength="30" value="<%= gestor.telefono_contacto || '' %>" data-format="phone" autocomplete="tel" class="campo-control" aria-describedby="telefonoGestorAyuda">
+          <p id="telefonoGestorAyuda" class="campo-ayuda">Celular o fijo de 10 dígitos, fijo de 7 dígitos o línea 01 8000. Extensión opcional: «ext. 123».</p>
         </div>
         <div class="campo">
           <label for="email_contacto" class="campo-etiqueta">Correo <span class="campo-obligatorio">(obligatorio)</span></label>

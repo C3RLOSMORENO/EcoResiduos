@@ -63,6 +63,12 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Autorización del tratamiento de datos personales (Ley 1581 de 2012): qué
+-- versión de la política aceptó y cuándo. La guarda el trigger al registrarse
+-- o registrar_autorizacion_datos en las cuentas anteriores.
+ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS autorizacion_datos_version TEXT;
+ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS autorizacion_datos_at TIMESTAMPTZ;
+
 -- materiales_residuos: catálogo de tipos de residuo que gestiona la app.
 CREATE TABLE IF NOT EXISTS public.materiales_residuos (
     id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -279,6 +285,13 @@ ALTER TABLE public.solicitudes_recoleccion
     ADD CONSTRAINT solicitudes_estado_check
     CHECK (estado IN ('PUBLICADO', 'EN_NEGOCIACION', 'RECOLECTADO', 'CANCELADO'));
 
+-- La app ya lo valida, pero con la llave pública se puede insertar sin pasar
+-- por ella: una cantidad en cero o negativa descuadraría los reportes.
+ALTER TABLE public.solicitudes_recoleccion
+    DROP CONSTRAINT IF EXISTS solicitudes_cantidad_positiva;
+ALTER TABLE public.solicitudes_recoleccion
+    ADD CONSTRAINT solicitudes_cantidad_positiva CHECK (cantidad_estimada > 0);
+
 ALTER TABLE public.postulaciones_recoleccion
     DROP CONSTRAINT IF EXISTS postulaciones_recoleccion_estado_check;
 ALTER TABLE public.postulaciones_recoleccion
@@ -308,6 +321,10 @@ ALTER TABLE public.postulaciones_recoleccion
 
 
 -- ─── Índices ──────────────────────────────────────────────────────────────────
+
+-- Una empresa gestora por NIT (sin dígito de verificación, como lo guardan la
+-- app y el panel).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_perfiles_gestor_nit ON public.perfiles_gestor (nit);
 
 CREATE INDEX IF NOT EXISTS idx_perfiles_generador_usuario       ON public.perfiles_generador      (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_perfiles_gestor_usuario          ON public.perfiles_gestor          (usuario_id);
@@ -352,6 +369,22 @@ WHERE (sigla = 'AMB'  OR id = 2) AND horario IS NULL;
 UPDATE public.autoridades_ambientales
 SET horario = 'Lun-Jue 8:00 a.m. - 12:00 m. y 2:00 - 6:00 p.m. | Vie 7:00 a.m. - 3:00 p.m.'
 WHERE (sigla = 'CAS'  OR id = 3) AND horario IS NULL;
+
+
+-- Teléfonos fijos de 7 dígitos, anteriores al plan de numeración de 2021: se
+-- completan con el indicativo 607 de Santander, igual que en la app y el panel.
+-- Las solicitudes no se tocan: son el registro de lo que se publicó.
+UPDATE public.perfiles_gestor
+SET telefono_contacto = '607' || regexp_replace(telefono_contacto, '[[:space:]().-]', '', 'g')
+WHERE regexp_replace(telefono_contacto, '[[:space:]().-]', '', 'g') ~ '^[0-9]{7}$';
+
+UPDATE public.perfiles_generador
+SET telefono = '607' || regexp_replace(telefono, '[[:space:]().-]', '', 'g')
+WHERE regexp_replace(telefono, '[[:space:]().-]', '', 'g') ~ '^[0-9]{7}$';
+
+UPDATE public.autoridades_ambientales
+SET telefono = '607' || regexp_replace(telefono, '[[:space:]().-]', '', 'g')
+WHERE regexp_replace(telefono, '[[:space:]().-]', '', 'g') ~ '^[0-9]{7}$';
 
 
 -- ─── Funciones privadas de ayuda (políticas y triggers) ───────────────────────
@@ -428,8 +461,14 @@ DECLARE
 BEGIN
     IF v_rol NOT IN ('GENERADOR', 'GESTOR') THEN v_rol := 'GENERADOR'; END IF;
 
-    INSERT INTO public.usuarios (id, email, rol)
-    VALUES (NEW.id, NEW.email, v_rol::public.rol_usuario)
+    -- La app no deja registrarse sin aceptar la política de datos y manda la
+    -- versión aceptada en los metadatos.
+    INSERT INTO public.usuarios (id, email, rol, autorizacion_datos_version, autorizacion_datos_at)
+    VALUES (
+        NEW.id, NEW.email, v_rol::public.rol_usuario,
+        nullif(v_meta->>'autorizacion_datos_version', ''),
+        CASE WHEN nullif(v_meta->>'autorizacion_datos_version', '') IS NOT NULL THEN NOW() END
+    )
     ON CONFLICT (id) DO NOTHING;
 
     IF v_rol = 'GENERADOR'
@@ -991,6 +1030,28 @@ $$;
 
 REVOKE ALL ON FUNCTION public.cargar_certificado_gestor(BIGINT, TEXT, TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.cargar_certificado_gestor(BIGINT, TEXT, TEXT) TO authenticated;
+
+-- Usuario: registra que aceptó la política de tratamiento de datos (Ley 1581
+-- de 2012). La usan las cuentas creadas antes de pedir la autorización y
+-- todas cuando cambia la versión de la política.
+CREATE OR REPLACE FUNCTION public.registrar_autorizacion_datos(p_version TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    IF (SELECT auth.uid()) IS NULL THEN
+        RAISE EXCEPTION 'Inicia sesión para continuar.';
+    END IF;
+    IF p_version IS NULL OR char_length(btrim(p_version)) NOT BETWEEN 1 AND 20 THEN
+        RAISE EXCEPTION 'La versión de la política no es válida.';
+    END IF;
+    UPDATE public.usuarios
+    SET autorizacion_datos_version = btrim(p_version), autorizacion_datos_at = NOW()
+    WHERE id = (SELECT auth.uid());
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.registrar_autorizacion_datos(TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_autorizacion_datos(TEXT) TO authenticated;
 
 -- Admin resuelve un problema reportado («No se recogió»).
 CREATE OR REPLACE FUNCTION public.resolver_problema_no_recogido(p_solicitud_id BIGINT, p_nota TEXT)

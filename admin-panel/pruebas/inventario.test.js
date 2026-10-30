@@ -21,7 +21,7 @@ const SESION = `sb_access_token=token-admin; ${COOKIE_CSRF}`;
 
 // Si agregas o quitas una ruta, actualiza esta lista y el inventario.
 const INVENTARIO = [
-    'GET /', 'GET /accesibilidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout',
+    'GET /', 'GET /accesibilidad', 'GET /privacidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout',
     'GET /restablecer-password', 'POST /sesion/renovar', 'GET /componentes',
     'GET /dashboard',
     'GET /gestores', 'POST /gestores', 'POST /gestores/guardar', 'GET /gestores/nuevo',
@@ -45,7 +45,7 @@ const INVENTARIO = [
     'POST /asistente/preguntar'
 ];
 
-const PUBLICAS = new Set(['GET /', 'GET /accesibilidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout', 'GET /restablecer-password']);
+const PUBLICAS = new Set(['GET /', 'GET /accesibilidad', 'GET /privacidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout', 'GET /restablecer-password']);
 
 // Lee las rutas tal como están escritas en src/routes/, con el prefijo con el
 // que index.js monta cada archivo.
@@ -188,7 +188,15 @@ test('materiales: un material sin solicitudes se elimina por los dos alias', asy
     }
 });
 
-const AUTORIDAD = { nombre: 'Área Metropolitana de Bucaramanga', sigla: 'amb', email: 'Contacto@AMB.test', telefono: '6076444831' };
+const AUTORIDAD = {
+    nombre: 'Área Metropolitana de Bucaramanga',
+    sigla: 'amb',
+    jurisdiccion: 'Bucaramanga, Floridablanca, Girón y Piedecuesta',
+    email: 'Contacto@AMB.test',
+    telefono: '644 4831',
+    sitio_web: 'www.amb.gov.co',
+    direccion: 'Avenida Los Samanes # 9-280'
+};
 
 test('autoridades: crear, editar y eliminar por todos sus alias', async () => {
     for (const url of ['/autoridades', '/autoridades/guardar']) {
@@ -199,6 +207,8 @@ test('autoridades: crear, editar y eliminar por todos sus alias', async () => {
         const fila = escrituras('autoridades_ambientales', 'insert')[0].payload[0];
         assert.equal(fila.sigla, 'AMB');
         assert.equal(fila.email, 'contacto@amb.test');
+        assert.equal(fila.telefono, '6076444831', 'el fijo de 7 dígitos se guarda con el indicativo 607');
+        assert.equal(fila.sitio_web, 'https://www.amb.gov.co');
     }
     for (const url of ['/autoridades/edit/5', '/autoridades/editar/5']) {
         supabase.limpiar();
@@ -214,14 +224,27 @@ test('autoridades: crear, editar y eliminar por todos sus alias', async () => {
     }
 });
 
-test('autoridades: sin nombre no se guarda', async () => {
-    const res = aviso(await enviar('/autoridades', { ...AUTORIDAD, nombre: ' ' }));
-    assert.deepEqual(res, { ruta: '/autoridades/nuevo', mensaje: 'El nombre institucional de la autoridad es obligatorio.', tipo: 'error' });
-    assert.equal(escrituras('autoridades_ambientales', 'insert').length, 0);
+test('autoridades: un dato que falta o no es válido no se guarda ni se inventa', async () => {
+    const casos = [
+        [{ nombre: ' ' }, /nombre institucional debe tener al menos 3/],
+        [{ jurisdiccion: '' }, /Falta la jurisdicción/],
+        [{ email: '' }, /correo no tiene un formato válido/],
+        [{ telefono: 'Sin registrar' }, /celular/],
+        [{ sitio_web: 'javascript:alert(1)' }, /sitio web/],
+        [{ direccion: '' }, /Falta la dirección/]
+    ];
+    for (const [cambio, mensaje] of casos) {
+        supabase.limpiar();
+        supabase.manejador = responderConDatos;
+        const res = aviso(await enviar('/autoridades', { ...AUTORIDAD, ...cambio }));
+        assert.equal(res.ruta, '/autoridades/nuevo', JSON.stringify(cambio));
+        assert.match(res.mensaje, mensaje, JSON.stringify(cambio));
+        assert.equal(escrituras('autoridades_ambientales', 'insert').length, 0, JSON.stringify(cambio));
+    }
 });
 
 const GESTOR = {
-    nit: '900.396.512-1',
+    nit: '900.396.512-3',
     razon_social: 'Reciclajes del Oriente S.A.S.',
     municipio: 'Floridablanca',
     direccion: 'Calle 10 # 20-30',
@@ -253,11 +276,14 @@ test('gestores: crear por los dos alias lo deja aprobado, ubicado y con sus mate
 test('gestores: cada dato inválido vuelve al formulario con su mensaje y no guarda nada', async () => {
     const casos = [
         [{ nit: '12345' }, /NIT es obligatorio/],
+        [{ nit: '900396512-1' }, /dígito de verificación no corresponde/],
         [{ razon_social: 'AB' }, /razón social/],
+        [{ razon_social: 'X'.repeat(151) }, /no puede pasar de 150/],
         [{ municipio: 'Medellín' }, /6 municipios/],
-        [{ direccion: 'Cl 1' }, /dirección es obligatoria/],
-        [{ telefono_contacto: '' }, /teléfono de contacto/],
-        [{ email_contacto: 'sin-arroba' }, /correo de contacto/],
+        [{ direccion: 'Cl 1' }, /dirección debe tener al menos 5/],
+        [{ telefono_contacto: '' }, /celular/],
+        [{ telefono_contacto: '12345' }, /celular/],
+        [{ email_contacto: 'sin-arroba' }, /correo no tiene un formato válido/],
         [{ horario: 'x'.repeat(121) }, /120 caracteres/]
     ];
     for (const [cambio, mensaje] of casos) {

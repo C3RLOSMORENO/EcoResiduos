@@ -242,7 +242,7 @@ def main():
         except Exception:
             continue
             
-    print("\n✅ Extracción de TACO v2 finalizada:")
+    print("\nExtracción de TACO v2 finalizada:")
     for cat, count in saved_counts.items():
         print(f"  {cat}: {count} recortes de residuos válidos")
     print(f"  FONDO: {bg_saved} fondos limpios extraídos")

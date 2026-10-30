@@ -166,28 +166,28 @@ def comprobar_tflite(modelo, dataset):
         interprete.set_tensor(entrada['index'], imagen)
         interprete.invoke()
         coincidencias += int(np.argmax(interprete.get_tensor(salida['index'])) == np.argmax(modelo.predict(imagen, verbose=0)))
-    print(f'✅ TFLite: entrada {list(entrada["shape"])} float32, coincide con Keras en {coincidencias}/{total} imágenes')
+    print(f'TFLite: entrada {list(entrada["shape"])} float32, coincide con Keras en {coincidencias}/{total} imágenes')
     if coincidencias < total * 0.9:
-        print('⚠️  El .tflite no coincide con el modelo de Keras: NO lo copies a la app.')
+        print(' El .tflite no coincide con el modelo de Keras: NO lo copies a la app.')
 
 
 def main():
     """Entrena en dos fases, evalúa, exporta el .tflite y comprueba que coincida con Keras."""
     if not DATASET_DIR.exists():
-        print(f"❌ No se encontró la carpeta '{DATASET_DIR}'.")
+        print(f"No se encontró la carpeta '{DATASET_DIR}'.")
         return
     desconocidas = sorted(d.name for d in DATASET_DIR.iterdir() if d.is_dir() and d.name not in CATEGORIAS)
     if desconocidas:
-        print(f"❌ Carpetas que no son categorías de la norma: {desconocidas}. Usa: {sorted(CATEGORIAS)}")
+        print(f"Carpetas que no son categorías de la norma: {desconocidas}. Usa: {sorted(CATEGORIAS)}")
         return
 
     entrenamiento = cargar(DATASET_DIR, 'training')
     validacion = cargar(DATASET_DIR, 'validation')
     nombres = entrenamiento.class_names
-    print(f'✅ Categorías ({len(nombres)}): {nombres}')
+    print(f'Categorías ({len(nombres)}): {nombres}')
 
     pesos = pesos_por_clase(entrenamiento, len(nombres))
-    print(f'⚖️  Pesos por clase: { {nombres[i]: round(p, 2) for i, p in pesos.items()} }')
+    print(f' Pesos por clase: { {nombres[i]: round(p, 2) for i, p in pesos.items()} }')
     tabla_pesos = tf.constant([pesos[i] for i in range(len(nombres))], dtype=tf.float32)
     autotune = tf.data.AUTOTUNE
     entrenamiento_aumentado = entrenamiento.map(
@@ -199,11 +199,11 @@ def main():
     modelo, base = construir_modelo(len(nombres))
     parada = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=4, restore_best_weights=True)
 
-    print('🧠 Fase 1: entrenando la cabeza con la base congelada...')
+    print('Fase 1: entrenando la cabeza con la base congelada...')
     modelo.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss='categorical_crossentropy', metrics=['accuracy'])
     modelo.fit(entrenamiento_aumentado, validation_data=validacion, epochs=EPOCAS_CABEZA, callbacks=[parada])
 
-    print(f'🔧 Fase 2: ajuste fino de las últimas {CAPAS_A_AJUSTAR} capas...')
+    print(f'Fase 2: ajuste fino de las últimas {CAPAS_A_AJUSTAR} capas...')
     base.trainable = True
     for capa in base.layers[:-CAPAS_A_AJUSTAR]:
         capa.trainable = False
@@ -227,12 +227,12 @@ def main():
     OUTPUT_REPORTE.write_text(texto, encoding='utf-8')
     guardar_matriz(matriz, nombres, titulo_matriz)
 
-    print('💾 Exportando a TensorFlow Lite...')
+    print('Exportando a TensorFlow Lite...')
     OUTPUT_MODEL.write_bytes(exportar_tflite(modelo))
     comprobar_tflite(modelo, validacion)
     OUTPUT_LABELS.write_text(''.join(f'{n}\n' for n in nombres), encoding='utf-8')
 
-    print('🎉 Listo. Copia estos dos archivos a app/assets/models/:')
+    print('Listo. Copia estos dos archivos a app/assets/models/:')
     print(f'  1. {OUTPUT_MODEL}')
     print(f'  2. {OUTPUT_LABELS}')
     print(f'Revisa {OUTPUT_MATRIZ.name} para ver qué categorías se confunden.')

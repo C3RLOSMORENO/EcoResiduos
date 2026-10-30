@@ -4,7 +4,7 @@ Este documento contiene la atribución bibliográfica, las licencias verificadas
 
 ---
 
-## 📚 Tabla de Datasets Utilizados
+## Tabla de Datasets Utilizados
 
 | Prefijo en Archivo | Nombre del Dataset | URL Directa al Dataset | Licencia Verificada (Cita Textual) | Referencia / Cita Bibliográfica | Categorías e Imágenes Aportadas |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -19,7 +19,7 @@ Este documento contiene la atribución bibliográfica, las licencias verificadas
 
 ---
 
-## 📑 Metadatos Individuales (Wikimedia y Unsplash)
+## Metadatos Individuales (Wikimedia y Unsplash)
 
 Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas de forma individual en el archivo [fuentes_individuales.csv](fuentes_individuales.csv) con las siguientes columnas:
 - `archivo`: Nombre del archivo guardado en el dataset.
@@ -31,7 +31,7 @@ Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas 
 
 ---
 
-## 📊 Balance General del Dataset
+## Balance General del Dataset
 
 | Categoría | Total Imágenes | Fuentes Utilizadas | Porcentaje Fuente Mayor (Máx. 60%) |
 | :--- | :---: | :--- | :---: |

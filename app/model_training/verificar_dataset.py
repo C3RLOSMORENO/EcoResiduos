@@ -63,7 +63,7 @@ def imagenes(carpeta):
 def main():
     """Hace todas las revisiones, escribe revision/verificacion.md y sale con 1 si hay errores."""
     if not DATASET_DIR.exists():
-        print(f"❌ No existe '{DATASET_DIR}'.")
+        print(f"No existe '{DATASET_DIR}'.")
         sys.exit(1)
 
     errores, avisos, lineas = [], [], ['# Verificación del dataset', '']
@@ -154,17 +154,17 @@ def main():
     else:
         avisos.append('No existe dataset_prueba/: no hay forma de medir el modelo con fotos reales propias')
 
-    lineas += ['', '## Errores', *([f'- ❌ {e}' for e in errores] or ['- Ninguno'])]
-    lineas += ['', '## Avisos', *([f'- ⚠️ {a}' for a in avisos] or ['- Ninguno'])]
+    lineas += ['', '## Errores', *([f'- {e}' for e in errores] or ['- Ninguno'])]
+    lineas += ['', '## Avisos', *([f'- {a}' for a in avisos] or ['- Ninguno'])]
     REPORTE.parent.mkdir(exist_ok=True)
     REPORTE.write_text('\n'.join(lineas) + '\n', encoding='utf-8')
 
     print('\n'.join(lineas))
     print(f'\nDetalle en {REPORTE}')
     if errores:
-        print(f'\n❌ El dataset NO cumple: {len(errores)} error(es).')
+        print(f'\nEl dataset NO cumple: {len(errores)} error(es).')
         sys.exit(1)
-    print('\n✅ El dataset cumple los requisitos verificables. Falta la revisión visual y la auditoría con Gemini.')
+    print('\nEl dataset cumple los requisitos verificables. Falta la revisión visual y la auditoría con Gemini.')
 
 
 if __name__ == '__main__':

@@ -22,6 +22,7 @@ import '../models/material_residuo.dart';
 import '../models/solicitud_recoleccion.dart';
 import '../models/unidad_medida.dart';
 import '../repositories/solicitudes_repository.dart';
+import '../../../utils/validacion.dart';
 import 'detalle_solicitud_screen.dart';
 
 /// Sugerencia de la IA sobre la foto: categoría detectada y confianza en %.
@@ -181,7 +182,7 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
   bool get _tieneFoto => _fotoLocal != null || (_fotoRemota?.isNotEmpty ?? false);
   bool get _tieneCantidad => (double.tryParse(_cantidad.text.trim().replaceAll(',', '.')) ?? 0) > 0;
   bool get _tieneDireccion => _direccion.text.trim().isNotEmpty;
-  bool get _tieneTelefono => _telefono.text.trim().isNotEmpty;
+  bool get _tieneTelefono => validarTelefono(_telefono.text) == null;
 
   List<String> get _faltantes => [
     if (!_tieneFoto) 'foto',
@@ -421,7 +422,7 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
     descripcion: _descripcion.text.trim(),
     direccionRecoleccion: _direccion.text.trim(),
     municipio: _municipio!.toUpperCase(),
-    telefono: _telefono.text.trim(),
+    telefono: normalizarTelefono(_telefono.text) ?? _telefono.text.trim(),
     fotoUrl: fotoUrl,
   );
 
@@ -569,7 +570,7 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
               decoration: InputDecoration(
                 labelText: 'Teléfono de contacto',
                 hintText: 'Para que el gestor coordine la recogida',
-                errorText: _mostrarErrores && !_tieneTelefono ? 'Escribe un teléfono de contacto.' : null,
+                errorText: _mostrarErrores ? validarTelefono(_telefono.text) : null,
               ),
             ),
           ],

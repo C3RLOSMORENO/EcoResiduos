@@ -19,7 +19,8 @@
     const campo = e.target;
     if (!(campo instanceof HTMLInputElement)) return;
     if (campo.matches('[data-format="nit"]')) campo.value = campo.value.replace(/[^0-9-]/g, '');
-    if (campo.matches('[data-format="phone"]')) campo.value = campo.value.replace(/[^0-9+\s]/g, '');
+    // Teléfono: dígitos, +57, separadores y la extensión («ext. 123»).
+    if (campo.matches('[data-format="phone"]')) campo.value = campo.value.replace(/[^0-9+\s().\-extEXT]/g, '');
     if (campo.matches('[data-format="numeric"]')) campo.value = campo.value.replace(/[^0-9]/g, '');
     if (campo.matches('[data-format="uppercase"]')) campo.value = campo.value.toUpperCase();
   });

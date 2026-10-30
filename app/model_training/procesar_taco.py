@@ -167,7 +167,7 @@ def main():
         except Exception as e:
             continue
             
-    print("\n✅ Extracción de TACO finalizada:")
+    print("\nExtracción de TACO finalizada:")
     for cat, count in saved_counts.items():
         print(f"  {cat}: {count} fotos")
 

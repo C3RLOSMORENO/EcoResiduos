@@ -737,8 +737,8 @@
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   }
 
-  /* Los filtros van sobre una superficie tonal con borde limpio: se distinguen
-     claramente de las tarjetas con datos. */
+  /* Los filtros van sobre una superficie de otro tono y con borde, para que no
+     se confundan con las tarjetas de datos. */
   .panel-filtros {
     @apply rounded-lg bg-surface-container-low p-4 md:p-6;
     border: 1px solid var(--md-sys-color-outline-variant);
@@ -925,13 +925,16 @@
     opacity: 0.6;
   }
 
-  /* Cifra destacada: tipografía tabular moderna sin aspecto condensado. */
+  /* Cifra destacada: números tabulares (todos del mismo ancho) para que las
+     cifras no bailen al cambiar; en la fuente del texto, no en la condensada
+     de los títulos. */
   .kpi-cifra {
     @apply font-sans font-bold text-headline-m text-on-surface tracking-tight;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Tarjeta de acción para pendientes: diseño contemporáneo y limpio. */
+  /* Tarjeta de acción para pendientes: todo el bloque es el enlace y sube un
+     poco al pasar el puntero. */
   .tarjeta-accion {
     @apply capa-estado flex items-start gap-3 rounded-lg p-3 md:p-4 no-underline transition-all;
     border: 1px solid var(--md-sys-color-outline-variant);

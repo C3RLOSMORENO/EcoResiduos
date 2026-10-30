@@ -162,11 +162,11 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
     """
     api_key = get_api_key()
     if not api_key:
-        print("❌ Error: No se encontró la GEMINI_API_KEY en los archivos .env.")
+        print("Error: No se encontró la GEMINI_API_KEY en los archivos .env.")
         return
 
     print("=" * 65)
-    print("🔬 AUDITORÍA DE DATASET CON IA MAESTRA (Teacher-Student Pipeline)")
+    print("AUDITORÍA DE DATASET CON IA MAESTRA (Teacher-Student Pipeline)")
     print(f"   Modelos Auditores: {', '.join(CANDIDATE_MODELS)}")
     print(f"   Muestras por categoría: {samples_per_cat}")
     print(f"   Limpieza automática (auto-clean): {'ACTIVADA' if auto_clean else 'DESACTIVADA (Solo reporte)'}")
@@ -190,13 +190,13 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
         sample_size = min(samples_per_cat, len(images))
         sampled_images = random.sample(images, sample_size)
 
-        print(f"\n📂 Evaluando categoría: {cat} ({sample_size} imágenes tomadas de {len(images)})...")
+        print(f"\nEvaluando categoría: {cat} ({sample_size} imágenes tomadas de {len(images)})...")
 
         for idx, img in enumerate(sampled_images, 1):
             result = audit_image_with_gemini(api_key, img)
             
             if "error" in result:
-                print(f"  [{idx}/{sample_size}] ⚠️ {img.name} -> Error de API: {result['error']}")
+                print(f"  [{idx}/{sample_size}] {img.name} -> Error de API: {result['error']}")
                 time.sleep(2)
                 continue
 
@@ -210,9 +210,9 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
             is_match = (gemini_cat == cat)
             if is_match:
                 total_matches += 1
-                print(f"  [{idx}/{sample_size}] ✅ {img.name} -> Coincide: {gemini_cat} ({objeto}) [{confianza}%]")
+                print(f"  [{idx}/{sample_size}] {img.name} -> Coincide: {gemini_cat} ({objeto}) [{confianza}%]")
             else:
-                print(f"  [{idx}/{sample_size}] ⚠️ DISCORDANCIA: {img.name}")
+                print(f"  [{idx}/{sample_size}] DISCORDANCIA: {img.name}")
                 print(f"       Etiqueta Humana: {cat}")
                 print(f"       Gemini Sugiere:  {gemini_cat} ({objeto})")
                 print(f"       Motivo:          {justificacion}")
@@ -239,15 +239,15 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
     accuracy_dataset = (total_matches / total_audited * 100) if total_audited > 0 else 0
 
     print("\n" + "=" * 65)
-    print("📊 RESUMEN FINAL DE LA AUDITORÍA CON GEMINI")
+    print("RESUMEN FINAL DE LA AUDITORÍA CON GEMINI")
     print(f"  Imágenes auditadas : {total_audited}")
-    print(f"  Coincidencias (✅) : {total_matches}")
-    print(f"  Discordancias (⚠️) : {len(discordances)}")
+    print(f"  Coincidencias : {total_matches}")
+    print(f"  Discordancias : {len(discordances)}")
     print(f"  Tasa de Concordancia: {accuracy_dataset:.1f}%")
     print("=" * 65)
 
     # Generar Reporte en Markdown
-    report_content = f"""# 📑 Reporte de Auditoría de Dataset con IA Maestra (Gemini)
+    report_content = f"""# Reporte de Auditoría de Dataset con IA Maestra (Gemini)
 
 **Fecha:** {time.strftime('%Y-%m-%d %H:%M:%S')}  
 **Metodología:** Teacher-Student Knowledge Distillation / Dataset Auditing  
@@ -256,7 +256,7 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
 
 ---
 
-## 📈 Métricas Globales
+## Métricas Globales
 - **Total imágenes auditadas:** {total_audited}
 - **Coincidencias (Aprobadas por Maestro):** {total_matches}
 - **Discordancias detectadas:** {len(discordances)}
@@ -264,7 +264,7 @@ def main(samples_per_cat=5, auto_clean=False, target_category=None):
 
 ---
 
-## ⚠️ Detalle de Discordancias e Imágenes Ruidosas
+## Detalle de Discordancias e Imágenes Ruidosas
 Las siguientes imágenes fueron marcadas por el modelo maestro como potencialmente mal etiquetadas o ambiguas:
 
 | Archivo | Cat. en Dataset | Cat. Sugerida (Gemini) | Objeto Detectado | Justificación |
@@ -275,14 +275,14 @@ Las siguientes imágenes fueron marcadas por el modelo maestro como potencialmen
 
     report_content += """
 ---
-> 💡 **Nota Metodológica para Tesis:**  
+> **Nota Metodológica para Tesis:**  
 > La utilización de un modelo fundacional de gran escala (Gemini Vision) como supervisor externo permite filtrar inconsistencias humanas en el dataset perimetral, aumentando la robustez y generalización del modelo ligero (MobileNetV2).
 """
 
     with open(REPORT_FILE, "w", encoding="utf-8") as f:
         f.write(report_content)
 
-    print(f"\n📄 Reporte generado exitosamente en:\n   {REPORT_FILE}")
+    print(f"\nReporte generado exitosamente en:\n   {REPORT_FILE}")
 
 if __name__ == "__main__":
     # 20 muestras por categoría según los requisitos del protocolo de auditoría

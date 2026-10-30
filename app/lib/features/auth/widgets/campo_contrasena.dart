@@ -60,11 +60,14 @@ class _CampoContrasenaState extends State<CampoContrasena> {
   }
 }
 
-/// Reglas de contraseña: al menos 8 caracteres y un número.
+/// Reglas de contraseña: al menos 8 caracteres, con letras y números. Son las
+/// mismas que se configuran en Supabase Auth (Minimum password length y
+/// Password requirements), que las aplica aunque alguien no use la app.
 String? validarContrasena(String? valor) {
   final texto = valor ?? '';
   if (texto.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
   if (!texto.contains(RegExp(r'[0-9]'))) return 'La contraseña debe tener al menos un número';
+  if (!texto.contains(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]'))) return 'La contraseña debe tener al menos una letra';
   return null;
 }
 

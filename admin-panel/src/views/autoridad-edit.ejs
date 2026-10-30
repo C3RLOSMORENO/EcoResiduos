@@ -38,7 +38,8 @@
       </div>
       <div class="campo">
         <label for="telefono" class="campo-etiqueta">Teléfono <span class="campo-obligatorio">(obligatorio)</span></label>
-        <input type="tel" id="telefono" name="telefono" required maxlength="50" value="<%= autoridad.telefono || '' %>" data-format="phone" autocomplete="tel" class="campo-control">
+        <input type="tel" id="telefono" name="telefono" required maxlength="50" value="<%= autoridad.telefono || '' %>" data-format="phone" autocomplete="tel" class="campo-control" aria-describedby="telefonoAutoridadAyuda">
+        <p id="telefonoAutoridadAyuda" class="campo-ayuda">Celular o fijo de 10 dígitos, fijo de 7 dígitos o línea 01 8000. Extensión opcional: «ext. 123».</p>
       </div>
       <div class="campo">
         <label for="email" class="campo-etiqueta">Correo o PQRS <span class="campo-obligatorio">(obligatorio)</span></label>

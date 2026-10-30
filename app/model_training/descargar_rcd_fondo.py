@@ -142,7 +142,7 @@ def collect_category(category, max_images=600):
     all_items = []
     seen_urls = set()
     
-    print(f"\n🔍 Buscando imágenes para [{category}]...")
+    print(f"\nBuscando imágenes para [{category}]...")
     for q in queries:
         items = search_wikimedia_paginated(q, target_count=40)
         for it in items:
@@ -166,19 +166,19 @@ def collect_category(category, max_images=600):
                 if saved >= max_images:
                     break
                     
-    print(f"✅ [{category}] Guardadas: {saved} fotos")
+    print(f"[{category}] Guardadas: {saved} fotos")
     return saved
 
 def main():
     """Completa RCD, FONDO y PELIGROSO desde Wikimedia Commons."""
-    print("🚀 INICIANDO RECOLECCIÓN AMPLIADA DE WIKIMEDIA (RCD, FONDO, PELIGROSO)...")
+    print("INICIANDO RECOLECCIÓN AMPLIADA DE WIKIMEDIA (RCD, FONDO, PELIGROSO)...")
     summary = {}
     for cat in ["RCD", "FONDO", "PELIGROSO"]:
         cnt = collect_category(cat, max_images=550)
         summary[cat] = cnt
         time.sleep(1)
         
-    print("\n📊 Resumen de recolección ampliada:")
+    print("\nResumen de recolección ampliada:")
     for c, count in summary.items():
         print(f"  {c}: {count} fotos")
 

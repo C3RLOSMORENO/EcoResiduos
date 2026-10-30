@@ -6,6 +6,7 @@ import '../../../data/guia_categorias.dart';
 import '../../../services/archivo_pdf.dart';
 import '../../../theme/eco_theme.dart';
 import '../../../utils/municipios.dart';
+import '../../../utils/validacion.dart';
 import '../../../widgets/boton_fijo_inferior.dart';
 import '../../../widgets/empty_state_widget.dart';
 import '../../../widgets/grupo_materiales.dart';
@@ -14,6 +15,7 @@ import '../../solicitudes/repositories/solicitudes_repository.dart';
 import '../models/gestor_directorio.dart';
 import '../repositories/auth_repository.dart';
 import '../widgets/campo_contrasena.dart';
+import '../widgets/casilla_autorizacion_datos.dart';
 import 'revisa_correo_screen.dart';
 
 enum _Paso { rol, generador, verificarGestor, gestorNoEncontrado, datosGestor, registroNuevo, materiales }
@@ -43,6 +45,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   bool _esGestor = false;
   bool _enviando = false;
   bool _mostrarErrores = false;
+  bool _autorizaDatos = false;
   String? _error;
 
   final _nombre = TextEditingController();
@@ -120,31 +123,34 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Map<String, bool> get _camposGenerador => {
     'nombre': _lleno(_nombre),
     'documento': _lleno(_documento),
-    'teléfono': _lleno(_telefono),
+    'teléfono': validarTelefono(_telefono.text) == null,
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+    'autorización de datos personales': _autorizaDatos,
   };
 
   Map<String, bool> get _camposGestor => {
-    'teléfono': _lleno(_telefono),
+    'teléfono': validarTelefono(_telefono.text) == null,
     'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+    'autorización de datos personales': _autorizaDatos,
   };
 
-  bool get _nitValido => RegExp(r'^\d{8,15}$').hasMatch(normalizarNit(_nit.text));
+  bool get _nitValido => validarNit(_nit.text) == null;
 
   Map<String, bool> get _camposGestorNuevo => {
     'NIT': _nitValido,
     'razón social': _lleno(_razonSocial),
     'representante legal': _lleno(_representante),
-    'teléfono': _lleno(_telefono),
+    'teléfono': validarTelefono(_telefono.text) == null,
     'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
     'contraseña': validarContrasena(_contrasena.text) == null,
     'permiso en PDF': _permiso != null,
+    'autorización de datos personales': _autorizaDatos,
   };
 
   String _mensajeFaltantes(Map<String, bool> campos) {
@@ -167,7 +173,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         password: _contrasena.text,
         nombre: _nombre.text,
         documento: _documento.text,
-        telefono: _telefono.text,
+        telefono: normalizarTelefono(_telefono.text) ?? _telefono.text.trim(),
         municipio: _municipio!,
       ),
     );
@@ -276,7 +282,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           nit: _nit.text,
           razonSocial: _razonSocial.text,
           representanteLegal: _representante.text,
-          telefono: _telefono.text,
+          telefono: normalizarTelefono(_telefono.text) ?? _telefono.text.trim(),
           direccion: _direccion.text,
           municipio: _municipio!,
           horario: _horario.text,
@@ -292,7 +298,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         password: _contrasena.text,
         gestorDirectorio: _gestorDirectorio!,
         razonSocial: _gestorDirectorio!.razonSocial,
-        telefono: _telefono.text,
+        telefono: normalizarTelefono(_telefono.text) ?? _telefono.text.trim(),
         direccion: _direccion.text,
         municipio: _municipio!,
         materialesDeclarados: _materialesElegidos.toList(),
@@ -614,7 +620,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           _telefono,
           'Teléfono',
           teclado: TextInputType.phone,
-          error: _lleno(_telefono) ? null : 'Escribe tu teléfono',
+          error: validarTelefono(_telefono.text),
           autofill: const [AutofillHints.telephoneNumber],
         ),
         _selectorMunicipio(),
@@ -627,7 +633,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
         CampoContrasena(
           controller: _contrasena,
-          ayuda: 'Mínimo 8 caracteres y un número',
+          ayuda: 'Mínimo 8 caracteres, con letras y números',
           autofillHints: const [AutofillHints.newPassword],
           validator: (_) => _mostrarErrores ? validarContrasena(_contrasena.text) : null,
           fillColor: Theme.of(context).brightness == Brightness.dark
@@ -636,6 +642,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
         ),
         if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
           _MensajeError(texto: validarContrasena(_contrasena.text)!),
+          CasillaAutorizacionDatos(
+            valor: _autorizaDatos,
+            onChanged: (valor) => setState(() => _autorizaDatos = valor),
+            conError: _mostrarErrores && !_autorizaDatos,
+          ),
       ]),
     );
   }
@@ -720,7 +731,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _telefono,
         'Teléfono',
         teclado: TextInputType.phone,
-        error: _lleno(_telefono) ? null : 'Escribe el teléfono',
+        error: validarTelefono(_telefono.text),
       ),
       _campo(
         _direccion,
@@ -732,7 +743,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       _selectorMunicipio(),
       CampoContrasena(
         controller: _contrasena,
-        ayuda: 'Mínimo 8 caracteres y un número',
+        ayuda: 'Mínimo 8 caracteres, con letras y números',
         autofillHints: const [AutofillHints.newPassword],
         fillColor: Theme.of(context).brightness == Brightness.dark
             ? Theme.of(context).colorScheme.surfaceContainerHigh
@@ -740,6 +751,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
+        CasillaAutorizacionDatos(
+          valor: _autorizaDatos,
+          onChanged: (valor) => setState(() => _autorizaDatos = valor),
+          conError: _mostrarErrores && !_autorizaDatos,
+        ),
     ]);
   }
 
@@ -755,7 +771,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _nit,
         'NIT',
         teclado: TextInputType.number,
-        error: _nitValido ? null : 'El NIT debe tener entre 8 y 15 dígitos, sin dígito de verificación',
+        error: validarNit(_nit.text),
       ),
       _campo(
         _razonSocial,
@@ -772,7 +788,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _telefono,
         'Teléfono',
         teclado: TextInputType.phone,
-        error: _lleno(_telefono) ? null : 'Escribe el teléfono',
+        error: validarTelefono(_telefono.text),
       ),
       _campo(
         _direccion,
@@ -799,7 +815,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       ),
       CampoContrasena(
         controller: _contrasena,
-        ayuda: 'Mínimo 8 caracteres y un número',
+        ayuda: 'Mínimo 8 caracteres, con letras y números',
         autofillHints: const [AutofillHints.newPassword],
         fillColor: Theme.of(context).brightness == Brightness.dark
             ? Theme.of(context).colorScheme.surfaceContainerHigh
@@ -807,6 +823,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
       ),
       if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
         _MensajeError(texto: validarContrasena(_contrasena.text)!),
+        CasillaAutorizacionDatos(
+          valor: _autorizaDatos,
+          onChanged: (valor) => setState(() => _autorizaDatos = valor),
+          conError: _mostrarErrores && !_autorizaDatos,
+        ),
       _SelectorPermiso(
         archivo: _permiso,
         onElegir: _enviando ? null : _elegirPermiso,

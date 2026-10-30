@@ -186,7 +186,7 @@ def collect_wikimedia_for_category(category, max_images=400):
                 all_items.append(it)
         time.sleep(0.5)
         
-    print(f"📂 [{category}] {len(all_items)} imágenes encontradas en Wikimedia Commons.")
+    print(f"[{category}] {len(all_items)} imágenes encontradas en Wikimedia Commons.")
     
     saved = 0
     with ThreadPoolExecutor(max_workers=8) as executor:
@@ -201,12 +201,12 @@ def collect_wikimedia_for_category(category, max_images=400):
                 if saved >= max_images:
                     break
                     
-    print(f"✅ [{category}] Descargadas exitosamente: {saved} fotos")
+    print(f"[{category}] Descargadas exitosamente: {saved} fotos")
     return saved
 
 def main():
     """Descarga de Wikimedia Commons hasta 350 imágenes de RCD, RIESGO_BIOLOGICO, PELIGROSO, RAEE, ORDINARIO y FONDO."""
-    print("🚀 INICIANDO RECOLECCIÓN DE IMÁGENES LIBRES (WIKIMEDIA COMMONS CC BY/CC0)...")
+    print("INICIANDO RECOLECCIÓN DE IMÁGENES LIBRES (WIKIMEDIA COMMONS CC BY/CC0)...")
     summary = {}
     categories = ["RCD", "RIESGO_BIOLOGICO", "PELIGROSO", "RAEE", "ORDINARIO", "FONDO"]
     for cat in categories:
@@ -214,7 +214,7 @@ def main():
         summary[cat] = cnt
         time.sleep(1)
         
-    print("\n📊 Resumen de recolección Wikimedia:")
+    print("\nResumen de recolección Wikimedia:")
     for c, count in summary.items():
         print(f"  {c}: {count} fotos")
 

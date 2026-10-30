@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <%- include('partials/head', { titulo: 'Tratamiento de datos personales' }) %>
+  <meta name="description" content="Política de tratamiento de datos personales de EcoResiduos (Ley 1581 de 2012)">
+</head>
+<body class="flex min-h-screen flex-col">
+  <a href="#contenido" class="saltar">Saltar al contenido</a>
+
+  <header class="flex items-center gap-3 border-b border-outline-variant px-4 py-3 md:px-8">
+    <a href="/dashboard" class="flex items-center gap-2 font-display text-title-l text-on-surface no-underline">
+      <img src="<%= recurso('/images/isotipo-192.png') %>" alt="" width="32" height="32" class="h-8 w-8 object-contain">
+      EcoResiduos
+    </a>
+    <button type="button" id="botonTema" class="btn-icono ml-auto" aria-pressed="false" aria-label="Modo oscuro">
+      <span class="material-symbols-outlined" aria-hidden="true" data-icono-tema>dark_mode</span>
+    </button>
+  </header>
+
+  <main id="contenido" tabindex="-1" class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8 md:px-8">
+    <div>
+      <h1 class="titulo-pagina">Política de tratamiento de datos personales</h1>
+      <p class="mt-2 text-body-l text-on-surface-variant">EcoResiduos · Ley 1581 de 2012 · Versión <%= politica.VERSION %></p>
+    </div>
+
+    <% politica.SECCIONES.forEach(function (seccion, i) { %>
+      <section class="flex flex-col gap-3" aria-labelledby="seccionPolitica<%= i %>">
+        <h2 id="seccionPolitica<%= i %>" class="text-headline-s text-on-surface"><%= seccion.titulo %></h2>
+        <% seccion.parrafos.forEach(function (parrafo) { %>
+          <p class="text-body-l text-on-surface"><%= parrafo %></p>
+        <% }); %>
+      </section>
+    <% }); %>
+
+    <p><a href="mailto:<%= politica.CORREO %>?subject=Datos%20personales" class="btn-filled">Escribir sobre mis datos</a></p>
+  </main>
+
+  <%- include('partials/componentes/accesibilidad') %>
+  <script src="<%= recurso('/js/accesibilidad.js') %>" defer></script>
+</body>
+</html>

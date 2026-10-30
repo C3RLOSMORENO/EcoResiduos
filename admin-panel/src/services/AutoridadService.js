@@ -2,6 +2,31 @@ const supabase = require('../config/supabase');
 
 const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase, noEncontrado } = require('../utils/errores');
+const { normalizarTelefono, normalizarCorreo, normalizarSitioWeb, textoObligatorio } = require('../utils/validacion');
+
+/**
+ * Valida y normaliza el formulario de una autoridad. Todos los campos son
+ * obligatorios salvo el horario: si falta uno se avisa, nunca se completa con
+ * un valor inventado.
+ *
+ * @param {object} dto Campos del formulario.
+ * @returns {object} La fila lista para guardar.
+ * @throws {Error} Con el mensaje para el formulario si un dato no es válido.
+ */
+function validarAutoridad(dto) {
+    const horario = String(dto.horario || '').trim();
+    if (horario.length > 120) throw new Error('El horario no puede pasar de 120 caracteres.');
+    return {
+        nombre: textoObligatorio(dto.nombre, 'el nombre institucional', { min: 3, max: 150 }),
+        sigla: textoObligatorio(dto.sigla, 'la sigla', { max: 20 }).toUpperCase(),
+        jurisdiccion: textoObligatorio(dto.jurisdiccion, 'la jurisdicción', { max: 300 }),
+        telefono: normalizarTelefono(dto.telefono),
+        email: normalizarCorreo(dto.email),
+        sitio_web: normalizarSitioWeb(dto.sitio_web),
+        direccion: textoObligatorio(dto.direccion, 'la dirección', { max: 255 }),
+        horario: horario || null
+    };
+}
 
 const autoridadService = {
     /**
@@ -97,49 +122,14 @@ const autoridadService = {
     },
 
     /**
-     * Registra una autoridad. El nombre es obligatorio; si faltan la sigla, el
-     * correo o el sitio web, se completan con valores por defecto.
+     * Registra una autoridad (validarAutoridad).
      *
      * @param {object} [dto] Campos del formulario.
      * @returns {Promise<object[]>} La fila creada.
-     * @throws {Error} Si el nombre tiene menos de 3 caracteres o falla la base.
+     * @throws {Error} Si un dato no es válido o falla la base.
      */
     async createAutoridad(dto = {}) {
-        let siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
-        const nombreLimpio = String(dto.nombre || '').trim();
-        const jurisdiccionLimpia = String(dto.jurisdiccion || 'Santander').trim();
-        const telefonoLimpio = String(dto.telefono || 'Sin registrar').trim();
-        let emailLimpio = String(dto.email || '').trim().toLowerCase();
-        let sitioWebLimpio = String(dto.sitio_web || '').trim();
-        const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
-        const horarioLimpio = String(dto.horario || '').trim();
-
-        if (!nombreLimpio || nombreLimpio.length < 3) {
-            throw new Error('El nombre institucional de la autoridad es obligatorio.');
-        }
-
-        if (!siglaLimpia) {
-            siglaLimpia = nombreLimpio.substring(0, 4).toUpperCase();
-        }
-
-        if (!emailLimpio) {
-            emailLimpio = 'contacto@autoridad.gov.co';
-        }
-
-        if (!sitioWebLimpio) {
-            sitioWebLimpio = 'https://www.santander.gov.co';
-        }
-
-        const payloadAutoridad = {
-            sigla: siglaLimpia,
-            nombre: nombreLimpio,
-            jurisdiccion: jurisdiccionLimpia,
-            telefono: telefonoLimpio,
-            email: emailLimpio,
-            sitio_web: sitioWebLimpio,
-            direccion: direccionLimpia,
-            horario: horarioLimpio || null
-        };
+        const payloadAutoridad = validarAutoridad(dto);
 
         const { data, error } = await supabase
             .from('autoridades_ambientales')
@@ -154,53 +144,19 @@ const autoridadService = {
     },
 
     /**
-     * Mismas validaciones y valores por defecto que createAutoridad.
+     * Mismas validaciones que createAutoridad.
      *
      * @param {number|string} id
      * @param {object} [dto] Campos del formulario.
      * @returns {Promise<object[]>} La fila actualizada.
-     * @throws {Error} Si el nombre tiene menos de 3 caracteres o falla la base.
+     * @throws {Error} Si un dato no es válido o falla la base.
      */
     async updateAutoridad(id, dto = {}) {
         if (!id) {
             throw new Error('El identificador de la autoridad es obligatorio para la actualización.');
         }
 
-        let siglaLimpia = String(dto.sigla || '').trim().toUpperCase();
-        const nombreLimpio = String(dto.nombre || '').trim();
-        const jurisdiccionLimpia = String(dto.jurisdiccion || 'Santander').trim();
-        const telefonoLimpio = String(dto.telefono || 'Sin registrar').trim();
-        let emailLimpio = String(dto.email || '').trim().toLowerCase();
-        let sitioWebLimpio = String(dto.sitio_web || '').trim();
-        const direccionLimpia = String(dto.direccion || dto.municipio || 'Santander').trim();
-        const horarioLimpio = String(dto.horario || '').trim();
-
-        if (!nombreLimpio || nombreLimpio.length < 3) {
-            throw new Error('El nombre institucional de la autoridad es obligatorio.');
-        }
-
-        if (!siglaLimpia) {
-            siglaLimpia = nombreLimpio.substring(0, 4).toUpperCase();
-        }
-
-        if (!emailLimpio) {
-            emailLimpio = 'contacto@autoridad.gov.co';
-        }
-
-        if (!sitioWebLimpio) {
-            sitioWebLimpio = 'https://www.santander.gov.co';
-        }
-
-        const payloadUpdate = {
-            sigla: siglaLimpia,
-            nombre: nombreLimpio,
-            jurisdiccion: jurisdiccionLimpia,
-            telefono: telefonoLimpio,
-            email: emailLimpio,
-            sitio_web: sitioWebLimpio,
-            direccion: direccionLimpia,
-            horario: horarioLimpio || null
-        };
+        const payloadUpdate = validarAutoridad(dto);
 
         const { data, error } = await supabase
             .from('autoridades_ambientales')

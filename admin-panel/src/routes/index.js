@@ -14,10 +14,12 @@ const reporteRoutes = require('./ReporteRoutes');
 const recorridoRoutes = require('./RecorridoRoutes');
 const asistenteRoutes = require('./AsistenteRoutes');
 const { requireAuth } = require('../middlewares/authMiddleware');
+const politicaDatos = require('../utils/politicaDatos');
 
 router.use('/', authRoutes);
 // Pública: debe poder leerse sin iniciar sesión.
 router.get('/accesibilidad', (req, res) => res.render('accesibilidad'));
+router.get('/privacidad', (req, res) => res.render('privacidad', { politica: politicaDatos }));
 
 router.get('/', (req, res) => {
     const conSesion = req.cookies && (req.cookies.sb_access_token || req.cookies.sb_refresh_token);

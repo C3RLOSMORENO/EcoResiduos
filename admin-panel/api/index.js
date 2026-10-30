@@ -31,7 +31,7 @@ if (faltan.length > 0) {
 </head>
 <body>
   <div class="card">
-    <h1>🌱 EcoResiduos · Falta Configuración</h1>
+    <h1>EcoResiduos · Falta configuración</h1>
     <p>El panel administrativo arrancó en Vercel, pero le faltan variables de entorno. Agrégalas en <strong>Vercel &gt; Settings &gt; Environment Variables</strong>:</p>
     <ul>
       ${faltan.map((f) => `<li>${f.split(':')[0]}</li>`).join('')}

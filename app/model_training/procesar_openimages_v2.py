@@ -188,7 +188,7 @@ def main():
             except Exception:
                 continue
                 
-    print("\n✅ Resumen Open Images v2 procesado:")
+    print("\nResumen Open Images v2 procesado:")
     for cat, total in saved_counts.items():
         print(f"  {cat}: {total} fotos")
 

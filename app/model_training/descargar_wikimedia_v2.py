@@ -233,7 +233,7 @@ def collect_wikimedia(max_per_category=350):
                     if saved >= max_per_category:
                         break
                         
-        print(f"✅ [{cat}] {saved} fotos válidas descargadas.")
+        print(f"[{cat}] {saved} fotos válidas descargadas.")
         
     # Guardar CSV actualizado
     with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
@@ -242,7 +242,7 @@ def collect_wikimedia(max_per_category=350):
         for r in all_records:
             writer.writerow(r)
             
-    print(f"\n📄 CSV de fuentes individuales guardado en {CSV_FILE} ({len(all_records)} registros)")
+    print(f"\nCSV de fuentes individuales guardado en {CSV_FILE} ({len(all_records)} registros)")
 
 if __name__ == "__main__":
     collect_wikimedia()
