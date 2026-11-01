@@ -1,3 +1,5 @@
+import '../../../utils/formato.dart';
+
 /// Empresa encontrada por su NIT al registrarse como gestor, con los datos que
 /// se precargan en el formulario.
 class GestorDirectorio {
@@ -35,15 +37,16 @@ class GestorDirectorio {
       return valor == null || valor.isEmpty ? null : valor;
     }
 
+    final dirRaw = texto('direccion');
     return GestorDirectorio(
       id: (map['id'] as num?)?.toInt() ?? 0,
       nit: (map['nit'] ?? '').toString().trim(),
-      razonSocial: (map['razon_social'] ?? map['nombre_empresa'] ?? '').toString().trim(),
+      razonSocial: formatoNombre((map['razon_social'] ?? map['nombre_empresa'] ?? '').toString().trim()),
       emailOficial: (map['email_contacto'] ?? map['email_oficial'] ?? map['email'])?.toString().trim(),
       estadoVerificacion: (map['estado_verificacion'] ?? 'PENDIENTE').toString().trim().toUpperCase(),
       usuarioId: map['usuario_id']?.toString().trim(),
       telefono: texto('telefono_contacto'),
-      direccion: texto('direccion'),
+      direccion: dirRaw != null ? formatoOracion(dirRaw) : null,
       municipio: texto('municipio'),
       materialIds: [
         for (final fila in (map['gestor_material'] as List?) ?? const [])

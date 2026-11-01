@@ -2,6 +2,7 @@ const supabase = require('../config/supabase');
 const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const solicitudService = require('./SolicitudService');
 const { MUNICIPIOS, variantesMunicipio } = require('../utils/municipios');
+const { formatoNombre } = require('../utils/formato');
 const { haceDias } = require('../utils/fechas');
 
 const contar = (tabla) => supabase.from(tabla).select('id', { count: 'exact', head: true });
@@ -117,7 +118,10 @@ const dashboardService = {
                 municipiosLabels: [...MUNICIPIOS, ...(otros > 0 ? ['Otro / sin dato'] : [])],
                 municipiosData: [...porMunicipio, ...(otros > 0 ? [otros] : [])]
             },
-            gestoresPendientes: pendientes.data || [],
+            gestoresPendientes: (pendientes.data || []).map((g) => ({
+                ...g,
+                razon_social: formatoNombre(g.razon_social || '')
+            })),
             ultimasSolicitudes: ultimas.data || [],
             errores: [...new Set(errores)]
         };

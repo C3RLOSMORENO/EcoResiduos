@@ -104,7 +104,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
     return Scaffold(
       appBar: EcoTopAppBar(
         titulo: sesion.nombreSaludo.isEmpty ? 'Hola' : 'Hola, ${sesion.nombreSaludo}',
-        subtitulo: [if (sesion.municipio != null) sesion.municipio!, 'Gestor certificado'].join(' · '),
+        subtitulo: [if (sesion.municipio != null) capitalizar(sesion.municipio!), 'Gestor certificado'].join(' · '),
       ),
       body: FutureBuilder<_ResumenGestor>(
         future: _resumen,
@@ -164,7 +164,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
           titulo: 'Te aceptaron la recolección de ${_material(s)}',
           detalle: [
             formatoCantidad(s.cantidadEstimada, s.unidadMedida),
-            if (s.municipio.isNotEmpty) s.municipio,
+            if (s.municipio.isNotEmpty) capitalizar(s.municipio),
             if (s.updatedAt != null) 'aceptada ${tiempoRelativo(s.updatedAt)}',
           ].join(' · '),
           accion: 'Coordinar recolección',
@@ -198,7 +198,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
       bloques.add(
         TarjetaSiguientePaso(
           key: _keyTarjeta,
-          encabezado: 'TODO AL DÍA',
+          encabezado: 'Todo al día',
           icono: Icons.task_alt,
           titulo: 'Todo al día',
           detalle: 'No hay solicitudes nuevas de tus materiales. Te avisamos cuando se publique una.',

@@ -1,4 +1,5 @@
 import '../features/solicitudes/models/solicitud_recoleccion.dart';
+import '../utils/formato.dart';
 
 /// Quién paga a quién en la propuesta del gestor.
 enum TipoValor {
@@ -89,17 +90,20 @@ class PostulacionRecoleccion {
     String? telefono;
     if (map['perfiles_gestor'] != null && map['perfiles_gestor'] is Map<String, dynamic>) {
       final pg = map['perfiles_gestor'] as Map<String, dynamic>;
-      razonSocial = pg['razon_social']?.toString();
-      municipio = pg['municipio']?.toString();
+      final rs = pg['razon_social']?.toString();
+      final mun = pg['municipio']?.toString();
+      razonSocial = rs != null ? formatoNombre(rs) : null;
+      municipio = mun != null ? capitalizar(mun) : null;
       telefono = pg['telefono_contacto']?.toString();
     }
 
+    final propRaw = map['propuesta']?.toString();
     return PostulacionRecoleccion(
       id: (map['id'] as num?)?.toInt(),
       solicitudId: (map['solicitud_id'] as num?)?.toInt() ?? 0,
       gestorId: (map['gestor_id'] as num?)?.toInt() ?? 0,
       estado: (map['estado'] ?? 'PROPUESTA').toString().toUpperCase(),
-      propuesta: map['propuesta']?.toString(),
+      propuesta: propRaw != null ? formatoOracion(propRaw) : null,
       tipoValor: TipoValor.desde(map['tipo_valor']?.toString()),
       valor: (map['valor'] as num?)?.toInt(),
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,

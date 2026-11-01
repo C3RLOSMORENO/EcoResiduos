@@ -162,6 +162,10 @@ void main() {
       expect(etiquetaCategoria('RIESGO_BIOLOGICO'), 'Riesgo biológico');
       expect(etiquetaEstado('EN_NEGOCIACION'), 'En negociación');
       expect(capitalizar('SABANA DE TORRES'), 'Sabana de Torres');
+      expect(capitalizar('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
+      expect(formatoNombre('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
+      expect(formatoNombre('EcoPilas'), 'EcoPilas');
+      expect(formatoOracion('CAJAS DE CARTÓN LIMPIO Y RAEE EN PORTERÍA.'), 'Cajas de cartón limpio y RAEE en portería.');
     });
   });
 

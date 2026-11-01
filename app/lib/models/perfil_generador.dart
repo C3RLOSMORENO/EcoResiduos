@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Modelo de dominio para la tabla 'public.perfiles_generador'.
 class PerfilGenerador {
   final int id;
@@ -25,7 +27,7 @@ class PerfilGenerador {
     return PerfilGenerador(
       id: (map['id'] as num?)?.toInt() ?? 0,
       usuarioId: map['usuario_id']?.toString() ?? '',
-      nombreCompletoOEmpresa: (map['nombre_completo_o_empresa'] ?? '').toString(),
+      nombreCompletoOEmpresa: formatoNombre((map['nombre_completo_o_empresa'] ?? '').toString()),
       documentoNit: (map['documento_nit'] ?? '').toString(),
       telefono: (map['telefono'] ?? '').toString(),
       municipio: (map['municipio'] ?? '').toString(),

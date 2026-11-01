@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'formato.dart';
+
 /// Rol de la cuenta: 'GENERADOR' o 'GESTOR'.
 ///
 /// Se lee de la tabla `usuarios`, que solo escribe el servidor. Los
@@ -54,12 +56,14 @@ class SesionUsuario {
 
     final rol = texto(['rol', 'rol_usuario', 'role'])?.toUpperCase();
     final esGestor = rol == 'GESTOR';
+    final nombreRaw = texto(['razon_social', 'nombre_completo_o_empresa', 'full_name', 'nombre']);
+    final municipioRaw = texto(['municipio']);
     return SesionUsuario(
-      nombre: texto(['razon_social', 'nombre_completo_o_empresa', 'full_name', 'nombre']) ?? '',
+      nombre: nombreRaw != null ? formatoNombre(nombreRaw) : '',
       correo: user?.email ?? '',
       correoPendiente: user?.newEmail,
       telefono: texto(['telefono']),
-      municipio: texto(['municipio']),
+      municipio: municipioRaw != null ? capitalizar(municipioRaw) : null,
       documento: esGestor ? texto(['nit']) : texto(['documento_nit', 'documento']),
       esGestor: esGestor,
       fotoPerfilPath: texto(['foto_perfil_path']),
@@ -100,7 +104,8 @@ class SesionUsuario {
   /// completa de una empresa.
   String get nombreSaludo {
     if (nombre.isEmpty) return '';
-    if (esGestor) return nombre.replaceAll(RegExp(r'\s+S\.?A\.?S\.?$', caseSensitive: false), '');
-    return nombre.split(RegExp(r'\s+')).first;
+    final normalizado = formatoNombre(nombre);
+    if (esGestor) return normalizado.replaceAll(RegExp(r'\s+S\.?A\.?S\.?$', caseSensitive: false), '');
+    return normalizado.split(RegExp(r'\s+')).first;
   }
 }

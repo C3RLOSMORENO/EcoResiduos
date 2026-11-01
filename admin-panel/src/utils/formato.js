@@ -339,8 +339,48 @@ function fechaIsoBogota(fecha = new Date()) {
     return `${p.anio}-${String(p.mes).padStart(2, '0')}-${String(p.dia).padStart(2, '0')}`;
 }
 
+const SIGLAS = new Set([
+    'S.A.S.', 'S.A.S', 'SAS',
+    'S.A.', 'S.A',
+    'E.S.P.', 'E.S.P', 'ESP',
+    'E.U.', 'E.U', 'LTDA', 'LTDA.', 'C.I.', 'C.I',
+    'BIC', 'NIT', 'CDMB', 'AMB', 'CAS',
+    'RAEE', 'RCD', 'RESPEL', 'PQRS', 'IPS', 'EPS'
+]);
+
+const CONECTORES = new Set([
+    'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin'
+]);
+
+const tieneLetras = (texto) => /[a-záéíóúñü]/i.test(texto);
+
+// Separa los signos de apertura y cierre del núcleo: «(S.A.S.)» → «(», «S.A.S.», «)».
+const PARTES_PALABRA = /^([([«"']*?)([^([«"'\])»"',;:!?]+(?:\.[^([«"'\])»"',;:!?]+)*\.?)([\])»"',;:!?]*)$/;
+
 /**
- * «FLORIDABLANCA» → «Floridablanca», «SABANA DE TORRES» → «Sabana de Torres».
+ * Formatea una palabra conservando siglas en mayúscula y conectores en minúscula.
+ *
+ * @param {string} palabra
+ * @param {boolean} esPrimera
+ * @returns {string}
+ */
+function capitalizarPalabra(palabra, esPrimera) {
+    if (!palabra) return palabra;
+    const m = palabra.match(PARTES_PALABRA);
+    const prefijo = m ? m[1] : '';
+    const nucleo = m ? m[2] : palabra;
+    const sufijo = m ? m[3] : '';
+    const mayus = nucleo.toUpperCase();
+    if (SIGLAS.has(mayus)) return `${prefijo}${mayus}${sufijo}`;
+    const minus = nucleo.toLowerCase();
+    if (minus === 'giron') return `${prefijo}Girón${sufijo}`;
+    if (!esPrimera && CONECTORES.has(minus)) return `${prefijo}${minus}${sufijo}`;
+    return `${prefijo}${minus[0].toUpperCase()}${minus.slice(1)}${sufijo}`;
+}
+
+/**
+ * «FLORIDABLANCA» → «Floridablanca», «SABANA DE TORRES» → «Sabana de Torres»,
+ * «RECICLAJES DEL ORIENTE S.A.S.» → «Reciclajes del Oriente S.A.S.».
  *
  * @param {?string} texto
  * @returns {string}
@@ -348,10 +388,65 @@ function fechaIsoBogota(fecha = new Date()) {
 function capitalizar(texto) {
     if (!texto) return '';
     return String(texto)
-        .toLowerCase()
         .split(' ')
-        .map((p) => (!p || ['de', 'del', 'y'].includes(p) ? p : p[0].toUpperCase() + p.slice(1)))
+        .map((p, i) => capitalizarPalabra(p, i === 0))
         .join(' ');
+}
+
+/**
+ * Normaliza nombres propios o razones sociales que vienen completamente en
+ * mayúsculas o minúsculas desde la base de datos, respetando los que ya tienen
+ * combinación de mayúsculas y minúsculas (como «EcoMetales Santander Ltda.»).
+ *
+ * @param {?string} texto
+ * @returns {string}
+ */
+function formatoNombre(texto) {
+    const limpio = texto === null || texto === undefined ? '' : String(texto).trim();
+    if (!limpio || !tieneLetras(limpio)) return limpio;
+    if (limpio === limpio.toUpperCase() || limpio === limpio.toLowerCase()) {
+        return capitalizar(limpio);
+    }
+    return limpio;
+}
+
+/**
+ * Convierte textos escritos completamente en mayúsculas a formato de oración
+ * («CAJAS DE CARTÓN EN PORTERÍA» → «Cajas de cartón en portería»), conservando
+ * siglas conocidas (RAEE, RESPEL, S.A.S., CDMB…) y dejando intactos los textos
+ * que ya usan mayúsculas y minúsculas normalmente.
+ *
+ * @param {?string} texto
+ * @returns {string}
+ */
+function formatoOracion(texto) {
+    const limpio = texto === null || texto === undefined ? '' : String(texto).trim();
+    if (!limpio || !tieneLetras(limpio)) return limpio;
+    if (limpio !== limpio.toUpperCase()) return limpio;
+    let inicioOracion = true;
+    return limpio
+        .split(/(\s+)/)
+        .map((fragmento) => {
+            if (/^\s+$/.test(fragmento) || !fragmento) return fragmento;
+            const m = fragmento.match(PARTES_PALABRA);
+            const prefijo = m ? m[1] : '';
+            const nucleo = m ? m[2] : fragmento;
+            const sufijo = m ? m[3] : '';
+            const mayus = nucleo.toUpperCase();
+            const cierraOracion = /[.!?]$/.test(fragmento) && !SIGLAS.has(mayus);
+            let resultado;
+            if (SIGLAS.has(mayus)) {
+                resultado = `${prefijo}${mayus}${sufijo}`;
+            } else {
+                const minus = nucleo.toLowerCase();
+                resultado = inicioOracion && tieneLetras(minus)
+                    ? `${prefijo}${minus[0].toUpperCase()}${minus.slice(1)}${sufijo}`
+                    : `${prefijo}${minus}${sufijo}`;
+            }
+            inicioOracion = cierraOracion;
+            return resultado;
+        })
+        .join('');
 }
 
 /**
@@ -381,7 +476,7 @@ function plural(cantidad, singular, varios) {
  */
 function textoODato(valor) {
     const limpio = valor === null || valor === undefined ? '' : String(valor).trim();
-    return limpio || 'Sin dato';
+    return formatoOracion(limpio) || 'Sin dato';
 }
 
 /**
@@ -439,6 +534,8 @@ module.exports = {
     fechaHora,
     fechaIsoBogota,
     capitalizar,
+    formatoNombre,
+    formatoOracion,
     finFrase,
     plural,
     textoODato,

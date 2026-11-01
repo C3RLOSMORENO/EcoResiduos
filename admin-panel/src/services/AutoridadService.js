@@ -1,8 +1,24 @@
 const supabase = require('../config/supabase');
-
+const { formatoNombre, formatoOracion } = require('../utils/formato');
 const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase, noEncontrado } = require('../utils/errores');
 const { normalizarTelefono, normalizarCorreo, normalizarSitioWeb, textoObligatorio } = require('../utils/validacion');
+
+function mapearAutoridad(row) {
+    if (!row) return row;
+    return {
+        ...row,
+        id: row.id ?? row.ID,
+        nombre: formatoNombre(row.nombre ?? row.NOMBRE ?? ''),
+        sigla: row.sigla ?? row.SIGLA ?? '',
+        jurisdiccion: formatoOracion(row.jurisdiccion ?? row.JURISDICCION ?? ''),
+        telefono: row.telefono ?? row.TELEFONO ?? '',
+        email: row.email ?? row.EMAIL ?? '',
+        sitio_web: row.sitio_web ?? row.SITIO_WEB ?? row.Sitio_Web ?? '',
+        direccion: formatoNombre(row.direccion ?? row.DIRECCION ?? ''),
+        horario: formatoOracion(row.horario ?? '')
+    };
+}
 
 /**
  * Valida y normaliza el formulario de una autoridad. Todos los campos son
@@ -55,7 +71,7 @@ const autoridadService = {
         if (error) {
             throw errorDeBase('No pudimos cargar las autoridades.', error);
         }
-        return { autoridades: data || [], total: count || 0 };
+        return { autoridades: (data || []).map(mapearAutoridad), total: count || 0 };
     },
 
     /**
@@ -76,14 +92,14 @@ const autoridadService = {
 
         return (data || []).map((row) => ({
             id: row.id ?? row.ID,
-            nombre: row.nombre ?? row.NOMBRE ?? '',
+            nombre: formatoNombre(row.nombre ?? row.NOMBRE ?? ''),
             sigla: row.sigla ?? row.SIGLA ?? '',
-            jurisdiccion: row.jurisdiccion ?? row.JURISDICCION ?? '',
+            jurisdiccion: formatoOracion(row.jurisdiccion ?? row.JURISDICCION ?? ''),
             telefono: row.telefono ?? row.TELEFONO ?? '',
             email: row.email ?? row.EMAIL ?? '',
             sitio_web: row.sitio_web ?? row.SITIO_WEB ?? row.Sitio_Web ?? '',
-            direccion: row.direccion ?? row.DIRECCION ?? '',
-            horario: row.horario ?? ''
+            direccion: formatoNombre(row.direccion ?? row.DIRECCION ?? ''),
+            horario: formatoOracion(row.horario ?? '')
         }));
     },
 
@@ -110,14 +126,14 @@ const autoridadService = {
 
         return {
             id: data.id ?? data.ID,
-            nombre: data.nombre ?? data.NOMBRE ?? '',
+            nombre: formatoNombre(data.nombre ?? data.NOMBRE ?? ''),
             sigla: data.sigla ?? data.SIGLA ?? '',
-            jurisdiccion: data.jurisdiccion ?? data.JURISDICCION ?? '',
+            jurisdiccion: formatoOracion(data.jurisdiccion ?? data.JURISDICCION ?? ''),
             telefono: data.telefono ?? data.TELEFONO ?? '',
             email: data.email ?? data.EMAIL ?? '',
             sitio_web: data.sitio_web ?? data.SITIO_WEB ?? data.Sitio_Web ?? '',
-            direccion: data.direccion ?? data.DIRECCION ?? '',
-            horario: data.horario ?? ''
+            direccion: formatoNombre(data.direccion ?? data.DIRECCION ?? ''),
+            horario: formatoOracion(data.horario ?? '')
         };
     },
 

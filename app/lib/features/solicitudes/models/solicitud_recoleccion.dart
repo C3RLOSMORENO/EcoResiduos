@@ -1,3 +1,4 @@
+import '../../../utils/formato.dart';
 import 'material_residuo.dart';
 
 /// Certificado que el gestor entrega al terminar la recolección.
@@ -83,14 +84,15 @@ class SolicitudRecoleccion {
       materialAsociado = MaterialResiduo.fromMap(map['materiales_residuos'] as Map<String, dynamic>);
     }
 
+    final descRaw = map['descripcion']?.toString();
     return SolicitudRecoleccion(
       id: (map['id'] as num?)?.toInt(),
       generadorId: (map['generador_id'] as num?)?.toInt() ?? 0,
       materialId: (map['material_id'] as num?)?.toInt() ?? 0,
       cantidadEstimada: (map['cantidad_estimada'] as num?)?.toDouble() ?? 0.0,
       unidadMedida: (map['unidad_medida'] ?? 'KG').toString().toUpperCase(),
-      descripcion: map['descripcion']?.toString(),
-      direccionRecoleccion: (map['direccion_recoleccion'] ?? '').toString(),
+      descripcion: descRaw != null ? formatoOracion(descRaw) : null,
+      direccionRecoleccion: formatoOracion((map['direccion_recoleccion'] ?? '').toString()),
       municipio: (map['municipio'] ?? '').toString(),
       telefono: (map['telefono'] ?? '').toString(),
       estado: (map['estado'] ?? 'PUBLICADO').toString().toUpperCase(),

@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Autoridad ambiental con jurisdicción en Santander (tabla `autoridades_ambientales`).
 class AutoridadAmbiental {
   const AutoridadAmbiental({
@@ -19,13 +21,13 @@ class AutoridadAmbiental {
 
     return AutoridadAmbiental(
       id: (map['id'] as num?)?.toInt(),
-      nombre: nombre,
+      nombre: formatoNombre(nombre),
       sigla: sigla,
-      jurisdiccion: (map['jurisdiccion'] ?? map['descripcion'] ?? '').toString(),
+      jurisdiccion: formatoOracion((map['jurisdiccion'] ?? map['descripcion'] ?? '').toString()),
       telefono: (map['telefono'] ?? '').toString(),
       email: (map['email'] ?? map['correo'] ?? '').toString(),
       sitioWeb: (map['sitio_web'] ?? '').toString(),
-      direccion: (map['direccion'] ?? '').toString(),
+      direccion: formatoNombre((map['direccion'] ?? '').toString()),
       horario: _horarioOficial(rawHorario, sigla, nombre),
     );
   }
