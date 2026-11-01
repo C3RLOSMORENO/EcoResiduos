@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 const { variantesMunicipio } = require('../utils/municipios');
+const { formatoNombre, formatoOracion } = require('../utils/formato');
 const { rango, faltaEnEsquema } = require('../utils/web');
 const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const { rangoBogota, haceDias } = require('../utils/fechas');
@@ -152,12 +153,33 @@ const solicitudService = {
         ]);
 
         return {
-            solicitud,
+            solicitud: {
+                ...solicitud,
+                descripcion: solicitud.descripcion ? formatoOracion(solicitud.descripcion) : solicitud.descripcion,
+                direccion_recoleccion: solicitud.direccion_recoleccion ? formatoOracion(solicitud.direccion_recoleccion) : solicitud.direccion_recoleccion
+            },
             material: solicitud.materiales_residuos || null,
-            generador: generador.data || null,
+            generador: generador.data
+                ? {
+                    ...generador.data,
+                    nombre_completo_o_empresa: generador.data.nombre_completo_o_empresa
+                        ? formatoNombre(generador.data.nombre_completo_o_empresa)
+                        : generador.data.nombre_completo_o_empresa
+                }
+                : null,
             historial: historial.error ? null : (historial.data || []),
-            postulaciones: postulaciones.error ? null : (postulaciones.data || []),
-            gestorAsignado: gestorAsignado.data || null
+            postulaciones: postulaciones.error
+                ? null
+                : (postulaciones.data || []).map((p) => ({
+                    ...p,
+                    propuesta: p.propuesta ? formatoOracion(p.propuesta) : p.propuesta,
+                    perfiles_gestor: p.perfiles_gestor
+                        ? { ...p.perfiles_gestor, razon_social: formatoNombre(p.perfiles_gestor.razon_social || '') }
+                        : p.perfiles_gestor
+                })),
+            gestorAsignado: gestorAsignado.data
+                ? { ...gestorAsignado.data, razon_social: formatoNombre(gestorAsignado.data.razon_social || '') }
+                : null
         };
     },
 

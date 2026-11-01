@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Empresa gestora tal como está en `perfiles_gestor`.
 class PerfilGestor {
   final int id;
@@ -47,19 +49,21 @@ class PerfilGestor {
       ids = (map['material_ids'] as List).map((id) => (id as num?)?.toInt()).whereType<int>().toList();
     }
 
+    final repRaw = map['representante_legal']?.toString();
+    final horarioRaw = (map['horario'] ?? map['horario_atencion'])?.toString();
     return PerfilGestor(
       id: (map['id'] as num?)?.toInt() ?? 0,
       usuarioId: map['usuario_id']?.toString(),
       nit: (map['nit'] ?? '').toString(),
-      razonSocial: (map['razon_social'] ?? '').toString(),
-      representanteLegal: map['representante_legal']?.toString(),
-      direccion: (map['direccion'] ?? '').toString(),
+      razonSocial: formatoNombre((map['razon_social'] ?? '').toString()),
+      representanteLegal: repRaw != null ? formatoNombre(repRaw) : null,
+      direccion: formatoOracion((map['direccion'] ?? '').toString()),
       municipio: (map['municipio'] ?? 'BUCARAMANGA').toString(),
       emailContacto: (map['email_contacto'] ?? '').toString(),
       telefonoContacto: (map['telefono_contacto'] ?? '').toString(),
       latitud: map['latitud'] != null ? double.tryParse(map['latitud'].toString()) : null,
       longitud: map['longitud'] != null ? double.tryParse(map['longitud'].toString()) : null,
-      horario: (map['horario'] ?? map['horario_atencion'])?.toString(),
+      horario: horarioRaw != null ? formatoOracion(horarioRaw) : null,
       estadoVerificacion: (map['estado_verificacion'] ?? 'PENDIENTE').toString().toUpperCase(),
       disponible: map['disponible'] is bool ? map['disponible'] as bool : true,
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,

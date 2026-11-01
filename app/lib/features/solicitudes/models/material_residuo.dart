@@ -1,3 +1,5 @@
+import '../../../utils/formato.dart';
+
 /// Modelo de dominio fuertemente tipado para la tabla 'public.materiales_residuos'.
 class MaterialResiduo {
   final int id;
@@ -27,12 +29,12 @@ class MaterialResiduo {
     return MaterialResiduo(
       id: (map['id'] as num).toInt(),
       codigo: map['codigo']?.toString(),
-      nombreComun: (map['nombre_comun'] ?? '').toString(),
-      descripcion: map['descripcion']?.toString(),
+      nombreComun: formatoNombre((map['nombre_comun'] ?? '').toString()),
+      descripcion: map['descripcion'] != null ? formatoOracion(map['descripcion'].toString()) : null,
       categoria: (map['categoria'] ?? '').toString(),
       guiaManejo: map['guia_manejo']?.toString(),
-      subcategoria: map['subcategoria']?.toString(),
-      advertenciaManejo: map['advertencia_manejo']?.toString(),
+      subcategoria: map['subcategoria'] != null ? formatoNombre(map['subcategoria'].toString()) : null,
+      advertenciaManejo: map['advertencia_manejo'] != null ? formatoOracion(map['advertencia_manejo'].toString()) : null,
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
     );
   }

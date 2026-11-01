@@ -72,12 +72,96 @@ String tiempoRelativo(DateTime? fecha, {DateTime? ahora}) {
   return fechaCorta(fecha);
 }
 
-/// Cada palabra con mayúscula inicial («FLORIDABLANCA» → «Floridablanca»).
-String capitalizar(String texto) => texto
-    .toLowerCase()
-    .split(' ')
-    .map((p) => p.isEmpty || const {'de', 'del', 'y'}.contains(p) ? p : '${p[0].toUpperCase()}${p.substring(1)}')
-    .join(' ');
+const _siglas = {
+  'S.A.S.', 'S.A.S', 'SAS',
+  'S.A.', 'S.A',
+  'E.S.P.', 'E.S.P', 'ESP',
+  'E.U.', 'E.U', 'LTDA', 'LTDA.', 'C.I.', 'C.I',
+  'BIC', 'NIT', 'CDMB', 'AMB', 'CAS',
+  'RAEE', 'RCD', 'RESPEL', 'PQRS', 'IPS', 'EPS',
+};
+
+const _conectores = {
+  'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin',
+};
+
+final _tieneLetras = RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]');
+final _partesPalabra = RegExp(
+  r'^([(\[«"\x27]*?)([^(\[«"\x27\])»",;:!?]+(?:\.[^(\[«"\x27\])»",;:!?]+)*\.?)([\])»",;:!?]*)$',
+);
+
+String _capitalizarPalabra(String palabra, {required bool esPrimera}) {
+  if (palabra.isEmpty) return palabra;
+  final m = _partesPalabra.firstMatch(palabra);
+  final prefijo = m != null ? m.group(1)! : '';
+  final nucleo = m != null ? m.group(2)! : palabra;
+  final sufijo = m != null ? m.group(3)! : '';
+  final mayus = nucleo.toUpperCase();
+  if (_siglas.contains(mayus)) return '$prefijo$mayus$sufijo';
+  final minus = nucleo.toLowerCase();
+  if (minus == 'giron') return '${prefijo}Girón$sufijo';
+  if (!esPrimera && _conectores.contains(minus)) return '$prefijo$minus$sufijo';
+  return '$prefijo${minus[0].toUpperCase()}${minus.substring(1)}$sufijo';
+}
+
+/// Cada palabra con mayúscula inicial («FLORIDABLANCA» → «Floridablanca»,
+/// «RECICLAJES DEL ORIENTE S.A.S.» → «Reciclajes del Oriente S.A.S.»).
+String capitalizar(String texto) {
+  if (texto.isEmpty) return texto;
+  final palabras = texto.split(' ');
+  return [
+    for (var i = 0; i < palabras.length; i++) _capitalizarPalabra(palabras[i], esPrimera: i == 0),
+  ].join(' ');
+}
+
+/// Normaliza nombres propios o razones sociales que vienen completamente en
+/// mayúsculas o minúsculas desde la base de datos, respetando los que ya tienen
+/// combinación de mayúsculas y minúsculas (como «EcoPilas»).
+String formatoNombre(String texto) {
+  final limpio = texto.trim();
+  if (limpio.isEmpty || !_tieneLetras.hasMatch(limpio)) return limpio;
+  if (limpio == limpio.toUpperCase() || limpio == limpio.toLowerCase()) {
+    return capitalizar(limpio);
+  }
+  return limpio;
+}
+
+/// Convierte textos escritos completamente en mayúsculas a formato de oración
+/// («CAJAS DE CARTÓN EN PORTERÍA» → «Cajas de cartón en portería»), conservando
+/// siglas conocidas (RAEE, RESPEL, S.A.S., CDMB…) y dejando intactos los textos
+/// que ya usan mayúsculas y minúsculas normalmente.
+String formatoOracion(String texto) {
+  final limpio = texto.trim();
+  if (limpio.isEmpty || !_tieneLetras.hasMatch(limpio)) return limpio;
+  if (limpio != limpio.toUpperCase()) return limpio;
+  var inicioOracion = true;
+  final buffer = StringBuffer();
+  for (final match in RegExp(r'\S+|\s+').allMatches(limpio)) {
+    final fragmento = match.group(0)!;
+    if (fragmento.trim().isEmpty) {
+      buffer.write(fragmento);
+      continue;
+    }
+    final m = _partesPalabra.firstMatch(fragmento);
+    final prefijo = m != null ? m.group(1)! : '';
+    final nucleo = m != null ? m.group(2)! : fragmento;
+    final sufijo = m != null ? m.group(3)! : '';
+    final mayus = nucleo.toUpperCase();
+    final cierraOracion = RegExp(r'[.!?]$').hasMatch(fragmento) && !_siglas.contains(mayus);
+    if (_siglas.contains(mayus)) {
+      buffer.write('$prefijo$mayus$sufijo');
+    } else {
+      final minus = nucleo.toLowerCase();
+      if (inicioOracion && _tieneLetras.hasMatch(minus)) {
+        buffer.write('$prefijo${minus[0].toUpperCase()}${minus.substring(1)}$sufijo');
+      } else {
+        buffer.write('$prefijo$minus$sufijo');
+      }
+    }
+    inicioOracion = cierraOracion;
+  }
+  return buffer.toString();
+}
 
 /// Primera letra en mayúscula («hace 2 h» → «Hace 2 h»).
 String mayusculaInicial(String texto) => texto.isEmpty ? texto : '${texto[0].toUpperCase()}${texto.substring(1)}';

@@ -79,6 +79,10 @@ test('formatos iguales a los de la app', () => {
     assert.equal(f.etiquetaCategoria('PELIGROSO'), 'Peligroso (RESPEL)');
     assert.equal(f.claseCategoria('RIESGO_BIOLOGICO'), 'riesgo-biologico');
     assert.equal(f.urlSegura('javascript:alert(1)'), null);
+    assert.equal(f.capitalizar('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
+    assert.equal(f.formatoNombre('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
+    assert.equal(f.formatoNombre('EcoMetales Santander Ltda.'), 'EcoMetales Santander Ltda.');
+    assert.equal(f.formatoOracion('CAJAS DE CARTÓN LIMPIO Y RAEE EN PORTERÍA.'), 'Cajas de cartón limpio y RAEE en portería.');
 });
 
 test('el reporte cuenta recolecciones por categoría y suma cantidades sin convertir unidades', () => {

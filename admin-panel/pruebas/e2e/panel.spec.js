@@ -65,7 +65,7 @@ test('login: cada mensaje sale junto a lo que hay que corregir y se quita al cor
 
 test('aprobar un gestor: se confirma en el diálogo y la ficha queda aprobada', async ({ page }) => {
     await iniciarSesion(page, '/gestores/1');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('RECICLAJES DEL ORIENTE');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Reciclajes del Oriente');
 
     await page.getByRole('button', { name: 'Aprobar', exact: true }).click();
     const dialogo = page.getByRole('dialog', { name: 'Aprobar gestor' });

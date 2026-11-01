@@ -81,7 +81,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
     return Scaffold(
       appBar: EcoTopAppBar(
         titulo: sesion.nombreSaludo.isEmpty ? 'Hola' : 'Hola, ${sesion.nombreSaludo}',
-        subtitulo: sesion.municipio,
+        subtitulo: sesion.municipio != null ? capitalizar(sesion.municipio!) : null,
       ),
       body: FutureBuilder<_Resumen>(
         future: _resumen,
@@ -126,7 +126,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
       bloques.add(
         TarjetaSiguientePaso(
           key: _keyTarjeta,
-          encabezado: 'PRIMER PASO',
+          encabezado: 'Primer paso',
           titulo: 'Empieza por tu primer residuo',
           detalle: 'Tómale una foto y te decimos qué es y qué gestor cercano lo recibe. Funciona sin internet.',
           nota: 'Usa «Identificar», abajo a la derecha',
@@ -138,7 +138,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
         bloques.add(
           TarjetaSiguientePaso(
             key: _keyTarjeta,
-            encabezado: 'TODO AL DÍA',
+            encabezado: 'Todo al día',
             icono: Icons.task_alt,
             titulo: 'Todo al día',
             detalle: publicados > 0

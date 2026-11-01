@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Gestor certificado tal como se muestra en el directorio y en las fichas.
 class Gestor {
   const Gestor({
@@ -27,15 +29,16 @@ class Gestor {
           (fila['materiales_residuos'] as Map)['categoria']?.toString().toUpperCase() ?? '',
     }..remove('');
 
+    final horarioRaw = (map['horario'] ?? map['horario_atencion'])?.toString();
     return Gestor(
       id: (map['id'] as num?)?.toInt() ?? 0,
-      nombre: (map['razon_social'] ?? '').toString(),
+      nombre: formatoNombre((map['razon_social'] ?? '').toString()),
       municipio: (map['municipio'] ?? '').toString(),
       nit: (map['nit'] ?? '').toString(),
-      direccion: (map['direccion'] ?? '').toString(),
+      direccion: formatoOracion((map['direccion'] ?? '').toString()),
       telefono: (map['telefono_contacto'] ?? '').toString(),
       correo: (map['email_contacto'] ?? '').toString(),
-      horario: (map['horario'] ?? map['horario_atencion'])?.toString(),
+      horario: horarioRaw != null ? formatoOracion(horarioRaw) : null,
       latitud: double.tryParse(map['latitud']?.toString() ?? ''),
       longitud: double.tryParse(map['longitud']?.toString() ?? ''),
       categorias: categorias.toList(),

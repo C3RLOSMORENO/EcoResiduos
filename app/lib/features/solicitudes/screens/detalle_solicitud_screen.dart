@@ -675,7 +675,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
                 _FilaDato(
                   icono: Icons.location_on_outlined,
                   etiqueta: 'Dirección de recolección',
-                  valor: [s.direccionRecoleccion, s.municipio].where((p) => p.isNotEmpty).join(', '),
+                  valor: [s.direccionRecoleccion, capitalizar(s.municipio)].where((p) => p.isNotEmpty).join(', '),
                   accion: TextButton(
                     onPressed: () => comoLlegar(
                       context,
@@ -952,7 +952,7 @@ class _Resumen extends StatelessWidget {
         _FilaDato(
           icono: Icons.location_on_outlined,
           etiqueta: 'Dirección de recolección',
-          valor: [s.direccionRecoleccion, s.municipio].where((p) => p.isNotEmpty).join(', '),
+          valor: [s.direccionRecoleccion, capitalizar(s.municipio)].where((p) => p.isNotEmpty).join(', '),
         ),
         if (s.descripcion?.trim().isNotEmpty ?? false)
           _FilaDato(icono: Icons.notes, etiqueta: 'Descripción', valor: s.descripcion!.trim()),
@@ -1113,7 +1113,7 @@ class _TarjetaPostulacion extends StatelessWidget {
     final scheme = theme.colorScheme;
     final p = postulacion;
     final detalle = [
-      if (p.gestorMunicipio?.isNotEmpty ?? false) p.gestorMunicipio!,
+      if (p.gestorMunicipio?.isNotEmpty ?? false) capitalizar(p.gestorMunicipio!),
       if (p.createdAt != null) tiempoRelativo(p.createdAt),
     ].join(' · ');
 

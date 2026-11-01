@@ -4,7 +4,7 @@ const geocodificador = require('./geocodificador');
 const { municipioParaGuardar, variantesMunicipio, municipioAdmitido } = require('../utils/municipios');
 const { rango, textoBusqueda, faltaEnEsquema } = require('../utils/web');
 const { errorDeBase } = require('../utils/errores');
-const { ESTADOS_GESTOR } = require('../utils/formato');
+const { ESTADOS_GESTOR, formatoNombre, formatoOracion } = require('../utils/formato');
 const { BUCKET: BUCKET_FOTOS, COLUMNAS: COLUMNAS_FOTO } = require('../utils/fotosPerfil');
 const { TAMANO_MAXIMO_SUBIDA: TAMANO_MAXIMO_PERMISO, entregaDePdf } = require('../utils/archivos');
 const { normalizarNit, normalizarTelefono, normalizarCorreo, textoObligatorio } = require('../utils/validacion');
@@ -82,17 +82,17 @@ function mapearGestor(row) {
     return {
         id: row.id,
         nit: row.nit || '',
-        razon_social: row.razon_social || '',
+        razon_social: formatoNombre(row.razon_social || ''),
         municipio: row.municipio || null,
-        direccion: row.direccion || '',
-        representante_legal: row.representante_legal || null,
+        direccion: formatoOracion(row.direccion || ''),
+        representante_legal: row.representante_legal ? formatoNombre(row.representante_legal) : null,
         telefono_contacto: row.telefono_contacto || '',
         email_contacto: row.email_contacto || '',
         latitud: row.latitud ?? null,
         longitud: row.longitud ?? null,
         estado_verificacion: row.estado_verificacion || null,
         disponible: row.disponible !== false,
-        horario: row.horario || '',
+        horario: formatoOracion(row.horario || ''),
         tiene_cuenta: Boolean(row.usuario_id),
         tiene_permiso: Boolean(row.permiso_path),
         foto_perfil_path: row.foto_perfil_path || null,

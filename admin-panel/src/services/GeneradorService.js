@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 const { municipioAdmitido, variantesMunicipio } = require('../utils/municipios');
+const { formatoNombre } = require('../utils/formato');
 const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase } = require('../utils/errores');
 
@@ -36,7 +37,11 @@ class GeneradorService {
         const generadores = data || [];
         const publicaciones = await this.contarPublicaciones(generadores.map((g) => g.id));
         return {
-            generadores: generadores.map((g) => ({ ...g, publicaciones: publicaciones.get(g.id) || 0 })),
+            generadores: generadores.map((g) => ({
+                ...g,
+                nombre_completo_o_empresa: g.nombre_completo_o_empresa ? formatoNombre(g.nombre_completo_o_empresa) : g.nombre_completo_o_empresa,
+                publicaciones: publicaciones.get(g.id) || 0
+            })),
             total: count || 0
         };
     }
