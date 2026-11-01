@@ -4,6 +4,7 @@ Cada versión publicada en [Releases](https://github.com/C3RLOSMORENO/EcoResiduo
 
 ## 1.2.0
 
+- Antes de instalar esta versión hay que desinstalar la 1.1.0: la app tiene ahora su propio identificador, co.edu.udes.ecoresiduos, y Android la toma como una app nueva. La cuenta y las publicaciones siguen igual, porque se guardan en el servidor.
 - En Cuenta, el generador puede cambiar su nombre, documento, teléfono y correo de acceso. El correo nuevo se confirma con un enlace que llega a ese correo; hasta entonces se sigue entrando con el anterior.
 - El recorrido de primera vez empieza con una bienvenida que explica en cuatro pasos cómo funciona la app, y luego señala cada parte de la pantalla de inicio. Se avanza y retrocede con Siguiente y Anterior, se puede saltar en cualquier momento y se repite desde Cuenta, en Ver el recorrido de nuevo.
 - El recorrido se marca como visto al terminarlo o saltarlo; si la app se cierra a mitad, vuelve a aparecer. El botón Atrás del teléfono lo cierra, y cada paso tiene etiquetas para lectores de pantalla como TalkBack.
