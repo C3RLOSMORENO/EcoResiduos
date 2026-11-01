@@ -7,7 +7,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-277%20Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-293%20Passed-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
 [![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
@@ -108,11 +108,11 @@ EcoResiduos/
 │   ├── assets/models/        # Modelo MobileNetV3 (.tflite) y etiquetas
 │   ├── lib/                  # Código de la app
 │   ├── model_training/       # Construcción del dataset y entrenamiento del modelo
-│   └── test/                 # 124 pruebas
+│   └── test/                 # 137 pruebas
 ├── admin-panel/              # Panel web (Node.js + Express). Ver admin-panel/README.md
 │   ├── api/                  # Entrada en Vercel
 │   ├── src/                  # Controladores, servicios, vistas y estilos
-│   └── pruebas/              # 153 pruebas y 9 recorridos en navegador
+│   └── pruebas/              # 156 pruebas y 9 recorridos en navegador
 ├── supabase/
 │   ├── migrations/           # Esquema completo: tablas, RLS, funciones, triggers y buckets
 │   └── functions/            # Función que borra fotos huérfanas del almacenamiento
@@ -123,7 +123,7 @@ EcoResiduos/
 
 ## 6. Clasificación con la cámara
 
-El modelo es un **MobileNetV3 Large** entrenado por el equipo con transferencia de aprendizaje ([`app/model_training/`](app/model_training/)), exportado a TensorFlow Lite y ejecutado en el teléfono con `tflite_flutter`. Recibe imágenes de 224 × 224 píxeles y distingue 8 clases: `APROVECHABLE`, `ORGANICO`, `ORDINARIO`, `PELIGROSO`, `RAEE`, `RCD`, `RIESGO_BIOLOGICO` y `FONDO` (la foto no muestra un residuo).
+El modelo es un MobileNetV3 Large entrenado por el equipo con transferencia de aprendizaje ([`app/model_training/`](app/model_training/)), exportado a TensorFlow Lite y ejecutado en el teléfono con `tflite_flutter`. Recibe imágenes de 224 × 224 píxeles y distingue 8 clases: `APROVECHABLE`, `ORGANICO`, `ORDINARIO`, `PELIGROSO`, `RAEE`, `RCD`, `RIESGO_BIOLOGICO` y `FONDO` (la foto no muestra un residuo).
 
 Cada foto se clasifica en cuatro versiones (recorte central, espejo, foto completa y recorte al 75 %) y se promedian los resultados. Con menos de 40 % de confianza, o si gana `FONDO`, la app no adivina: lo dice y ofrece alternativas. El detalle está en el [README de la app](app/README.md#3-clasificación-con-la-cámara).
 
@@ -182,7 +182,7 @@ sequenceDiagram
 
 ### Paso 1: Base de datos
 
-1. Abre el **SQL Editor** de Supabase y ejecuta completo [`supabase/migrations/00000000000000_schema_completo.sql`](supabase/migrations/00000000000000_schema_completo.sql). Es una sola migración idempotente: crea tablas, funciones, políticas RLS y buckets, y se puede volver a ejecutar sin perder datos.
+1. Abre el **SQL Editor** de Supabase y ejecuta completo [`supabase/migrations/00000000000000_schema_completo.sql`](supabase/migrations/00000000000000_schema_completo.sql). Es una sola migración idempotente: crea tablas, funciones, políticas RLS y buckets, y se puede volver a ejecutar sin perder datos. Si la base ya existe, el SQL Editor la aplica todo o nada: si un paso falla, no queda ningún cambio a medias.
 2. Comprueba en **Storage** que existan los buckets:
    - `escaneos_ia`: fotos de los residuos (público).
    - `fotos_perfil`: logo y portada de los gestores (público).
@@ -212,7 +212,7 @@ npm run dev               # http://localhost:3000
 
 ### Paso 4: Producción
 
-El panel se despliega en **Vercel** (Root Directory: `admin-panel`) o en cualquier servidor con Node 24. Las variables obligatorias y los pasos están en el [README del panel, sección 5](admin-panel/README.md#5-despliegue-en-producción).
+El panel se despliega en Vercel (Root Directory: `admin-panel`) o en cualquier servidor con Node 24. Las variables obligatorias y los pasos están en el [README del panel, sección 5](admin-panel/README.md#5-despliegue-en-producción).
 
 Para que el plan gratis de Supabase no pause el proyecto por inactividad, el flujo [`mantener-supabase.yml`](.github/workflows/mantener-supabase.yml) hace una consulta cada 3 días; se activa agregando los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY` en GitHub.
 
@@ -222,8 +222,8 @@ Para que el plan gratis de Supabase no pause el proyecto por inactividad, el flu
 
 | Parte | Pruebas | Comando |
 |---|---|---|
-| App móvil | 124 | `cd app && flutter analyze && flutter test` |
-| Panel | 153, más 9 recorridos en navegador (escritorio y celular) | `cd admin-panel && npm run lint && npm test && npm run test:e2e` |
+| App móvil | 137 | `cd app && flutter analyze && flutter test` |
+| Panel | 156, más 9 recorridos en navegador (escritorio y celular) | `cd admin-panel && npm run lint && npm test && npm run test:e2e` |
 
 La integración continua ([`ci.yml`](.github/workflows/ci.yml)) corre el análisis y las pruebas de ambas partes en cada cambio.
 
@@ -231,12 +231,13 @@ La integración continua ([`ci.yml`](.github/workflows/ci.yml)) corre el anális
 
 ## 11. Seguridad y datos personales
 
-- **Seguridad por fila (RLS):** la base solo deja ver y cambiar a cada usuario lo que le corresponde, aunque alguien use la llave pública fuera de la app.
-- **Transacciones:** aceptar una oferta, marcar una recolección o cancelar se hace con funciones de la base que bloquean la fila, para que dos acciones simultáneas no dejen la solicitud en un estado inválido.
-- **Validación en la base:** cantidades mayores que cero, NIT único por empresa y estados permitidos, además de la validación de la app y el panel.
-- **Panel:** CSP con nonce por petición, protección CSRF, cookies `HttpOnly`, contraseña de administrador de al menos 12 caracteres y reportes en Excel que escriben cada celda como valor (sin inyección de fórmulas).
-- **Datos personales (Ley 1581 de 2012):** nadie se registra sin autorizar el tratamiento de sus datos; quien ya tenía cuenta lo autoriza la próxima vez que entra. La política está publicada en el panel (`/privacidad`) y en la app.
-- **Fotos:** la clasificación ocurre en el teléfono y no se envía a ningún servicio de inteligencia artificial. Las fotos de escaneos y publicaciones sí se guardan en Supabase, en un bucket público para que la app pueda mostrarlas; quien tenga la URL exacta puede verlas (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
+La base aplica seguridad por fila (RLS): cada usuario solo ve y cambia lo que le corresponde, aunque use la llave pública fuera de la app. Aceptar una oferta, marcar una recolección o cancelar pasa por funciones que bloquean la fila, así dos acciones al mismo tiempo no dejan la solicitud en un estado inválido. La base también rechaza cantidades en cero o negativas, NIT repetidos y estados que no existen, además de lo que ya validan la app y el panel.
+
+El panel usa CSP con nonce por petición, protección CSRF y cookies `HttpOnly`, exige al administrador una contraseña de al menos 12 caracteres y escribe cada celda del Excel como valor, para que nadie pueda inyectar fórmulas.
+
+La app no deja registrarse sin autorizar el tratamiento de datos (Ley 1581 de 2012), y a quien ya tenía cuenta se lo pide la próxima vez que entra. La política está publicada en el panel (`/privacidad`) y en la app.
+
+La clasificación de las fotos ocurre en el teléfono y no pasa por ningún servicio de inteligencia artificial. Las fotos de escaneos y publicaciones sí se guardan en Supabase, en un bucket público para que la app pueda mostrarlas, así que quien tenga la URL exacta puede verlas (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
 
 ---
 
@@ -244,4 +245,4 @@ La integración continua ([`ci.yml`](.github/workflows/ci.yml)) corre el anális
 
 Proyecto de grado de la Universidad de Santander (UDES) para la gestión de residuos y la economía circular en seis municipios de Santander.
 
-- **Repositorio:** [C3RLOSMORENO/EcoResiduos](https://github.com/C3RLOSMORENO/EcoResiduos)
+Repositorio: [C3RLOSMORENO/EcoResiduos](https://github.com/C3RLOSMORENO/EcoResiduos)
