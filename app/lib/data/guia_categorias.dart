@@ -112,13 +112,13 @@ const subcategoriasPorCategoria = <Categoria, List<String>>{
 };
 
 // Enlace canónico a la Resolución 2184 de 2019 (Código Nacional de Colores).
-const _urlRes2184 = 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Resoluciones/30039705';
+const _urlRes2184 = 'https://www.minambiente.gov.co/wp-content/uploads/2021/08/resolucion-2184-de-2019.pdf';
 
 const guiasPorCategoria = <Categoria, GuiaCategoria>{
   Categoria.aprovechable: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 (MinAmbiente) / Decreto 1077 de 2015',
     urlNormativa: _urlRes2184,
-    codigoColor: 'Caneca o Bolsa Blanca (Aprovechables limpios)',
+    codigoColor: 'Caneca o bolsa blanca (aprovechables limpios)',
     articuloClave:
         'Separación en la fuente obligatoria de materiales limpios y secos para reincorporación al ciclo productivo.',
     queEs:
@@ -139,12 +139,12 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     entregar:
         'En la caneca o bolsa blanca, a la organización de recicladores de oficio de tu sector o a un gestor ambiental registrado en EcoResiduos.',
     consejoResultado:
-        'Clasificado como APROVECHABLE (Res. 2184/2019). Deposítalo limpio y seco en la caneca blanca o solicita recolección con un gestor.',
+        'Clasificado como aprovechable (Res. 2184/2019). Deposítalo limpio y seco en la caneca blanca o solicita recolección con un gestor.',
   ),
   Categoria.peligroso: GuiaCategoria(
     normativa: 'Decreto 1076 de 2015 (Título 6 - RESPEL) / Ley 1252 de 2008',
-    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=30019960',
-    codigoColor: 'Canal Posconsumo / Gestor Licenciado (CRETIB)',
+    urlNormativa: 'https://www.minambiente.gov.co/wp-content/uploads/2021/06/Decreto-1076-de-2015.pdf',
+    codigoColor: 'Canal posconsumo / gestor licenciado (CRETIB)',
     articuloClave:
         'Prohibición estricta de disposición en rellenos sanitarios o espacio público; manejo exclusivo por gestores autorizados.',
     queEs:
@@ -165,12 +165,12 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     entregar:
         'En puntos de recolección posconsumo autorizados (Lúmina, Pilas con el Ambiente, Recoenergy, CampoLimpio) o a un gestor con Licencia Ambiental emitida por la autoridad competente (CDMB, AMB, CAS, ANLA).',
     consejoResultado:
-        'Clasificado como RESIDUO PELIGROSO (Decreto 1076/2015). No lo arrojes a la basura ni lo viertas por el desagüe. Requiere entrega a gestor RESPEL autorizado.',
+        'Clasificado como residuo peligroso (Decreto 1076/2015). No lo arrojes a la basura ni lo viertas por el desagüe. Requiere entrega a gestor RESPEL autorizado.',
   ),
   Categoria.raee: GuiaCategoria(
     normativa: 'Ley 1672 de 2013 (Gestión Integral de RAEE) / Decreto 284 de 2018',
-    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=1687564',
-    codigoColor: 'Punto Posconsumo RAEE / Desensamble Técnico',
+    urlNormativa: 'https://www.minambiente.gov.co/wp-content/uploads/2021/06/ley-1672-2013.pdf',
+    codigoColor: 'Punto posconsumo RAEE / desensamble técnico',
     articuloClave:
         'Principio de Responsabilidad Extendida del Productor (REP) y prohibición de disposición en rellenos sanitarios.',
     queEs:
@@ -195,8 +195,8 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
   ),
   Categoria.rcd: GuiaCategoria(
     normativa: 'Resolución 1257 de 2021 (Modifica Res. 0472/2017 MinAmbiente)',
-    urlNormativa: 'https://www.minambiente.gov.co/document/resolucion-1257-de-2021/',
-    codigoColor: 'Acopio en Obra / Escombrera o Planta RCD Autorizada',
+    urlNormativa: 'https://www.minambiente.gov.co/wp-content/uploads/2021/12/Resolucion-1257-de-2021.pdf',
+    codigoColor: 'Acopio en obra / escombrera o planta RCD autorizada',
     articuloClave:
         'Obligación del generador de garantizar transporte en volquetas registradas y entrega exclusiva en Sitios de Disposición Final o Plantas RCD con Licencia.',
     queEs:
@@ -220,9 +220,9 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
         'Clasificado como RCD (Res. 1257/2021). No apto para el servicio de aseo ordinario. Requiere acopio en obra y transporte a escombrera o planta autorizada.',
   ),
   Categoria.riesgoBiologico: GuiaCategoria(
-    normativa: 'Resolución 1164 de 2002 (Manual MPGIRH) / Decreto 780 de 2016 y Decreto 1076 de 2015',
-    urlNormativa: 'https://www.suin-juriscol.gov.co/viewDocument.asp?id=1614508',
-    codigoColor: 'Bolsa y Caneca Roja / Guardián de Seguridad para Cortopunzantes',
+    normativa: 'Resolución 591 de 2024 y Res. 1164 de 2002 / Decreto 780 de 2016 y Decreto 1076 de 2015',
+    urlNormativa: 'https://www.minsalud.gov.co/Normatividad_Nuevo/Resoluci%C3%B3n%20No%20591%20de%202024.pdf',
+    codigoColor: 'Bolsa y caneca roja / guardián de seguridad para cortopunzantes',
     articuloClave:
         'Manejo riguroso de bioseguridad, rotulado obligatorio de riesgo biológico y tratamiento mediante autoclave o incineración autorizada.',
     queEs:
@@ -243,12 +243,12 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     entregar:
         'A un gestor autorizado de residuos hospitalarios e infecciosos con vehículo recolector acondicionado y planta de tratamiento térmico certificada.',
     consejoResultado:
-        'Clasificado como RIESGO BIOLÓGICO (Res. 1164/2002). Usa bolsa roja y deposita agujas en guardián rígido. Entrega obligatoria a ruta hospitalaria.',
+        'Clasificado como riesgo biológico (Res. 591/2024). Usa bolsa roja y deposita agujas en guardián rígido. Entrega obligatoria a ruta hospitalaria.',
   ),
   Categoria.organico: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 (Código Nacional de Colores)',
     urlNormativa: _urlRes2184,
-    codigoColor: 'Caneca o Bolsa Verde (Orgánicos aprovechables)',
+    codigoColor: 'Caneca o bolsa verde (orgánicos aprovechables)',
     articuloClave: 'Aprovechamiento biológico mediante compostaje, lombricultura o generación de biomasa.',
     queEs:
         'Residuos biodegradables de origen vegetal y animal que se descomponen naturalmente mediante procesos biológicos, aptos para transformación en enmiendas orgánicas del suelo (compost o abono) y biogás.',
@@ -268,12 +268,12 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     entregar:
         'En la caneca verde para la ruta municipal de orgánicos o en proyectos locales de compostaje comunitario.',
     consejoResultado:
-        'Clasificado como ORGÁNICO APROVECHABLE (Res. 2184/2019). Deposítalo en la caneca verde o utilízalo en compostaje.',
+        'Clasificado como orgánico aprovechable (Res. 2184/2019). Deposítalo en la caneca verde o utilízalo en compostaje.',
   ),
   Categoria.ordinario: GuiaCategoria(
     normativa: 'Resolución 2184 de 2019 / Decreto 1077 de 2015 (Servicio Público de Aseo)',
     urlNormativa: _urlRes2184,
-    codigoColor: 'Caneca o Bolsa Negra (No aprovechables)',
+    codigoColor: 'Caneca o bolsa negra (no aprovechables)',
     articuloClave:
         'Disposición final técnica y sanitaria en relleno sanitario autorizado (ej. Parque Tecnológico El Carrasco).',
     queEs:
@@ -292,6 +292,6 @@ const guiasPorCategoria = <Categoria, GuiaCategoria>{
     ],
     entregar: 'En la caneca o bolsa negra para el camión compactador del servicio público de aseo domiciliario.',
     consejoResultado:
-        'Clasificado como NO APROVECHABLE (Res. 2184/2019). Deposítalo en la bolsa negra para el servicio regular de aseo urbano.',
+        'Clasificado como no aprovechable (Res. 2184/2019). Deposítalo en la bolsa negra para el servicio regular de aseo urbano.',
   ),
 };

@@ -344,15 +344,41 @@ const SIGLAS = new Set([
     'S.A.', 'S.A',
     'E.S.P.', 'E.S.P', 'ESP',
     'E.U.', 'E.U', 'LTDA', 'LTDA.', 'C.I.', 'C.I',
-    'BIC', 'NIT', 'CDMB', 'AMB', 'CAS',
-    'RAEE', 'RCD', 'RESPEL', 'PQRS', 'IPS', 'EPS'
+    'BIC', 'NIT', 'CDMB', 'AMB', 'CAS', 'ANLA',
+    'RAEE', 'RCD', 'RESPEL', 'PQRS', 'IPS', 'EPS',
+    'PET', 'PEAD', 'HDPE', 'PEAD/HDPE', 'PEHD', 'PELD', 'PP', 'PVC',
+    'LED', 'LCD', 'LED/LCD', 'PC', 'USB', 'UPS',
+    'ACU', 'ECA', 'CRETIB', 'PGIRS', 'PGIRASA', 'MPGIRH',
+    'EMAB', 'EMAF', 'ESA', 'EPP', 'PCB', 'AA', 'AAA', '9V', '4R'
 ]);
 
 const CONECTORES = new Set([
-    'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin'
+    'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin', 'al'
+]);
+
+const NOMBRES_PROPIOS = {
+    bucaramanga: 'Bucaramanga',
+    floridablanca: 'Floridablanca',
+    giron: 'Girón',
+    'girón': 'Girón',
+    piedecuesta: 'Piedecuesta',
+    barrancabermeja: 'Barrancabermeja',
+    santander: 'Santander',
+    colombia: 'Colombia',
+    chimita: 'Chimitá',
+    'chimitá': 'Chimitá',
+    carrasco: 'Carrasco',
+    ecoresiduos: 'EcoResiduos'
+};
+
+const ABREVIATURAS = new Set([
+    'NO.', 'NRO.', 'NUM.', 'NÚM.', 'RES.', 'DEC.', 'ART.', 'KM.',
+    'AV.', 'CR.', 'CRA.', 'CL.', 'DG.', 'TV.', 'TEL.', 'EXT.',
+    'DR.', 'DRA.', 'SR.', 'SRA.', 'ING.'
 ]);
 
 const tieneLetras = (texto) => /[a-záéíóúñü]/i.test(texto);
+const esCamelCaseInterno = (texto) => /^[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+[A-ZÁÉÍÓÚÑÜ]/.test(texto);
 
 // Separa los signos de apertura y cierre del núcleo: «(S.A.S.)» → «(», «S.A.S.», «)».
 const PARTES_PALABRA = /^([([«"']*?)([^([«"'\])»"',;:!?]+(?:\.[^([«"'\])»"',;:!?]+)*\.?)([\])»"',;:!?]*)$/;
@@ -373,7 +399,7 @@ function capitalizarPalabra(palabra, esPrimera) {
     const mayus = nucleo.toUpperCase();
     if (SIGLAS.has(mayus)) return `${prefijo}${mayus}${sufijo}`;
     const minus = nucleo.toLowerCase();
-    if (minus === 'giron') return `${prefijo}Girón${sufijo}`;
+    if (NOMBRES_PROPIOS[minus]) return `${prefijo}${NOMBRES_PROPIOS[minus]}${sufijo}`;
     if (!esPrimera && CONECTORES.has(minus)) return `${prefijo}${minus}${sufijo}`;
     return `${prefijo}${minus[0].toUpperCase()}${minus.slice(1)}${sufijo}`;
 }
@@ -394,9 +420,10 @@ function capitalizar(texto) {
 }
 
 /**
- * Normaliza nombres propios o razones sociales que vienen completamente en
- * mayúsculas o minúsculas desde la base de datos, respetando los que ya tienen
- * combinación de mayúsculas y minúsculas (como «EcoMetales Santander Ltda.»).
+ * Normaliza nombres propios o razones sociales que vienen en mayúsculas o
+ * minúsculas desde la base de datos (incluidas palabras sueltas en mayúsculas
+ * como «Representante Legal ASOREFLOR»), respetando marcas con mayúsculas
+ * internas (como «EcoMetales Santander Ltda.»).
  *
  * @param {?string} texto
  * @returns {string}
@@ -407,22 +434,35 @@ function formatoNombre(texto) {
     if (limpio === limpio.toUpperCase() || limpio === limpio.toLowerCase()) {
         return capitalizar(limpio);
     }
-    return limpio;
+    return limpio
+        .split(' ')
+        .map((p, i) => {
+            if (!p) return p;
+            const m = p.match(PARTES_PALABRA);
+            const nucleo = m ? m[2] : p;
+            if (!tieneLetras(nucleo) || esCamelCaseInterno(nucleo)) return p;
+            if (nucleo === nucleo.toUpperCase() || nucleo === nucleo.toLowerCase()) {
+                return capitalizarPalabra(p, i === 0);
+            }
+            return p;
+        })
+        .join(' ');
 }
 
 /**
- * Convierte textos escritos completamente en mayúsculas a formato de oración
- * («CAJAS DE CARTÓN EN PORTERÍA» → «Cajas de cartón en portería»), conservando
- * siglas conocidas (RAEE, RESPEL, S.A.S., CDMB…) y dejando intactos los textos
- * que ya usan mayúsculas y minúsculas normalmente.
+ * Normaliza una línea de texto a formato de oración («CAJAS DE CARTÓN EN PORTERÍA»
+ * o «Botellas y Frascos de Vidrio» → «Cajas de cartón en portería», «Botellas y
+ * frascos de vidrio»), conservando siglas (RAEE, RESPEL, S.A.S., PET…) y nombres
+ * propios de municipios.
  *
- * @param {?string} texto
+ * @param {string} linea
  * @returns {string}
  */
-function formatoOracion(texto) {
-    const limpio = texto === null || texto === undefined ? '' : String(texto).trim();
+function formatoOracionLinea(linea) {
+    const limpio = linea.trim();
     if (!limpio || !tieneLetras(limpio)) return limpio;
-    if (limpio !== limpio.toUpperCase()) return limpio;
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(limpio)) return limpio.toLowerCase();
+    if (/^https?:\/\//i.test(limpio)) return limpio;
     let inicioOracion = true;
     return limpio
         .split(/(\s+)/)
@@ -433,20 +473,50 @@ function formatoOracion(texto) {
             const nucleo = m ? m[2] : fragmento;
             const sufijo = m ? m[3] : '';
             const mayus = nucleo.toUpperCase();
-            const cierraOracion = /[.!?]$/.test(fragmento) && !SIGLAS.has(mayus);
+            const cierraOracion = /[.!?]$/.test(fragmento) && !SIGLAS.has(mayus) && !ABREVIATURAS.has(mayus);
+            const hayLetras = tieneLetras(nucleo);
             let resultado;
-            if (SIGLAS.has(mayus)) {
+            if (!hayLetras) {
+                resultado = fragmento;
+            } else if (SIGLAS.has(mayus)) {
                 resultado = `${prefijo}${mayus}${sufijo}`;
+            } else if (esCamelCaseInterno(nucleo)) {
+                resultado = `${prefijo}${nucleo}${sufijo}`;
             } else {
                 const minus = nucleo.toLowerCase();
-                resultado = inicioOracion && tieneLetras(minus)
-                    ? `${prefijo}${minus[0].toUpperCase()}${minus.slice(1)}${sufijo}`
-                    : `${prefijo}${minus}${sufijo}`;
+                if (NOMBRES_PROPIOS[minus]) {
+                    resultado = `${prefijo}${NOMBRES_PROPIOS[minus]}${sufijo}`;
+                } else if (inicioOracion) {
+                    resultado = `${prefijo}${minus[0].toUpperCase()}${minus.slice(1)}${sufijo}`;
+                } else {
+                    resultado = `${prefijo}${minus}${sufijo}`;
+                }
             }
-            inicioOracion = cierraOracion;
+            if (cierraOracion) {
+                inicioOracion = true;
+            } else if (hayLetras) {
+                inicioOracion = false;
+            }
             return resultado;
         })
         .join('');
+}
+
+/**
+ * Convierte textos a formato de oración («CAJAS DE CARTÓN EN PORTERÍA» →
+ * «Cajas de cartón en portería»), conservando siglas conocidas (RAEE, RESPEL,
+ * S.A.S., CDMB…) y nombres propios de municipios.
+ *
+ * @param {?string} texto
+ * @returns {string}
+ */
+function formatoOracion(texto) {
+    const limpio = texto === null || texto === undefined ? '' : String(texto).trim();
+    if (!limpio || !tieneLetras(limpio)) return limpio;
+    if (limpio.includes('\n')) {
+        return limpio.split('\n').map(formatoOracionLinea).join('\n');
+    }
+    return formatoOracionLinea(limpio);
 }
 
 /**
@@ -476,7 +546,8 @@ function plural(cantidad, singular, varios) {
  */
 function textoODato(valor) {
     const limpio = valor === null || valor === undefined ? '' : String(valor).trim();
-    return formatoOracion(limpio) || 'Sin dato';
+    if (!limpio) return 'Sin dato';
+    return limpio === limpio.toUpperCase() ? formatoOracion(limpio) : limpio;
 }
 
 /**

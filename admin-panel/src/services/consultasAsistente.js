@@ -6,7 +6,7 @@ const supabase = require('../config/supabase');
 const dashboardService = require('./DashboardService');
 const reporteService = require('./ReporteService');
 const { MUNICIPIOS, municipioAdmitido, variantesMunicipio } = require('../utils/municipios');
-const { CATEGORIAS, ESTADOS_SOLICITUD, ESTADOS_GESTOR } = require('../utils/formato');
+const { CATEGORIAS, ESTADOS_SOLICITUD, ESTADOS_GESTOR, capitalizar, formatoNombre, formatoOracion } = require('../utils/formato');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
 const { filtrosReporte, describirFiltrosReporte, enlaceExcelReporte } = require('../utils/filtros');
@@ -112,7 +112,7 @@ const herramientas = {
                 const total = conteoDe(respuesta, 'los gestores');
                 return {
                     total,
-                    gestores: (respuesta.data || []).map((g) => ({ nombre: g.razon_social, municipio: g.municipio, estado: g.estado_verificacion })),
+                    gestores: (respuesta.data || []).map((g) => ({ nombre: formatoNombre(g.razon_social), municipio: g.municipio ? capitalizar(g.municipio) : g.municipio, estado: g.estado_verificacion })),
                     ...(total > MAX_NOMBRES ? { nota: `Solo se listan los primeros ${MAX_NOMBRES} nombres.` } : {})
                 };
             }
@@ -133,9 +133,9 @@ const herramientas = {
             (data || []).forEach((fila) => {
                 const g = fila.perfiles_gestor;
                 if (!g) return;
-                const actual = porGestor.get(g.id) || { nombre: g.razon_social, municipio: g.municipio, estado: g.estado_verificacion, materiales: [] };
+                const actual = porGestor.get(g.id) || { nombre: formatoNombre(g.razon_social), municipio: g.municipio ? capitalizar(g.municipio) : g.municipio, estado: g.estado_verificacion, materiales: [] };
                 const m = fila.materiales_residuos || {};
-                actual.materiales.push(`${m.nombre_comun}${fila.verificado ? '' : ' (sin verificar)'}`);
+                actual.materiales.push(`${formatoOracion(m.nombre_comun)}${fila.verificado ? '' : ' (sin verificar)'}`);
                 porGestor.set(g.id, actual);
             });
             const gestores = [...porGestor.values()].sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
@@ -278,7 +278,7 @@ const herramientas = {
             const respuesta = await consulta.order('codigo', { ascending: true }).limit(50);
             return {
                 total: conteoDe(respuesta, 'los materiales'),
-                materiales: (respuesta.data || []).map((m) => ({ codigo: m.codigo, nombre: m.nombre_comun, categoria: m.categoria }))
+                materiales: (respuesta.data || []).map((m) => ({ codigo: m.codigo, nombre: formatoOracion(m.nombre_comun), categoria: m.categoria }))
             };
         }
     },
@@ -313,7 +313,7 @@ const herramientas = {
                 .select('sigla, nombre, jurisdiccion, telefono, email, sitio_web')
                 .order('sigla', { ascending: true });
             if (error) throw errorDeBase('No pudimos leer las autoridades.', error);
-            return { total: (data || []).length, autoridades: data || [] };
+            return { total: (data || []).length, autoridades: (data || []).map((a) => ({ ...a, nombre: formatoNombre(a.nombre), jurisdiccion: formatoOracion(a.jurisdiccion) })) };
         }
     },
 
@@ -337,7 +337,7 @@ const herramientas = {
             const { data, error } = await consulta.order('razon_social', { ascending: true }).limit(MAX_DOCUMENTOS);
             if (error) throw errorDeBase('No pudimos buscar los documentos del gestor.', error);
 
-            const gestores = data || [];
+            const gestores = (data || []).map((g) => ({ ...g, razon_social: formatoNombre(g.razon_social), municipio: g.municipio ? capitalizar(g.municipio) : g.municipio }));
             const enlaces = gestores.flatMap((g) => [
                 ...(g.permiso_path ? [{ tipo: 'pdf', texto: `Permiso ambiental · ${g.razon_social}`, url: `/gestores/${g.id}/permiso` }] : []),
                 { tipo: 'ficha', texto: `Ficha · ${g.razon_social}`, url: `/gestores/${g.id}` }
@@ -376,7 +376,7 @@ const herramientas = {
                 const { data, error } = await supabase.from('perfiles_gestor').select('id, razon_social').ilike('razon_social', `%${gestor}%`).limit(20);
                 if (error) throw errorDeBase('No pudimos buscar el gestor.', error);
                 if (!data || !data.length) return { total: 0, certificados: [], nota: `No hay gestores con «${gestor}» en el nombre.` };
-                data.forEach((g) => nombres.set(g.id, g.razon_social));
+                data.forEach((g) => nombres.set(g.id, formatoNombre(g.razon_social)));
             }
 
             let consulta = supabase.from('solicitudes_recoleccion')
@@ -393,8 +393,8 @@ const herramientas = {
 
             const certificados = (respuesta.data || []).map((s) => ({
                 solicitud: s.id,
-                material: s.materiales_residuos && s.materiales_residuos.nombre_comun,
-                municipio: s.municipio,
+                material: s.materiales_residuos && s.materiales_residuos.nombre_comun ? formatoOracion(s.materiales_residuos.nombre_comun) : (s.materiales_residuos && s.materiales_residuos.nombre_comun),
+                municipio: s.municipio ? capitalizar(s.municipio) : s.municipio,
                 tipo: s.certificado_tipo,
                 fecha: s.certificado_at ? String(s.certificado_at).slice(0, 10) : null,
                 ...(nombres.has(s.gestor_asignado_id) ? { gestor: nombres.get(s.gestor_asignado_id) } : {})

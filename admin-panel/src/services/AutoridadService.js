@@ -15,7 +15,7 @@ function mapearAutoridad(row) {
         telefono: row.telefono ?? row.TELEFONO ?? '',
         email: row.email ?? row.EMAIL ?? '',
         sitio_web: row.sitio_web ?? row.SITIO_WEB ?? row.Sitio_Web ?? '',
-        direccion: formatoNombre(row.direccion ?? row.DIRECCION ?? ''),
+        direccion: formatoOracion(row.direccion ?? row.DIRECCION ?? ''),
         horario: formatoOracion(row.horario ?? '')
     };
 }
@@ -98,7 +98,7 @@ const autoridadService = {
             telefono: row.telefono ?? row.TELEFONO ?? '',
             email: row.email ?? row.EMAIL ?? '',
             sitio_web: row.sitio_web ?? row.SITIO_WEB ?? row.Sitio_Web ?? '',
-            direccion: formatoNombre(row.direccion ?? row.DIRECCION ?? ''),
+            direccion: formatoOracion(row.direccion ?? row.DIRECCION ?? ''),
             horario: formatoOracion(row.horario ?? '')
         }));
     },
@@ -132,7 +132,7 @@ const autoridadService = {
             telefono: data.telefono ?? data.TELEFONO ?? '',
             email: data.email ?? data.EMAIL ?? '',
             sitio_web: data.sitio_web ?? data.SITIO_WEB ?? data.Sitio_Web ?? '',
-            direccion: formatoNombre(data.direccion ?? data.DIRECCION ?? ''),
+            direccion: formatoOracion(data.direccion ?? data.DIRECCION ?? ''),
             horario: formatoOracion(data.horario ?? '')
         };
     },

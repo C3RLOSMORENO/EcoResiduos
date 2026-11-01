@@ -171,7 +171,7 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Normativa Nacional de Separación',
+                            'Normativa nacional de separación',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.onSurface,

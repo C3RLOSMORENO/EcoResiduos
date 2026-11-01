@@ -105,7 +105,7 @@ class SolicitudRecoleccion {
       recolectadoAt: map['recolectado_at'] != null ? DateTime.tryParse(map['recolectado_at'].toString()) : null,
       confirmadoAt: map['confirmado_at'] != null ? DateTime.tryParse(map['confirmado_at'].toString()) : null,
       problemaReportado: map['problema_reportado'] == true || map['problema_reportado'] == 'true',
-      problemaDetalle: map['problema_detalle']?.toString(),
+      problemaDetalle: map['problema_detalle'] != null ? formatoOracion(map['problema_detalle'].toString()) : null,
       gestorAsignadoId: (map['gestor_asignado_id'] as num?)?.toInt(),
       certificadoUrl: map['certificado_url']?.toString(),
       certificadoTipo: TipoCertificado.desde(map['certificado_tipo']?.toString()),

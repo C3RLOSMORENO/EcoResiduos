@@ -165,6 +165,11 @@ void main() {
       expect(capitalizar('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
       expect(formatoNombre('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
       expect(formatoNombre('EcoPilas'), 'EcoPilas');
+      expect(formatoNombre('Representante Legal ASOREFLOR'), 'Representante Legal Asoreflor');
+      expect(formatoNombre('Gerencia COOPSEREC'), 'Gerencia Coopserec');
+      expect(formatoOracion('CALLE 58 No. 16 - 185, KM 7 VÍA BUCARAMANGA'), 'Calle 58 no. 16 - 185, km 7 vía Bucaramanga');
+      expect(formatoOracion('Botellas y Frascos de Vidrio'), 'Botellas y frascos de vidrio');
+      expect(formatoOracion('calle 103 # 52 - 4'), 'Calle 103 # 52 - 4');
       expect(formatoOracion('CAJAS DE CARTÓN LIMPIO Y RAEE EN PORTERÍA.'), 'Cajas de cartón limpio y RAEE en portería.');
     });
   });

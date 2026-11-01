@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Modelo de dominio para la tabla 'public.historial_escaneos_ia'.
 class HistorialEscaneoIa {
   final int? id;
@@ -23,7 +25,7 @@ class HistorialEscaneoIa {
     return HistorialEscaneoIa(
       id: (map['id'] as num?)?.toInt(),
       usuarioId: (map['usuario_id'] ?? '').toString(),
-      nombreDetectado: (map['nombre_detectado'] ?? '').toString(),
+      nombreDetectado: formatoOracion((map['nombre_detectado'] ?? '').toString()),
       categoriaDetectada: (map['categoria_detectada'] ?? '').toString(),
       nivelConfianza: (map['nivel_confianza'] as num?)?.toDouble() ?? 0.0,
       imagenPath: (map['imagen_path'] ?? '').toString(),

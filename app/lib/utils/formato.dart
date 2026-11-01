@@ -77,15 +77,43 @@ const _siglas = {
   'S.A.', 'S.A',
   'E.S.P.', 'E.S.P', 'ESP',
   'E.U.', 'E.U', 'LTDA', 'LTDA.', 'C.I.', 'C.I',
-  'BIC', 'NIT', 'CDMB', 'AMB', 'CAS',
+  'BIC', 'NIT', 'CDMB', 'AMB', 'CAS', 'ANLA',
   'RAEE', 'RCD', 'RESPEL', 'PQRS', 'IPS', 'EPS',
+  'PET', 'PEAD', 'HDPE', 'PEAD/HDPE', 'PEHD', 'PELD', 'PP', 'PVC',
+  'LED', 'LCD', 'LED/LCD', 'PC', 'USB', 'UPS',
+  'ACU', 'ECA', 'CRETIB', 'PGIRS', 'PGIRASA', 'MPGIRH',
+  'EMAB', 'EMAF', 'ESA', 'EPP', 'PCB', 'AA', 'AAA', '9V', '4R',
 };
 
 const _conectores = {
-  'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin',
+  'de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'o', 'u', 'en', 'a', 'para', 'por', 'con', 'sin', 'al',
+};
+
+const _nombresPropios = {
+  'bucaramanga': 'Bucaramanga',
+  'floridablanca': 'Floridablanca',
+  'giron': 'Girón',
+  'girón': 'Girón',
+  'piedecuesta': 'Piedecuesta',
+  'barrancabermeja': 'Barrancabermeja',
+  'santander': 'Santander',
+  'colombia': 'Colombia',
+  'chimita': 'Chimitá',
+  'chimitá': 'Chimitá',
+  'carrasco': 'Carrasco',
+  'ecoresiduos': 'EcoResiduos',
+};
+
+const _abreviaturas = {
+  'NO.', 'NRO.', 'NUM.', 'NÚM.', 'RES.', 'DEC.', 'ART.', 'KM.',
+  'AV.', 'CR.', 'CRA.', 'CL.', 'DG.', 'TV.', 'TEL.', 'EXT.',
+  'DR.', 'DRA.', 'SR.', 'SRA.', 'ING.',
 };
 
 final _tieneLetras = RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]');
+final _camelCaseInterno = RegExp(r'^[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+[A-ZÁÉÍÓÚÑÜ]');
+final _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+final _urlRegex = RegExp(r'^https?:\/\/', caseSensitive: false);
 final _partesPalabra = RegExp(
   r'^([(\[«"\x27]*?)([^(\[«"\x27\])»",;:!?]+(?:\.[^(\[«"\x27\])»",;:!?]+)*\.?)([\])»",;:!?]*)$',
 );
@@ -99,7 +127,7 @@ String _capitalizarPalabra(String palabra, {required bool esPrimera}) {
   final mayus = nucleo.toUpperCase();
   if (_siglas.contains(mayus)) return '$prefijo$mayus$sufijo';
   final minus = nucleo.toLowerCase();
-  if (minus == 'giron') return '${prefijo}Girón$sufijo';
+  if (_nombresPropios.containsKey(minus)) return '$prefijo${_nombresPropios[minus]}$sufijo';
   if (!esPrimera && _conectores.contains(minus)) return '$prefijo$minus$sufijo';
   return '$prefijo${minus[0].toUpperCase()}${minus.substring(1)}$sufijo';
 }
@@ -114,26 +142,38 @@ String capitalizar(String texto) {
   ].join(' ');
 }
 
-/// Normaliza nombres propios o razones sociales que vienen completamente en
-/// mayúsculas o minúsculas desde la base de datos, respetando los que ya tienen
-/// combinación de mayúsculas y minúsculas (como «EcoPilas»).
+/// Normaliza nombres propios o razones sociales que vienen en mayúsculas o
+/// minúsculas desde la base de datos (incluidas palabras sueltas en mayúsculas
+/// como «Representante Legal ASOREFLOR»), respetando los que ya tienen
+/// combinación interna de mayúsculas y minúsculas (como «EcoPilas»).
 String formatoNombre(String texto) {
   final limpio = texto.trim();
   if (limpio.isEmpty || !_tieneLetras.hasMatch(limpio)) return limpio;
   if (limpio == limpio.toUpperCase() || limpio == limpio.toLowerCase()) {
     return capitalizar(limpio);
   }
-  return limpio;
+  final palabras = limpio.split(' ');
+  return [
+    for (var i = 0; i < palabras.length; i++)
+      () {
+        final p = palabras[i];
+        if (p.isEmpty) return p;
+        final m = _partesPalabra.firstMatch(p);
+        final nucleo = m != null ? m.group(2)! : p;
+        if (!_tieneLetras.hasMatch(nucleo) || _camelCaseInterno.hasMatch(nucleo)) return p;
+        if (nucleo == nucleo.toUpperCase() || nucleo == nucleo.toLowerCase()) {
+          return _capitalizarPalabra(p, esPrimera: i == 0);
+        }
+        return p;
+      }(),
+  ].join(' ');
 }
 
-/// Convierte textos escritos completamente en mayúsculas a formato de oración
-/// («CAJAS DE CARTÓN EN PORTERÍA» → «Cajas de cartón en portería»), conservando
-/// siglas conocidas (RAEE, RESPEL, S.A.S., CDMB…) y dejando intactos los textos
-/// que ya usan mayúsculas y minúsculas normalmente.
-String formatoOracion(String texto) {
-  final limpio = texto.trim();
+String _formatoOracionLinea(String linea) {
+  final limpio = linea.trim();
   if (limpio.isEmpty || !_tieneLetras.hasMatch(limpio)) return limpio;
-  if (limpio != limpio.toUpperCase()) return limpio;
+  if (_emailRegex.hasMatch(limpio)) return limpio.toLowerCase();
+  if (_urlRegex.hasMatch(limpio)) return limpio;
   var inicioOracion = true;
   final buffer = StringBuffer();
   for (final match in RegExp(r'\S+|\s+').allMatches(limpio)) {
@@ -147,20 +187,45 @@ String formatoOracion(String texto) {
     final nucleo = m != null ? m.group(2)! : fragmento;
     final sufijo = m != null ? m.group(3)! : '';
     final mayus = nucleo.toUpperCase();
-    final cierraOracion = RegExp(r'[.!?]$').hasMatch(fragmento) && !_siglas.contains(mayus);
-    if (_siglas.contains(mayus)) {
+    final cierraOracion =
+        RegExp(r'[.!?]$').hasMatch(fragmento) && !_siglas.contains(mayus) && !_abreviaturas.contains(mayus);
+    final hayLetras = _tieneLetras.hasMatch(nucleo);
+    if (!hayLetras) {
+      buffer.write(fragmento);
+    } else if (_siglas.contains(mayus)) {
       buffer.write('$prefijo$mayus$sufijo');
+    } else if (_camelCaseInterno.hasMatch(nucleo)) {
+      buffer.write('$prefijo$nucleo$sufijo');
     } else {
       final minus = nucleo.toLowerCase();
-      if (inicioOracion && _tieneLetras.hasMatch(minus)) {
+      if (_nombresPropios.containsKey(minus)) {
+        buffer.write('$prefijo${_nombresPropios[minus]}$sufijo');
+      } else if (inicioOracion) {
         buffer.write('$prefijo${minus[0].toUpperCase()}${minus.substring(1)}$sufijo');
       } else {
         buffer.write('$prefijo$minus$sufijo');
       }
     }
-    inicioOracion = cierraOracion;
+    if (cierraOracion) {
+      inicioOracion = true;
+    } else if (hayLetras) {
+      inicioOracion = false;
+    }
   }
   return buffer.toString();
+}
+
+/// Convierte textos a formato de oración («CAJAS DE CARTÓN EN PORTERÍA» →
+/// «Cajas de cartón en portería», «Botellas y Frascos de Vidrio» → «Botellas y
+/// frascos de vidrio»), conservando siglas conocidas (RAEE, RESPEL, S.A.S.,
+/// CDMB…) y nombres propios de municipios.
+String formatoOracion(String texto) {
+  final limpio = texto.trim();
+  if (limpio.isEmpty || !_tieneLetras.hasMatch(limpio)) return limpio;
+  if (limpio.contains('\n')) {
+    return limpio.split('\n').map(_formatoOracionLinea).join('\n');
+  }
+  return _formatoOracionLinea(limpio);
 }
 
 /// Primera letra en mayúscula («hace 2 h» → «Hace 2 h»).

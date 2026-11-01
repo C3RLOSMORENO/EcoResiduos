@@ -55,7 +55,7 @@ class ResultadoScreen extends StatelessWidget {
                     CategoriaBanner(
                       categoria: categoria,
                       height: 56,
-                      label: categoria == Categoria.raee ? 'Eléctricos y Electrónicos (RAEE)' : null,
+                      label: categoria == Categoria.raee ? 'Eléctricos y electrónicos (RAEE)' : null,
                     ),
                     Padding(
                       padding: const EdgeInsets.all(EcoSpace.s16),

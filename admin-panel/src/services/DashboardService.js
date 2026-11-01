@@ -2,7 +2,7 @@ const supabase = require('../config/supabase');
 const { conFotoSiExiste } = require('../utils/fotosPerfil');
 const solicitudService = require('./SolicitudService');
 const { MUNICIPIOS, variantesMunicipio } = require('../utils/municipios');
-const { formatoNombre } = require('../utils/formato');
+const { formatoNombre, formatoOracion } = require('../utils/formato');
 const { haceDias } = require('../utils/fechas');
 
 const contar = (tabla) => supabase.from(tabla).select('id', { count: 'exact', head: true });
@@ -122,7 +122,12 @@ const dashboardService = {
                 ...g,
                 razon_social: formatoNombre(g.razon_social || '')
             })),
-            ultimasSolicitudes: ultimas.data || [],
+            ultimasSolicitudes: (ultimas.data || []).map((s) => ({
+                ...s,
+                materiales_residuos: s.materiales_residuos
+                    ? { ...s.materiales_residuos, nombre_comun: formatoOracion(s.materiales_residuos.nombre_comun || '') }
+                    : s.materiales_residuos
+            })),
             errores: [...new Set(errores)]
         };
     }
