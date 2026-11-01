@@ -123,9 +123,9 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
             titulo: 'Cuatro estados de tus propuestas',
             descripcion:
                 'Enviadas: esperando respuesta del generador. '
-                'Aceptadas: coordina la recogida y súbela cuando la completes. '
-                'Asignada a otro: el generador eligió a otro gestor. '
-                'Rechazadas: propuestas descartadas.',
+                'Aceptadas: te eligieron; coordina la recogida, márcala como recolectada y carga el certificado. '
+                'Asignadas a otro gestor: el generador eligió otra oferta. '
+                'Rechazadas: el generador descartó tu oferta.',
           ),
         ]);
       });

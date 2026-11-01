@@ -21,6 +21,7 @@ class SesionUsuario {
   const SesionUsuario({
     this.nombre = '',
     this.correo = '',
+    this.correoPendiente,
     this.telefono,
     this.municipio,
     this.documento,
@@ -56,6 +57,7 @@ class SesionUsuario {
     return SesionUsuario(
       nombre: texto(['razon_social', 'nombre_completo_o_empresa', 'full_name', 'nombre']) ?? '',
       correo: user?.email ?? '',
+      correoPendiente: user?.newEmail,
       telefono: texto(['telefono']),
       municipio: texto(['municipio']),
       documento: esGestor ? texto(['nit']) : texto(['documento_nit', 'documento']),
@@ -67,6 +69,10 @@ class SesionUsuario {
 
   final String nombre;
   final String correo;
+
+  /// Correo nuevo que se pidió y aún no se confirma desde el enlace; mientras
+  /// tanto se sigue entrando con [correo].
+  final String? correoPendiente;
   final String? telefono;
   final String? municipio;
   final String? documento;
@@ -81,6 +87,7 @@ class SesionUsuario {
   SesionUsuario conImagenes({required String? fotoPerfilPath, required String? portadaPath}) => SesionUsuario(
     nombre: nombre,
     correo: correo,
+    correoPendiente: correoPendiente,
     telefono: telefono,
     municipio: municipio,
     documento: documento,

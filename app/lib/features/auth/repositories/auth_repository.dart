@@ -110,6 +110,21 @@ abstract class AuthRepository {
   /// Actualiza el horario de atención del gestor. Null o cadena vacía borra el campo.
   Future<void> actualizarHorario(String? horario);
 
+  /// Pide cambiar el correo de acceso. Supabase envía un enlace al correo
+  /// nuevo y el cambio se aplica al abrirlo; hasta entonces se sigue entrando
+  /// con el actual. Al confirmarse, un trigger de la base copia el correo al
+  /// perfil.
+  Future<void> cambiarCorreo(String correoNuevo);
+
+  /// Actualiza el nombre, el documento y el teléfono del generador de la
+  /// sesión. La base los valida (función `actualizar_perfil_generador`); el
+  /// teléfono debe llegar normalizado.
+  Future<void> actualizarPerfilGenerador({
+    required String nombre,
+    required String documento,
+    required String telefono,
+  });
+
   /// Sube un nuevo PDF de permiso ambiental para el gestor de la sesión y
   /// reemplaza el existente en `perfiles_gestor.permiso_path`.
   Future<void> renovarPermisoAmbiental(ArchivoPdf pdf);
@@ -368,6 +383,34 @@ class SupabaseAuthRepository implements AuthRepository {
       'telefono_contacto': telefonoContacto.trim(),
       'direccion': direccion.trim(),
     }).eq('usuario_id', user.id);
+  }
+
+  @override
+  Future<void> cambiarCorreo(String correoNuevo) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(email: correoNuevo.trim().toLowerCase()));
+    } on AuthException catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<void> actualizarPerfilGenerador({
+    required String nombre,
+    required String documento,
+    required String telefono,
+  }) async {
+    await _client.rpc('actualizar_perfil_generador', params: {
+      'p_nombre': nombre.trim(),
+      'p_documento': documento.trim(),
+      'p_telefono': telefono.trim(),
+    });
+    // La sesión (utils/sesion.dart) lee el nombre y el teléfono de los
+    // metadatos de la cuenta: sin esto el saludo seguiría con el nombre viejo.
+    await _client.auth.updateUser(UserAttributes(data: {
+      'nombre_completo_o_empresa': nombre.trim(),
+      'telefono': telefono.trim(),
+    }));
   }
 
   @override

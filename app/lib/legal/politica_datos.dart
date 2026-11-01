@@ -66,6 +66,8 @@ const politicaDatos = [
         'Superintendencia de Industria y Comercio.',
   ]),
   SeccionPolitica('Cómo ejercerlos', [
+    'Si eres ciudadano o empresa generadora, puedes cambiar tu nombre, documento, teléfono, municipio y correo desde Cuenta, en la aplicación. '
+        'Las empresas gestoras cambian ahí sus datos de contacto; el NIT y la razón social se piden al administrador.',
     'Escribe a $correoDatosPersonales desde el correo de tu cuenta, indicando qué necesitas.',
     'Las consultas se responden en máximo 10 días hábiles (prorrogables 5 más) y los reclamos en máximo 15 días hábiles '
         '(prorrogables 8 más), como indican los artículos 14 y 15 de la Ley 1581 de 2012.',

@@ -6,7 +6,12 @@
 -- archivos de migración incremental anteriores.
 --
 -- Idempotente: se puede ejecutar sobre una base vacía o sobre una existente
--- (IF NOT EXISTS / CREATE OR REPLACE / DROP … IF EXISTS).
+-- (IF NOT EXISTS / CREATE OR REPLACE / DROP … IF EXISTS). CREATE TABLE IF NOT
+-- EXISTS no agrega columnas a una tabla que ya existe: las que se sumaron
+-- después de crear una tabla van también como ADD COLUMN IF NOT EXISTS justo
+-- debajo de ella, para las bases creadas con las migraciones anteriores.
+-- El SQL Editor de Supabase lo ejecuta todo o nada: si un paso falla, no
+-- queda ningún cambio aplicado.
 -- ==============================================================================
 
 
@@ -96,6 +101,12 @@ CREATE TABLE IF NOT EXISTS public.autoridades_ambientales (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Columnas agregadas después de la primera versión de la tabla.
+ALTER TABLE public.autoridades_ambientales
+    ADD COLUMN IF NOT EXISTS horario TEXT CHECK (char_length(horario) <= 120);
+ALTER TABLE public.autoridades_ambientales
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 -- perfiles_generador: empresa o persona que publica solicitudes de recolección.
 -- El trigger crear_perfil_nuevo_usuario la crea automáticamente al registrarse.
 CREATE TABLE IF NOT EXISTS public.perfiles_generador (
@@ -181,6 +192,15 @@ CREATE TABLE IF NOT EXISTS public.solicitudes_recoleccion (
     created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at            TIMESTAMPTZ          DEFAULT NOW()
 );
+
+-- Columnas agregadas después de la primera versión de la tabla (resolución
+-- de un problema reportado por el generador).
+ALTER TABLE public.solicitudes_recoleccion
+    ADD COLUMN IF NOT EXISTS problema_resuelto_at TIMESTAMPTZ;
+ALTER TABLE public.solicitudes_recoleccion
+    ADD COLUMN IF NOT EXISTS problema_resolucion TEXT CHECK (problema_resolucion IN ('NO_RECOGIDO'));
+ALTER TABLE public.solicitudes_recoleccion
+    ADD COLUMN IF NOT EXISTS problema_nota TEXT CHECK (char_length(problema_nota) <= 300);
 
 COMMENT ON COLUMN public.solicitudes_recoleccion.certificado_tipo IS
     'DISPOSICION_FINAL o APROVECHAMIENTO, según el certificado que cargó el gestor.';
@@ -494,6 +514,28 @@ DROP TRIGGER IF EXISTS ecoresiduos_crear_perfil ON auth.users;
 CREATE TRIGGER ecoresiduos_crear_perfil
 AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION private.crear_perfil_nuevo_usuario();
+
+-- Cambio de correo de acceso: Supabase cambia auth.users.email cuando el
+-- usuario abre el enlace de confirmación. Se copia a usuarios y al perfil del
+-- generador para que el panel muestre el correo vigente. El correo de
+-- contacto del gestor es otro dato y no se toca.
+CREATE OR REPLACE FUNCTION private.sincronizar_correo_usuario()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    UPDATE public.usuarios SET email = NEW.email WHERE id = NEW.id;
+    UPDATE public.perfiles_generador SET email = coalesce(NEW.email, '') WHERE usuario_id = NEW.id;
+    RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.sincronizar_correo_usuario() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS ecoresiduos_sincronizar_correo ON auth.users;
+CREATE TRIGGER ecoresiduos_sincronizar_correo
+AFTER UPDATE OF email ON auth.users
+FOR EACH ROW WHEN (OLD.email IS DISTINCT FROM NEW.email)
+EXECUTE FUNCTION private.sincronizar_correo_usuario();
 
 -- Notificaciones.
 CREATE OR REPLACE FUNCTION private.notificar(
@@ -1052,6 +1094,45 @@ $$;
 
 REVOKE ALL ON FUNCTION public.registrar_autorizacion_datos(TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.registrar_autorizacion_datos(TEXT) TO authenticated;
+
+-- Generador: actualiza su nombre, documento y teléfono (derecho a actualizar
+-- y rectificar sus datos, Ley 1581 de 2012). Pasa por esta función y no por
+-- un UPDATE directo para validar en la base: la app ya valida, pero con la
+-- llave pública se podría escribir cualquier cosa. El teléfono llega
+-- normalizado por la app (app/lib/utils/validacion.dart).
+CREATE OR REPLACE FUNCTION public.actualizar_perfil_generador(
+    p_nombre TEXT, p_documento TEXT, p_telefono TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_nombre    TEXT := regexp_replace(btrim(coalesce(p_nombre, '')), '[[:space:]]+', ' ', 'g');
+    v_documento TEXT := regexp_replace(coalesce(p_documento, ''), '[[:space:].-]', '', 'g');
+    v_telefono  TEXT := btrim(coalesce(p_telefono, ''));
+BEGIN
+    IF (SELECT auth.uid()) IS NULL THEN
+        RAISE EXCEPTION 'Inicia sesión para continuar.';
+    END IF;
+    IF char_length(v_nombre) NOT BETWEEN 3 AND 150 THEN
+        RAISE EXCEPTION 'El nombre debe tener entre 3 y 150 caracteres.';
+    END IF;
+    IF v_documento !~ '^[A-Za-z0-9]{5,15}$' THEN
+        RAISE EXCEPTION 'El documento debe tener entre 5 y 15 letras o números.';
+    END IF;
+    IF v_telefono !~ '^(3[0-9]{9}|60[0-9]{8}|018000[0-9]{6})( ext[.] [0-9]{1,6})?$' THEN
+        RAISE EXCEPTION 'El teléfono no es un número colombiano válido.';
+    END IF;
+
+    UPDATE public.perfiles_generador
+    SET nombre_completo_o_empresa = v_nombre, documento_nit = upper(v_documento), telefono = v_telefono
+    WHERE usuario_id = (SELECT auth.uid());
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Tu cuenta no tiene un perfil de generador.';
+    END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.actualizar_perfil_generador(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.actualizar_perfil_generador(TEXT, TEXT, TEXT) TO authenticated;
 
 -- Admin resuelve un problema reportado («No se recogió»).
 CREATE OR REPLACE FUNCTION public.resolver_problema_no_recogido(p_solicitud_id BIGINT, p_nota TEXT)

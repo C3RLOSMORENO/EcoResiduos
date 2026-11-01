@@ -373,5 +373,16 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> actualizarHorario(String? horario) async => llamadas.add('horario:$horario');
 
   @override
+  Future<void> cambiarCorreo(String correoNuevo) async => llamadas.add('correo:$correoNuevo');
+
+  @override
+  Future<void> actualizarPerfilGenerador({
+    required String nombre,
+    required String documento,
+    required String telefono,
+  }) async =>
+      llamadas.add('perfilGenerador:$nombre|$documento|$telefono');
+
+  @override
   Future<void> renovarPermisoAmbiental(ArchivoPdf pdf) async => llamadas.add('renovarPermiso:${pdf.nombre}');
 }

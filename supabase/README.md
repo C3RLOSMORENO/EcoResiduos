@@ -1,102 +1,105 @@
-# EcoResiduos — Capa de Base de Datos y Servicios Supabase
+# EcoResiduos: base de datos (Supabase)
 
 <div align="center">
 
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Storage-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Row Level Security](https://img.shields.io/badge/Security-Row_Level_Security_(RLS)-red?style=for-the-badge)
-![Transactions](https://img.shields.io/badge/ACID-Pessimistic_Locks_(FOR_UPDATE)-blue?style=for-the-badge)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Row Level Security](https://img.shields.io/badge/Seguridad-RLS-red?style=for-the-badge)
 
-**Arquitectura de persistencia relacional, control de acceso Zero-Trust y procedimientos transaccionales para EcoResiduos**
-
-*Ámbito Territorial Acotado: Bucaramanga, Floridablanca, Girón, Piedecuesta, Barrancabermeja y Sabana de Torres (Santander)*
+**Tablas, reglas de acceso, funciones y almacenamiento de EcoResiduos**
 
 </div>
 
 ---
 
-## 1. Estructura de la Capa de Datos
-
-La persistencia del sistema está implementada sobre **PostgreSQL 15+** alojado en la infraestructura administrada de **Supabase**, aplicando una separación estricta entre el catálogo público expuesto a la API y las funciones transaccionales seguras del esquema `private`:
+## 1. Archivos
 
 ```
 supabase/
-├── migrations/                               # Scripts DDL y reglas de negocio relacionales
-│   ├── 20260924000000_reglas_negocio_postulaciones_materiales.sql
-│   ├── 20260925000000_seguridad_rls_y_perfiles.sql
-│   ├── 20260926000000_storage_fotos.sql
-│   ├── 20260927000000_notificaciones_historial_horario.sql
-│   ├── 20260928000000_horario_autoridades.sql
-│   ├── 20260930000000_certificado_recoleccion.sql
-│   ├── 20261001000000_valor_postulacion_y_certificado.sql
-│   ├── 20261002000000_registro_gestor_nuevo.sql
-│   ├── 20261003000000_cancelar_solicitud_admin.sql
-│   ├── 20261003000100_motivo_verificacion_y_avisos_gestor.sql
-│   └── 20261003000200_resolucion_problemas_reportados.sql
-│
-└── functions/                                # Edge Functions del servidor
-    └── limpiar-fotos-huerfanas/              # Mantenimiento automatizado de almacenamiento
+├── migrations/
+│   └── 00000000000000_schema_completo.sql   # Toda la base: tablas, RLS, funciones, triggers y buckets
+└── functions/
+    └── limpiar-fotos-huerfanas/             # Borra fotos que ya no usa ninguna fila (ver su README)
 ```
 
----
+Hay una sola migración. Crea la base desde cero y también pone al día una base que ya existe: usa `IF NOT EXISTS`, `CREATE OR REPLACE` y `DROP … IF EXISTS`, y agrega con `ADD COLUMN IF NOT EXISTS` las columnas que se sumaron después de crear cada tabla.
 
-## 2. Catálogo de Tablas del Sistema
+### Cómo aplicarla
 
-```
-┌───────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
-│ Tabla Relacional                      │ Responsabilidad en el Modelo de Dominio                       │
-├───────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
-│ `public.usuarios`                     │ Vinculación 1:1 con auth.users y asignación protegida de rol. │
-│ `public.perfiles_generador`           │ Información de contacto y municipio del generador de residuo. │
-│ `public.perfiles_gestor`              │ Directorio oficial de empresas gestoras y coordenadas GPS.    │
-│ `public.materiales_residuos`          │ Catálogo de tipologías bajo Resolución 2184 de 2019.          │
-│ `public.gestor_material`              │ Tabla N:M de materiales habilitados por empresa gestora.      │
-│ `public.solicitudes_recoleccion`      │ Órdenes de recolección de residuos y ciclo de vida logístico. │
-│ `public.postulaciones_recoleccion`    │ Propuestas económicas y cotizaciones de recolección.          │
-│ `public.solicitudes_historial_estados`│ Bitácora inmutable de auditoría para trazabilidad de estados. │
-│ `public.notificaciones`               │ Bandeja de alertas transaccionales por usuario.               │
-│ `public.gestor_decisiones`            │ Registro inmutable de auditoría documental (Aprobado/Rechazo).│
-│ `public.historial_escaneos_ia`        │ Registro de inferencias y nivel de confianza en dispositivo.  │
-│ `public.autoridades_ambientales`      │ Directorio institucional de corporaciones (CDMB, AMB, CAS).   │
-└───────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
-```
+1. En Supabase, abre **SQL Editor** y pega el archivo completo.
+2. Para probar sin guardar nada, agrega `BEGIN;` como primera línea y `ROLLBACK;` como última, y ejecútalo.
+3. Si no hay errores, quita esas dos líneas y ejecútalo de nuevo.
+
+El SQL Editor lo ejecuta todo o nada: si un paso falla, la base queda como estaba. Al aplicarlo sobre una base existente, el único dato que modifica es el de los teléfonos fijos de 7 dígitos, que pasan a 10 con el indicativo 607 de Santander.
+
+Para que las recolecciones se confirmen solas a las 72 horas, activa antes la extensión `pg_cron` (Database → Extensions); la migración programa la tarea si la encuentra.
 
 ---
 
-## 3. Modelo de Seguridad (Row Level Security - RLS)
+## 2. Tablas
 
-Para implementar una arquitectura *Zero-Trust*, todas las tablas tienen RLS habilitado y sus privilegios públicos (`anon`, `authenticated`) fueron revocados para evitar operaciones masivas o no autorizadas:
-
-1. **Esquema `private` no expuesto:** Las funciones de validación (`mi_generador_id`, `mi_gestor_id`, `mis_materiales_verificados`, `solicitudes_abiertas_para_mi`) se definen con `SECURITY DEFINER` y `SET search_path = ''` para prevenir inyecciones SQL y recursión en políticas.
-2. **Aislamiento por Rol:** Los generadores solo pueden consultar sus propias solicitudes. Los gestores ambientales solo pueden ver solicitudes abiertas que correspondan a los materiales que tienen verificados en su licencia.
-3. **Acceso Administrativo:** El panel administrativo opera con la clave `service_role` desde el backend Node.js, omitiendo RLS para auditoría centralizada.
-
----
-
-## 4. Procedimientos Transaccionales ACID
-
-Las mutaciones de estado se realizan mediante funciones RPC almacenadas con bloqueos pesimistas (`FOR UPDATE`), previniendo condiciones de carrera:
-
-- `aceptar_postulacion_recoleccion(solicitud_id, postulacion_id)`: Adjudica la solicitud al gestor elegido, cambia las demás ofertas a `NO_SELECCIONADA` y transiciona el estado a `EN_NEGOCIACION`.
-- `marcar_recolectado_gestor(solicitud_id)`: Valida la identidad del gestor asignado y registra la marca temporal de retiro físico.
-- `confirmar_recoleccion_generador(solicitud_id)`: Valida la conformidad del generador y cierra el ciclo de servicio.
-- `cargar_certificado_gestor(solicitud_id, url, tipo)`: Custodia el PDF probatorio de disposición final o aprovechamiento.
-- `vincular_cuenta_gestor()`: Registra y vincula la empresa gestora en estado `PENDIENTE` en su primer inicio de sesión tras confirmar correo.
+| Tabla | Qué guarda |
+|---|---|
+| `usuarios` | Una fila por cuenta de `auth.users`: correo, rol y la autorización de datos aceptada (versión y fecha). La crea un trigger; la app no escribe aquí. |
+| `perfiles_generador` | Nombre o empresa, documento, teléfono, municipio y correo de quien publica residuos. |
+| `perfiles_gestor` | Empresas gestoras: NIT, razón social, contacto, ubicación, horario, estado de verificación, permiso ambiental, logo y portada. |
+| `materiales_residuos` | Catálogo de materiales con su categoría según la Resolución 2184 de 2019. |
+| `gestor_material` | Qué materiales recibe cada gestor y si el administrador ya los verificó. |
+| `solicitudes_recoleccion` | Cada publicación: material, cantidad, dirección, estado, gestor asignado, problemas reportados y certificado. |
+| `postulaciones_recoleccion` | Ofertas de los gestores: valor, tipo de valor y modalidad de entrega. |
+| `solicitudes_historial_estados` | Cada cambio de estado de una solicitud. Lo escribe un trigger; la app solo lo lee. |
+| `notificaciones` | Avisos por usuario que generan los triggers (oferta nueva, recolección marcada…). |
+| `gestor_decisiones` | Historial de aprobaciones, rechazos y suspensiones de gestores, con el motivo. Solo lo lee el panel. |
+| `historial_escaneos_ia` | Cada residuo identificado con la cámara: categoría, confianza y foto. |
+| `autoridades_ambientales` | CDMB, AMB, CAS y otras autoridades, con su contacto y horario. |
 
 ---
 
-## 5. Configuración de Almacenamiento (Supabase Storage)
+## 3. Seguridad por fila (RLS)
 
-| Bucket | Visibilidad | Límite por Archivo | Tipos MIME | Política de Acceso |
+Todas las tablas tienen RLS activo. La llave pública de la app solo deja leer y cambiar lo que las políticas permiten:
+
+- Un generador ve sus propias solicitudes y edita las que siguen publicadas.
+- Un gestor ve las solicitudes publicadas de los materiales que tiene verificados, las que ya ofertó y las que le asignaron.
+- Los cambios de estado críticos no se hacen con `UPDATE` directo: pasan por las funciones de la sección 4.
+- El panel de administración usa la llave `service_role` desde el servidor y no está limitado por RLS.
+
+Las funciones auxiliares de las políticas (`mi_generador_id`, `mi_gestor_id`, `mis_materiales_verificados`, `mis_solicitudes_postuladas`…) viven en el esquema `private`, que la API no expone, y usan `SECURITY DEFINER` con `SET search_path = ''`.
+
+---
+
+## 4. Funciones (RPC)
+
+Las que cambian el estado de una solicitud bloquean la fila (`FOR UPDATE`) para que dos acciones al mismo tiempo no la dejen en un estado inválido.
+
+| Función | Quién la llama | Qué hace |
+|---|---|---|
+| `aceptar_postulacion_recoleccion` | Generador | Elige una oferta: la marca aceptada, las demás como no seleccionadas y pasa la solicitud a `EN_NEGOCIACION`. |
+| `rechazar_postulacion_recoleccion` | Generador | Descarta una oferta. |
+| `cancelar_solicitud_generador` | Generador | Cancela su publicación si está publicada o en negociación. |
+| `confirmar_recoleccion_generador` | Generador | Confirma que recogieron el residuo. |
+| `reportar_problema_recoleccion` | Generador | Reporta que la recolección no se hizo bien. |
+| `actualizar_perfil_generador` | Generador | Cambia su nombre, documento y teléfono, validados en la base. |
+| `marcar_recolectado_gestor` | Gestor | Marca la recolección hecha. |
+| `cargar_certificado_gestor` | Gestor | Guarda el certificado de disposición final o aprovechamiento. |
+| `actualizar_materiales_gestor` | Gestor | Cambia los materiales que recibe; los nuevos quedan por verificar. |
+| `vincular_cuenta_gestor` | Gestor | Vincula la cuenta con su empresa al primer inicio de sesión. |
+| `registrar_autorizacion_datos` | Cualquier usuario | Guarda que aceptó la política de datos (Ley 1581 de 2012). |
+| `cancelar_solicitud_admin` | Panel | Cancela una solicitud. |
+| `cambiar_verificacion_gestor_admin` | Panel | Aprueba, rechaza o suspende un gestor y guarda el motivo en `gestor_decisiones`. |
+| `resolver_problema_no_recogido` | Panel | Resuelve un problema reportado: la solicitud vuelve a `EN_NEGOCIACION`. |
+| `auto_confirmar_recolecciones_vencidas` | `pg_cron`, cada hora | Confirma las recolecciones sin respuesta del generador después de 72 horas. |
+
+Además, un trigger copia a `usuarios` y a `perfiles_generador` el correo de acceso cuando el usuario confirma un cambio de correo.
+
+---
+
+## 5. Almacenamiento (Storage)
+
+| Bucket | Visibilidad | Límite | Tipos | Quién sube |
 |---|---|---|---|---|
-| `solicitudes` | Público | 5 MB | JPEG, PNG, WEBP | Subida restringida a la carpeta del usuario autenticado (`auth.uid()`). |
-| `certificados`| Público | 10 MB | PDF | Subida exclusiva del gestor asignado tras retiro físico del lote. |
-| `permisos` | **Privado** | 10 MB | PDF | Subida anónima durante el onboarding en `registro/`. **Lectura exclusiva de backend**. |
+| `escaneos_ia` | Público | 5 MB | JPEG, PNG, WEBP | Cada usuario, en su carpeta (`<uid>/…`). Fotos de escaneos y publicaciones. |
+| `fotos_perfil` | Público | 2 MB | JPEG, PNG, WEBP | Cada usuario, en su carpeta. Logo y portada de los gestores, foto de los generadores. |
+| `certificados` | Público | 10 MB | PDF | El gestor, en su carpeta. |
+| `permisos` | Privado | 10 MB | PDF | La empresa al registrarse (`registro/`) o al renovarlo (`renovacion/`), y el panel (`admin/`). Solo el servidor lo lee. |
 
----
-
-## 6. Despliegue de Migraciones
-
-Para aplicar el esquema relacional en una instancia de Supabase:
-1. Abrir el **SQL Editor** en la consola del proyecto en Supabase.
-2. Ejecutar secuencialmente los 11 archivos ubicados en el directorio `supabase/migrations/`.
+Los buckets públicos sirven sus archivos a quien tenga la URL exacta; las rutas llevan el identificador aleatorio del usuario, así que no se pueden adivinar, pero no exigen sesión. Está anotado como limitación en el README del panel.

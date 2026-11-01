@@ -1,4 +1,4 @@
-# EcoResiduos — Aplicación Móvil
+# EcoResiduos: aplicación móvil
 
 <div align="center">
 
@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Dart-3.12-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Flutter_SDK-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Tests](https://img.shields.io/badge/Flutter_Tests-124_Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Flutter_Tests-137_Passed-brightgreen?style=for-the-badge)
 [![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
 **App para clasificar residuos con la cámara, sin conexión, y coordinar su recolección con empresas gestoras autorizadas**
@@ -53,7 +53,7 @@ app/
 │   ├── theme/                    # Colores, tipografía y espaciados (Material 3)
 │   ├── utils/                    # Municipios, formatos y validación de teléfonos y NIT
 │   └── widgets/                  # Componentes compartidos
-└── test/                         # 124 pruebas de lógica y de pantallas
+└── test/                         # 137 pruebas de lógica y de pantallas
 ```
 
 ---
@@ -74,10 +74,11 @@ La foto se guarda en el historial de escaneos del usuario en Supabase (bucket `e
 
 ## 4. Datos personales y validaciones
 
-- **Autorización (Ley 1581 de 2012):** el registro no avanza sin marcar la autorización del tratamiento de datos, que enlaza la [política completa](lib/legal/politica_datos.dart). Quien ya tenía cuenta la acepta la próxima vez que entra. La versión aceptada y la fecha quedan en `usuarios.autorizacion_datos_version` y `autorizacion_datos_at`.
-- **Contraseñas:** mínimo 8 caracteres, con letras y números. Supabase Auth aplica la misma regla aunque alguien no use la app.
-- **Teléfonos:** celular o fijo de 10 dígitos, fijo de 7 dígitos (se guarda con el indicativo 607 de Santander) o línea 01 8000, con extensión opcional. Son las mismas reglas del panel ([`validacion.dart`](lib/utils/validacion.dart)).
-- **NIT:** 8 a 15 dígitos; si se escribe el dígito de verificación, se comprueba con el algoritmo de la DIAN.
+El registro no avanza sin marcar la autorización del tratamiento de datos (Ley 1581 de 2012), que enlaza la [política completa](lib/legal/politica_datos.dart). Quien ya tenía cuenta la acepta la próxima vez que entra. La versión aceptada y la fecha quedan en `usuarios.autorizacion_datos_version` y `autorizacion_datos_at`.
+
+En Cuenta, el generador cambia su nombre, documento, teléfono, municipio y correo de acceso. El correo nuevo se confirma con un enlace, y un trigger lo copia al perfil; los demás datos pasan por la función `actualizar_perfil_generador`, que los valida en la base. La empresa gestora cambia ahí su correo de contacto, teléfono, dirección y horario; el NIT y la razón social los cambia el administrador.
+
+Las contraseñas llevan mínimo 8 caracteres, con letras y números, y Supabase Auth aplica la misma regla aunque alguien no use la app. Los teléfonos pueden ser celulares o fijos de 10 dígitos, fijos de 7 dígitos (se guardan con el indicativo 607 de Santander) o líneas 01 8000, con extensión opcional. El NIT tiene de 8 a 15 dígitos y, si se escribe el dígito de verificación, se comprueba con el algoritmo de la DIAN. Teléfonos y NIT siguen las mismas reglas que el panel ([`validacion.dart`](lib/utils/validacion.dart)).
 
 ---
 
@@ -93,7 +94,23 @@ flutter run
 
 La app usa la llave pública de Supabase, que puede ir en el código: los datos los protegen las políticas de seguridad por fila de la base ([`supabase/migrations`](../supabase/migrations/)), no la llave.
 
-El APK de cada versión se compila en GitHub Actions ([`build-apk.yml`](../.github/workflows/build-apk.yml)) y se publica en [Releases](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest).
+### Publicar una versión
+
+El APK se compila en GitHub Actions ([`build-apk.yml`](../.github/workflows/build-apk.yml)) cada vez que llegan a `main` cambios de la app, y se publica en [Releases](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest).
+
+1. Sube la versión en `pubspec.yaml` (`version: X.Y.Z+N`).
+2. Escribe en [`CHANGELOG.md`](CHANGELOG.md) una sección `## X.Y.Z` con lo que cambió, en palabras del usuario. El release la publica como novedades, y `flutter test` falla si falta.
+
+### Firma del APK
+
+Android solo instala una versión encima de la anterior si las dos están firmadas con la misma llave. Sin llave propia, el flujo firma con la de depuración, que cambia en cada compilación, y quien actualiza tiene que desinstalar la versión anterior. Para firmar siempre igual, se crea la llave una sola vez:
+
+```bash
+keytool -genkey -v -keystore ecoresiduos.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ecoresiduos
+base64 -w 0 ecoresiduos.jks > ecoresiduos.jks.base64
+```
+
+y se guardan en GitHub (Settings → Secrets and variables → Actions) los secretos `ANDROID_KEYSTORE_BASE64` (el contenido de `ecoresiduos.jks.base64`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`ecoresiduos`) y `ANDROID_KEY_PASSWORD`. Guarda el archivo `.jks` y sus contraseñas fuera del repositorio: si se pierden, ninguna versión futura se podrá instalar encima de las publicadas con esa llave.
 
 ---
 
@@ -101,7 +118,7 @@ El APK de cada versión se compila en GitHub Actions ([`build-apk.yml`](../.gith
 
 ```bash
 flutter analyze
-flutter test        # 124 pruebas
+flutter test        # 137 pruebas
 ```
 
 Cubren el registro (incluida la autorización de datos y la validación de NIT y teléfono), la recuperación de contraseña, la publicación y la cola sin conexión, el detalle de una solicitud, las listas, la foto de perfil y el dibujo de cada pantalla en tema claro y oscuro.
