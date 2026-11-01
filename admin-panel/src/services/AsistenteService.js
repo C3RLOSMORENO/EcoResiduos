@@ -54,16 +54,24 @@ const NOMBRES_CONSULTAS = {
     contar_certificados: 'Certificados',
     listar_materiales: 'Materiales',
     contar_ciudadanos: 'Ciudadanos',
-    listar_autoridades: 'Autoridades'
+    listar_autoridades: 'Autoridades',
+    documentos_gestor: 'Documentos del gestor',
+    documentos_certificados: 'Certificados en PDF',
+    descargar_reporte: 'Reporte en Excel'
 };
+
+// Únicas rutas que el asistente puede ofrecer como enlace: todas son del
+// panel y exigen sesión de administrador.
+const RUTAS_PERMITIDAS = /^\/(?:gestores\/\d+(?:\/permiso)?|solicitudes\/\d+\/certificado|reportes(?:\/excel)?(?:\?[\w=&%.-]*)?)$/;
+const MAX_ENLACES = 12;
 
 // Preguntas de ejemplo del asistente vacío.
 const SUGERENCIAS = [
     '¿Cuántos gestores tenemos aprobados?',
     '¿Qué gestores reciben aceite usado?',
     '¿Cuántas publicaciones se completaron este mes?',
-    '¿Cuántos kilos se han recolectado por municipio?',
-    '¿Cuántos certificados de aprovechamiento hay?',
+    'Descárgame el reporte de este mes en Excel',
+    'Muéstrame los certificados de aprovechamiento',
     'Dame un resumen general del panel'
 ];
 
@@ -118,6 +126,7 @@ function instrucciones(hoy) {
         '- Responde en español, breve y claro, en texto plano: sin markdown, sin asteriscos ni almohadillas. Para listas usa líneas que empiecen con «- ».',
         '- Nunca sumes cantidades de unidades distintas (kg, toneladas, litros, metros cúbicos): dalas por separado.',
         '- Si una consulta devuelve un error, explícale al administrador qué pasó con tus palabras.',
+        '- Cuando una consulta trae «botones», el panel los muestra debajo de tu respuesta: menciónalos («abajo tienes el permiso»). Nunca escribas direcciones web.',
         '',
         'Vocabulario del panel:',
         '- «Publicaciones» y «solicitudes» son lo mismo.',
@@ -218,6 +227,25 @@ async function llamarGemini(modelo, cuerpo, fetchBase, limiteMs) {
 }
 
 /**
+ * Saca los enlaces del resultado de una consulta y los guarda aparte: el
+ * modelo solo recibe el texto de cada botón, así no tiene URL que copiar.
+ * Cada URL se valida contra RUTAS_PERMITIDAS.
+ *
+ * @param {object} resultado Lo que devolvió la consulta.
+ * @param {Map<string, object>} enlaces Enlaces de la respuesta, por URL.
+ * @returns {object} El resultado para el modelo.
+ */
+function separarEnlaces(resultado, enlaces) {
+    if (!resultado || !Array.isArray(resultado.enlaces)) return resultado;
+    const { enlaces: propios, ...paraModelo } = resultado;
+    const validos = propios.filter((e) => e && typeof e.url === 'string' && RUTAS_PERMITIDAS.test(e.url));
+    validos.forEach((e) => {
+        if (enlaces.size < MAX_ENLACES) enlaces.set(e.url, { tipo: e.tipo, texto: String(e.texto).slice(0, 120), url: e.url });
+    });
+    return { ...paraModelo, botones: validos.map((e) => e.texto) };
+}
+
+/**
  * La conversación completa con un modelo: rondas de consultas hasta que
  * responde con texto.
  *
@@ -230,6 +258,7 @@ async function llamarGemini(modelo, cuerpo, fetchBase, limiteMs) {
 async function conversar(modelo, historial, { fetchBase, ahora, vence }) {
     const contenidos = historial.map((m) => ({ role: m.rol === 'asistente' ? 'model' : 'user', parts: [{ text: m.texto }] }));
     const usadas = new Set();
+    const enlaces = new Map();
 
     for (let ronda = 0; ronda < MAX_RONDAS; ronda += 1) {
         const restante = vence - Date.now();
@@ -251,14 +280,14 @@ async function conversar(modelo, historial, { fetchBase, ahora, vence }) {
             // Las partes con thought son el razonamiento interno del modelo.
             const texto = partes.filter((p) => typeof p.text === 'string' && !p.thought).map((p) => p.text).join('').trim();
             if (!texto) throw new ErrorAsistente('El asistente no pudo responder esa pregunta. Intenta escribirla de otra forma.');
-            return { respuesta: texto, consultas: [...usadas].map((n) => NOMBRES_CONSULTAS[n] || n) };
+            return { respuesta: texto, consultas: [...usadas].map((n) => NOMBRES_CONSULTAS[n] || n), enlaces: [...enlaces.values()] };
         }
 
         // Fuera del panel (o una función que no existe) y sin ninguna
         // consulta de datos: respuesta fija, sin dejar que el modelo redacte.
         const fuera = (l) => l.name === 'fuera_del_panel' || (!herramientas[l.name] && l.name !== 'conversacion');
         if (llamadas.every(fuera)) {
-            return { respuesta: RESPUESTA_FUERA_DEL_PANEL, consultas: [] };
+            return { respuesta: RESPUESTA_FUERA_DEL_PANEL, consultas: [], enlaces: [] };
         }
 
         // La respuesta del modelo vuelve tal cual (con sus firmas de
@@ -272,7 +301,7 @@ async function conversar(modelo, historial, { fetchBase, ahora, vence }) {
                 resultado = { indicacion: 'Responde en una o dos frases, sin agregar información que no esté en el panel ni en esta conversación.' };
             } else {
                 if (herramientas[llamada.name]) usadas.add(llamada.name);
-                resultado = await ejecutar(llamada.name, llamada.args);
+                resultado = separarEnlaces(await ejecutar(llamada.name, llamada.args), enlaces);
             }
             return { functionResponse: { name: llamada.name, response: { resultado } } };
         }));
@@ -290,6 +319,7 @@ const asistenteService = {
     NOMBRES_CONSULTAS,
     SUGERENCIAS,
     RESPUESTA_FUERA_DEL_PANEL,
+    RUTAS_PERMITIDAS,
     ErrorAsistente,
 
     /** @returns {boolean} true si hay llave de Gemini. */
@@ -306,8 +336,9 @@ const asistenteService = {
      * @param {{rol: string, texto: string}[]} historial Resultado de historialValido.
      * @param {{fetchBase?: typeof fetch, ahora?: Date}} [opciones] Las pruebas
      *     reemplazan fetch y el reloj.
-     * @returns {Promise<{respuesta: string, consultas: string[]}>} La respuesta y
-     *     el nombre legible de las consultas que se usaron.
+     * @returns {Promise<{respuesta: string, consultas: string[], enlaces: object[]}>} La
+     *     respuesta, el nombre legible de las consultas que se usaron y los
+     *     enlaces a documentos o reportes que trajeron.
      * @throws {ErrorAsistente}
      */
     async preguntar(historial, { fetchBase = globalThis.fetch, ahora = new Date() } = {}) {

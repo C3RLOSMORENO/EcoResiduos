@@ -211,7 +211,17 @@ test('asistente flotante: se abre, responde, sigue al cambiar de pantalla y se c
     await page.route('**/asistente/preguntar', async (ruta) => {
         const { historial } = ruta.request().postDataJSON();
         expect(ruta.request().headers()['x-csrf-token']).toBeTruthy();
-        await ruta.fulfill({ json: { ok: true, respuesta: `Tienen 47 gestores aprobados (${historial.length} mensaje).`, consultas: ['Gestores'] } });
+        await ruta.fulfill({ json: {
+            ok: true,
+            respuesta: `Tienen 47 gestores aprobados (${historial.length} mensaje).`,
+            consultas: ['Gestores'],
+            // Un enlace del panel se muestra; uno de otro sitio nunca.
+            enlaces: [
+                { tipo: 'pdf', texto: 'Permiso ambiental · Reciclajes', url: '/gestores/1/permiso' },
+                { tipo: 'pdf', texto: 'Certificado · solicitud 10 (Periféricos (Mouse, Teclados, Parlantes pequeños))', url: '/solicitudes/10/certificado' },
+                { tipo: 'pdf', texto: 'Enlace externo', url: 'https://otro-sitio.co/x.pdf' }
+            ]
+        } });
     });
     await iniciarSesion(page, '/solicitudes/7');
 
@@ -224,6 +234,15 @@ test('asistente flotante: se abre, responde, sigue al cambiar de pantalla y se c
     await panel.getByRole('button', { name: '¿Cuántos gestores tenemos aprobados?' }).click();
     await expect(panel.getByRole('log')).toContainText('Tienen 47 gestores aprobados (1 mensaje).');
     await expect(panel.getByRole('log')).toContainText('Consultó: Gestores');
+    const permiso = panel.getByRole('link', { name: 'Permiso ambiental · Reciclajes' }).first();
+    await expect(permiso).toHaveAttribute('href', '/gestores/1/permiso');
+    await expect(permiso).toHaveAttribute('target', '_blank');
+    await expect(panel.getByRole('link', { name: 'Enlace externo' })).toHaveCount(0);
+    // Un nombre largo pasa a otra línea: el botón no se sale de la burbuja.
+    const largo = panel.getByRole('link', { name: /solicitud 10/ });
+    const cajaEnlace = await largo.boundingBox();
+    const cajaBurbuja = await largo.locator('xpath=ancestor::div[contains(@class, "rounded-2xl")][1]').boundingBox();
+    expect(cajaEnlace.x + cajaEnlace.width).toBeLessThanOrEqual(cajaBurbuja.x + cajaBurbuja.width + 1);
     if (process.env.CAPTURA_ASISTENTE) await page.screenshot({ path: `${process.env.CAPTURA_ASISTENTE}-${test.info().project.name}.png` });
 
     // Al pasar a otra pantalla la conversación sigue abierta y con sus mensajes.

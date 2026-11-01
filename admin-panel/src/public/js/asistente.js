@@ -33,7 +33,38 @@
     try { sessionStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) { /* sin almacenamiento */ }
   }
 
-  function burbuja(rol, texto, consultas) {
+  // Enlaces a documentos o reportes que mandó el servidor. Solo rutas del
+  // propio panel: una URL absoluta o que empiece por // no se muestra.
+  const ICONO_ENLACE = { pdf: 'picture_as_pdf', excel: 'download', ficha: 'open_in_new' };
+
+  function listaEnlaces(enlaces) {
+    const lista = document.createElement('ul');
+    lista.className = 'mt-3 flex flex-col gap-2';
+    lista.setAttribute('role', 'list');
+    enlaces.filter((e) => /^\/(?!\/)/.test(String(e.url))).forEach((e) => {
+      const item = document.createElement('li');
+      const enlace = document.createElement('a');
+      enlace.href = e.url;
+      enlace.className = 'btn-tonal asistente-enlace';
+      if (e.tipo === 'pdf') {
+        enlace.target = '_blank';
+        enlace.rel = 'noopener';
+      }
+      if (e.tipo === 'excel') enlace.setAttribute('download', '');
+      const icono = document.createElement('span');
+      icono.className = 'material-symbols-outlined icono-20';
+      icono.setAttribute('aria-hidden', 'true');
+      icono.textContent = ICONO_ENLACE[e.tipo] || 'open_in_new';
+      const texto = document.createElement('span');
+      texto.textContent = e.texto;
+      enlace.append(icono, texto);
+      item.append(enlace);
+      lista.append(item);
+    });
+    return lista;
+  }
+
+  function burbuja(rol, texto, consultas, enlaces) {
     const fila = document.createElement('div');
     fila.className = rol === 'usuario' ? 'flex justify-end' : 'flex justify-start';
 
@@ -45,6 +76,8 @@
         ? `${base} rounded-bl-sm bg-error-container text-on-error-container`
         : `${base} rounded-bl-sm bg-surface-container-high text-on-surface`;
     caja.textContent = texto;
+
+    if (enlaces && enlaces.length) caja.append(listaEnlaces(enlaces));
 
     if (consultas && consultas.length) {
       const nota = document.createElement('p');
@@ -65,7 +98,7 @@
 
   function pintarConversacion() {
     if (estado.mensajes.length && sugerencias) sugerencias.hidden = true;
-    estado.mensajes.forEach((m) => burbuja(m.rol, m.texto, m.consultas));
+    estado.mensajes.forEach((m) => burbuja(m.rol, m.texto, m.consultas, m.enlaces));
   }
 
   function abrir(enfocar) {
@@ -141,8 +174,8 @@
 
     espera.remove();
     if (respuesta && respuesta.ok) {
-      burbuja('asistente', respuesta.respuesta, respuesta.consultas);
-      estado.mensajes.push({ rol: 'asistente', texto: respuesta.respuesta, consultas: respuesta.consultas });
+      burbuja('asistente', respuesta.respuesta, respuesta.consultas, respuesta.enlaces);
+      estado.mensajes.push({ rol: 'asistente', texto: respuesta.respuesta, consultas: respuesta.consultas, enlaces: respuesta.enlaces });
     } else {
       // La pregunta sin respuesta sale del historial para no confundir la
       // siguiente; el error se ve en pantalla pero no se guarda.
