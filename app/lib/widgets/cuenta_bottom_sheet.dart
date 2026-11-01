@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException, PostgrestException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/auth/screens/restablecer_password_screen.dart';
+import '../features/auth/widgets/campo_contrasena.dart' show validarCorreo;
 import '../features/solicitudes/screens/mis_materiales_screen.dart';
 import '../services/archivo_pdf.dart';
 import '../services/foto_perfil_service.dart';
@@ -12,11 +14,16 @@ import '../theme/eco_theme.dart';
 import '../utils/formato.dart';
 import '../utils/municipios.dart';
 import '../utils/sesion.dart';
+import '../utils/validacion.dart';
 import 'gestor_card.dart';
+import 'recorrido_bienvenida.dart' show reiniciarRecorridos;
 
 /// Hoja de cuenta (05) que se abre desde el avatar. El municipio se edita en
-/// la misma hoja (05b); la foto de perfil (y la portada del gestor) se cambia
-/// con su opción; los demás datos son de lectura.
+/// la misma hoja (05b) y la foto de perfil (y la portada del gestor) con su
+/// opción. El generador edita su nombre, documento, teléfono y correo de
+/// acceso (este último se confirma desde un enlace al correo nuevo); el
+/// gestor, sus datos de contacto (el NIT, la razón social y el correo de
+/// acceso los cambia el administrador).
 class CuentaBottomSheet extends StatefulWidget {
   const CuentaBottomSheet({super.key, this.authRepository, this.fotoPerfilService, this.sesion});
 
@@ -52,10 +59,12 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   String? _direccion;
   String? _emailContacto;
   String? _horario;
+  String? _correoPendiente;
 
   _VistaActual _vista = _VistaActual.cuenta;
   String? _municipioNuevo;
   _CampoEditable? _campoActual;
+  String? _errorCampo;
   bool _guardando = false;
 
   // Un único controlador reutilizable para la sub-vista de editar un campo.
@@ -72,6 +81,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     _telefono = _sesion.telefono;
     _municipio = _sesion.municipio;
     _documento = _sesion.documento;
+    _correoPendiente = _sesion.correoPendiente;
     _cargarPerfil();
   }
 
@@ -132,6 +142,9 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
 
   void _abrirEditarCampo(_CampoEditable campo) {
     _ctrlCampo.text = switch (campo) {
+      _CampoEditable.nombre => _nombre,
+      _CampoEditable.correoAcceso => _correoPendiente ?? _sesion.correo,
+      _CampoEditable.documento => _documento ?? '',
       _CampoEditable.email => _emailContacto ?? '',
       _CampoEditable.telefono => _telefono ?? '',
       _CampoEditable.direccion => _direccion ?? '',
@@ -139,22 +152,64 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     };
     setState(() {
       _campoActual = campo;
+      _errorCampo = null;
       _vista = _VistaActual.editarCampo;
     });
   }
 
+  /// Mensaje de error del valor escrito, o null si se puede guardar. Son las
+  /// mismas reglas que valida la base.
+  static String? _validar(_CampoEditable campo, String valor) => switch (campo) {
+        _CampoEditable.nombre =>
+          valor.length < 3 || valor.length > 150 ? 'Escribe entre 3 y 150 caracteres' : null,
+        _CampoEditable.documento => RegExp(r'^[A-Za-z0-9]{5,15}$').hasMatch(valor.replaceAll(RegExp(r'[\s.-]'), ''))
+            ? null
+            : 'Escribe entre 5 y 15 letras o números',
+        _CampoEditable.email => validarCorreo(valor),
+        _CampoEditable.correoAcceso => validarCorreo(valor),
+        _CampoEditable.telefono => validarTelefono(valor),
+        _CampoEditable.direccion => valor.length < 5 ? 'Escribe la dirección completa' : null,
+        _CampoEditable.horario => valor.length > 120 ? 'Máximo 120 caracteres' : null,
+      };
+
   Future<void> _guardarCampo() async {
     final campo = _campoActual;
     if (campo == null) return;
-    final nuevo = _ctrlCampo.text.trim();
-    if (nuevo.isEmpty && campo != _CampoEditable.horario) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El campo no puede estar vacío.')));
+    final escrito = _ctrlCampo.text.trim();
+    var error = _validar(campo, escrito);
+    if (error == null && campo == _CampoEditable.correoAcceso && escrito.toLowerCase() == _sesion.correo.toLowerCase()) {
+      error = 'Es el mismo correo con el que entras ahora';
+    }
+    if (error != null) {
+      setState(() => _errorCampo = error);
       return;
     }
+    // El teléfono se guarda normalizado (solo dígitos e indicativo 607 en los fijos de 7 dígitos).
+    final nuevo = campo == _CampoEditable.telefono ? normalizarTelefono(escrito)! : escrito;
     final messenger = ScaffoldMessenger.of(context);
-    setState(() => _guardando = true);
+    setState(() {
+      _guardando = true;
+      _errorCampo = null;
+    });
     try {
-      if (campo == _CampoEditable.horario) {
+      if (campo == _CampoEditable.correoAcceso) {
+        await _auth.cambiarCorreo(nuevo);
+        setState(() {
+          _correoPendiente = nuevo.toLowerCase();
+          _vista = _VistaActual.cuenta;
+        });
+        messenger.showSnackBar(
+          SnackBar(content: Text('Te enviamos un enlace a $nuevo. Ábrelo para confirmar el cambio.')),
+        );
+        return;
+      }
+      if (!_sesion.esGestor) {
+        await _auth.actualizarPerfilGenerador(
+          nombre: campo == _CampoEditable.nombre ? nuevo : _nombre,
+          documento: campo == _CampoEditable.documento ? nuevo : (_documento ?? ''),
+          telefono: campo == _CampoEditable.telefono ? nuevo : (normalizarTelefono(_telefono ?? '') ?? _telefono ?? ''),
+        );
+      } else if (campo == _CampoEditable.horario) {
         await _auth.actualizarHorario(nuevo.isEmpty ? null : nuevo);
       } else {
         await _auth.actualizarInfoContactoGestor(
@@ -165,14 +220,25 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       }
       setState(() {
         switch (campo) {
+          case _CampoEditable.nombre: _nombre = nuevo;
+          case _CampoEditable.correoAcceso: break;
+          case _CampoEditable.documento: _documento = nuevo;
           case _CampoEditable.email: _emailContacto = nuevo;
           case _CampoEditable.telefono: _telefono = nuevo;
           case _CampoEditable.direccion: _direccion = nuevo;
           case _CampoEditable.horario: _horario = nuevo.isEmpty ? null : nuevo;
         }
+        if (!_sesion.esGestor) _sesion = widget.sesion ?? SesionUsuario.actual();
         _vista = _VistaActual.cuenta;
       });
       messenger.showSnackBar(const SnackBar(content: Text('Guardado correctamente.')));
+    } on AuthException catch (e) {
+      // Mensaje ya traducido por el repositorio (por ejemplo, correo en uso).
+      if (mounted) setState(() => _errorCampo = e.message);
+    } on PostgrestException catch (e) {
+      // Los mensajes de la base (RAISE EXCEPTION) ya están en español.
+      debugPrint('La base rechazó el cambio: ${e.message}');
+      if (mounted) setState(() => _errorCampo = e.message);
     } catch (e) {
       debugPrint('No se pudo actualizar: $e');
       messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar los cambios. Revisa tu conexión.')));
@@ -296,10 +362,13 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // El teclado no achica la hoja por sí solo: sin sumar su altura, el campo
+    // que se está editando quedaba tapado.
+    final teclado = MediaQuery.viewInsetsOf(context).bottom;
     return AnimatedSize(
       duration: EcoMotion.duracion(context, EcoMotion.estado),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s16),
+        padding: EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s16 + teclado),
         child: switch (_vista) {
           _VistaActual.municipio => _vistaMunicipio(),
           _VistaActual.editarCampo => _vistaEditarCampo(),
@@ -344,7 +413,26 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             ],
           ),
           const SizedBox(height: EcoSpace.s16),
-          _Dato(etiqueta: 'Correo de acceso', valor: _sesion.correo),
+          if (!_sesion.esGestor)
+            _Dato(
+              etiqueta: 'Nombre o empresa',
+              valor: _nombre.isNotEmpty ? _nombre : 'Sin definir',
+              accion: TextButton(
+                onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.nombre),
+                child: const Text('Cambiar'),
+              ),
+            ),
+          _Dato(
+            etiqueta: 'Correo de acceso',
+            valor: _sesion.correo,
+            detalle: _correoPendiente == null ? null : 'Pendiente: confirma desde $_correoPendiente',
+            accion: _sesion.esGestor
+                ? null
+                : TextButton(
+                    onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.correoAcceso),
+                    child: const Text('Cambiar'),
+                  ),
+          ),
           if (_sesion.esGestor)
             _Dato(
               etiqueta: 'Correo de contacto',
@@ -357,12 +445,10 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
           _Dato(
             etiqueta: 'Teléfono',
             valor: _telefono?.isNotEmpty == true ? _telefono! : 'Sin definir',
-            accion: _sesion.esGestor
-                ? TextButton(
-                    onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.telefono),
-                    child: const Text('Cambiar'),
-                  )
-                : null,
+            accion: TextButton(
+              onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.telefono),
+              child: const Text('Cambiar'),
+            ),
           ),
           _Dato(
             etiqueta: 'Municipio',
@@ -375,8 +461,17 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
               child: const Text('Cambiar'),
             ),
           ),
-          if (_documento?.isNotEmpty ?? false)
-            _Dato(etiqueta: _sesion.esGestor ? 'NIT' : 'Documento', valor: _documento!),
+          if (_sesion.esGestor && (_documento?.isNotEmpty ?? false))
+            _Dato(etiqueta: 'NIT', valor: _documento!),
+          if (!_sesion.esGestor)
+            _Dato(
+              etiqueta: 'Documento',
+              valor: _documento?.isNotEmpty == true ? _documento! : 'Sin definir',
+              accion: TextButton(
+                onPressed: _guardando ? null : () => _abrirEditarCampo(_CampoEditable.documento),
+                child: const Text('Cambiar'),
+              ),
+            ),
           if (_sesion.esGestor)
             _Dato(
               etiqueta: 'Dirección',
@@ -444,6 +539,18 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
                 navigator.push(MaterialPageRoute(builder: (_) => const MisMaterialesScreen()));
               },
             ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.tour_outlined),
+            title: const Text('Ver el recorrido de nuevo'),
+            subtitle: const Text('Cómo funciona la app, paso a paso'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final navigator = Navigator.of(context);
+              await reiniciarRecorridos();
+              navigator.pop();
+            },
+          ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.lock_outline),
@@ -514,6 +621,9 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     final theme = Theme.of(context);
     final campo = _campoActual!;
     final (titulo, hint, tipo, multilinea) = switch (campo) {
+      _CampoEditable.nombre => ('Nombre o empresa', 'Ana Gómez o Panadería La Esquina', TextInputType.name, false),
+      _CampoEditable.correoAcceso => ('Correo de acceso', 'tucorreo@ejemplo.com', TextInputType.emailAddress, false),
+      _CampoEditable.documento => ('Documento', 'Cédula o NIT, sin puntos', TextInputType.text, false),
       _CampoEditable.email => ('Correo de contacto', 'contacto@empresa.com', TextInputType.emailAddress, false),
       _CampoEditable.telefono => ('Teléfono', '3001234567', TextInputType.phone, false),
       _CampoEditable.direccion => ('Dirección', 'Calle 35 # 12-40', TextInputType.streetAddress, false),
@@ -531,13 +641,18 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: _guardando ? null : () => setState(() => _vista = _VistaActual.cuenta),
               ),
-              Text('Cambiar $titulo', style: theme.textTheme.headlineSmall),
+              // Expanded: «Cambiar Nombre o empresa» no cabe en una línea en
+              // un teléfono angosto.
+              Expanded(child: Text('Cambiar ${titulo.toLowerCase()}', style: theme.textTheme.headlineSmall)),
             ],
           ),
           const SizedBox(height: EcoSpace.s16),
           TextField(
             controller: _ctrlCampo,
-            decoration: InputDecoration(labelText: titulo, hintText: hint),
+            decoration: InputDecoration(labelText: titulo, hintText: hint, errorText: _errorCampo, errorMaxLines: 3),
+            onChanged: (_) {
+              if (_errorCampo != null) setState(() => _errorCampo = null);
+            },
             keyboardType: tipo,
             textInputAction: multilinea ? TextInputAction.newline : TextInputAction.done,
             minLines: multilinea ? 2 : 1,
@@ -546,6 +661,14 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             autofocus: true,
             onSubmitted: multilinea ? null : (_) => _guardarCampo(),
           ),
+          if (campo == _CampoEditable.correoAcceso) ...[
+            const SizedBox(height: EcoSpace.s4),
+            Text(
+              'Te enviaremos un enlace al correo nuevo. El cambio se aplica cuando lo abras; '
+              'mientras tanto sigues entrando con ${_sesion.correo}.',
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
           if (campo == _CampoEditable.horario) ...[
             const SizedBox(height: EcoSpace.s4),
             Text(
@@ -615,13 +738,16 @@ const _adminEmail = 'soporte@ecoresiduos.co';
 
 enum _VistaActual { cuenta, municipio, editarCampo, solicitarCambio }
 
-enum _CampoEditable { email, telefono, direccion, horario }
+enum _CampoEditable { nombre, documento, correoAcceso, email, telefono, direccion, horario }
 
 class _Dato extends StatelessWidget {
-  const _Dato({required this.etiqueta, required this.valor, this.accion});
+  const _Dato({required this.etiqueta, required this.valor, this.detalle, this.accion});
 
   final String etiqueta;
   final String valor;
+
+  /// Línea pequeña bajo el valor (por ejemplo, un cambio pendiente).
+  final String? detalle;
   final Widget? accion;
 
   @override
@@ -638,6 +764,8 @@ class _Dato extends StatelessWidget {
               children: [
                 Text(etiqueta, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                 Text(valor, style: theme.textTheme.bodyLarge),
+                if (detalle != null)
+                  Text(detalle!, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
               ],
             ),
           ),

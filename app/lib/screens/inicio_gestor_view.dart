@@ -43,13 +43,20 @@ class _InicioGestorViewState extends State<InicioGestorView> {
     super.initState();
     _ciclo = AppLifecycleListener(onResume: _actualizarEnSilencio);
     ContadorNovedades.llegadas.addListener(_actualizarEnSilencio);
+    reinicioRecorridos.addListener(_repetirRecorrido);
   }
 
   @override
   void dispose() {
     ContadorNovedades.llegadas.removeListener(_actualizarEnSilencio);
+    reinicioRecorridos.removeListener(_repetirRecorrido);
     _ciclo.dispose();
     super.dispose();
+  }
+
+  /// Desde la cuenta se pidió ver el recorrido de nuevo.
+  void _repetirRecorrido() {
+    if (mounted) setState(() => _recorridoAgendado = false);
   }
 
   /// Recarga sin mostrar el esqueleto: lo que está en pantalla se queda hasta

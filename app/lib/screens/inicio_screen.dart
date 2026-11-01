@@ -130,7 +130,7 @@ class _InicioScreenState extends State<InicioScreen> {
   }
 
   List<Widget> _pestanasGenerador() => [
-    InicioGeneradorView(repository: _repository, keyFab: _keyFab),
+    InicioGeneradorView(repository: _repository, keyFab: _keyFab, keyNav: _keyNav),
     ResiduosScreen(repository: _repository),
     const GestoresAsociadosScreen(),
     MisPublicacionesScreen(repository: _repository),

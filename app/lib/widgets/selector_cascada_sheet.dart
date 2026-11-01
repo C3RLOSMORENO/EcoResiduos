@@ -224,7 +224,10 @@ class _SelectorCascadaSheetState extends State<SelectorCascadaSheet> {
 
     return ListView(
       controller: scroll,
-      padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s24),
+      // Con el teclado abierto para filtrar, los últimos materiales deben
+      // poder subir por encima de él.
+      padding: EdgeInsets.fromLTRB(
+        EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s24 + MediaQuery.viewInsetsOf(context).bottom),
       children: [
         if (todos.length > 5)
           Padding(

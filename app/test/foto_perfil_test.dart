@@ -48,7 +48,7 @@ Future<void> _abrirCuenta(WidgetTester tester, SesionUsuario sesion, {FotoPerfil
 
 void main() {
   group('rutas de las fotos', () {
-    // La misma regla que la restricción de la migración 20261006000000.
+    // La misma regla que la restricción de la base (supabase/migrations/00000000000000_schema_completo.sql).
     RegExp regla(String carpeta) => RegExp('^$_uid/$carpeta/[0-9]+\\.(jpg|jpeg|png|webp)\$');
     final ahora = DateTime(2026, 10, 6, 9);
 

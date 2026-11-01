@@ -216,7 +216,7 @@ class _SolicitudesDisponiblesScreenState extends State<SolicitudesDisponiblesScr
             descripcion:
                 'Cada tarjeta muestra residuo, municipio, distancia y fecha de publicación. '
                 'Tócala para ver el detalle y enviar tu propuesta: precio, modalidad de entrega y mensaje al generador.',
-            nota: 'Solo ves los materiales que declaraste.',
+            nota: 'Solo ves solicitudes de los materiales que el administrador ya verificó en tu perfil.',
           ),
         ]);
       });

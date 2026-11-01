@@ -134,9 +134,9 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> with Si
             keyObjetivo: _keyFabPublicar,
             titulo: 'Publica sin identificar',
             descripcion:
-                'Si ya sabes qué material es y qué gestor lo recibe, '
-                'publica directamente sin pasar por la cámara. '
-                'Elige categoría, cantidad y preferencia de entrega.',
+                'Si ya sabes qué material es, publícalo sin pasar por la cámara: '
+                'eliges el material, la cantidad, la dirección y una foto. '
+                'Después las empresas te envían sus ofertas.',
             forma: FormaSpotlight.circulo,
           ),
         ]);

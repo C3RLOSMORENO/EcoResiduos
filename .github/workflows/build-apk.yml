@@ -172,6 +172,29 @@ jobs:
           cd app
           flutter test
 
+      - name: Preparar la llave de firma
+        # Con los cuatro secretos ANDROID_* el APK se firma siempre con la misma
+        # llave y cada versión se instala encima de la anterior. Sin ellos se usa
+        # la llave de depuración, que cambia en cada compilación.
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Sin secretos de firma: se firma con la llave de depuración."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > app/android/app/ecoresiduos.jks
+          {
+            echo "storeFile=ecoresiduos.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > app/android/key.properties
+          echo "Llave de firma lista."
+
       - name: Compilar APK en modo Release
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
@@ -196,6 +219,43 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Preparar las novedades de la versión
+        # Toma de app/CHANGELOG.md la sección «## X.Y.Z» de esta versión. Si no
+        # existe (una corrección publicada sin entrada), lo dice en una línea.
+        run: |
+          NOVEDADES=$(awk -v v="$VERSION_NAME" '
+            $0 ~ "^## " && ($2 == v) { dentro = 1; next }
+            dentro && /^## / { exit }
+            dentro { print }
+          ' app/CHANGELOG.md)
+          if [ -z "$(printf '%s' "$NOVEDADES" | tr -d '[:space:]')" ]; then
+            NOVEDADES="Correcciones y mejoras internas."
+          fi
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          {
+            echo "## Novedades"
+            echo "$NOVEDADES"
+            echo
+            echo "## Descarga"
+            echo
+            echo "- [EcoResiduos.apk]($BASE/EcoResiduos.apk)"
+            echo "- [EcoResiduos-v$VERSION_NAME.apk]($BASE/EcoResiduos-v$VERSION_NAME.apk), el mismo archivo con la versión en el nombre"
+            echo
+            echo "## Instalación"
+            echo
+            echo "1. Abre el enlace de EcoResiduos.apk desde el navegador del celular Android y descárgalo."
+            echo "2. Abre el archivo descargado."
+            echo "3. Si Android dice que no permite instalar apps de esta fuente, toca Configuración, activa Permitir desde esta fuente, vuelve y toca Instalar."
+            echo "4. Abre EcoResiduos e inicia sesión o regístrate."
+            if [ ! -f app/android/key.properties ]; then
+              echo
+              echo "Si Android dice que la app no se instaló porque entra en conflicto con una versión anterior, desinstala la anterior e instala esta. Tu cuenta y tus publicaciones están en el servidor y no se pierden."
+            fi
+            echo
+            echo "Versión $VERSION_NAME (compilación $BUILD_NUMBER), $date, commit \`$GITHUB_SHA\`."
+          } > novedades.md
+          cat novedades.md
+
       - name: Publicar Release en GitHub para descarga pública
         uses: softprops/action-gh-release@v2
         if: |
@@ -208,33 +268,8 @@ jobs:
           name: ${{ env.TITLE }}
           draft: false
           prerelease: ${{ inputs.is_prerelease || false }}
-          generate_release_notes: true
-          body: |
-            ## Aplicación Móvil EcoResiduos (Android)
-
-            ¡La versión de la aplicación está lista para descargar e instalar en dispositivos Android!
-
-            ### ⬇️ Enlaces de Descarga Directa
-            - **[Descargar EcoResiduos.apk (Recomendado)](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/EcoResiduos.apk)**
-            - **[Descargar EcoResiduos-v${{ env.VERSION_NAME }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/EcoResiduos-v${{ env.VERSION_NAME }}.apk)**
-
-            ---
-
-            ### ℹ️ Información de Compilación
-            - **Versión:** `${{ env.VERSION_NAME }}` (Build `${{ env.BUILD_NUMBER }}`)
-            - **Fecha de compilación:** `${{ env.date }}`
-            - **Commit:** `${{ github.sha }}`
-
-            ---
-
-            ### Instrucciones de Instalación
-            1. Haz clic en **EcoResiduos.apk** desde tu navegador en el celular Android para descargarlo.
-            2. Abre el archivo descargado.
-            3. Si Android muestra una advertencia de seguridad (*"Por seguridad, el teléfono no tiene permitido instalar apps desconocidas de esta fuente"*):
-               - Toca en **Ajustes / Configuración**.
-               - Activa el permiso **"Permitir desde esta fuente"**.
-               - Regresa y presiona **Instalar**.
-            4. ¡Listo! Abre **EcoResiduos** e inicia sesión o regístrate.
+          generate_release_notes: false
+          body_path: novedades.md
           files: |
             app/build/app/outputs/flutter-apk/EcoResiduos.apk
             app/build/app/outputs/flutter-apk/EcoResiduos-v${{ env.VERSION_NAME }}.apk

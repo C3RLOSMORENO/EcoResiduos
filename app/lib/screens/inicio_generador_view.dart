@@ -15,11 +15,13 @@ import 'navegacion_principal.dart';
 
 /// Inicio del generador (06): el siguiente paso primero y el resumen después.
 class InicioGeneradorView extends StatefulWidget {
-  const InicioGeneradorView({super.key, required this.repository, this.keyFab});
+  const InicioGeneradorView({super.key, required this.repository, this.keyFab, this.keyNav});
 
   final SolicitudesRepository repository;
-  /// Clave del FAB «Identificar» definida en InicioScreen, usada por el recorrido.
+  /// Claves del FAB «Identificar» y de la barra de navegación, definidas en
+  /// InicioScreen y usadas por el recorrido.
   final GlobalKey? keyFab;
+  final GlobalKey? keyNav;
 
   @override
   State<InicioGeneradorView> createState() => _InicioGeneradorViewState();
@@ -30,6 +32,23 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
   final _keyTarjeta = GlobalKey();
   final _keyCifras = GlobalKey();
   bool _recorridoAgendado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    reinicioRecorridos.addListener(_repetirRecorrido);
+  }
+
+  @override
+  void dispose() {
+    reinicioRecorridos.removeListener(_repetirRecorrido);
+    super.dispose();
+  }
+
+  /// Desde la cuenta se pidió ver el recorrido de nuevo.
+  void _repetirRecorrido() {
+    if (mounted) setState(() => _recorridoAgendado = false);
+  }
 
   Future<_Resumen> _cargar() async {
     final publicaciones = await widget.repository.getMisPublicaciones();
@@ -88,6 +107,7 @@ class _InicioGeneradorViewState extends State<InicioGeneradorView> {
                 keyTarjeta: _keyTarjeta,
                 keyCifras: _keyCifras,
                 keyFab: widget.keyFab,
+                keyNav: widget.keyNav,
               );
             });
           }
