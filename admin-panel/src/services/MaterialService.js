@@ -1,5 +1,5 @@
 const supabase = require('../config/supabase');
-const { CATEGORIAS_CATALOGO, formatoNombre, formatoOracion } = require('../utils/formato');
+const { CATEGORIAS_CATALOGO, formatoOracion } = require('../utils/formato');
 const { rango, textoBusqueda } = require('../utils/web');
 const { errorDeBase, noEncontrado } = require('../utils/errores');
 
@@ -7,10 +7,10 @@ function mapearMaterial(m) {
     if (!m) return m;
     return {
         ...m,
-        nombre_comun: formatoNombre(m.nombre_comun ?? m.NOMBRE_COMUN ?? ''),
+        nombre_comun: formatoOracion(m.nombre_comun ?? m.NOMBRE_COMUN ?? ''),
         descripcion: formatoOracion(m.descripcion ?? m.DESCRIPCION ?? ''),
         guia_manejo: m.guia_manejo ? formatoOracion(m.guia_manejo) : m.guia_manejo,
-        subcategoria: m.subcategoria ? formatoNombre(m.subcategoria) : m.subcategoria,
+        subcategoria: m.subcategoria ? formatoOracion(m.subcategoria) : m.subcategoria,
         advertencia_manejo: m.advertencia_manejo ? formatoOracion(m.advertencia_manejo) : m.advertencia_manejo
     };
 }
@@ -124,11 +124,11 @@ const materialService = {
         return {
             id: data.id ?? data.ID,
             codigo: data.codigo ?? data.CODIGO ?? '',
-            nombre_comun: formatoNombre(data.nombre_comun ?? data.NOMBRE_COMUN ?? ''),
+            nombre_comun: formatoOracion(data.nombre_comun ?? data.NOMBRE_COMUN ?? ''),
             categoria: data.categoria ?? data.CATEGORIA ?? '',
             descripcion: formatoOracion(data.descripcion ?? data.DESCRIPCION ?? ''),
             guia_manejo: formatoOracion(data.guia_manejo ?? data.GUIA_MANEJO ?? ''),
-            subcategoria: formatoNombre(data.subcategoria ?? ''),
+            subcategoria: formatoOracion(data.subcategoria ?? ''),
             advertencia_manejo: formatoOracion(data.advertencia_manejo ?? '')
         };
     },

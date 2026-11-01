@@ -109,7 +109,15 @@ const solicitudService = {
         if (error) {
             throw errorDeBase('No pudimos cargar las solicitudes.', error);
         }
-        return { solicitudes: data || [], total: count || 0 };
+        return {
+            solicitudes: (data || []).map((s) => ({
+                ...s,
+                materiales_residuos: s.materiales_residuos
+                    ? { ...s.materiales_residuos, nombre_comun: formatoOracion(s.materiales_residuos.nombre_comun || '') }
+                    : s.materiales_residuos
+            })),
+            total: count || 0
+        };
     },
 
     /**
@@ -156,9 +164,17 @@ const solicitudService = {
             solicitud: {
                 ...solicitud,
                 descripcion: solicitud.descripcion ? formatoOracion(solicitud.descripcion) : solicitud.descripcion,
-                direccion_recoleccion: solicitud.direccion_recoleccion ? formatoOracion(solicitud.direccion_recoleccion) : solicitud.direccion_recoleccion
+                direccion_recoleccion: solicitud.direccion_recoleccion ? formatoOracion(solicitud.direccion_recoleccion) : solicitud.direccion_recoleccion,
+                problema_detalle: solicitud.problema_detalle ? formatoOracion(solicitud.problema_detalle) : solicitud.problema_detalle,
+                problema_nota: solicitud.problema_nota ? formatoOracion(solicitud.problema_nota) : solicitud.problema_nota
             },
-            material: solicitud.materiales_residuos || null,
+            material: solicitud.materiales_residuos
+                ? {
+                    ...solicitud.materiales_residuos,
+                    nombre_comun: formatoOracion(solicitud.materiales_residuos.nombre_comun || ''),
+                    descripcion: solicitud.materiales_residuos.descripcion ? formatoOracion(solicitud.materiales_residuos.descripcion) : solicitud.materiales_residuos.descripcion
+                }
+                : null,
             generador: generador.data
                 ? {
                     ...generador.data,

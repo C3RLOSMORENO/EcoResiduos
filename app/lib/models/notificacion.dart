@@ -1,3 +1,5 @@
+import '../utils/formato.dart';
+
 /// Aviso de la tabla `notificaciones`. Lo crean los triggers del servidor
 /// cuando cambia una solicitud o una postulación del usuario.
 class Notificacion {
@@ -13,7 +15,7 @@ class Notificacion {
   factory Notificacion.fromMap(Map<String, dynamic> map) => Notificacion(
     id: (map['id'] as num).toInt(),
     tipo: (map['tipo'] ?? '').toString().toUpperCase(),
-    titulo: (map['titulo'] ?? '').toString(),
+    titulo: formatoOracion((map['titulo'] ?? '').toString()),
     solicitudId: (map['solicitud_id'] as num?)?.toInt(),
     leidaAt: map['leida_at'] != null ? DateTime.tryParse(map['leida_at'].toString()) : null,
     createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),

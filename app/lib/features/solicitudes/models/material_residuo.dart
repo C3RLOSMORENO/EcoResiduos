@@ -29,11 +29,11 @@ class MaterialResiduo {
     return MaterialResiduo(
       id: (map['id'] as num).toInt(),
       codigo: map['codigo']?.toString(),
-      nombreComun: formatoNombre((map['nombre_comun'] ?? '').toString()),
+      nombreComun: formatoOracion((map['nombre_comun'] ?? '').toString()),
       descripcion: map['descripcion'] != null ? formatoOracion(map['descripcion'].toString()) : null,
       categoria: (map['categoria'] ?? '').toString(),
-      guiaManejo: map['guia_manejo']?.toString(),
-      subcategoria: map['subcategoria'] != null ? formatoNombre(map['subcategoria'].toString()) : null,
+      guiaManejo: map['guia_manejo'] != null ? formatoOracion(map['guia_manejo'].toString()) : null,
+      subcategoria: map['subcategoria'] != null ? formatoOracion(map['subcategoria'].toString()) : null,
       advertenciaManejo: map['advertencia_manejo'] != null ? formatoOracion(map['advertencia_manejo'].toString()) : null,
       createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
     );

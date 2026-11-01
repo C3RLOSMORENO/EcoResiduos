@@ -82,6 +82,10 @@ test('formatos iguales a los de la app', () => {
     assert.equal(f.capitalizar('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
     assert.equal(f.formatoNombre('RECICLAJES DEL ORIENTE S.A.S.'), 'Reciclajes del Oriente S.A.S.');
     assert.equal(f.formatoNombre('EcoMetales Santander Ltda.'), 'EcoMetales Santander Ltda.');
+    assert.equal(f.formatoNombre('Representante Legal ASOREFLOR'), 'Representante Legal Asoreflor');
+    assert.equal(f.formatoOracion('CALLE 58 No. 16 - 185, KM 7 VÍA BUCARAMANGA'), 'Calle 58 no. 16 - 185, km 7 vía Bucaramanga');
+    assert.equal(f.formatoOracion('Botellas y Frascos de Vidrio'), 'Botellas y frascos de vidrio');
+    assert.equal(f.formatoOracion('calle 103 # 52 - 4'), 'Calle 103 # 52 - 4');
     assert.equal(f.formatoOracion('CAJAS DE CARTÓN LIMPIO Y RAEE EN PORTERÍA.'), 'Cajas de cartón limpio y RAEE en portería.');
 });
 

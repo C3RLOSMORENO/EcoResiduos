@@ -77,7 +77,7 @@ function mapearGestor(row) {
     const relaciones = row.gestor_material || [];
     const materiales = relaciones
         .filter((gm) => gm.materiales_residuos)
-        .map((gm) => ({ ...gm.materiales_residuos, verificado: gm.verificado !== false }));
+        .map((gm) => ({ ...gm.materiales_residuos, nombre_comun: formatoOracion(gm.materiales_residuos.nombre_comun || ''), verificado: gm.verificado !== false }));
 
     return {
         id: row.id,
@@ -513,7 +513,7 @@ const gestorService = {
             .order('created_at', { ascending: false })
             .limit(50);
         if (error) return null;
-        return data || [];
+        return (data || []).map((d) => ({ ...d, observacion: d.observacion ? formatoOracion(d.observacion) : d.observacion }));
     },
 
     /**
