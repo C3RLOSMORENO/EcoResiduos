@@ -33,7 +33,7 @@ function paletaDeLaApp(esquema, colores) {
         const nombre = m[1] === 'onInverseSurface' ? 'inverse-on-surface' : kebab(m[1]);
         t[`--md-sys-color-${nombre}`] = hex(`0x${m[2]}`);
     }
-    for (const m of bloqueDart(`const ${colores} = EcoColores(`).matchAll(/(Categoria|EstadoSolicitud)\.(\w+): CategoriaColor\(([^)]*)\)/g)) {
+    for (const m of bloqueDart(`const ${colores} = EcoColores(`).matchAll(/(Categoria|EstadoSolicitud)\.(\w+):\s*CategoriaColor\(([\s\S]*?)\n\s*\)/g)) {
         const base = `${m[1] === 'Categoria' ? '--eco-cat-' : '--eco-estado-'}${kebab(m[2])}`;
         const c = Object.fromEntries([...m[3].matchAll(/(\w+): Color\(0x([0-9A-Fa-f]{8})\)/g)].map((x) => [x[1], hex(`0x${x[2]}`)]));
         Object.assign(t, { [`${base}-color`]: c.color, [`${base}-on`]: c.onColor, [`${base}-container`]: c.container, [`${base}-on-container`]: c.onContainer });

@@ -74,68 +74,68 @@
     --md-sys-color-scrim: #000000;
 
     /* ecoColoresLight: categorías */
-    --eco-cat-aprovechable-color: undefined;
-    --eco-cat-aprovechable-on: undefined;
-    --eco-cat-aprovechable-container: undefined;
-    --eco-cat-aprovechable-on-container: undefined;
-    --eco-cat-peligroso-color: undefined;
-    --eco-cat-peligroso-on: undefined;
-    --eco-cat-peligroso-container: undefined;
-    --eco-cat-peligroso-on-container: undefined;
-    --eco-cat-raee-color: undefined;
-    --eco-cat-raee-on: undefined;
-    --eco-cat-raee-container: undefined;
-    --eco-cat-raee-on-container: undefined;
-    --eco-cat-rcd-color: undefined;
-    --eco-cat-rcd-on: undefined;
-    --eco-cat-rcd-container: undefined;
-    --eco-cat-rcd-on-container: undefined;
-    --eco-cat-riesgo-biologico-color: undefined;
-    --eco-cat-riesgo-biologico-on: undefined;
-    --eco-cat-riesgo-biologico-container: undefined;
-    --eco-cat-riesgo-biologico-on-container: undefined;
-    --eco-cat-organico-color: undefined;
-    --eco-cat-organico-on: undefined;
-    --eco-cat-organico-container: undefined;
-    --eco-cat-organico-on-container: undefined;
-    --eco-cat-ordinario-color: undefined;
-    --eco-cat-ordinario-on: undefined;
-    --eco-cat-ordinario-container: undefined;
-    --eco-cat-ordinario-on-container: undefined;
+    --eco-cat-aprovechable-color: #0A5F7A;
+    --eco-cat-aprovechable-on: #FFFFFF;
+    --eco-cat-aprovechable-container: #CDEBF5;
+    --eco-cat-aprovechable-on-container: #003544;
+    --eco-cat-peligroso-color: #F2B200;
+    --eco-cat-peligroso-on: #1F1600;
+    --eco-cat-peligroso-container: #FFEFC2;
+    --eco-cat-peligroso-on-container: #261A00;
+    --eco-cat-raee-color: #5B3FA0;
+    --eco-cat-raee-on: #FFFFFF;
+    --eco-cat-raee-container: #E8DEFF;
+    --eco-cat-raee-on-container: #1D0B52;
+    --eco-cat-rcd-color: #6D5A4B;
+    --eco-cat-rcd-on: #FFFFFF;
+    --eco-cat-rcd-container: #F0E2D6;
+    --eco-cat-rcd-on-container: #261A10;
+    --eco-cat-riesgo-biologico-color: #B3261E;
+    --eco-cat-riesgo-biologico-on: #FFFFFF;
+    --eco-cat-riesgo-biologico-container: #FFDAD5;
+    --eco-cat-riesgo-biologico-on-container: #410002;
+    --eco-cat-organico-color: #2F6B1F;
+    --eco-cat-organico-on: #FFFFFF;
+    --eco-cat-organico-container: #C9EDB2;
+    --eco-cat-organico-on-container: #082100;
+    --eco-cat-ordinario-color: #2B2F2C;
+    --eco-cat-ordinario-on: #FFFFFF;
+    --eco-cat-ordinario-container: #DFE4DE;
+    --eco-cat-ordinario-on-container: #151A16;
 
     /* ecoColoresLight: estados */
-    --eco-estado-publicado-color: undefined;
-    --eco-estado-publicado-on: undefined;
-    --eco-estado-publicado-container: undefined;
-    --eco-estado-publicado-on-container: undefined;
-    --eco-estado-en-negociacion-color: undefined;
-    --eco-estado-en-negociacion-on: undefined;
-    --eco-estado-en-negociacion-container: undefined;
-    --eco-estado-en-negociacion-on-container: undefined;
-    --eco-estado-propuesta-color: undefined;
-    --eco-estado-propuesta-on: undefined;
-    --eco-estado-propuesta-container: undefined;
-    --eco-estado-propuesta-on-container: undefined;
-    --eco-estado-recolectado-color: undefined;
-    --eco-estado-recolectado-on: undefined;
-    --eco-estado-recolectado-container: undefined;
-    --eco-estado-recolectado-on-container: undefined;
-    --eco-estado-aceptada-color: undefined;
-    --eco-estado-aceptada-on: undefined;
-    --eco-estado-aceptada-container: undefined;
-    --eco-estado-aceptada-on-container: undefined;
-    --eco-estado-cancelado-color: undefined;
-    --eco-estado-cancelado-on: undefined;
-    --eco-estado-cancelado-container: undefined;
-    --eco-estado-cancelado-on-container: undefined;
-    --eco-estado-rechazada-color: undefined;
-    --eco-estado-rechazada-on: undefined;
-    --eco-estado-rechazada-container: undefined;
-    --eco-estado-rechazada-on-container: undefined;
-    --eco-estado-no-seleccionada-color: undefined;
-    --eco-estado-no-seleccionada-on: undefined;
-    --eco-estado-no-seleccionada-container: undefined;
-    --eco-estado-no-seleccionada-on-container: undefined;
+    --eco-estado-publicado-color: #1F5FA8;
+    --eco-estado-publicado-on: #FFFFFF;
+    --eco-estado-publicado-container: #D6E3FF;
+    --eco-estado-publicado-on-container: #001B3E;
+    --eco-estado-en-negociacion-color: #8A5100;
+    --eco-estado-en-negociacion-on: #FFFFFF;
+    --eco-estado-en-negociacion-container: #FFDDB8;
+    --eco-estado-en-negociacion-on-container: #2C1600;
+    --eco-estado-propuesta-color: #8A5100;
+    --eco-estado-propuesta-on: #FFFFFF;
+    --eco-estado-propuesta-container: #FFDDB8;
+    --eco-estado-propuesta-on-container: #2C1600;
+    --eco-estado-recolectado-color: #1F6B35;
+    --eco-estado-recolectado-on: #FFFFFF;
+    --eco-estado-recolectado-container: #B7F0C0;
+    --eco-estado-recolectado-on-container: #00210B;
+    --eco-estado-aceptada-color: #1F6B35;
+    --eco-estado-aceptada-on: #FFFFFF;
+    --eco-estado-aceptada-container: #B7F0C0;
+    --eco-estado-aceptada-on-container: #00210B;
+    --eco-estado-cancelado-color: #5D5F5A;
+    --eco-estado-cancelado-on: #FFFFFF;
+    --eco-estado-cancelado-container: #E3E3DC;
+    --eco-estado-cancelado-on-container: #1A1C18;
+    --eco-estado-rechazada-color: #5D5F5A;
+    --eco-estado-rechazada-on: #FFFFFF;
+    --eco-estado-rechazada-container: #E3E3DC;
+    --eco-estado-rechazada-on-container: #1A1C18;
+    --eco-estado-no-seleccionada-color: #5D5F5A;
+    --eco-estado-no-seleccionada-on: #FFFFFF;
+    --eco-estado-no-seleccionada-container: #E3E3DC;
+    --eco-estado-no-seleccionada-on-container: #1A1C18;
 
     /* Paleta de los gráficos: categórica de 8 posiciones, en orden fijo. */
     --eco-graf-1: #0284C7;
@@ -192,67 +192,67 @@
       --md-sys-color-inverse-on-surface: #2F312C;
       --md-sys-color-inverse-primary: #1F4A2C;
 
-      --eco-cat-aprovechable-color: undefined;
-      --eco-cat-aprovechable-on: undefined;
-      --eco-cat-aprovechable-container: undefined;
-      --eco-cat-aprovechable-on-container: undefined;
-      --eco-cat-peligroso-color: undefined;
-      --eco-cat-peligroso-on: undefined;
-      --eco-cat-peligroso-container: undefined;
-      --eco-cat-peligroso-on-container: undefined;
-      --eco-cat-raee-color: undefined;
-      --eco-cat-raee-on: undefined;
-      --eco-cat-raee-container: undefined;
-      --eco-cat-raee-on-container: undefined;
-      --eco-cat-rcd-color: undefined;
-      --eco-cat-rcd-on: undefined;
-      --eco-cat-rcd-container: undefined;
-      --eco-cat-rcd-on-container: undefined;
-      --eco-cat-riesgo-biologico-color: undefined;
-      --eco-cat-riesgo-biologico-on: undefined;
-      --eco-cat-riesgo-biologico-container: undefined;
-      --eco-cat-riesgo-biologico-on-container: undefined;
-      --eco-cat-organico-color: undefined;
-      --eco-cat-organico-on: undefined;
-      --eco-cat-organico-container: undefined;
-      --eco-cat-organico-on-container: undefined;
-      --eco-cat-ordinario-color: undefined;
-      --eco-cat-ordinario-on: undefined;
-      --eco-cat-ordinario-container: undefined;
-      --eco-cat-ordinario-on-container: undefined;
+      --eco-cat-aprovechable-color: #86D1EC;
+      --eco-cat-aprovechable-on: #003544;
+      --eco-cat-aprovechable-container: #004D63;
+      --eco-cat-aprovechable-on-container: #CDEBF5;
+      --eco-cat-peligroso-color: #F2B200;
+      --eco-cat-peligroso-on: #1F1600;
+      --eco-cat-peligroso-container: #5A4300;
+      --eco-cat-peligroso-on-container: #FFE08A;
+      --eco-cat-raee-color: #CFBDFF;
+      --eco-cat-raee-on: #2F1A75;
+      --eco-cat-raee-container: #44298A;
+      --eco-cat-raee-on-container: #E8DEFF;
+      --eco-cat-rcd-color: #D8C2AF;
+      --eco-cat-rcd-on: #3A2C20;
+      --eco-cat-rcd-container: #54433A;
+      --eco-cat-rcd-on-container: #F0E2D6;
+      --eco-cat-riesgo-biologico-color: #FFB4AA;
+      --eco-cat-riesgo-biologico-on: #690004;
+      --eco-cat-riesgo-biologico-container: #8C1D18;
+      --eco-cat-riesgo-biologico-on-container: #FFDAD5;
+      --eco-cat-organico-color: #A5D889;
+      --eco-cat-organico-on: #0F3900;
+      --eco-cat-organico-container: #1A500A;
+      --eco-cat-organico-on-container: #C9EDB2;
+      --eco-cat-ordinario-color: #C4C8C3;
+      --eco-cat-ordinario-on: #2C312D;
+      --eco-cat-ordinario-container: #444945;
+      --eco-cat-ordinario-on-container: #DFE4DE;
 
-      --eco-estado-publicado-color: undefined;
-      --eco-estado-publicado-on: undefined;
-      --eco-estado-publicado-container: undefined;
-      --eco-estado-publicado-on-container: undefined;
-      --eco-estado-en-negociacion-color: undefined;
-      --eco-estado-en-negociacion-on: undefined;
-      --eco-estado-en-negociacion-container: undefined;
-      --eco-estado-en-negociacion-on-container: undefined;
-      --eco-estado-propuesta-color: undefined;
-      --eco-estado-propuesta-on: undefined;
-      --eco-estado-propuesta-container: undefined;
-      --eco-estado-propuesta-on-container: undefined;
-      --eco-estado-recolectado-color: undefined;
-      --eco-estado-recolectado-on: undefined;
-      --eco-estado-recolectado-container: undefined;
-      --eco-estado-recolectado-on-container: undefined;
-      --eco-estado-aceptada-color: undefined;
-      --eco-estado-aceptada-on: undefined;
-      --eco-estado-aceptada-container: undefined;
-      --eco-estado-aceptada-on-container: undefined;
-      --eco-estado-cancelado-color: undefined;
-      --eco-estado-cancelado-on: undefined;
-      --eco-estado-cancelado-container: undefined;
-      --eco-estado-cancelado-on-container: undefined;
-      --eco-estado-rechazada-color: undefined;
-      --eco-estado-rechazada-on: undefined;
-      --eco-estado-rechazada-container: undefined;
-      --eco-estado-rechazada-on-container: undefined;
-      --eco-estado-no-seleccionada-color: undefined;
-      --eco-estado-no-seleccionada-on: undefined;
-      --eco-estado-no-seleccionada-container: undefined;
-      --eco-estado-no-seleccionada-on-container: undefined;
+      --eco-estado-publicado-color: #A9C7FF;
+      --eco-estado-publicado-on: #002F65;
+      --eco-estado-publicado-container: #00468C;
+      --eco-estado-publicado-on-container: #D6E3FF;
+      --eco-estado-en-negociacion-color: #FFB95F;
+      --eco-estado-en-negociacion-on: #4A2800;
+      --eco-estado-en-negociacion-container: #693C00;
+      --eco-estado-en-negociacion-on-container: #FFDDB8;
+      --eco-estado-propuesta-color: #FFB95F;
+      --eco-estado-propuesta-on: #4A2800;
+      --eco-estado-propuesta-container: #693C00;
+      --eco-estado-propuesta-on-container: #FFDDB8;
+      --eco-estado-recolectado-color: #8DD9A0;
+      --eco-estado-recolectado-on: #00391A;
+      --eco-estado-recolectado-container: #005226;
+      --eco-estado-recolectado-on-container: #B7F0C0;
+      --eco-estado-aceptada-color: #8DD9A0;
+      --eco-estado-aceptada-on: #00391A;
+      --eco-estado-aceptada-container: #005226;
+      --eco-estado-aceptada-on-container: #B7F0C0;
+      --eco-estado-cancelado-color: #C6C7C0;
+      --eco-estado-cancelado-on: #2F312C;
+      --eco-estado-cancelado-container: #454742;
+      --eco-estado-cancelado-on-container: #E3E3DC;
+      --eco-estado-rechazada-color: #C6C7C0;
+      --eco-estado-rechazada-on: #2F312C;
+      --eco-estado-rechazada-container: #454742;
+      --eco-estado-rechazada-on-container: #E3E3DC;
+      --eco-estado-no-seleccionada-color: #C6C7C0;
+      --eco-estado-no-seleccionada-on: #2F312C;
+      --eco-estado-no-seleccionada-container: #454742;
+      --eco-estado-no-seleccionada-on-container: #E3E3DC;
 
       --eco-graf-1: #38BDF8;
       --eco-graf-2: #FBBF24;
@@ -305,67 +305,67 @@
     --md-sys-color-inverse-on-surface: #2F312C;
     --md-sys-color-inverse-primary: #1F4A2C;
 
-    --eco-cat-aprovechable-color: undefined;
-    --eco-cat-aprovechable-on: undefined;
-    --eco-cat-aprovechable-container: undefined;
-    --eco-cat-aprovechable-on-container: undefined;
-    --eco-cat-peligroso-color: undefined;
-    --eco-cat-peligroso-on: undefined;
-    --eco-cat-peligroso-container: undefined;
-    --eco-cat-peligroso-on-container: undefined;
-    --eco-cat-raee-color: undefined;
-    --eco-cat-raee-on: undefined;
-    --eco-cat-raee-container: undefined;
-    --eco-cat-raee-on-container: undefined;
-    --eco-cat-rcd-color: undefined;
-    --eco-cat-rcd-on: undefined;
-    --eco-cat-rcd-container: undefined;
-    --eco-cat-rcd-on-container: undefined;
-    --eco-cat-riesgo-biologico-color: undefined;
-    --eco-cat-riesgo-biologico-on: undefined;
-    --eco-cat-riesgo-biologico-container: undefined;
-    --eco-cat-riesgo-biologico-on-container: undefined;
-    --eco-cat-organico-color: undefined;
-    --eco-cat-organico-on: undefined;
-    --eco-cat-organico-container: undefined;
-    --eco-cat-organico-on-container: undefined;
-    --eco-cat-ordinario-color: undefined;
-    --eco-cat-ordinario-on: undefined;
-    --eco-cat-ordinario-container: undefined;
-    --eco-cat-ordinario-on-container: undefined;
+    --eco-cat-aprovechable-color: #86D1EC;
+    --eco-cat-aprovechable-on: #003544;
+    --eco-cat-aprovechable-container: #004D63;
+    --eco-cat-aprovechable-on-container: #CDEBF5;
+    --eco-cat-peligroso-color: #F2B200;
+    --eco-cat-peligroso-on: #1F1600;
+    --eco-cat-peligroso-container: #5A4300;
+    --eco-cat-peligroso-on-container: #FFE08A;
+    --eco-cat-raee-color: #CFBDFF;
+    --eco-cat-raee-on: #2F1A75;
+    --eco-cat-raee-container: #44298A;
+    --eco-cat-raee-on-container: #E8DEFF;
+    --eco-cat-rcd-color: #D8C2AF;
+    --eco-cat-rcd-on: #3A2C20;
+    --eco-cat-rcd-container: #54433A;
+    --eco-cat-rcd-on-container: #F0E2D6;
+    --eco-cat-riesgo-biologico-color: #FFB4AA;
+    --eco-cat-riesgo-biologico-on: #690004;
+    --eco-cat-riesgo-biologico-container: #8C1D18;
+    --eco-cat-riesgo-biologico-on-container: #FFDAD5;
+    --eco-cat-organico-color: #A5D889;
+    --eco-cat-organico-on: #0F3900;
+    --eco-cat-organico-container: #1A500A;
+    --eco-cat-organico-on-container: #C9EDB2;
+    --eco-cat-ordinario-color: #C4C8C3;
+    --eco-cat-ordinario-on: #2C312D;
+    --eco-cat-ordinario-container: #444945;
+    --eco-cat-ordinario-on-container: #DFE4DE;
 
-    --eco-estado-publicado-color: undefined;
-    --eco-estado-publicado-on: undefined;
-    --eco-estado-publicado-container: undefined;
-    --eco-estado-publicado-on-container: undefined;
-    --eco-estado-en-negociacion-color: undefined;
-    --eco-estado-en-negociacion-on: undefined;
-    --eco-estado-en-negociacion-container: undefined;
-    --eco-estado-en-negociacion-on-container: undefined;
-    --eco-estado-propuesta-color: undefined;
-    --eco-estado-propuesta-on: undefined;
-    --eco-estado-propuesta-container: undefined;
-    --eco-estado-propuesta-on-container: undefined;
-    --eco-estado-recolectado-color: undefined;
-    --eco-estado-recolectado-on: undefined;
-    --eco-estado-recolectado-container: undefined;
-    --eco-estado-recolectado-on-container: undefined;
-    --eco-estado-aceptada-color: undefined;
-    --eco-estado-aceptada-on: undefined;
-    --eco-estado-aceptada-container: undefined;
-    --eco-estado-aceptada-on-container: undefined;
-    --eco-estado-cancelado-color: undefined;
-    --eco-estado-cancelado-on: undefined;
-    --eco-estado-cancelado-container: undefined;
-    --eco-estado-cancelado-on-container: undefined;
-    --eco-estado-rechazada-color: undefined;
-    --eco-estado-rechazada-on: undefined;
-    --eco-estado-rechazada-container: undefined;
-    --eco-estado-rechazada-on-container: undefined;
-    --eco-estado-no-seleccionada-color: undefined;
-    --eco-estado-no-seleccionada-on: undefined;
-    --eco-estado-no-seleccionada-container: undefined;
-    --eco-estado-no-seleccionada-on-container: undefined;
+    --eco-estado-publicado-color: #A9C7FF;
+    --eco-estado-publicado-on: #002F65;
+    --eco-estado-publicado-container: #00468C;
+    --eco-estado-publicado-on-container: #D6E3FF;
+    --eco-estado-en-negociacion-color: #FFB95F;
+    --eco-estado-en-negociacion-on: #4A2800;
+    --eco-estado-en-negociacion-container: #693C00;
+    --eco-estado-en-negociacion-on-container: #FFDDB8;
+    --eco-estado-propuesta-color: #FFB95F;
+    --eco-estado-propuesta-on: #4A2800;
+    --eco-estado-propuesta-container: #693C00;
+    --eco-estado-propuesta-on-container: #FFDDB8;
+    --eco-estado-recolectado-color: #8DD9A0;
+    --eco-estado-recolectado-on: #00391A;
+    --eco-estado-recolectado-container: #005226;
+    --eco-estado-recolectado-on-container: #B7F0C0;
+    --eco-estado-aceptada-color: #8DD9A0;
+    --eco-estado-aceptada-on: #00391A;
+    --eco-estado-aceptada-container: #005226;
+    --eco-estado-aceptada-on-container: #B7F0C0;
+    --eco-estado-cancelado-color: #C6C7C0;
+    --eco-estado-cancelado-on: #2F312C;
+    --eco-estado-cancelado-container: #454742;
+    --eco-estado-cancelado-on-container: #E3E3DC;
+    --eco-estado-rechazada-color: #C6C7C0;
+    --eco-estado-rechazada-on: #2F312C;
+    --eco-estado-rechazada-container: #454742;
+    --eco-estado-rechazada-on-container: #E3E3DC;
+    --eco-estado-no-seleccionada-color: #C6C7C0;
+    --eco-estado-no-seleccionada-on: #2F312C;
+    --eco-estado-no-seleccionada-container: #454742;
+    --eco-estado-no-seleccionada-on-container: #E3E3DC;
 
     --eco-graf-1: #38BDF8;
     --eco-graf-2: #FBBF24;
@@ -751,7 +751,7 @@
   }
 
   .tarjeta-titulo {
-    @apply text-title-l text-on-surface font-semibold;
+    @apply font-sans text-title-l font-semibold text-on-surface;
   }
 
   .tarjeta-kpi {
@@ -766,8 +766,8 @@
 
   /* Cuando el dato destacado es un nombre y no una cifra. */
   .kpi-cifra-texto {
-    @apply truncate font-sans text-title-l font-bold tracking-tight text-on-surface;
-    line-height: 36px;
+    @apply truncate font-sans text-headline-s font-semibold text-on-surface;
+    line-height: 40px;
   }
 
   /* Contexto de una cifra destacada: a qué equivale o de dónde sale. */
@@ -935,7 +935,7 @@
      cifras no bailen al cambiar; en la fuente del texto, no en la condensada
      de los títulos. */
   .kpi-cifra {
-    @apply font-sans font-bold text-headline-m text-on-surface tracking-tight;
+    @apply font-display font-bold text-display-s text-on-surface;
     font-variant-numeric: tabular-nums;
   }
 
@@ -964,7 +964,7 @@
   }
 
   .tarjeta-accion .kpi-cifra {
-    @apply text-title-l md:text-headline-s font-bold leading-none;
+    @apply font-display text-headline-m md:text-display-s font-bold leading-none;
   }
 
   .tarjeta-accion > .material-symbols-outlined:last-child {
@@ -1146,7 +1146,7 @@
   }
 
   .dialogo-titulo {
-    @apply font-display text-headline-s text-on-surface;
+    @apply font-display text-headline-s font-semibold text-on-surface;
   }
 
   .dialogo-acciones {
@@ -2038,11 +2038,11 @@
   }
 
   .titulo-pagina {
-    @apply font-display text-headline-m md:text-headline-l text-on-surface;
+    @apply font-display text-headline-m md:text-headline-l font-bold text-on-surface;
   }
 
   .seccion-titulo {
-    @apply font-display text-headline-s text-on-surface;
+    @apply font-display text-headline-s font-semibold text-on-surface;
   }
 
   .solo-impresion {
