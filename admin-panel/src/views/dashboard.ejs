@@ -4,7 +4,7 @@
 <div class="flex flex-col gap-4 md:gap-8">
   <div>
     <h1 class="titulo-pagina">Inicio</h1>
-    <p class="mt-0.5 text-body-m md:text-body-l text-on-surface-variant">Lo que necesita tu atención hoy y cómo va el reciclaje en Santander.</p>
+    <p class="mt-1 text-body-l text-on-surface-variant">Lo que necesita tu atención hoy y cómo va el reciclaje en Santander.</p>
   </div>
 
   <% if (errorCarga) { %>
@@ -111,10 +111,10 @@
       ].forEach(function (kpi) { %>
         <div class="tarjeta-kpi">
           <div class="flex items-center justify-between">
-            <dt class="text-label-m text-on-surface-variant font-medium"><%= kpi[0] %></dt>
+            <dt class="text-label-l text-on-surface-variant"><%= kpi[0] %></dt>
             <span class="material-symbols-outlined icono-18 text-on-surface-variant opacity-70" aria-hidden="true"><%= kpi[2] %></span>
           </div>
-          <dd class="kpi-cifra text-headline-s"><%= f.formatoNumero(kpi[1]) %></dd>
+          <dd class="kpi-cifra"><%= f.formatoNumero(kpi[1]) %></dd>
         </div>
       <% }); %>
     </dl>
