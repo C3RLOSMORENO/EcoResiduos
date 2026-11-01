@@ -26,7 +26,7 @@ async function entregaDePdf(supabase, bucket, ruta, archivo) {
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(ruta, VIGENCIA_ENLACE_S);
     if (error || !data || !data.signedUrl) {
         console.error(`No se firmó el enlace de ${bucket}/${ruta}: ${error ? error.message : 'sin URL'}`);
-        throw new Error('El PDF es muy grande y no pudimos generar el enlace para abrirlo. Intenta de nuevo.');
+        throw new Error('El PDF es muy grande y no pudimos generar el enlace para abrirlo. Inténtalo de nuevo.');
     }
     return { url: data.signedUrl };
 }

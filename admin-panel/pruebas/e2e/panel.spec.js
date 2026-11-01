@@ -26,6 +26,42 @@ async function iniciarSesion(page, destino) {
     await expect(page).toHaveURL(new RegExp(`${destino}(\\?|$)`));
 }
 
+test('login: cada mensaje sale junto a lo que hay que corregir y se quita al corregirlo', async ({ page }) => {
+    await page.goto('/login');
+    const correo = page.getByLabel('Correo');
+    const clave = page.getByLabel('Contraseña', { exact: false }).first();
+    const ingresar = page.getByRole('button', { name: 'Ingresar' });
+
+    // Vacío: cada campo dice qué le falta, debajo de él.
+    await ingresar.click();
+    await expect(page.locator('#email-error')).toContainText('Escribe tu correo.');
+    await expect(page.locator('#password-error')).toContainText('Escribe tu contraseña.');
+    await expect(correo).toBeFocused();
+
+    // Contraseña errada: el aviso va entre los campos y el botón, y el correo sigue escrito.
+    await correo.fill(ADMIN.correo);
+    await clave.fill('mala');
+    await ingresar.click();
+    const aviso = page.getByRole('alert').filter({ hasText: 'El correo o la contraseña no coinciden' });
+    await expect(aviso).toBeVisible();
+    await expect(correo).toHaveValue(ADMIN.correo);
+    await expect(clave).toBeFocused();
+    const cajaAviso = await aviso.boundingBox();
+    expect(cajaAviso.y).toBeGreaterThan((await clave.boundingBox()).y);
+    expect(cajaAviso.y).toBeLessThan((await ingresar.boundingBox()).y);
+
+    await clave.fill('clave-correct');
+    await expect(aviso).toHaveCount(0);
+    await expect(clave).not.toHaveAttribute('aria-invalid', 'true');
+
+    // Chrome anota en la consola toda respuesta 4xx; el 422 del intento
+    // fallido es el esperado y cualquier otro error sigue haciendo fallar.
+    const errores = test.info().errores;
+    const restantes = errores.filter((e) => !/status of 422/.test(e));
+    expect(errores.length - restantes.length).toBe(1);
+    errores.splice(0, errores.length, ...restantes);
+});
+
 test('aprobar un gestor: se confirma en el diálogo y la ficha queda aprobada', async ({ page }) => {
     await iniciarSesion(page, '/gestores/1');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('RECICLAJES DEL ORIENTE');

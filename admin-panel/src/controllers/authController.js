@@ -20,6 +20,26 @@ function mensajeEspera(ms) {
     return `Hiciste demasiados intentos seguidos. Espera ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'} y vuelve a intentarlo, o restablece tu contraseña.`;
 }
 
+/**
+ * Vuelve a mostrar el login con el error del intento. Se responde con la
+ * página, sin redirigir, para conservar el correo escrito: así solo hay que
+ * corregir lo que falló.
+ *
+ * @param {import('express').Response} res
+ * @param {number} estado Código HTTP: 400 si falta un dato, 422 si no coinciden (401 exigiría
+ *   la cabecera WWW-Authenticate, que no aplica a un formulario), 429 o 503.
+ * @param {{ correo: string, volver: string, mensaje: string, campos?: boolean }} datos
+ *   campos: true si el error es del correo o la contraseña (se marcan los dos).
+ */
+function renderError(res, estado, { correo, volver, mensaje, campos = false }) {
+    return res.status(estado).render('login', {
+        titulo: 'Iniciar sesión',
+        volver,
+        correo,
+        errorLogin: { mensaje, campos }
+    });
+}
+
 const authController = {
     /** GET /login. Con una sesión válida va directo al panel. */
     async renderLogin(req, res) {
@@ -37,7 +57,7 @@ const authController = {
             }
         }
 
-        res.render('login', { titulo: 'Iniciar sesión', volver });
+        res.render('login', { titulo: 'Iniciar sesión', volver, correo: '', errorLogin: null });
     },
 
     /** POST /login: valida las credenciales con límite de intentos por correo y por IP. */
@@ -45,18 +65,19 @@ const authController = {
         const email = String(req.body.email || '').trim().toLowerCase();
         const password = String(req.body.password || '');
         const volver = rutaInterna(req.body.volver, '');
-        const conVolver = volver ? `&volver=${encodeURIComponent(volver)}` : '';
-        const devolver = (mensaje) => res.redirect(conAviso('/login', mensaje, 'error') + conVolver);
+        const datos = { correo: email, volver };
 
         if (!email || !password) {
-            return devolver('Escribe tu correo y tu contraseña.');
+            const falta = !email && !password ? 'tu correo y tu contraseña' : (!email ? 'tu correo' : 'tu contraseña');
+            return renderError(res, 400, { ...datos, mensaje: `Escribe ${falta} para entrar.`, campos: true });
         }
 
         const claveCorreo = `correo:${email}`;
         const claveIp = `ip:${req.ip}`;
         const espera = Math.max(limitePorCorreo.espera(claveCorreo), limitePorIp.espera(claveIp));
         if (espera > 0) {
-            return devolver(mensajeEspera(espera));
+            res.set('Retry-After', String(Math.ceil(espera / 1000)));
+            return renderError(res, 429, { ...datos, mensaje: mensajeEspera(espera) });
         }
 
         try {
@@ -65,15 +86,23 @@ const authController = {
             if (session && session.access_token) {
                 guardarSesion(res, { accessToken: session.access_token, refreshToken: session.refresh_token });
             }
-            return res.redirect(conAviso(volver || INICIO, 'Iniciaste sesión.'));
+            // Sin aviso de «iniciaste sesión»: llegar al panel ya lo confirma.
+            return res.redirect(volver || INICIO);
         } catch (err) {
             if (err.codigo === 'CREDENCIALES') {
                 limitePorCorreo.fallo(claveCorreo);
                 limitePorIp.fallo(claveIp);
-                return devolver('Correo o contraseña incorrectos.');
+                return renderError(res, 422, {
+                    ...datos,
+                    mensaje: 'El correo o la contraseña no coinciden. Revisa que estén bien escritos o restablece la contraseña.',
+                    campos: true
+                });
             }
             console.error('Inicio de sesión: falló Supabase Auth:', err.message);
-            return devolver('No pudimos iniciar sesión por un problema del servicio. Intenta de nuevo en unos minutos.');
+            return renderError(res, 503, {
+                ...datos,
+                mensaje: 'No pudimos iniciar sesión porque el servicio no respondió. Inténtalo de nuevo en unos minutos.'
+            });
         }
     },
 

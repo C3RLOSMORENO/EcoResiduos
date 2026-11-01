@@ -126,7 +126,8 @@ test('iniciar sesión guarda el token y el refresh token y vuelve a la página p
         const res = await request(app).post(ruta).set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
             .send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta', volver: '/gestores/1' });
         assert.equal(res.status, 302);
-        assert.match(res.headers.location, /^\/gestores\/1\?msg=/);
+        // Sin aviso de «iniciaste sesión»: llegar a la página ya lo confirma.
+        assert.equal(res.headers.location, '/gestores/1');
         const cookies = res.headers['set-cookie'].join(';');
         assert.match(cookies, /sb_access_token=token-admin/);
         assert.match(cookies, /sb_refresh_token=refresco-1/);
@@ -135,7 +136,40 @@ test('iniciar sesión guarda el token y el refresh token y vuelve a la página p
         .send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta', volver: '//sitio-malo.test' });
     assert.match(externo.headers.location, /^\/dashboard/);
     const mala = await request(app).post('/login').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form').send({ email: 'admin@ecoresiduos.test', password: 'mala' });
-    assert.match(mala.headers.location, /^\/login\?msg=Correo%20o%20contrase%C3%B1a%20incorrectos\.&type=error&firma=/);
+    assert.equal(mala.status, 422);
+    assert.match(mala.text, /El correo o la contraseña no coinciden/);
+});
+
+test('el error del login sale junto al botón, con el correo escrito y los campos marcados', async () => {
+    const res = await request(app).post('/login').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
+        .send({ email: 'Admin@EcoResiduos.test', password: 'mala' });
+    assert.equal(res.status, 422);
+    const html = res.text;
+    const error = html.indexOf('id="errorLogin"');
+    assert.ok(error > html.indexOf('id="password"'), 'el error va después de los campos');
+    assert.ok(error < html.indexOf('type="submit"'), 'y antes del botón Ingresar');
+    assert.match(html, /role="alert"[^>]*data-quitar-al-corregir/);
+    assert.match(html, /id="email"[^>]*value="admin@ecoresiduos\.test"[^>]*aria-invalid="true" aria-describedby="errorLogin"/);
+    assert.match(html, /id="password"[^>]*aria-invalid="true"/);
+    // El correo vuelve escapado: no se puede inyectar HTML desde el formulario.
+    const raro = await request(app).post('/login').set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
+        .send({ email: '"><script>alert(1)</script>', password: 'x' });
+    assert.ok(!raro.text.includes('<script>alert(1)'));
+});
+
+test('el login vacío no usa placeholders que parezcan texto escrito', async () => {
+    const res = await request(app).get('/login');
+    assert.ok(!/id="(email|password)"[^>]*placeholder=/.test(res.text));
+    assert.match(res.text, /data-mensaje-obligatorio="Escribe tu correo\."/);
+    assert.ok(!res.text.includes('id="errorLogin"'));
+});
+
+test('sin sesión, el login explica por qué está ahí con un aviso informativo, no con un error', async () => {
+    const res = await request(app).get('/solicitudes');
+    assert.equal(res.headers.location, '/login?aviso=inicia-sesion&volver=%2Fsolicitudes');
+    const login = await request(app).get(res.headers.location);
+    assert.match(login.text, /class="nota nota-info mb-4" role="status"/);
+    assert.match(login.text, /Inicia sesión para continuar\./);
 });
 
 test('con el token vencido, la sesión se renueva con el refresh token', async () => {

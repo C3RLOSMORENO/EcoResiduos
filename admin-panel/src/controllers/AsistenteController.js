@@ -17,7 +17,7 @@ const asistenteController = {
         const espera = limite.espera(clave);
         if (espera > 0) {
             const minutos = Math.ceil(espera / 60000);
-            return res.status(429).json({ ok: false, mensaje: `Hiciste muchas preguntas seguidas. Intenta de nuevo en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.` });
+            return res.status(429).json({ ok: false, mensaje: `Hiciste muchas preguntas seguidas. Vuelve a preguntar en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.` });
         }
         limite.fallo(clave);
 

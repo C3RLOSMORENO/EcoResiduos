@@ -275,6 +275,24 @@
     });
   });
 
+  // El error de un envío (el del login, por ejemplo) se quita apenas la
+  // persona empieza a corregir: ya no describe lo que hay en los campos.
+  $$('[data-quitar-al-corregir]').forEach((nota) => {
+    const form = nota.closest('form');
+    if (!form || !nota.id) return;
+    form.addEventListener('input', () => {
+      $$('[aria-describedby]', form).forEach((campo) => {
+        const resto = campo.getAttribute('aria-describedby').split(' ').filter((id) => id && id !== nota.id);
+        if (resto.length) campo.setAttribute('aria-describedby', resto.join(' '));
+        else campo.removeAttribute('aria-describedby');
+        if (!document.getElementById(`${campo.id}-error`) || document.getElementById(`${campo.id}-error`).hidden) {
+          campo.removeAttribute('aria-invalid');
+        }
+      });
+      nota.remove();
+    }, { once: true });
+  });
+
   // ------------------------------------------------------------------
   // Confirmación con diálogo propio (reemplaza confirm())
   // ------------------------------------------------------------------
@@ -902,7 +920,7 @@
           window.location.href = datos.redirigir;
           return;
         }
-        marcarError(campo, datos.mensaje || 'No pudimos subir el permiso. Intenta de nuevo.');
+        marcarError(campo, datos.mensaje || 'No pudimos subir el permiso. Inténtalo de nuevo.');
         campo.focus();
       } catch (err) {
         marcarError(campo, 'No pudimos conectarnos con el servidor. Revisa tu conexión e intenta de nuevo.');

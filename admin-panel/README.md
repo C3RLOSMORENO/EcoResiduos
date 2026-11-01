@@ -97,7 +97,7 @@ admin-panel/
 │   ├── utils/                    # Excel, fechas, filtros, íconos, límites de archivos…
 │   ├── views/                    # Plantillas EJS
 │   └── public/                   # CSS compilado, JavaScript del navegador e imágenes
-├── pruebas/                      # 156 pruebas de integración, seguridad y WCAG, más las de navegador (e2e/)
+├── pruebas/                      # 159 pruebas de integración, seguridad y WCAG, más las de navegador (e2e/)
 ├── vercel.json                   # Configuración del despliegue en Vercel
 ├── tailwind.config.js            # Tokens de diseño (colores y tipografía de la app)
 └── package.json                  # Dependencias y scripts
@@ -168,12 +168,12 @@ Al arrancar, el panel revisa estas variables y dice cuál falta.
 ### Pruebas
 
 ```bash
-npm test             # 156 pruebas, unos segundos
+npm test             # 159 pruebas, unos segundos
 npm run lint
-npm run test:e2e     # 9 recorridos en navegador, en escritorio y en celular
+npm run test:e2e     # 10 recorridos en navegador, en escritorio y en celular
 ```
 
-`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí inicia sesión, recorre y salta el recorrido guiado del inicio, aprueba un gestor, quita su logo, comprueba el esqueleto de carga, amplía la foto de una solicitud, guarda un formulario de edición, conversa con el asistente y cambia las preferencias de accesibilidad. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
+`npm run test:e2e` levanta el panel con datos simulados en el puerto 3998. Allí revisa dónde salen los mensajes del inicio de sesión, entra, recorre y salta el recorrido guiado del inicio, aprueba un gestor, quita su logo, comprueba el esqueleto de carga, amplía la foto de una solicitud, guarda un formulario de edición, conversa con el asistente y cambia las preferencias de accesibilidad. Si aparece cualquier error en la consola del navegador, la prueba falla. La primera vez hay que descargar el navegador:
 
 ```bash
 npx playwright install chromium

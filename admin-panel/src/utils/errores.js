@@ -30,7 +30,7 @@ function errorDeBase(mensaje, error) {
     if (codigo === 'P0001' && error.message) return new Error(error.message);
 
     const causa = CAUSAS_POR_CODIGO[codigo];
-    return new Error(causa ? `${mensaje} ${causa}` : `${mensaje} Intenta de nuevo en unos minutos.`);
+    return new Error(causa ? `${mensaje} ${causa}` : `${mensaje} Inténtalo de nuevo en unos minutos.`);
 }
 
 /**

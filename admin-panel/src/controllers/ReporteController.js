@@ -42,6 +42,6 @@ exports.descargarExcel = async (req, res) => {
         res.send(archivo);
     } catch (err) {
         console.error('Reporte Excel:', err.message);
-        res.redirect(conAviso('/reportes', 'No pudimos generar el Excel. Intenta de nuevo en unos minutos.', 'error'));
+        res.redirect(conAviso('/reportes', 'No pudimos generar el Excel. Inténtalo de nuevo en unos minutos.', 'error'));
     }
 };
