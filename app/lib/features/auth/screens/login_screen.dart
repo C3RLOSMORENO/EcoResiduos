@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/eco_theme.dart';
+import '../../../widgets/aviso_formulario.dart';
 import '../../../widgets/eco_logo.dart';
 import '../repositories/auth_repository.dart';
 import '../widgets/campo_contrasena.dart';
@@ -49,35 +50,52 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _auth.signIn(email: _correo.text.trim(), password: _contrasena.text);
     } on AuthException catch (e) {
+      if (!mounted) return;
       setState(() {
         if (e.code == 'email_not_confirmed') {
           _aviso = _AvisoLogin.sinActivar;
-        } else if (e.code == 'invalid_credentials' || e.message.contains('no coinciden')) {
+        } else if (e.code == 'invalid_credentials') {
           _aviso = _AvisoLogin.credenciales;
         } else {
+          // El repositorio ya lo tradujo (demasiados intentos, sin conexión…).
           _aviso = _AvisoLogin.otro;
           _mensajeOtro = e.message;
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _aviso = _AvisoLogin.otro;
-        _mensajeOtro = 'No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.';
+        _mensajeOtro = 'Revisa tu conexión a internet e inténtalo de nuevo.';
       });
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
   }
 
+  /// En cuanto la persona empieza a corregir, el aviso del intento anterior
+  /// ya no aplica y se quita. El de la cuenta sin activar se queda porque
+  /// tiene el botón para reenviar el enlace.
+  void _alCorregir() {
+    if (_aviso == _AvisoLogin.credenciales || _aviso == _AvisoLogin.otro) {
+      setState(() => _aviso = _AvisoLogin.ninguno);
+    }
+  }
+
   Future<void> _reenviarEnlace() async {
     final messenger = ScaffoldMessenger.of(context);
+    final correo = _correo.text.trim();
     try {
-      await _auth.reenviarConfirmacion(_correo.text.trim());
+      await _auth.reenviarConfirmacion(correo);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Enviamos un enlace nuevo. Revisa también la carpeta de spam.')),
+        SnackBar(content: Text('Te enviamos otro enlace a $correo. Si no aparece, revisa la carpeta de spam.')),
       );
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text('No pudimos reenviar el enlace. Inténtalo en un minuto.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No pudimos reenviar el enlace. Revisa tu conexión e inténtalo de nuevo.')),
+      );
     }
   }
 
@@ -268,12 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
 
-                      const SizedBox(height: EcoSpace.s12),
-
-                      if (_aviso != _AvisoLogin.ninguno) ...[
-                        _banner().animate().fadeIn().slideY(begin: -0.1),
-                        const SizedBox(height: EcoSpace.s16),
-                      ],
+                      const SizedBox(height: EcoSpace.s16),
 
                       // Campo Correo
                       TextFormField(
@@ -282,9 +295,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.email],
                         validator: validarCorreo,
+                        onChanged: (_) => _alCorregir(),
                         style: TextStyle(fontWeight: FontWeight.w500, color: scheme.onSurface),
                         decoration: InputDecoration(
-                          hintText: 'Correo',
+                          labelText: 'Correo',
                           prefixIcon: const Icon(Icons.mail_outline_rounded),
                           filled: true,
                           fillColor: fieldBgColor,
@@ -302,6 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       CampoContrasena(
                         controller: _contrasena,
                         validator: (v) => (v ?? '').isEmpty ? 'Escribe tu contraseña' : null,
+                        onChanged: (_) => _alCorregir(),
                         onSubmitted: (_) => _entrar(),
                         fillColor: fieldBgColor,
                       ).animate().fadeIn(duration: 600.ms, delay: 800.ms).slideY(begin: 0.1),
@@ -322,6 +337,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('¿Olvidaste tu contraseña?'),
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 900.ms),
+
+                      // El resultado de tocar «Entrar» va pegado al botón:
+                      // ahí está mirando la persona y el teclado no lo tapa.
+                      if (_aviso != _AvisoLogin.ninguno) ...[
+                        const SizedBox(height: EcoSpace.s8),
+                        _banner(),
+                      ],
 
                       const SizedBox(height: EcoSpace.s24),
 
@@ -409,72 +431,25 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _banner() {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    final (icono, titulo, texto) = switch (_aviso) {
-      _AvisoLogin.credenciales => (
-        Icons.warning_amber_rounded,
-        'El correo o la contraseña no coinciden',
-        'Revísalos o recupera tu contraseña.',
+    final scheme = Theme.of(context).colorScheme;
+    return switch (_aviso) {
+      _AvisoLogin.credenciales => const AvisoFormulario(
+        titulo: 'El correo o la contraseña no coinciden',
+        texto: 'Revisa que estén bien escritos. Si no recuerdas la contraseña, usa «¿Olvidaste tu contraseña?».',
       ),
-      _AvisoLogin.sinActivar => (
-        Icons.mark_email_unread_outlined,
-        'Aún no has activado tu cuenta',
-        'Abre el enlace que te enviamos a tu correo.',
-      ),
-      _ => (Icons.error_outline, 'No pudimos iniciar sesión', _mensajeOtro),
-    };
-    final sinActivar = _aviso == _AvisoLogin.sinActivar;
-
-    return Container(
-      padding: const EdgeInsets.all(EcoSpace.s16),
-      decoration: BoxDecoration(
-        color: sinActivar
-            ? scheme.secondaryContainer.withValues(alpha: isDark ? 0.5 : 0.8)
-            : scheme.errorContainer.withValues(alpha: isDark ? 0.5 : 0.8),
-        borderRadius: BorderRadius.circular(EcoRadius.medium),
-        border: Border.all(
-          color: sinActivar ? scheme.primary.withValues(alpha: 0.3) : scheme.error.withValues(alpha: 0.3),
+      _AvisoLogin.sinActivar => AvisoFormulario(
+        informativo: true,
+        titulo: 'Aún no has activado tu cuenta',
+        texto: 'Abre el enlace que te enviamos a ${_correo.text.trim()}. Si no lo encuentras, pide otro.',
+        accion: TextButton.icon(
+          onPressed: _reenviarEnlace,
+          icon: const Icon(Icons.send_outlined, size: 18),
+          label: const Text('Reenviar enlace'),
+          style: TextButton.styleFrom(foregroundColor: scheme.onSecondaryContainer),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icono, color: sinActivar ? scheme.onSecondaryContainer : scheme.onErrorContainer),
-              const SizedBox(width: EcoSpace.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(titulo, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    if (texto.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(texto, style: theme.textTheme.bodyMedium),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (sinActivar)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _reenviarEnlace,
-                icon: const Icon(Icons.send_outlined, size: 18),
-                label: const Text('Reenviar enlace'),
-                style: TextButton.styleFrom(foregroundColor: scheme.onSecondaryContainer),
-              ),
-            ),
-        ],
-      ),
-    );
+      _ => AvisoFormulario(titulo: 'No pudimos iniciar sesión', texto: _mensajeOtro),
+    };
   }
 }
 

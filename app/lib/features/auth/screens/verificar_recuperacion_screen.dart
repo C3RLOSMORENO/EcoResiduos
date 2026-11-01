@@ -68,7 +68,7 @@ class _VerificarRecuperacionScreenState extends State<VerificarRecuperacionScree
       setState(() => _error = e.message);
     } catch (e) {
       debugPrint('No se pudo verificar el código: $e');
-      setState(() => _error = 'No pudimos verificar el código. Revisa tu conexión.');
+      setState(() => _error = 'No pudimos verificar el código. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _verificando = false);
     }
@@ -82,8 +82,12 @@ class _VerificarRecuperacionScreenState extends State<VerificarRecuperacionScree
       setState(() => _error = null);
       _iniciarEspera();
       messenger.showSnackBar(const SnackBar(content: Text('Te enviamos un código nuevo.')));
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text('No pudimos reenviar el código. Inténtalo más tarde.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No pudimos reenviar el código. Revisa tu conexión e inténtalo de nuevo.')),
+      );
     }
   }
 

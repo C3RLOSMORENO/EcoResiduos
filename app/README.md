@@ -53,7 +53,7 @@ app/
 │   ├── theme/                    # Colores, tipografía y espaciados (Material 3)
 │   ├── utils/                    # Municipios, formatos y validación de teléfonos y NIT
 │   └── widgets/                  # Componentes compartidos
-└── test/                         # 137 pruebas de lógica y de pantallas
+└── test/                         # 147 pruebas de lógica y de pantallas
 ```
 
 ---
@@ -118,7 +118,7 @@ y se guardan en GitHub (Settings → Secrets and variables → Actions) los secr
 
 ```bash
 flutter analyze
-flutter test        # 137 pruebas
+flutter test        # 147 pruebas
 ```
 
 Cubren el registro (incluida la autorización de datos y la validación de NIT y teléfono), la recuperación de contraseña, la publicación y la cola sin conexión, el detalle de una solicitud, las listas, la foto de perfil y el dibujo de cada pantalla en tema claro y oscuro.

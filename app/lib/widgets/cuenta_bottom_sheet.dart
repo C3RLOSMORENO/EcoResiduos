@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,6 +10,7 @@ import '../features/auth/repositories/auth_repository.dart';
 import '../features/auth/screens/restablecer_password_screen.dart';
 import '../features/auth/widgets/campo_contrasena.dart' show validarCorreo;
 import '../features/solicitudes/screens/mis_materiales_screen.dart';
+import '../legal/politica_datos.dart' show correoDatosPersonales;
 import '../services/archivo_pdf.dart';
 import '../services/foto_perfil_service.dart';
 import '../theme/eco_theme.dart';
@@ -65,6 +68,12 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   String? _municipioNuevo;
   _CampoEditable? _campoActual;
   String? _errorCampo;
+  String? _errorSolicitud;
+
+  /// Aviso en el borde inferior de la hoja (ver [_avisar]).
+  String? _aviso;
+  ({String etiqueta, VoidCallback alTocar})? _accionAviso;
+  Timer? _cierreAviso;
   bool _guardando = false;
 
   // Un único controlador reutilizable para la sub-vista de editar un campo.
@@ -87,6 +96,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
 
   @override
   void dispose() {
+    _cierreAviso?.cancel();
     _ctrlCampo.dispose();
     _ctrlSolicitud.dispose();
     super.dispose();
@@ -121,10 +131,32 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     }
   }
 
+  /// Confirmaciones y errores que no son de un campo. Un SnackBar saldría en
+  /// la pantalla de atrás, tapado por esta hoja; por eso el aviso se pinta en
+  /// el borde inferior de la propia hoja, el mismo lugar del snackbar. Si
+  /// trae un botón no se cierra solo, para dar tiempo de usarlo (WCAG 2.2.1).
+  void _avisar(String texto, {String? accion, VoidCallback? alTocar}) {
+    _cierreAviso?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _aviso = texto;
+      _accionAviso = accion == null ? null : (etiqueta: accion, alTocar: alTocar!);
+    });
+    if (accion == null) {
+      _cierreAviso = Timer(const Duration(seconds: 5), () {
+        if (mounted) setState(() => _aviso = null);
+      });
+    }
+  }
+
+  void _cerrarAviso() {
+    _cierreAviso?.cancel();
+    setState(() => _aviso = null);
+  }
+
   Future<void> _guardarMunicipio() async {
     final nuevo = _municipioNuevo;
     if (nuevo == null) return;
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _guardando = true);
     try {
       await _auth.actualizarMunicipio(nuevo);
@@ -132,9 +164,10 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
         _municipio = nuevo;
         _vista = _VistaActual.cuenta;
       });
+      _avisar('Cambiamos tu municipio a $nuevo.');
     } catch (e) {
       debugPrint('No se pudo actualizar el municipio: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar el municipio.')));
+      _avisar('No pudimos guardar el municipio. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -172,6 +205,27 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
         _CampoEditable.horario => valor.length > 120 ? 'Máximo 120 caracteres' : null,
       };
 
+  /// Dice qué se guardó, para que la persona no tenga que buscarlo en la lista.
+  static String _confirmacionDe(_CampoEditable campo) => switch (campo) {
+        _CampoEditable.nombre => 'Cambiamos tu nombre.',
+        _CampoEditable.correoAcceso => 'Cambiamos tu correo de acceso.',
+        _CampoEditable.documento => 'Cambiamos tu documento.',
+        _CampoEditable.email => 'Cambiamos el correo de contacto.',
+        _CampoEditable.telefono => 'Cambiamos tu teléfono.',
+        _CampoEditable.direccion => 'Cambiamos la dirección.',
+        _CampoEditable.horario => 'Cambiamos el horario de atención.',
+      };
+
+  /// Las funciones de la base avisan en español con RAISE EXCEPTION (código
+  /// P0001) y ese texto se muestra tal cual. Los demás errores de Postgres
+  /// vienen en inglés y se traducen.
+  static String _mensajeDeLaBase(PostgrestException e) => switch (e.code) {
+        'P0001' => e.message,
+        '23505' => 'Ese dato ya está registrado en otra cuenta.',
+        '23514' || '22001' => 'El valor no tiene el formato que pedimos. Revísalo.',
+        _ => 'No pudimos guardar el cambio. Inténtalo de nuevo en unos minutos.',
+      };
+
   Future<void> _guardarCampo() async {
     final campo = _campoActual;
     if (campo == null) return;
@@ -186,7 +240,6 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     }
     // El teléfono se guarda normalizado (solo dígitos e indicativo 607 en los fijos de 7 dígitos).
     final nuevo = campo == _CampoEditable.telefono ? normalizarTelefono(escrito)! : escrito;
-    final messenger = ScaffoldMessenger.of(context);
     setState(() {
       _guardando = true;
       _errorCampo = null;
@@ -198,9 +251,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
           _correoPendiente = nuevo.toLowerCase();
           _vista = _VistaActual.cuenta;
         });
-        messenger.showSnackBar(
-          SnackBar(content: Text('Te enviamos un enlace a $nuevo. Ábrelo para confirmar el cambio.')),
-        );
+        _avisar('Te enviamos un enlace a $nuevo. Ábrelo para confirmar el cambio.');
         return;
       }
       if (!_sesion.esGestor) {
@@ -231,17 +282,16 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
         if (!_sesion.esGestor) _sesion = widget.sesion ?? SesionUsuario.actual();
         _vista = _VistaActual.cuenta;
       });
-      messenger.showSnackBar(const SnackBar(content: Text('Guardado correctamente.')));
+      _avisar(_confirmacionDe(campo));
     } on AuthException catch (e) {
       // Mensaje ya traducido por el repositorio (por ejemplo, correo en uso).
       if (mounted) setState(() => _errorCampo = e.message);
     } on PostgrestException catch (e) {
-      // Los mensajes de la base (RAISE EXCEPTION) ya están en español.
-      debugPrint('La base rechazó el cambio: ${e.message}');
-      if (mounted) setState(() => _errorCampo = e.message);
+      debugPrint('La base rechazó el cambio: ${e.code} ${e.message}');
+      if (mounted) setState(() => _errorCampo = _mensajeDeLaBase(e));
     } catch (e) {
       debugPrint('No se pudo actualizar: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar los cambios. Revisa tu conexión.')));
+      _avisar('No pudimos guardar el cambio. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -250,7 +300,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   Future<void> _enviarSolicitud() async {
     final texto = _ctrlSolicitud.text.trim();
     if (texto.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escribe qué necesitas cambiar.')));
+      setState(() => _errorSolicitud = 'Cuéntanos qué dato quieres cambiar');
       return;
     }
     final asunto = Uri.encodeComponent('Solicitud cambio datos · ${_documento ?? _nombre}');
@@ -260,22 +310,16 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       await launchUrl(uri);
       if (mounted) setState(() => _vista = _VistaActual.cuenta);
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo abrir el correo. Contáctanos directamente.')),
-        );
-      }
+      _avisar('No encontramos una app de correo en el teléfono. Escríbenos a $correoDatosPersonales.');
     }
   }
 
   Future<void> _subirPermiso() async {
-    final messenger = ScaffoldMessenger.of(context);
     ArchivoPdf? pdf;
     try {
       pdf = await elegirPdf();
     } on PdfInvalido catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.mensaje)));
+      _avisar(e.mensaje);
       return;
     }
     if (pdf == null || !mounted) return;
@@ -283,12 +327,10 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     try {
       await _auth.renovarPermisoAmbiental(pdf);
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('Permiso ambiental actualizado. El administrador lo revisará.')));
+      _avisar('Subimos tu permiso ambiental. El administrador lo revisará.');
     } catch (e) {
       debugPrint('No se pudo subir el permiso: $e');
-      if (mounted) {
-        messenger.showSnackBar(const SnackBar(content: Text('No pudimos subir el permiso. Revisa tu conexión.')));
-      }
+      _avisar('No pudimos subir el permiso. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -307,8 +349,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       if (rutaLocal == null || !mounted) return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
-    final nombre = imagen == ImagenPerfil.foto ? 'Foto de perfil' : 'Portada';
+    final nombre = imagen == ImagenPerfil.foto ? 'la foto de perfil' : 'la portada';
     setState(() => _cambiandoImagen = imagen);
     try {
       String? ruta;
@@ -323,14 +364,10 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             ? _sesion.conImagenes(fotoPerfilPath: ruta, portadaPath: _sesion.portadaPath)
             : _sesion.conImagenes(fotoPerfilPath: _sesion.fotoPerfilPath, portadaPath: ruta),
       );
-      messenger.showSnackBar(SnackBar(content: Text(rutaLocal == null ? '$nombre quitada.' : '$nombre actualizada.')));
+      _avisar(rutaLocal == null ? 'Quitamos $nombre.' : 'Cambiamos $nombre.');
     } catch (e) {
       debugPrint('No se pudo cambiar la imagen del perfil: $e');
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('No pudimos guardar la ${nombre.toLowerCase()}. Revisa tu conexión e inténtalo de nuevo.'),
-        ),
-      );
+      _avisar('No pudimos guardar $nombre. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _cambiandoImagen = null);
     }
@@ -343,12 +380,11 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
     if (estado.isGranted) return true;
     if (!estado.isPermanentlyDenied) estado = await Permission.camera.request();
     if (estado.isGranted) return true;
-    if (estado.isPermanentlyDenied && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Para tomar la foto, permite la cámara en los ajustes del teléfono.'),
-          action: SnackBarAction(label: 'Abrir ajustes', onPressed: openAppSettings),
-        ),
+    if (estado.isPermanentlyDenied) {
+      _avisar(
+        'Para tomar la foto, permite la cámara en los ajustes del teléfono.',
+        accion: 'Abrir ajustes',
+        alTocar: openAppSettings,
       );
     }
     return false;
@@ -369,12 +405,38 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       duration: EcoMotion.duracion(context, EcoMotion.estado),
       child: Padding(
         padding: EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s16 + teclado),
-        child: switch (_vista) {
-          _VistaActual.municipio => _vistaMunicipio(),
-          _VistaActual.editarCampo => _vistaEditarCampo(),
-          _VistaActual.solicitarCambio => _vistaSolicitarCambio(),
-          _VistaActual.cuenta => _vistaCuenta(),
-        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              child: switch (_vista) {
+                _VistaActual.municipio => _vistaMunicipio(),
+                _VistaActual.editarCampo => _vistaEditarCampo(),
+                _VistaActual.solicitarCambio => _vistaSolicitarCambio(),
+                _VistaActual.cuenta => _vistaCuenta(),
+              },
+            ),
+            if (_aviso != null)
+              Padding(
+                padding: const EdgeInsets.only(top: EcoSpace.s8),
+                child: _AvisoHoja(
+                  texto: _aviso!,
+                  accion: _accionAviso == null
+                      ? null
+                      : TextButton(
+                          onPressed: () {
+                            final accion = _accionAviso!.alTocar;
+                            _cerrarAviso();
+                            accion();
+                          },
+                          child: Text(_accionAviso!.etiqueta),
+                        ),
+                  onCerrar: _cerrarAviso,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -590,7 +652,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => setState(() => _vista = _VistaActual.cuenta),
             ),
-            Text('Tu municipio', style: theme.textTheme.headlineSmall),
+            Expanded(child: Text('Tu municipio', style: theme.textTheme.headlineSmall)),
           ],
         ),
         RadioGroup<String>(
@@ -701,7 +763,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => setState(() => _vista = _VistaActual.cuenta),
               ),
-              Text('Solicitar cambio', style: theme.textTheme.headlineSmall),
+              Expanded(child: Text('Solicitar cambio', style: theme.textTheme.headlineSmall)),
             ],
           ),
           const SizedBox(height: EcoSpace.s8),
@@ -716,9 +778,13 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
             maxLines: 6,
             maxLength: 300,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
+            onChanged: (_) {
+              if (_errorSolicitud != null) setState(() => _errorSolicitud = null);
+            },
+            decoration: InputDecoration(
               labelText: '¿Qué necesitas cambiar?',
               hintText: 'Ej.: Actualizar el NIT porque hubo una corrección.',
+              errorText: _errorSolicitud,
             ),
           ),
           const SizedBox(height: EcoSpace.s16),
@@ -734,7 +800,7 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
   }
 }
 
-const _adminEmail = 'soporte@ecoresiduos.co';
+const _adminEmail = correoDatosPersonales;
 
 enum _VistaActual { cuenta, municipio, editarCampo, solicitarCambio }
 
@@ -957,6 +1023,54 @@ class _OpcionesImagen extends StatelessWidget {
               onTap: () => Navigator.pop(context, _OpcionImagen.quitar),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Aviso con el aspecto de un snackbar de Material 3 (fondo inverso), pero
+/// dentro de la hoja. El lector de pantalla lo anuncia al aparecer.
+class _AvisoHoja extends StatelessWidget {
+  const _AvisoHoja({required this.texto, required this.onCerrar, this.accion});
+
+  final String texto;
+  final VoidCallback onCerrar;
+  final Widget? accion;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: Material(
+        color: scheme.inverseSurface,
+        elevation: 3,
+        borderRadius: BorderRadius.circular(EcoRadius.small),
+        child: Padding(
+          padding: const EdgeInsets.only(left: EcoSpace.s16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onInverseSurface)),
+                ),
+              ),
+              if (accion != null)
+                TextButtonTheme(
+                  data: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: scheme.inversePrimary)),
+                  child: accion!,
+                ),
+              IconButton(
+                tooltip: 'Cerrar aviso',
+                icon: Icon(Icons.close, color: scheme.onInverseSurface),
+                onPressed: onCerrar,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -43,11 +43,22 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
 
   bool get _largoOk => _nueva.text.length >= 8;
   bool get _numeroOk => _nueva.text.contains(RegExp(r'[0-9]'));
+  bool get _letraOk => _nueva.text.contains(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]'));
   bool get _coinciden => _nueva.text.isNotEmpty && _nueva.text == _confirmacion.text;
 
   Future<void> _guardar() async {
-    if (!_largoOk || !_numeroOk || !_coinciden) {
-      setState(() => _error = 'Cumple las tres reglas para continuar.');
+    // Dice la primera regla que falta, en el mismo orden de la lista.
+    final falta = !_largoOk
+        ? 'La contraseña necesita al menos 8 caracteres.'
+        : !_letraOk
+        ? 'La contraseña necesita al menos una letra.'
+        : !_numeroOk
+        ? 'La contraseña necesita al menos un número.'
+        : !_coinciden
+        ? 'Las dos contraseñas no coinciden. Escríbela igual en ambos campos.'
+        : null;
+    if (falta != null) {
+      setState(() => _error = falta);
       return;
     }
     setState(() {
@@ -77,10 +88,10 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
         ),
       );
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } catch (e) {
       debugPrint('No se pudo actualizar la contraseña: $e');
-      setState(() => _error = 'No pudimos guardar la contraseña. Revisa tu conexión.');
+      if (mounted) setState(() => _error = 'No pudimos guardar la contraseña. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -88,7 +99,6 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Crea una contraseña nueva')),
       body: AutofillGroup(
@@ -110,12 +120,9 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
             ),
             const SizedBox(height: EcoSpace.s16),
             _Regla(cumplida: _largoOk, texto: 'Al menos 8 caracteres'),
+            _Regla(cumplida: _letraOk, texto: 'Al menos una letra'),
             _Regla(cumplida: _numeroOk, texto: 'Al menos un número'),
             _Regla(cumplida: _coinciden, texto: 'Las dos coinciden'),
-            if (_error != null) ...[
-              const SizedBox(height: EcoSpace.s12),
-              Text(_error!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error)),
-            ],
           ],
         ),
       ),
@@ -126,6 +133,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
           isLoading: _guardando,
           textoLoading: 'Guardando…',
           onPressed: _guardar,
+          mensajeError: _error,
         ),
       ),
     );

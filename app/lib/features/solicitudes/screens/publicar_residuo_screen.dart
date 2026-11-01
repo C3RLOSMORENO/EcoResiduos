@@ -349,7 +349,7 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _esEdicion ? 'No se pudieron guardar los cambios.' : 'No se pudo publicar. Tus datos siguen aquí.',
+            _esEdicion ? 'No pudimos guardar los cambios.' : 'No pudimos publicar. Lo que escribiste sigue aquí.',
           ),
           action: SnackBarAction(label: 'Reintentar', onPressed: _guardar),
         ),

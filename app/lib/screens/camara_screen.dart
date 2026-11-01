@@ -98,7 +98,7 @@ class _CamaraScreenState extends State<CamaraScreen> with WidgetsBindingObserver
     } catch (e) {
       debugPrint('No se pudo tomar la foto: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo tomar la foto.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No pudimos tomar la foto. Inténtalo otra vez.')));
       }
     } finally {
       if (mounted) setState(() => _capturando = false);

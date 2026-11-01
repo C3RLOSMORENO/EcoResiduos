@@ -153,7 +153,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
       await _recargarSolicitud();
     } catch (e) {
       debugPrint('Acción sobre la solicitud fallida: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No se pudo completar. Inténtalo de nuevo.')));
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos guardar el cambio. Revisa tu conexión e inténtalo de nuevo.')));
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }
@@ -231,7 +231,7 @@ class _DetalleSolicitudScreenState extends State<DetalleSolicitudScreen> {
       );
     } catch (e) {
       debugPrint('No se pudo cancelar la solicitud: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No se pudo cancelar. Inténtalo de nuevo.')));
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos cancelar la publicación. Revisa tu conexión e inténtalo de nuevo.')));
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }

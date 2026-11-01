@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../theme/eco_theme.dart';
 
-/// Campo de contraseña con botón para mostrarla u ocultarla.
+/// Campo de contraseña con botón para mostrarla u ocultarla. [ayuda] dice la
+/// regla antes de escribir; [errorText] la muestra en rojo en el mismo sitio
+/// cuando no se cumple.
 class CampoContrasena extends StatefulWidget {
   const CampoContrasena({
     super.key,
@@ -9,7 +11,9 @@ class CampoContrasena extends StatefulWidget {
     this.etiqueta = 'Contraseña',
     this.ayuda,
     this.validator,
+    this.errorText,
     this.textInputAction = TextInputAction.done,
+    this.onChanged,
     this.onSubmitted,
     this.autofillHints = const [AutofillHints.password],
     this.fillColor,
@@ -19,7 +23,9 @@ class CampoContrasena extends StatefulWidget {
   final String etiqueta;
   final String? ayuda;
   final FormFieldValidator<String>? validator;
+  final String? errorText;
   final TextInputAction textInputAction;
+  final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final Iterable<String> autofillHints;
   final Color? fillColor;
@@ -38,11 +44,16 @@ class _CampoContrasenaState extends State<CampoContrasena> {
       obscureText: _oculta,
       validator: widget.validator,
       textInputAction: widget.textInputAction,
+      onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
       autofillHints: widget.autofillHints,
       style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
-        hintText: widget.etiqueta,
+        labelText: widget.etiqueta,
+        helperText: widget.ayuda,
+        helperMaxLines: 2,
+        errorText: widget.errorText,
+        errorMaxLines: 2,
         prefixIcon: const Icon(Icons.lock_outline_rounded),
         filled: widget.fillColor != null,
         fillColor: widget.fillColor,
@@ -78,6 +89,6 @@ final _correoValido = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 String? validarCorreo(String? valor) {
   final texto = valor?.trim() ?? '';
   if (texto.isEmpty) return 'Escribe tu correo';
-  if (!_correoValido.hasMatch(texto)) return 'Ingresa un correo electrónico válido';
+  if (!_correoValido.hasMatch(texto)) return 'Escribe un correo válido, por ejemplo ana@gmail.com';
   return null;
 }

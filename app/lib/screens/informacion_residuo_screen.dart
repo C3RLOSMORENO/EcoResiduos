@@ -198,7 +198,7 @@ class _GestoresCercanosState extends State<GestoresCercanos> {
             const SizedBox(height: EcoSpace.s8),
             if (snapshot.hasError)
               _MensajeCarrusel(
-                texto: 'No pudimos cargar los gestores. Revisa tu conexión.',
+                texto: 'No pudimos cargar los gestores. Revisa tu conexión e inténtalo de nuevo.',
                 accion: 'Reintentar',
                 onAccion: () => setState(() {
                   _gestores = _repository.getGestoresPorCategoria(widget.categoria);
