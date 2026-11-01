@@ -1,10 +1,10 @@
-# Fuentes y Atribución del Dataset - EcoResiduos (v2)
+# Fuentes y atribución del dataset de EcoResiduos (v2)
 
 Este documento contiene la atribución bibliográfica, las licencias verificadas y los enlaces directos de los repositorios y datasets utilizados para construir el conjunto de imágenes de **EcoResiduos** conforme a la **Resolución 2184 de 2019**.
 
 ---
 
-## Tabla de Datasets Utilizados
+## Datasets utilizados
 
 | Prefijo en Archivo | Nombre del Dataset | URL Directa al Dataset | Licencia Verificada (Cita Textual) | Referencia / Cita Bibliográfica | Categorías e Imágenes Aportadas |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -19,7 +19,7 @@ Este documento contiene la atribución bibliográfica, las licencias verificadas
 
 ---
 
-## Metadatos Individuales (Wikimedia y Unsplash)
+## Metadatos por imagen (Wikimedia y Unsplash)
 
 Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas de forma individual en el archivo [fuentes_individuales.csv](fuentes_individuales.csv) con las siguientes columnas:
 - `archivo`: Nombre del archivo guardado en el dataset.
@@ -31,7 +31,7 @@ Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas 
 
 ---
 
-## Balance General del Dataset
+## Balance del dataset
 
 | Categoría | Total Imágenes | Fuentes Utilizadas | Porcentaje Fuente Mayor (Máx. 60%) |
 | :--- | :---: | :--- | :---: |
@@ -43,4 +43,4 @@ Todas las fotos provenientes de Wikimedia Commons y Unsplash están registradas 
 | **RAEE** | 650 | `trashbox` (346), `gizewaste` (299), `openimages` (3), `wikimedia` (2) | 53% |
 | **RCD** | 26 | `wikimedia` (15), `unsplash` (11) | 58% |
 | **RIESGO_BIOLOGICO** | 30 | `trashbox` (17), `wikimedia` (13) | 57% |
-| **TOTAL** | **2.358** | *8 categorías conformadas* | — |
+| **TOTAL** | **2.358** | 8 categorías | |
