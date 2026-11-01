@@ -362,6 +362,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               children: [
                 IconButton(
                   onPressed: _volver,
+                  tooltip: 'Volver',
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,

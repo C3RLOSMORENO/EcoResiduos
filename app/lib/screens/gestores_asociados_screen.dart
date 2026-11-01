@@ -48,10 +48,10 @@ class _GestoresAsociadosScreenState extends State<GestoresAsociadosScreen> {
       final pantalla = widget.incluirResiduos ? 'directorio_gestor' : 'gestores_generador';
       final desc = widget.incluirResiduos
           ? 'Gestores: empresas con sus materiales y contacto. '
-              'Autoridades: entidades de control ambiental de tu municipio. '
-              'Residuos: catálogo de materiales con instrucciones de separación y normativa.'
+                'Autoridades: entidades de control ambiental de tu municipio. '
+                'Residuos: catálogo de materiales con instrucciones de separación y normativa.'
           : 'Gestores: empresas certificadas, qué materiales reciben y cómo contactarlas. '
-              'Autoridades: entidades ambientales de tu municipio para consultar o reportar.';
+                'Autoridades: entidades ambientales de tu municipio para consultar o reportar.';
       mostrarRecorridoPantallaSiNecesario(context, pantalla, [
         CoachMarkPaso(
           keyObjetivo: _keySegmentos,
@@ -176,12 +176,14 @@ class _ListaGestoresState extends State<_ListaGestores> {
         final encabezado = <Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s16),
-            child: SearchBar(
-              hintText: 'Nombre, municipio o material',
-              leading: const Icon(Icons.search),
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerHighest),
-              onChanged: (texto) => setState(() => _busqueda = texto.trim()),
+            child: MergeSemantics(
+              child: SearchBar(
+                hintText: 'Nombre, municipio o material',
+                leading: const Icon(Icons.search),
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerHighest),
+                onChanged: (texto) => setState(() => _busqueda = texto.trim()),
+              ),
             ),
           ),
           _filtros(),
@@ -425,12 +427,14 @@ class _ListaAutoridadesState extends State<_ListaAutoridades> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(EcoSpace.s16, 0, EcoSpace.s16, EcoSpace.s8),
-              child: SearchBar(
-                hintText: 'Nombre o municipio',
-                leading: const Icon(Icons.search),
-                elevation: const WidgetStatePropertyAll(0),
-                backgroundColor: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerHighest),
-                onChanged: (valor) => setState(() => _busqueda = valor.trim()),
+              child: MergeSemantics(
+                child: SearchBar(
+                  hintText: 'Nombre o municipio',
+                  leading: const Icon(Icons.search),
+                  elevation: const WidgetStatePropertyAll(0),
+                  backgroundColor: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerHighest),
+                  onChanged: (valor) => setState(() => _busqueda = valor.trim()),
+                ),
               ),
             ),
             if (visibles.isEmpty)

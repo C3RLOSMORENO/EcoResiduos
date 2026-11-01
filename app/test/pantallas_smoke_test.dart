@@ -103,7 +103,7 @@ void main() {
 
   for (final brillo in Brightness.values) {
     for (final entrada in pantallas.entries) {
-      testWidgets('${entrada.key} se dibuja sin errores (${brillo.name})', (tester) async {
+      testWidgets('${entrada.key} se dibuja sin errores y cumple las guías de accesibilidad (${brillo.name})', (tester) async {
         tester.view.physicalSize = const Size(360, 800);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
@@ -111,6 +111,13 @@ void main() {
         await tester.pumpWidget(MaterialApp(theme: ecoTheme(brillo), home: entrada.value));
         // El splash tiene una barra indeterminada que nunca se detiene.
         entrada.value is SplashScreen ? await tester.pump(const Duration(seconds: 1)) : await tester.pumpAndSettle();
+
+        // Guías de accesibilidad de Android y Material 3: todo lo que se toca
+        // mide al menos 48 dp y tiene nombre para TalkBack.
+        final semantica = tester.ensureSemantics();
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        semantica.dispose();
       });
     }
   }

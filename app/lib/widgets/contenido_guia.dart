@@ -184,7 +184,6 @@ class RecuadroNormativa extends StatelessWidget {
               child: TextButton.icon(
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: EcoSpace.s8, vertical: 0),
-                  visualDensity: VisualDensity.compact,
                   foregroundColor: scheme.primary,
                 ),
                 onPressed: () => abrirDocumento(context, guia.urlNormativa!),

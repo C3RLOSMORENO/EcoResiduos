@@ -214,19 +214,21 @@ class _CatalogoResiduosState extends State<CatalogoResiduos> {
   Widget _barraBusqueda(List<MaterialResiduo> catalogo) {
     return KeyedSubtree(
       key: _keyBuscar,
-      child: SearchAnchor.bar(
-      barHintText: 'Busca un residuo: pilas, cartón…',
-      barElevation: const WidgetStatePropertyAll(0),
-      barBackgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
-      viewHintText: 'Busca un residuo',
-      isFullScreen: true,
-      onSubmitted: _guardarReciente,
-      suggestionsBuilder: (context, controller) {
-        final texto = controller.text.trim();
-        if (texto.length < 2) return _sugerenciasIniciales(controller);
-        return _resultados(catalogo, texto, controller);
-      },
-    ),
+      child: MergeSemantics(
+        child: SearchAnchor.bar(
+          barHintText: 'Busca un residuo: pilas, cartón…',
+          barElevation: const WidgetStatePropertyAll(0),
+          barBackgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
+          viewHintText: 'Busca un residuo',
+          isFullScreen: true,
+          onSubmitted: _guardarReciente,
+          suggestionsBuilder: (context, controller) {
+            final texto = controller.text.trim();
+            if (texto.length < 2) return _sugerenciasIniciales(controller);
+            return _resultados(catalogo, texto, controller);
+          },
+        ),
+      ),
     );
   }
 
