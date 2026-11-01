@@ -146,6 +146,11 @@
       closeBtnLabel: 'Cerrar recorrido',
       onPopoverRender(popover, { driver: d }) {
         popover.wrapper.setAttribute('aria-modal', 'true');
+        // Driver.js arma la tarjeta con <header> y <footer>; fuera de un
+        // <section> cuentan como un segundo encabezado y pie de la página para
+        // los lectores de pantalla (WCAG 1.3.1).
+        popover.title.setAttribute('role', 'none');
+        popover.footer.setAttribute('role', 'none');
         const icono = document.createElement('span');
         icono.className = 'material-symbols-outlined';
         icono.setAttribute('aria-hidden', 'true');
@@ -161,7 +166,15 @@
           popover.footerButtons.prepend(saltar);
         }
       },
-      onHighlighted(_elemento, _paso, { state }) {
+      onHighlighted(elemento, _paso, { state }) {
+        // Driver.js marca lo resaltado como botón que abre un diálogo
+        // (aria-haspopup, aria-expanded, aria-controls). Aquí lo resaltado no
+        // se puede usar (disableActiveInteraction), y en un div o una sección
+        // esos atributos no son válidos (WCAG 4.1.2). Al pasar de paso,
+        // Driver.js devuelve los valores originales.
+        if (elemento && !elemento.matches('a[href], button, input, select, textarea, summary, [role="button"]')) {
+          ['aria-haspopup', 'aria-expanded', 'aria-controls'].forEach((a) => elemento.removeAttribute(a));
+        }
         pasoMaximo = Math.max(pasoMaximo, (state.activeIndex || 0) + 1);
         // Driver.js enfoca la ✕, el primer botón de la tarjeta; el foco va
         // a «Siguiente» para que Enter avance.

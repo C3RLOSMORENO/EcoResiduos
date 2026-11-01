@@ -110,10 +110,10 @@
         ['Postulaciones', kpis.totalPostulaciones, 'inbox']
       ].forEach(function (kpi) { %>
         <div class="tarjeta-kpi">
-          <div class="flex items-center justify-between">
-            <dt class="text-label-l text-on-surface-variant"><%= kpi[0] %></dt>
-            <span class="material-symbols-outlined icono-18 text-on-surface-variant opacity-70" aria-hidden="true"><%= kpi[2] %></span>
-          </div>
+          <dt class="flex items-center justify-between text-label-l text-on-surface-variant">
+            <span><%= kpi[0] %></span>
+            <span class="material-symbols-outlined icono-18 opacity-70" aria-hidden="true"><%= kpi[2] %></span>
+          </dt>
           <dd class="kpi-cifra"><%= f.formatoNumero(kpi[1]) %></dd>
         </div>
       <% }); %>
