@@ -9,7 +9,7 @@ class TarjetaSiguientePaso extends StatelessWidget {
   const TarjetaSiguientePaso({
     super.key,
     required this.titulo,
-    this.encabezado = 'SIGUIENTE PASO',
+    this.encabezado = 'Siguiente paso',
     this.contador,
     this.chip,
     this.detalle,
@@ -58,7 +58,7 @@ class TarjetaSiguientePaso extends StatelessWidget {
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontFamily: theme.textTheme.headlineSmall?.fontFamily,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
+                    letterSpacing: 0.2,
                     color: scheme.brightness == Brightness.light
                         ? ecoDarkColorScheme.tertiary
                         : ecoLightColorScheme.tertiary,

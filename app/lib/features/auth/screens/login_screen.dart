@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: textColor),
           ),
         ],
       ),
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Lo que sobra,\nvuelve a servir.',
                               style: theme.textTheme.displaySmall?.copyWith(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                                 height: 1.1,
                                 letterSpacing: -0.5,
                               ),
@@ -277,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Hola de nuevo',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: isDark ? Colors.white : const Color(0xFF192313),
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: -0.5,
                         ),
                       ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         autofillHints: const [AutofillHints.email],
                         validator: validarCorreo,
                         onChanged: (_) => _alCorregir(),
-                        style: TextStyle(fontWeight: FontWeight.w500, color: scheme.onSurface),
+                        style: theme.textTheme.bodyLarge?.copyWith(color: scheme.onSurface),
                         decoration: InputDecoration(
                           labelText: 'Correo',
                           prefixIcon: const Icon(Icons.mail_outline_rounded),
@@ -336,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           style: TextButton.styleFrom(
                             foregroundColor: scheme.primary,
-                            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                            textStyle: theme.textTheme.labelLarge,
                           ),
                           child: const Text('¿Olvidaste tu contraseña?'),
                         ),
@@ -360,6 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(EcoRadius.full), // Pastilla completa
                               ),
+                              textStyle: theme.textTheme.titleMedium,
                               elevation: 0,
                             ),
                             onPressed: _cargando ? null : _entrar,
@@ -372,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text('Entrar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      Text('Entrar'),
                                       SizedBox(width: 8),
                                       Icon(Icons.arrow_forward_rounded, size: 20),
                                     ],
@@ -417,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             style: TextButton.styleFrom(
                               foregroundColor: scheme.primary,
-                              textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                              textStyle: theme.textTheme.labelLarge,
                             ),
                             child: const Text('Regístrate'),
                           ),
