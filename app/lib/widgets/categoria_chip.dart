@@ -154,11 +154,11 @@ class CategoriaBanner extends StatelessWidget {
             const SizedBox(width: EcoSpace.s8),
             Expanded(
               child: Text(
-                texto.toUpperCase(),
+                texto,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: theme.textTheme.headlineSmall?.fontFamily,
                   color: color.onColor,
-                  letterSpacing: 1.4,
+                  letterSpacing: 0.2,
+                  fontFamily: theme.textTheme.headlineSmall?.fontFamily,
                   fontWeight: FontWeight.w700,
                 ),
               ),

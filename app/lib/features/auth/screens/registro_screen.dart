@@ -380,7 +380,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 'Únete al\ncambio',
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                   height: 1.1,
                 ),
               ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),

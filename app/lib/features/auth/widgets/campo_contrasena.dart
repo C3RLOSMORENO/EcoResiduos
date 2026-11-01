@@ -47,7 +47,7 @@ class _CampoContrasenaState extends State<CampoContrasena> {
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
       autofillHints: widget.autofillHints,
-      style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: widget.etiqueta,
         helperText: widget.ayuda,
