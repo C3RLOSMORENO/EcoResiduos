@@ -5,13 +5,7 @@ const { recurso } = require('../utils/recursos');
 const { URL_ICONOS } = require('../utils/iconos');
 const { urlFotoPerfil } = require('../utils/fotosPerfil');
 const asistenteService = require('../services/AsistenteService');
-
-// Avisos que arma el navegador (no el servidor), así que no pueden ir
-// firmados: la URL solo trae el código y el texto vive aquí.
-const AVISOS_FIJOS = {
-    'sesion-vencida': { tipo: 'error', mensaje: 'Tu sesión venció por inactividad. Inicia sesión para continuar donde ibas.' },
-    'clave-actualizada': { tipo: 'exito', mensaje: 'Contraseña actualizada. Ya puedes iniciar sesión.' }
-};
+const { AVISOS_FIJOS } = require('../utils/avisosFijos');
 
 /**
  * Ayudas y avisos disponibles en todas las vistas.

@@ -47,10 +47,10 @@ class _SolicitarRecuperacionScreenState extends State<SolicitarRecuperacionScree
         ),
       );
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } catch (e) {
       debugPrint('No se pudo pedir el código de recuperación: $e');
-      setState(() => _error = 'No pudimos enviar el código. Revisa tu conexión.');
+      if (mounted) setState(() => _error = 'No pudimos enviar el código. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -77,7 +77,7 @@ class _SolicitarRecuperacionScreenState extends State<SolicitarRecuperacionScree
               autofillHints: const [AutofillHints.email],
               validator: validarCorreo,
               onFieldSubmitted: (_) => _enviar(),
-              decoration: InputDecoration(labelText: 'Correo', errorText: _error, errorMaxLines: 3),
+              decoration: const InputDecoration(labelText: 'Correo'),
             ),
           ],
         ),
@@ -89,6 +89,7 @@ class _SolicitarRecuperacionScreenState extends State<SolicitarRecuperacionScree
           isLoading: _enviando,
           textoLoading: 'Enviando…',
           onPressed: _enviar,
+          mensajeError: _error,
         ),
       ),
     );

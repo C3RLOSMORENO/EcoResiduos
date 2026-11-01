@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../theme/eco_theme.dart';
+import 'aviso_formulario.dart';
 
-/// Barra fija inferior con la acciÃ³n principal (56 dp) y, en formularios, la
-/// meta de avance Â«N de M camposÂ» con lo que falta.
+/// Barra fija inferior con la acción principal (56 dp) y, en formularios, la
+/// meta de avance «N de M campos» con lo que falta.
+///
+/// [mensajeError] es el resultado fallido de tocar el botón (sin conexión,
+/// cuenta repetida…). Va justo encima del botón: si la persona bajó para
+/// tocarlo, un aviso al comienzo del formulario le quedaría fuera de la vista.
 class BotonFijoInferior extends StatelessWidget {
   const BotonFijoInferior({
     super.key,
@@ -16,6 +21,7 @@ class BotonFijoInferior extends StatelessWidget {
     this.totalCampos,
     this.mensajeCamposFaltantes,
     this.botonSecundario,
+    this.mensajeError,
   });
 
   final String textoBoton;
@@ -27,6 +33,7 @@ class BotonFijoInferior extends StatelessWidget {
   final int? totalCampos;
   final String? mensajeCamposFaltantes;
   final Widget? botonSecundario;
+  final String? mensajeError;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +51,7 @@ class BotonFijoInferior extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (mensajeError != null) ...[AvisoFormulario(texto: mensajeError!), const SizedBox(height: EcoSpace.s12)],
           if (tieneMeta) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,7 +120,7 @@ class BotonFijoInferior extends StatelessWidget {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                textoLoading ?? 'Procesandoâ€¦',
+                                textoLoading ?? 'Procesando…',
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimary),
                               ),

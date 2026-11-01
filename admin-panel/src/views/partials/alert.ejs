@@ -13,7 +13,7 @@
 <div id="avisosEstado" class="avisos-region" role="status" aria-live="polite" aria-atomic="true">
   <% if (avisoMostrar && avisoMostrar.tipo !== 'error') { %>
     <div class="aviso" data-aviso>
-      <span class="material-symbols-outlined icono-20" aria-hidden="true">check_circle</span>
+      <span class="material-symbols-outlined icono-20" aria-hidden="true"><%= avisoMostrar.tipo === 'info' ? 'info' : 'check_circle' %></span>
       <p class="flex-1"><%= avisoMostrar.mensaje %></p>
       <button type="button" class="btn-icono" data-cerrar-aviso aria-label="Cerrar aviso">
         <span class="material-symbols-outlined icono-20" aria-hidden="true">close</span>

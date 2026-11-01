@@ -146,7 +146,7 @@
             %>
               <li data-material-item data-busqueda="<%= mat.busqueda %>">
                 <% if (!creando && marcado) { %><input type="hidden" name="materiales_presentes[]" value="<%= mat.id %>"><% } %>
-                <label for="mat_<%= mat.id %>" class="flex min-h-11 cursor-pointer items-start gap-3 rounded-sm bg-surface-container-lowest p-3">
+                <label for="mat_<%= mat.id %>" class="flex min-h-11 cursor-pointer items-start gap-3 rounded-sm bg-[var(--eco-tarjeta)] p-3">
                   <input type="checkbox" id="mat_<%= mat.id %>" name="materiales_ids[]" value="<%= mat.id %>" <%= marcado ? 'checked' : '' %> class="mt-0.5">
                   <span class="flex min-w-0 flex-col gap-1">
                     <span class="font-semibold"><%= mat.nombre_comun %></span>

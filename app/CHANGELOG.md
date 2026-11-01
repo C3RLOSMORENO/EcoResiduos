@@ -9,6 +9,11 @@ Cada versión publicada en [Releases](https://github.com/C3RLOSMORENO/EcoResiduo
 - El recorrido se marca como visto al terminarlo o saltarlo; si la app se cierra a mitad, vuelve a aparecer. El botón Atrás del teléfono lo cierra, y cada paso tiene etiquetas para lectores de pantalla como TalkBack.
 - Al editar un dato en Cuenta o al filtrar materiales para publicar, el teclado ya no tapa lo que se está escribiendo.
 - Los textos de los recorridos describen mejor qué solicitudes ve cada empresa gestora, las secciones de la barra inferior y los datos que se piden al publicar.
+- Al entrar, la app confirma con «Iniciaste sesión.». Si el inicio de sesión falla, el aviso aparece junto al botón Entrar y se quita en cuanto corriges el correo o la contraseña. Sin internet, la app lo dice en español en lugar de mostrar el error técnico.
+- En el registro y al recuperar la contraseña, el error del envío sale encima del botón, a la vista aunque hayas bajado por el formulario. La regla de la contraseña se lee debajo del campo desde antes de escribir.
+- La contraseña nueva que se crea al recuperarla también debe tener una letra, como la del registro.
+- En Cuenta, los avisos de guardado se ven dentro de la hoja; antes quedaban tapados por ella. Cada uno dice qué dato cambió.
+- El correo de soporte es el mismo en toda la app: soporte@ecoresiduos.com.
 
 ## 1.1.0 (30 de octubre de 2026)
 

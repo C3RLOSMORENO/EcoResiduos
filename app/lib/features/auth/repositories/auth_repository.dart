@@ -440,28 +440,62 @@ class SupabaseAuthRepository implements AuthRepository {
     await _client.from('perfiles_gestor').update({'permiso_path': ruta}).eq('usuario_id', user.id);
   }
 
-  AuthException _traducir(AuthException e) {
-    final mensaje = e.message.toLowerCase();
-    if (mensaje.contains('invalid login credentials')) {
-      return AuthException('El correo o la contraseña no coinciden.', code: e.code);
-    }
-    if (mensaje.contains('email not confirmed')) {
-      return AuthException('Aún no has activado tu cuenta.', code: 'email_not_confirmed');
-    }
-    if (mensaje.contains('already registered') || mensaje.contains('already exists')) {
-      return AuthException('Ya existe una cuenta con este correo.', code: e.code);
-    }
-    if (mensaje.contains('expired')) {
-      return AuthException('El código venció. Pide uno nuevo.', code: e.code);
-    }
-    if (mensaje.contains('token') || mensaje.contains('otp')) {
-      return AuthException('El código no coincide. Revisa el correo más reciente.', code: e.code);
-    }
-    if (mensaje.contains('password')) {
-      return AuthException('La contraseña debe tener al menos 8 caracteres, con letras y números.', code: e.code);
-    }
-    return AuthException(e.message, code: e.code);
+  AuthException _traducir(AuthException e) => traducirErrorAuth(e);
+}
+
+/// Pasa un error de Supabase Auth a un mensaje en español que dice qué pasó y
+/// qué hacer. Se decide por el código del error y, si no viene, por el texto
+/// en inglés. Lo que no se reconoce se registra en la consola y la persona ve
+/// un mensaje general: el texto original no se muestra nunca.
+AuthException traducirErrorAuth(AuthException e) {
+  final codigo = e.code ?? '';
+  final mensaje = e.message.toLowerCase();
+  AuthException con(String texto, [String? nuevoCodigo]) => AuthException(texto, code: nuevoCodigo ?? e.code);
+
+  if (e is AuthRetryableFetchException) {
+    return con('No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.', 'sin_conexion');
   }
+  if (codigo == 'invalid_credentials' || mensaje.contains('invalid login credentials')) {
+    return con('El correo o la contraseña no coinciden.', 'invalid_credentials');
+  }
+  if (codigo == 'email_not_confirmed' || mensaje.contains('email not confirmed')) {
+    return con('Aún no has activado tu cuenta.', 'email_not_confirmed');
+  }
+  if (codigo == 'user_already_exists' ||
+      codigo == 'email_exists' ||
+      mensaje.contains('already registered') ||
+      mensaje.contains('already exists')) {
+    return con('Ya existe una cuenta con este correo. Inicia sesión o usa otro correo.');
+  }
+  if (codigo == 'over_email_send_rate_limit') {
+    return con('Ya te enviamos un correo hace poco. Espera un minuto antes de pedir otro.');
+  }
+  if (codigo.startsWith('over_') || e.statusCode == '429' || mensaje.contains('rate limit')) {
+    return con('Hiciste varios intentos seguidos. Espera un minuto y vuelve a intentarlo.');
+  }
+  if (codigo == 'same_password' || mensaje.contains('should be different')) {
+    return con('La contraseña nueva debe ser distinta de la que tienes ahora.');
+  }
+  if (codigo == 'weak_password' || mensaje.contains('password should')) {
+    return con('La contraseña debe tener al menos 8 caracteres, con letras y números.');
+  }
+  if (codigo == 'email_address_invalid' || mensaje.contains('invalid format')) {
+    return con('Ese correo no es válido. Revisa cómo está escrito.');
+  }
+  if (codigo == 'otp_expired' || mensaje.contains('expired')) {
+    return con('El código venció. Pide uno nuevo.');
+  }
+  if (mensaje.contains('token') || mensaje.contains('otp')) {
+    return con('El código no coincide. Usa el del correo más reciente.');
+  }
+  if (codigo == 'user_banned') {
+    return con('Esta cuenta está suspendida. Escríbenos a $correoDatosPersonales para revisarla.');
+  }
+  if (codigo == 'session_not_found' || codigo == 'refresh_token_not_found' || e is AuthSessionMissingException) {
+    return con('Tu sesión se cerró. Vuelve a iniciar sesión.');
+  }
+  debugPrint('Error de Supabase Auth sin traducir: ${e.code} ${e.statusCode} ${e.message}');
+  return con('Algo falló de nuestro lado. Inténtalo de nuevo en unos minutos.');
 }
 
 /// NIT sin puntos, espacios ni dígito de verificación: «900.456.789-2» → «900456789».

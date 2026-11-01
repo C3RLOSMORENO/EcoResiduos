@@ -178,7 +178,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fotos.llamadas, ['quitar:foto']);
-      expect(find.text('Foto de perfil quitada.'), findsOneWidget);
+      expect(find.text('Quitamos la foto de perfil.'), findsOneWidget);
       expect(find.byTooltip('Agregar foto de perfil'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Agregar foto de perfil'));

@@ -109,6 +109,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.llamadas, ['eliminarFoto:https://ejemplo.co/foto.jpg']);
-    expect(find.text('No se pudieron guardar los cambios.'), findsOneWidget);
+    expect(find.text('No pudimos guardar los cambios.'), findsOneWidget);
   });
 }

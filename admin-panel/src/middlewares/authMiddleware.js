@@ -1,6 +1,6 @@
 const authService = require('../services/authService');
 const { DURACION_SESION_MS, guardarSesion, limpiarSesion } = require('../utils/sesion');
-const { conAviso } = require('../utils/web');
+const { AVISOS_FIJOS } = require('../utils/avisosFijos');
 
 /**
  * Las peticiones de main.js llevan X-Requested-With: fetch y esperan JSON en
@@ -18,14 +18,14 @@ function esPeticionFetch(req) {
  *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
- * @param {string} mensaje Aviso que se muestra en el login.
+ * @param {string} codigo Aviso de utils/avisosFijos que se muestra en el login.
  */
-function aLogin(req, res, mensaje) {
+function aLogin(req, res, codigo) {
     if (esPeticionFetch(req)) {
-        return res.status(401).json({ ok: false, mensaje });
+        return res.status(401).json({ ok: false, mensaje: AVISOS_FIJOS[codigo].mensaje });
     }
     const volver = req.method === 'GET' ? `&volver=${encodeURIComponent(req.originalUrl)}` : '';
-    return res.redirect(conAviso('/login', mensaje, 'error') + volver);
+    return res.redirect(`/login?aviso=${codigo}${volver}`);
 }
 
 const authMiddleware = {
@@ -48,7 +48,7 @@ const authMiddleware = {
         const token = req.cookies && req.cookies.sb_access_token;
         const refreshToken = req.cookies && req.cookies.sb_refresh_token;
         if (!token && !refreshToken) {
-            return aLogin(req, res, 'Debes iniciar sesión para continuar');
+            return aLogin(req, res, 'inicia-sesion');
         }
 
         try {
@@ -71,7 +71,7 @@ const authMiddleware = {
 
             if (!user) {
                 limpiarSesion(res);
-                return aLogin(req, res, 'Sesión inválida, expirada o sin permisos de administrador');
+                return aLogin(req, res, 'sesion-terminada');
             }
 
             req.user = user;

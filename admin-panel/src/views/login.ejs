@@ -4,6 +4,18 @@
   <%- include('partials/head', { titulo: 'Iniciar sesión' }) %>
   <meta name="description" content="Acceso al panel de administración de EcoResiduos">
 </head>
+<%
+  // Dónde va cada mensaje (la misma regla de la app):
+  // - Lo que trae la URL al llegar (sesión vencida, cerraste sesión) va arriba
+  //   del formulario, como contexto antes de empezar.
+  // - El resultado de tocar «Ingresar» va justo encima del botón, donde está
+  //   la vista, y marca los campos que hay que corregir.
+  const correoEscrito = typeof correo === 'string' ? correo : '';
+  const error = typeof errorLogin !== 'undefined' && errorLogin ? errorLogin : null;
+  const marcarCampos = Boolean(error && error.campos);
+  const avisoLlegada = typeof aviso !== 'undefined' && aviso ? aviso : null;
+  const iconoAviso = { info: 'info', exito: 'check_circle', error: 'error' };
+%>
 <body class="fondo-autenticacion relative">
   <a href="#contenido" class="saltar">Saltar al contenido</a>
 
@@ -24,7 +36,12 @@
           <p class="mt-1 text-body-m text-on-surface-variant">Panel de administración</p>
         </div>
 
-        <%- include('partials/alert') %>
+        <% if (avisoLlegada) { %>
+          <div class="nota nota-<%= avisoLlegada.tipo %> mb-4" role="<%= avisoLlegada.tipo === 'error' ? 'alert' : 'status' %>">
+            <span class="material-symbols-outlined" aria-hidden="true"><%= iconoAviso[avisoLlegada.tipo] || 'info' %></span>
+            <p class="flex-1"><%= avisoLlegada.mensaje %></p>
+          </div>
+        <% } %>
 
         <form action="/auth/login" method="POST" class="flex flex-col gap-4" data-validar>
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -36,7 +53,7 @@
               <span class="campo-icono-prefijo" aria-hidden="true">
                 <span class="material-symbols-outlined icono-20">mail</span>
               </span>
-              <input type="email" id="email" name="email" required autocomplete="username" inputmode="email" placeholder="admin@ecoresiduos.com" class="campo-control">
+              <input type="email" id="email" name="email" required autocomplete="username" inputmode="email" value="<%= correoEscrito %>" data-mensaje-obligatorio="Escribe tu correo." <% if (marcarCampos) { %>aria-invalid="true" aria-describedby="errorLogin"<% } %> class="campo-control">
             </div>
           </div>
 
@@ -49,7 +66,7 @@
               <span class="campo-icono-prefijo" aria-hidden="true">
                 <span class="material-symbols-outlined icono-20">lock</span>
               </span>
-              <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••" class="campo-control pr-12">
+              <input type="password" id="password" name="password" required autocomplete="current-password" data-mensaje-obligatorio="Escribe tu contraseña." <% if (marcarCampos) { %>aria-invalid="true" aria-describedby="errorLogin"<% } %> <% if (correoEscrito) { %>autofocus<% } %> class="campo-control pr-12">
               <button type="button" id="botonVerClave" data-ver-clave="password" class="btn-icono absolute right-1 top-1" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false">
                 <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
               </button>
@@ -59,6 +76,13 @@
               <span>Bloqueo de mayúsculas activado</span>
             </p>
           </div>
+
+          <% if (error) { %>
+            <div id="errorLogin" class="nota nota-error" role="alert" data-quitar-al-corregir>
+              <span class="material-symbols-outlined" aria-hidden="true">error</span>
+              <p class="flex-1"><%= error.mensaje %></p>
+            </div>
+          <% } %>
 
           <button type="submit" class="btn-filled mt-2 w-full h-12 text-label-l font-semibold" data-cargando="Ingresando…">
             <span class="material-symbols-outlined icono-20" aria-hidden="true">login</span>
@@ -74,7 +98,8 @@
     </div>
   </main>
 
-  <footer class="py-6 text-center text-body-s text-on-surface-variant opacity-70">
+  <%# En el celular, espacio abajo para que el botón de accesibilidad no tape el pie. %>
+  <footer class="px-4 pt-6 pb-24 sm:pb-6 text-center text-body-s text-on-surface-variant opacity-70">
     <p>EcoResiduos · Panel de administración · Santander · <a href="/accesibilidad" class="underline">Accesibilidad</a> · <a href="/privacidad" class="underline">Tratamiento de datos</a></p>
   </footer>
 

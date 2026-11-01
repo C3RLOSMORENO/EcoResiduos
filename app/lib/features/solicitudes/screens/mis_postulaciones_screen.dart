@@ -102,7 +102,7 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
       await _cargar();
     } catch (e) {
       debugPrint('No se pudo marcar como recolectado: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No se pudo marcar como recolectado. Inténtalo de nuevo.')));
+      messenger.showSnackBar(const SnackBar(content: Text('No pudimos marcar la recolección. Revisa tu conexión e inténtalo de nuevo.')));
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }

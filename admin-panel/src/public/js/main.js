@@ -28,8 +28,38 @@
   // ------------------------------------------------------------------
   // Avisos (snackbar)
   // ------------------------------------------------------------------
+  // En pantallas grandes el aviso va justo debajo de la barra superior; la
+  // hoja de estilos necesita su alto real, que cambia con el tamaño de texto.
+  const barraSuperior = $('.barra-superior');
+  if (barraSuperior) {
+    const medirBarra = () => {
+      document.documentElement.style.setProperty('--alto-barra', `${barraSuperior.offsetHeight}px`);
+    };
+    medirBarra();
+    if ('ResizeObserver' in window) new ResizeObserver(medirBarra).observe(barraSuperior);
+  }
+
+  // Debajo de «Cerrar sesión» suele estar el botón principal de la página
+  // («Nuevo gestor», «Descargar Excel»). Si el foco llega a un control que un
+  // aviso tapa, el aviso se cierra para no esconderlo (WCAG 2.4.11).
+  document.addEventListener('focusin', (e) => {
+    const destino = e.target;
+    if (!(destino instanceof Element) || destino.closest('.aviso')) return;
+    const r = destino.getBoundingClientRect();
+    $$('.avisos-region .aviso').forEach((aviso) => {
+      const a = aviso.getBoundingClientRect();
+      if (r.left < a.right && a.left < r.right && r.top < a.bottom && a.top < r.bottom) cerrarAviso(aviso);
+    });
+  });
+
+  // Sale hacia su borde (abajo o arriba, según el ancho) y después se quita. El temporizador cubre el
+  // caso sin animación (reducir movimiento), en el que animationend no llega.
   function cerrarAviso(aviso) {
-    if (aviso && aviso.parentNode) aviso.remove();
+    if (!aviso || !aviso.parentNode || aviso.classList.contains('aviso-saliendo')) return;
+    aviso.classList.add('aviso-saliendo');
+    const quitar = () => aviso.remove();
+    aviso.addEventListener('animationend', quitar, { once: true });
+    setTimeout(quitar, 400);
   }
 
   // Se cierra solo a los 10 s, salvo que tenga el foco o el puntero encima.
@@ -273,6 +303,24 @@
     form.addEventListener('input', (e) => {
       if (e.target.getAttribute('aria-invalid') === 'true' && e.target.checkValidity()) limpiarError(e.target);
     });
+  });
+
+  // El error de un envío (el del login, por ejemplo) se quita apenas la
+  // persona empieza a corregir: ya no describe lo que hay en los campos.
+  $$('[data-quitar-al-corregir]').forEach((nota) => {
+    const form = nota.closest('form');
+    if (!form || !nota.id) return;
+    form.addEventListener('input', () => {
+      $$('[aria-describedby]', form).forEach((campo) => {
+        const resto = campo.getAttribute('aria-describedby').split(' ').filter((id) => id && id !== nota.id);
+        if (resto.length) campo.setAttribute('aria-describedby', resto.join(' '));
+        else campo.removeAttribute('aria-describedby');
+        if (!document.getElementById(`${campo.id}-error`) || document.getElementById(`${campo.id}-error`).hidden) {
+          campo.removeAttribute('aria-invalid');
+        }
+      });
+      nota.remove();
+    }, { once: true });
   });
 
   // ------------------------------------------------------------------
@@ -902,7 +950,7 @@
           window.location.href = datos.redirigir;
           return;
         }
-        marcarError(campo, datos.mensaje || 'No pudimos subir el permiso. Intenta de nuevo.');
+        marcarError(campo, datos.mensaje || 'No pudimos subir el permiso. Inténtalo de nuevo.');
         campo.focus();
       } catch (err) {
         marcarError(campo, 'No pudimos conectarnos con el servidor. Revisa tu conexión e intenta de nuevo.');

@@ -1,3 +1,4 @@
+/* global window, document */
 // Recorridos completos en un navegador real: iniciar sesión, aprobar un
 // gestor y ampliar la foto de una solicitud. Corre en escritorio y en celular.
 const { test, expect } = require('@playwright/test');
@@ -25,6 +26,42 @@ async function iniciarSesion(page, destino) {
     await page.getByRole('button', { name: 'Ingresar' }).click();
     await expect(page).toHaveURL(new RegExp(`${destino}(\\?|$)`));
 }
+
+test('login: cada mensaje sale junto a lo que hay que corregir y se quita al corregirlo', async ({ page }) => {
+    await page.goto('/login');
+    const correo = page.getByLabel('Correo');
+    const clave = page.getByLabel('Contraseña', { exact: false }).first();
+    const ingresar = page.getByRole('button', { name: 'Ingresar' });
+
+    // Vacío: cada campo dice qué le falta, debajo de él.
+    await ingresar.click();
+    await expect(page.locator('#email-error')).toContainText('Escribe tu correo.');
+    await expect(page.locator('#password-error')).toContainText('Escribe tu contraseña.');
+    await expect(correo).toBeFocused();
+
+    // Contraseña errada: el aviso va entre los campos y el botón, y el correo sigue escrito.
+    await correo.fill(ADMIN.correo);
+    await clave.fill('mala');
+    await ingresar.click();
+    const aviso = page.getByRole('alert').filter({ hasText: 'El correo o la contraseña no coinciden' });
+    await expect(aviso).toBeVisible();
+    await expect(correo).toHaveValue(ADMIN.correo);
+    await expect(clave).toBeFocused();
+    const cajaAviso = await aviso.boundingBox();
+    expect(cajaAviso.y).toBeGreaterThan((await clave.boundingBox()).y);
+    expect(cajaAviso.y).toBeLessThan((await ingresar.boundingBox()).y);
+
+    await clave.fill('clave-correct');
+    await expect(aviso).toHaveCount(0);
+    await expect(clave).not.toHaveAttribute('aria-invalid', 'true');
+
+    // Chrome anota en la consola toda respuesta 4xx; el 422 del intento
+    // fallido es el esperado y cualquier otro error sigue haciendo fallar.
+    const errores = test.info().errores;
+    const restantes = errores.filter((e) => !/status of 422/.test(e));
+    expect(errores.length - restantes.length).toBe(1);
+    errores.splice(0, errores.length, ...restantes);
+});
 
 test('aprobar un gestor: se confirma en el diálogo y la ficha queda aprobada', async ({ page }) => {
     await iniciarSesion(page, '/gestores/1');
@@ -138,7 +175,78 @@ test('logo del gestor: se ve, se quita con confirmación y el aviso queda en el 
     if (ancho >= 600) expect(cajaAviso.x).toBeGreaterThanOrEqual(navegacion.x + navegacion.width);
     expect(cajaAviso.x + cajaAviso.width).toBeLessThanOrEqual(ancho);
     expect(cajaAviso.y + cajaAviso.height).toBeLessThanOrEqual(page.viewportSize().height);
+
+    await revisarPosicionAviso(page);
+
+    // Al cerrarlo sale con su animación y desaparece.
+    await page.locator('.aviso .btn-icono').first().click();
+    await expect(page.locator('.aviso')).toHaveCount(0);
+
+    // Si el foco llega a un control que el aviso tapa, el aviso se cierra.
+    await page.evaluate(() => window.mostrarNotificacion('Aviso de prueba.'));
+    const tapado = await page.locator('.aviso').last().evaluate((aviso) => {
+        const a = aviso.getBoundingClientRect();
+        return [...document.querySelectorAll('main a, main button')].findIndex((el) => {
+            const r = el.getBoundingClientRect();
+            return !el.closest('.avisos-region') && r.width > 0
+                && r.left < a.right && a.left < r.right && r.top < a.bottom && a.top < r.bottom;
+        });
+    });
+    if (tapado >= 0) {
+        await page.locator('main a, main button').nth(tapado).focus();
+        await expect(page.locator('.aviso')).toHaveCount(0);
+    } else {
+        await page.locator('.aviso .btn-icono').first().click();
+    }
+
+    // En escritorio se revisa también el ancho de una tablet, donde va abajo.
+    if (ancho >= 1024) {
+        await page.setViewportSize({ width: 900, height: 800 });
+        await page.evaluate(() => window.mostrarNotificacion('Aviso de prueba.'));
+        await revisarPosicionAviso(page);
+    }
 });
+
+/**
+ * Comprueba la posición de la confirmación pasajera más reciente: nunca tapa
+ * un botón de la barra, los botones flotantes ni el texto del título. Desde
+ * 1024 px va debajo de «Cerrar sesión», alineada a su derecha; por debajo, abajo.
+ */
+async function revisarPosicionAviso(page) {
+    const aviso = page.locator('.aviso').last();
+    await expect(aviso).toBeVisible();
+    await page.waitForTimeout(400); // termina la animación de entrada
+    const caja = await aviso.boundingBox();
+    const { width: ancho, height: alto } = page.viewportSize();
+    const cruza = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+    const botones = page.locator('.barra-superior button:visible, .barra-superior a:visible, #botonAsistente:visible, #botonAccesibilidad:visible');
+    expect(await botones.count()).toBeGreaterThan(2);
+    for (const boton of await botones.all()) {
+        expect(cruza(caja, await boton.boundingBox()), 'el aviso tapa un botón').toBe(false);
+    }
+    // El texto del título, no su bloque (que ocupa todo el ancho).
+    const titulo = await page.locator('h1').first().evaluate((h1) => {
+        const rango = document.createRange();
+        rango.selectNodeContents(h1);
+        const r = rango.getBoundingClientRect();
+        return { x: r.x, y: r.y, width: r.width, height: r.height };
+    });
+    expect(cruza(caja, titulo), 'el aviso tapa el título').toBe(false);
+    expect(caja.x).toBeGreaterThanOrEqual(0);
+    expect(caja.x + caja.width).toBeLessThanOrEqual(ancho);
+
+    if (ancho >= 1024) {
+        const barra = await page.locator('.barra-superior').boundingBox();
+        const cerrarSesion = await page.locator('.barra-superior form[action="/logout"] button').boundingBox();
+        expect(caja.y).toBeGreaterThanOrEqual(barra.y + barra.height);
+        expect(caja.y).toBeLessThan(barra.y + barra.height + 24);
+        expect(Math.abs(caja.x + caja.width - (cerrarSesion.x + cerrarSesion.width))).toBeLessThan(16);
+    } else {
+        expect(caja.y).toBeGreaterThan(alto / 2);
+        expect(caja.y + caja.height).toBeLessThanOrEqual(alto);
+    }
+}
 
 test('al cambiar de pantalla se ve el esqueleto de esa pantalla y el menú ya marca el destino', async ({ page }) => {
     await iniciarSesion(page, '/solicitudes');

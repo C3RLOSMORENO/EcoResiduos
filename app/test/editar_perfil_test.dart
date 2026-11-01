@@ -114,6 +114,43 @@ void main() {
     expect(find.descendant(of: correo, matching: find.text('Cambiar')), findsNothing);
   });
 
+  testWidgets('el aviso de guardado sale encima de la hoja, no tapado por ella', (tester) async {
+    usarPantallaAlta(tester);
+    await tester.pumpWidget(app(Builder(
+      builder: (context) => Scaffold(
+        body: Center(
+          child: TextButton(
+            onPressed: () => CuentaBottomSheet.show(context, authRepository: FakeAuthRepository()),
+            child: const Text('Abrir cuenta'),
+          ),
+        ),
+      ),
+    )));
+    await tester.tap(find.text('Abrir cuenta'));
+    await tester.pumpAndSettle();
+    await _cambiar(tester, 'Teléfono');
+    await tester.enterText(find.byType(TextField), '3001234567');
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    // hitTestable: se puede tocar, o sea que ninguna capa lo tapa.
+    expect(find.text('Cambiamos tu teléfono.').hitTestable(), findsOneWidget);
+    await tester.tap(find.byTooltip('Cerrar aviso'));
+    await tester.pump();
+    expect(find.text('Cambiamos tu teléfono.'), findsNothing);
+  });
+
+  testWidgets('la solicitud vacía se marca en su campo', (tester) async {
+    final auth = await _abrirCuenta(tester, const SesionUsuario(nombre: 'Reciclajes', correo: 'r@r.co', esGestor: true));
+    await tester.tap(find.text('Solicitar cambio al administrador'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enviar solicitud'));
+    await tester.pump();
+
+    expect(find.text('Cuéntanos qué dato quieres cambiar'), findsOneWidget);
+    expect(auth.llamadas, isEmpty);
+  });
+
   testWidgets('al escribir, el teclado no tapa el campo que se está editando', (tester) async {
     usarPantallaAlta(tester);
     await tester.pumpWidget(app(Builder(

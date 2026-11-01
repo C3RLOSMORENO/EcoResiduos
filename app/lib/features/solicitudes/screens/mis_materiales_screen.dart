@@ -67,7 +67,7 @@ class _MisMaterialesScreenState extends State<MisMaterialesScreen> {
       navigator.pop(true);
     } catch (e) {
       debugPrint('No se pudieron guardar los materiales: $e');
-      if (mounted) setState(() => _error = 'No pudimos guardar tus materiales. Revisa tu conexión.');
+      if (mounted) setState(() => _error = 'No pudimos guardar tus materiales. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _guardando = false);
     }

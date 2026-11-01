@@ -146,13 +146,16 @@ test('el login se bloquea tras 5 intentos fallidos con el mismo correo', async (
         .type('form').send({ email: 'Bloqueo@EcoResiduos.test', password });
     for (let i = 1; i <= 5; i++) {
         const res = await intentar(`mala-${i}`);
-        assert.match(decodeURIComponent(res.headers.location), /Correo o contraseña incorrectos/, `intento ${i}`);
+        assert.equal(res.status, 422, `intento ${i}`);
+        assert.match(res.text, /El correo o la contraseña no coinciden/, `intento ${i}`);
     }
     const sexto = await intentar('mala-6');
-    assert.match(decodeURIComponent(sexto.headers.location), /demasiados intentos seguidos\. Espera 15 minutos/);
+    assert.equal(sexto.status, 429);
+    assert.equal(sexto.headers['retry-after'], '900');
+    assert.match(sexto.text, /demasiados intentos seguidos\. Espera 15 minutos/);
     // Sigue bloqueado aunque ahora la contraseña sea la correcta.
     const correcta = await intentar('clave-correcta');
-    assert.match(decodeURIComponent(correcta.headers.location), /demasiados intentos/);
+    assert.match(correcta.text, /demasiados intentos/);
     assert.ok(!(correcta.headers['set-cookie'] || []).some((c) => c.startsWith('sb_access_token=token')));
 });
 
@@ -160,8 +163,9 @@ test('una cuenta de la app con la contraseña correcta recibe el mismo mensaje q
     supabase.manejador = (consulta) => (consulta.tabla === 'usuarios' ? { data: { rol: 'GENERADOR' } } : responderConDatos(consulta));
     const res = await request(app).post('/login').set('Cookie', COOKIE_CSRF).set('X-CSRF-Token', TOKEN_CSRF)
         .type('form').send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta' });
-    assert.match(decodeURIComponent(res.headers.location), /Correo o contraseña incorrectos\./);
-    assert.ok(!decodeURIComponent(res.headers.location).includes('permisos'));
+    assert.equal(res.status, 422);
+    assert.match(res.text, /El correo o la contraseña no coinciden/);
+    assert.ok(!res.text.includes('permiso'));
 });
 
 // ---------- Avisos en la URL ----------
@@ -208,7 +212,7 @@ test('un error de la base no muestra el texto de PostgreSQL; un mensaje propio d
         const res = await request(app).get('/autoridades').set('Cookie', CON_CSRF);
         assert.ok(!res.text.includes('relation'), 'la pantalla muestra el error de PostgreSQL');
         assert.ok(!res.text.includes('42P01'));
-        assert.match(res.text, /No pudimos cargar las autoridades\. Intenta de nuevo en unos minutos\./);
+        assert.match(res.text, /No pudimos cargar las autoridades\. Inténtalo de nuevo en unos minutos\./);
         assert.ok(registro.some((l) => l.includes('42P01')), 'el detalle debe quedar en el registro del servidor');
     } finally {
         console.error = original;
@@ -229,8 +233,9 @@ test('un error de la base no muestra el texto de PostgreSQL; un mensaje propio d
 test('los avisos que arma el navegador usan códigos con texto fijo', async () => {
     const vencida = await request(app).get('/login?aviso=sesion-vencida');
     assert.match(vencida.text, /Tu sesión venció por inactividad/);
+    assert.match(vencida.text, /nota-info/, 'que venza la sesión no es un error del administrador');
     const clave = await request(app).get('/login?aviso=clave-actualizada');
-    assert.match(clave.text, /Contraseña actualizada/);
+    assert.match(clave.text, /Actualizamos tu contraseña/);
     const inventado = await request(app).get('/login?aviso=lo-que-sea');
     assert.ok(!inventado.text.includes('lo-que-sea'));
 });

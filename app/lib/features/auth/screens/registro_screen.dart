@@ -48,6 +48,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
   bool _autorizaDatos = false;
   String? _error;
 
+  /// Problema con el PDF elegido; va debajo del selector del permiso.
+  String? _errorPermiso;
+
   final _nombre = TextEditingController();
   final _documento = TextEditingController();
   final _telefono = TextEditingController();
@@ -100,6 +103,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   void _ir(_Paso paso) => setState(() {
     _paso = paso;
     _error = null;
+    _errorPermiso = null;
     _mostrarErrores = false;
   });
 
@@ -207,7 +211,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       }
     } catch (e) {
       debugPrint('Falló la búsqueda del NIT: $e');
-      if (mounted) setState(() => _error = 'No pudimos buscar tu empresa. Revisa tu conexión.');
+      if (mounted) setState(() => _error = 'No pudimos buscar tu empresa. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -247,14 +251,14 @@ class _RegistroScreenState extends State<RegistroScreen> {
       if (pdf != null && mounted) {
         setState(() {
           _permiso = pdf;
-          _error = null;
+          _errorPermiso = null;
         });
       }
     } on PdfInvalido catch (e) {
-      if (mounted) setState(() => _error = e.mensaje);
+      if (mounted) setState(() => _errorPermiso = e.mensaje);
     } catch (e) {
       debugPrint('No se pudo leer el permiso: $e');
-      if (mounted) setState(() => _error = 'No pudimos abrir ese archivo. Elige otro PDF.');
+      if (mounted) setState(() => _errorPermiso = 'No pudimos abrir ese archivo. Elige otro PDF.');
     }
   }
 
@@ -461,6 +465,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           isLoading: _enviando,
           textoLoading: 'Creando cuenta…',
           onPressed: _crearCuentaGenerador,
+          mensajeError: _error,
           camposCompletados: _camposGenerador.values.where((v) => v).length,
           totalCampos: _camposGenerador.length,
           mensajeCamposFaltantes: _mensajeFaltantes(_camposGenerador),
@@ -473,6 +478,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           isLoading: _enviando,
           textoLoading: 'Buscando…',
           onPressed: _verificarDirectorio,
+          mensajeError: _error,
         ),
       ),
       _Paso.datosGestor => _conTeclado(
@@ -499,6 +505,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         isLoading: _enviando,
         textoLoading: 'Creando cuenta…',
         onPressed: _crearCuentaGestor,
+        mensajeError: _error,
       ),
       _Paso.gestorNoEncontrado => null,
     };
@@ -513,7 +520,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(EcoSpace.s16, EcoSpace.s8, EcoSpace.s16, EcoSpace.s24),
       children: [
-        if (_error != null) ...[_MensajeError(texto: _error!), const SizedBox(height: EcoSpace.s16)],
         for (final (i, campo) in campos.indexed) ...[if (i > 0) const SizedBox(height: EcoSpace.s16), campo],
       ],
     );
@@ -634,19 +640,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
         CampoContrasena(
           controller: _contrasena,
           ayuda: 'Mínimo 8 caracteres, con letras y números',
+          errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
           autofillHints: const [AutofillHints.newPassword],
-          validator: (_) => _mostrarErrores ? validarContrasena(_contrasena.text) : null,
           fillColor: Theme.of(context).brightness == Brightness.dark
               ? Theme.of(context).colorScheme.surfaceContainerHigh
               : const Color(0xFFE6E3DB),
         ),
-        if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
-          _MensajeError(texto: validarContrasena(_contrasena.text)!),
-          CasillaAutorizacionDatos(
-            valor: _autorizaDatos,
-            onChanged: (valor) => setState(() => _autorizaDatos = valor),
-            conError: _mostrarErrores && !_autorizaDatos,
-          ),
+        CasillaAutorizacionDatos(
+          valor: _autorizaDatos,
+          onChanged: (valor) => setState(() => _autorizaDatos = valor),
+          conError: _mostrarErrores && !_autorizaDatos,
+        ),
       ]),
     );
   }
@@ -727,12 +731,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         soloLectura: true,
         ayuda: 'Es el correo registrado de tu empresa. Ahí te llega el enlace para activar la cuenta.',
       ),
-      _campo(
-        _telefono,
-        'Teléfono',
-        teclado: TextInputType.phone,
-        error: validarTelefono(_telefono.text),
-      ),
+      _campo(_telefono, 'Teléfono', teclado: TextInputType.phone, error: validarTelefono(_telefono.text)),
       _campo(
         _direccion,
         'Dirección',
@@ -744,18 +743,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
       CampoContrasena(
         controller: _contrasena,
         ayuda: 'Mínimo 8 caracteres, con letras y números',
+        errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
         autofillHints: const [AutofillHints.newPassword],
         fillColor: Theme.of(context).brightness == Brightness.dark
             ? Theme.of(context).colorScheme.surfaceContainerHigh
             : const Color(0xFFE6E3DB),
       ),
-      if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
-        _MensajeError(texto: validarContrasena(_contrasena.text)!),
-        CasillaAutorizacionDatos(
-          valor: _autorizaDatos,
-          onChanged: (valor) => setState(() => _autorizaDatos = valor),
-          conError: _mostrarErrores && !_autorizaDatos,
-        ),
+      CasillaAutorizacionDatos(
+        valor: _autorizaDatos,
+        onChanged: (valor) => setState(() => _autorizaDatos = valor),
+        conError: _mostrarErrores && !_autorizaDatos,
+      ),
     ]);
   }
 
@@ -767,12 +765,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         'que recibas solicitudes.',
         style: theme.textTheme.bodyLarge,
       ),
-      _campo(
-        _nit,
-        'NIT',
-        teclado: TextInputType.number,
-        error: validarNit(_nit.text),
-      ),
+      _campo(_nit, 'NIT', teclado: TextInputType.number, error: validarNit(_nit.text)),
       _campo(
         _razonSocial,
         'Razón social',
@@ -784,12 +777,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         'Representante legal',
         error: _lleno(_representante) ? null : 'Escribe el nombre del representante legal',
       ),
-      _campo(
-        _telefono,
-        'Teléfono',
-        teclado: TextInputType.phone,
-        error: validarTelefono(_telefono.text),
-      ),
+      _campo(_telefono, 'Teléfono', teclado: TextInputType.phone, error: validarTelefono(_telefono.text)),
       _campo(
         _direccion,
         'Dirección',
@@ -816,22 +804,21 @@ class _RegistroScreenState extends State<RegistroScreen> {
       CampoContrasena(
         controller: _contrasena,
         ayuda: 'Mínimo 8 caracteres, con letras y números',
+        errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
         autofillHints: const [AutofillHints.newPassword],
         fillColor: Theme.of(context).brightness == Brightness.dark
             ? Theme.of(context).colorScheme.surfaceContainerHigh
             : const Color(0xFFE6E3DB),
       ),
-      if (_mostrarErrores && validarContrasena(_contrasena.text) != null)
-        _MensajeError(texto: validarContrasena(_contrasena.text)!),
-        CasillaAutorizacionDatos(
-          valor: _autorizaDatos,
-          onChanged: (valor) => setState(() => _autorizaDatos = valor),
-          conError: _mostrarErrores && !_autorizaDatos,
-        ),
+      CasillaAutorizacionDatos(
+        valor: _autorizaDatos,
+        onChanged: (valor) => setState(() => _autorizaDatos = valor),
+        conError: _mostrarErrores && !_autorizaDatos,
+      ),
       _SelectorPermiso(
         archivo: _permiso,
         onElegir: _enviando ? null : _elegirPermiso,
-        conError: _mostrarErrores && _permiso == null,
+        error: _errorPermiso ?? (_mostrarErrores && _permiso == null ? 'Adjunta el permiso en PDF' : null),
       ),
     ]);
   }
@@ -863,7 +850,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
                         'de mostrarte solicitudes.',
               style: theme.textTheme.bodyLarge,
             ),
-            if (_error != null) ...[const SizedBox(height: EcoSpace.s16), _MensajeError(texto: _error!)],
             const SizedBox(height: EcoSpace.s16),
             for (final categoria in categoriasPublicables.keys)
               GrupoMateriales(
@@ -881,17 +867,18 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
 /// Licencia o permiso ambiental en PDF, obligatorio para registrar una empresa.
 class _SelectorPermiso extends StatelessWidget {
-  const _SelectorPermiso({required this.archivo, required this.onElegir, required this.conError});
+  const _SelectorPermiso({required this.archivo, required this.onElegir, this.error});
 
   final ArchivoPdf? archivo;
   final VoidCallback? onElegir;
-  final bool conError;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final elegido = archivo != null;
+    final conError = error != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -935,7 +922,10 @@ class _SelectorPermiso extends StatelessWidget {
         ),
         if (conError) ...[
           const SizedBox(height: EcoSpace.s4),
-          Text('Adjunta el permiso en PDF', style: theme.textTheme.bodySmall?.copyWith(color: scheme.error)),
+          Semantics(
+            liveRegion: true,
+            child: Text(error!, style: theme.textTheme.bodySmall?.copyWith(color: scheme.error)),
+          ),
         ],
       ],
     );
@@ -1015,32 +1005,6 @@ class _TarjetaRol extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _MensajeError extends StatelessWidget {
-  const _MensajeError({required this.texto});
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(EcoSpace.s12),
-      decoration: BoxDecoration(color: scheme.errorContainer, borderRadius: BorderRadius.circular(EcoRadius.small)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.error_outline, color: scheme.onErrorContainer, size: 20),
-          const SizedBox(width: EcoSpace.s8),
-          Expanded(
-            child: Text(texto, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onErrorContainer)),
-          ),
-        ],
       ),
     );
   }

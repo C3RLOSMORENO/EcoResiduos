@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../theme/eco_theme.dart';
@@ -54,11 +55,15 @@ class _RevisaCorreoScreenState extends State<RevisaCorreoScreen> {
       await widget.onReenviar();
       _iniciarEspera();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Enviamos un enlace nuevo. Revisa también la carpeta de spam.')),
+        const SnackBar(content: Text('Te enviamos otro enlace. Si no aparece, revisa la carpeta de spam.')),
       );
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       debugPrint('No se pudo reenviar el enlace: $e');
-      messenger.showSnackBar(const SnackBar(content: Text('No pudimos reenviar el enlace. Inténtalo más tarde.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No pudimos reenviar el enlace. Revisa tu conexión e inténtalo de nuevo.')),
+      );
     } finally {
       if (mounted) setState(() => _reenviando = false);
     }
