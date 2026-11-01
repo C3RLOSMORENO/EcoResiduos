@@ -126,8 +126,7 @@ test('iniciar sesión guarda el token y el refresh token y vuelve a la página p
         const res = await request(app).post(ruta).set('X-CSRF-Token', TOKEN_CSRF).set('Cookie', COOKIE_CSRF).type('form')
             .send({ email: 'admin@ecoresiduos.test', password: 'clave-correcta', volver: '/gestores/1' });
         assert.equal(res.status, 302);
-        // Sin aviso de «iniciaste sesión»: llegar a la página ya lo confirma.
-        assert.equal(res.headers.location, '/gestores/1');
+        assert.match(decodeURIComponent(res.headers.location), /^\/gestores\/1\?msg=Iniciaste sesión\./);
         const cookies = res.headers['set-cookie'].join(';');
         assert.match(cookies, /sb_access_token=token-admin/);
         assert.match(cookies, /sb_refresh_token=refresco-1/);

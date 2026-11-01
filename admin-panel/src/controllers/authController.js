@@ -86,8 +86,7 @@ const authController = {
             if (session && session.access_token) {
                 guardarSesion(res, { accessToken: session.access_token, refreshToken: session.refresh_token });
             }
-            // Sin aviso de «iniciaste sesión»: llegar al panel ya lo confirma.
-            return res.redirect(volver || INICIO);
+            return res.redirect(conAviso(volver || INICIO, 'Iniciaste sesión.'));
         } catch (err) {
             if (err.codigo === 'CREDENCIALES') {
                 limitePorCorreo.fallo(claveCorreo);

@@ -47,8 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
       _cargando = true;
       _aviso = _AvisoLogin.ninguno;
     });
+    // Se toma antes de entrar: al iniciar sesión esta pantalla se reemplaza
+    // por el inicio, y el aviso se muestra allá.
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await _auth.signIn(email: _correo.text.trim(), password: _contrasena.text);
+      messenger.showSnackBar(const SnackBar(content: Text('Iniciaste sesión.')));
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {

@@ -7,7 +7,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![TensorFlow Lite](https://img.shields.io/badge/TensorFlow_Lite-MobileNetV3-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-306%20Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-311%20Passed-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licencia-Proyecto_de_Grado-blue?style=for-the-badge)
 [![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Android-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/C3RLOSMORENO/EcoResiduos/releases/latest)
 
@@ -108,11 +108,11 @@ EcoResiduos/
 │   ├── assets/models/        # Modelo MobileNetV3 (.tflite) y etiquetas
 │   ├── lib/                  # Código de la app
 │   ├── model_training/       # Construcción del dataset y entrenamiento del modelo
-│   └── test/                 # 147 pruebas
+│   └── test/                 # 148 pruebas
 ├── admin-panel/              # Panel web (Node.js + Express). Ver admin-panel/README.md
 │   ├── api/                  # Entrada en Vercel
 │   ├── src/                  # Controladores, servicios, vistas y estilos
-│   └── pruebas/              # 159 pruebas y 10 recorridos en navegador
+│   └── pruebas/              # 163 pruebas y 10 recorridos en navegador
 ├── supabase/
 │   ├── migrations/           # Esquema completo: tablas, RLS, funciones, triggers y buckets
 │   └── functions/            # Función que borra fotos huérfanas del almacenamiento
@@ -222,8 +222,8 @@ Para que el plan gratis de Supabase no pause el proyecto por inactividad, el flu
 
 | Parte | Pruebas | Comando |
 |---|---|---|
-| App móvil | 147 | `cd app && flutter analyze && flutter test` |
-| Panel | 159, más 10 recorridos en navegador (escritorio y celular) | `cd admin-panel && npm run lint && npm test && npm run test:e2e` |
+| App móvil | 148 | `cd app && flutter analyze && flutter test` |
+| Panel | 163, más 10 recorridos en navegador (escritorio y celular) | `cd admin-panel && npm run lint && npm test && npm run test:e2e` |
 
 La integración continua ([`ci.yml`](.github/workflows/ci.yml)) corre el análisis y las pruebas de ambas partes en cada cambio.
 

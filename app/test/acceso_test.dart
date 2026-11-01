@@ -34,6 +34,18 @@ void main() {
       await tester.pumpWidget(app(LoginScreen(authRepository: auth)));
     }
 
+    testWidgets('al entrar bien confirma que se inició sesión', (tester) async {
+      final auth = FakeAuthRepository();
+      await abrirLogin(tester, auth);
+
+      await tester.enterText(find.widgetWithText(TextFormField, 'Correo'), 'mariana@correo.co');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+      await tester.tap(find.text('Entrar'));
+      await tester.pump();
+
+      expect(find.text('Iniciaste sesión.'), findsOneWidget);
+    });
+
     testWidgets('credenciales incorrectas muestran el aviso sin perder los datos', (tester) async {
       final auth = FakeAuthRepository()
         ..errorAlEntrar = const AuthException('El correo o la contraseña no coinciden.', code: 'invalid_credentials');
