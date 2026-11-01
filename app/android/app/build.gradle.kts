@@ -18,7 +18,7 @@ val propiedadesFirma = Properties().apply {
 val hayFirmaPropia = propiedadesFirma.getProperty("storeFile") != null
 
 android {
-    namespace = "com.example.ecoresiduos"
+    namespace = "co.edu.udes.ecoresiduos"
     compileSdk = 37
     // ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.ecoresiduos"
+        applicationId = "co.edu.udes.ecoresiduos"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

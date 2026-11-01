@@ -1,4 +1,4 @@
-package com.example.ecoresiduos
+package co.edu.udes.ecoresiduos
 
 import io.flutter.embedding.android.FlutterActivity
 
