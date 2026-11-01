@@ -406,3 +406,65 @@ test('accesibilidad: se abre con el botón o con Alt+Shift+A, cambia el texto y 
     await expect(panel).toBeHidden();
     await expect(page.getByRole('button', { name: 'Accesibilidad' })).toBeFocused();
 });
+
+// Revisión automática con axe-core de los criterios WCAG 2.1 A y AA (y los AA
+// nuevos de 2.2) en cada pantalla, en tema claro y oscuro, con el recorrido
+// y el panel de preferencias abiertos. No reemplaza la revisión manual, pero
+// detecta contraste, nombres, listas y atributos ARIA mal puestos.
+const AxeBuilder = require('@axe-core/playwright').default;
+const ETIQUETAS_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+async function sinViolaciones(page, donde) {
+    // Se mide con todo quieto: a mitad de una animación de entrada el
+    // contraste sale más bajo de lo que es.
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+    // preload: false evita que axe descargue las hojas de Google Fonts, que la
+    // CSP no deja leer con fetch.
+    const { violations } = await new AxeBuilder({ page }).withTags(ETIQUETAS_WCAG).options({ preload: false }).analyze();
+    const resumen = violations.map((v) => `${v.id}: ${v.help} → ${v.nodes.slice(0, 3).map((n) => `${n.target.join(' ')} (${n.failureSummary.replace(/\s+/g, ' ')})`).join(' | ')}`);
+    expect(resumen, `violaciones WCAG en ${donde}`).toEqual([]);
+}
+
+test('WCAG con axe: pantallas públicas y del panel, en claro y oscuro', async ({ page }) => {
+    test.setTimeout(180000);
+    for (const tema of ['light', 'dark']) {
+        await page.emulateMedia({ colorScheme: tema });
+        for (const ruta of ['/login', '/accesibilidad', '/privacidad', '/no-existe']) {
+            await page.goto(ruta);
+            await sinViolaciones(page, `${ruta} (${tema})`);
+        }
+    }
+    // El 404 de /no-existe es el esperado, no un error de la página.
+    const errores = test.info().errores;
+    errores.splice(0, errores.length, ...errores.filter((e) => !e.includes('404 (Not Found)')));
+
+    await page.emulateMedia({ colorScheme: 'light' });
+    await iniciarSesion(page, '/dashboard');
+    // Primera visita: el recorrido se abre solo y resalta una región.
+    const recorrido = page.locator('.driver-popover');
+    await expect(recorrido).toBeVisible();
+    await sinViolaciones(page, '/dashboard con el recorrido abierto');
+    await page.getByRole('button', { name: 'Saltar' }).click();
+    await expect(recorrido).toBeHidden();
+
+    await page.keyboard.press('Alt+Shift+A');
+    await expect(page.getByRole('region', { name: 'Preferencias de accesibilidad' })).toBeVisible();
+    await sinViolaciones(page, '/dashboard con las preferencias abiertas');
+    await page.keyboard.press('Escape');
+
+    const rutas = ['/dashboard', '/gestores', '/gestores/1', '/gestores/nuevo', '/gestores/editar/1',
+        '/materiales', '/materiales/nuevo', '/materiales/editar/1', '/autoridades', '/autoridades/nuevo',
+        '/autoridades/editar/1', '/solicitudes', '/solicitudes/1', '/ciudadanos', '/reportes'];
+    for (const tema of ['light', 'dark']) {
+        await page.emulateMedia({ colorScheme: tema });
+        for (const ruta of rutas) {
+            await page.goto(ruta);
+            // Cada pantalla abre su recorrido la primera vez; Escape lo cierra.
+            if (await recorrido.isVisible()) {
+                await page.keyboard.press('Escape');
+                await expect(recorrido).toBeHidden();
+            }
+            await sinViolaciones(page, `${ruta} (${tema})`);
+        }
+    }
+});

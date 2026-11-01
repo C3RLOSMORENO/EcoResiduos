@@ -925,10 +925,11 @@
     text-align: right;
   }
 
-  /* Un cero informa, pero no debe pesar como una cifra. */
+  /* Un cero informa, pero no debe pesar como una cifra: va en el color
+     secundario del texto, sin bajar la opacidad (con 0.6 quedaba en 3,2:1,
+     por debajo del 4,5:1 de WCAG 1.4.3). */
   .cifra-cero {
     @apply text-on-surface-variant;
-    opacity: 0.6;
   }
 
   /* Cifra destacada: números tabulares (todos del mismo ancho) para que las
