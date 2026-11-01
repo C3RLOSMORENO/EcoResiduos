@@ -22,8 +22,8 @@ const asistenteController = {
         limite.fallo(clave);
 
         try {
-            const { respuesta, consultas } = await asistenteService.preguntar(historial);
-            return res.json({ ok: true, respuesta, consultas });
+            const { respuesta, consultas, enlaces } = await asistenteService.preguntar(historial);
+            return res.json({ ok: true, respuesta, consultas, enlaces: enlaces || [] });
         } catch (err) {
             if (err instanceof asistenteService.ErrorAsistente) {
                 return res.status(err.estado).json({ ok: false, mensaje: err.message });

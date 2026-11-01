@@ -2051,6 +2051,23 @@
     box-shadow: var(--md-sys-elevation-level3);
   }
 
+  /* Enlaces a documentos dentro de una respuesta: los nombres son largos
+     («Certificado · solicitud 10 (Periféricos…)»), así que pasan a otra línea
+     dentro de la burbuja. */
+  .asistente-enlace {
+    @apply w-full justify-start rounded-lg px-3 py-2 text-left;
+    white-space: normal;
+  }
+
+  .asistente-enlace > .material-symbols-outlined {
+    flex-shrink: 0;
+  }
+
+  .asistente-enlace > span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   .asistente-panel[hidden],
   .accesibilidad-panel[hidden] {
     display: none;

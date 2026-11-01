@@ -235,7 +235,7 @@ test('POST /asistente/preguntar: pide CSRF, valida la pregunta y responde en JSO
             .set('X-Requested-With', 'fetch').set('X-CSRF-Token', TOKEN_CSRF)
             .send({ historial: [{ rol: 'usuario', texto: '¿Cuántos gestores hay?' }] });
         assert.equal(ok.status, 200);
-        assert.deepEqual(ok.body, { ok: true, respuesta: 'Hay 3 gestores.', consultas: ['Gestores'] });
+        assert.deepEqual(ok.body, { ok: true, respuesta: 'Hay 3 gestores.', consultas: ['Gestores'], enlaces: [] });
     } finally {
         asistenteService.preguntar = original;
     }
@@ -255,5 +255,70 @@ test('el límite de preguntas por administrador responde 429', async () => {
         assert.match(ultima.body.mensaje, /muchas preguntas/);
     } finally {
         asistenteService.preguntar = original;
+    }
+});
+
+test('documentos del gestor: busca por nombre o NIT y arma los enlaces al permiso y a la ficha', async () => {
+    supabase.manejador = (consulta) => (consulta.tabla === 'perfiles_gestor'
+        ? { data: [
+            { id: 1, razon_social: 'RECICLAJES DEL ORIENTE', nit: '900396512', municipio: 'GIRÓN', estado_verificacion: 'APROBADO', permiso_path: 'registro/a.pdf' },
+            { id: 2, razon_social: 'RECICLAJES SIN PERMISO', nit: '800111222', municipio: 'GIRÓN', estado_verificacion: 'PENDIENTE', permiso_path: null }
+        ] }
+        : undefined);
+
+    const resultado = await ejecutar('documentos_gestor', { busqueda: 'reciclajes' });
+    assert.deepEqual(resultado.enlaces.map((e) => e.url), ['/gestores/1/permiso', '/gestores/1', '/gestores/2']);
+    assert.equal(resultado.gestores[1].tiene_permiso, false);
+    assert.equal(supabase.consultas[0].valor('ilike', 'razon_social'), '%reciclajes%');
+
+    supabase.limpiar();
+    supabase.manejador = () => ({ data: [] });
+    await ejecutar('documentos_gestor', { busqueda: '900.396.512' });
+    assert.equal(supabase.consultas[0].valor('like', 'nit'), '900396512%', 'por NIT busca sin puntos');
+    assert.match((await ejecutar('documentos_gestor', { busqueda: 'ab' })).error, /al menos 3/);
+});
+
+test('certificados y reporte: enlaces a cada PDF y al Excel con los mismos filtros de Reportes', async () => {
+    supabase.manejador = (consulta) => (consulta.tabla === 'solicitudes_recoleccion'
+        ? { data: [{ id: 7, municipio: 'GIRÓN', certificado_tipo: 'APROVECHAMIENTO', certificado_at: '2026-10-20T15:00:00Z', materiales_residuos: { nombre_comun: 'Cartón' } }], count: 1 }
+        : undefined);
+    const certificados = await ejecutar('documentos_certificados', { municipio: 'Girón', tipo: 'aprovechamiento' });
+    assert.equal(certificados.total, 1);
+    assert.deepEqual(certificados.enlaces, [{ tipo: 'pdf', texto: 'Certificado · solicitud 7 (Cartón)', url: '/solicitudes/7/certificado' }]);
+    assert.equal(supabase.consultas[0].valor('eq', 'certificado_tipo'), 'APROVECHAMIENTO');
+
+    const reporte = await ejecutar('descargar_reporte', { desde: '2026-10-01', hasta: '2026-10-31', categoria: 'raee' });
+    assert.equal(reporte.enlaces[0].url, '/reportes/excel?desde=2026-10-01&hasta=2026-10-31&categoria=RAEE');
+    assert.equal(reporte.enlaces[0].tipo, 'excel');
+    assert.equal(reporte.enlaces[1].url, '/reportes?desde=2026-10-01&hasta=2026-10-31&categoria=RAEE');
+    assert.match((await ejecutar('descargar_reporte', { categoria: 'inventada' })).error, /categoría válido/);
+});
+
+test('preguntar: los enlaces van al navegador, el modelo solo ve el texto de los botones y una URL ajena se descarta', async () => {
+    const consultas = require('../src/services/consultasAsistente');
+    const original = consultas.herramientas.documentos_gestor.ejecutar;
+    consultas.herramientas.documentos_gestor.ejecutar = async () => ({
+        total: 1,
+        enlaces: [
+            { tipo: 'pdf', texto: 'Permiso ambiental · X', url: '/gestores/1/permiso' },
+            { tipo: 'pdf', texto: 'Trampa', url: 'https://otro-sitio.co/x.pdf' }
+        ]
+    });
+    const peticiones = [];
+    const fetchFalso = async (url, opciones) => {
+        peticiones.push(JSON.parse(opciones.body));
+        return peticiones.length === 1
+            ? deGemini([{ functionCall: { name: 'documentos_gestor', args: { busqueda: 'X' } } }])
+            : deGemini([{ text: 'Abajo tienes el permiso de X.' }]);
+    };
+    try {
+        const resultado = await asistenteService.preguntar([{ rol: 'usuario', texto: 'permiso de X' }], { fetchBase: fetchFalso });
+        assert.deepEqual(resultado.enlaces, [{ tipo: 'pdf', texto: 'Permiso ambiental · X', url: '/gestores/1/permiso' }]);
+        assert.deepEqual(resultado.consultas, ['Documentos del gestor']);
+        const paraModelo = JSON.stringify(peticiones[1].contents.at(-1));
+        assert.doesNotMatch(paraModelo, /\/gestores\/1|otro-sitio/, 'el modelo no recibe URL');
+        assert.match(paraModelo, /Permiso ambiental · X/);
+    } finally {
+        consultas.herramientas.documentos_gestor.ejecutar = original;
     }
 });

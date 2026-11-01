@@ -9,9 +9,11 @@ const { MUNICIPIOS, municipioAdmitido, variantesMunicipio } = require('../utils/
 const { CATEGORIAS, ESTADOS_SOLICITUD, ESTADOS_GESTOR } = require('../utils/formato');
 const { rangoBogota, haceDias } = require('../utils/fechas');
 const { errorDeBase } = require('../utils/errores');
+const { filtrosReporte, describirFiltrosReporte, enlaceExcelReporte } = require('../utils/filtros');
 
 const DIAS_SIN_CERTIFICADO = 7;
 const MAX_NOMBRES = 25;
+const MAX_DOCUMENTOS = 10;
 
 /**
  * Error de un parámetro: se le devuelve al modelo para que se lo explique al
@@ -312,6 +314,119 @@ const herramientas = {
                 .order('sigla', { ascending: true });
             if (error) throw errorDeBase('No pudimos leer las autoridades.', error);
             return { total: (data || []).length, autoridades: data || [] };
+        }
+    },
+
+    // Las tres consultas siguientes devuelven «enlaces»: rutas del propio panel
+    // (que ya exigen sesión) armadas aquí con los identificadores de la base.
+    // El modelo nunca escribe una URL; el navegador solo muestra estos enlaces.
+
+    documentos_gestor: {
+        descripcion: 'Busca una empresa gestora por nombre o NIT y da los enlaces para abrir su permiso ambiental (PDF) '
+            + 'y su ficha en el panel. Úsala cuando pidan el permiso, la licencia o los documentos de un gestor.',
+        parametros: {
+            busqueda: { tipo: 'string', descripcion: 'Nombre (o parte) de la empresa, o su NIT.' }
+        },
+        async ejecutar(args) {
+            const texto = textoBusqueda(args.busqueda);
+            if (texto.length < 3) throw new ParametroInvalido('Escribe al menos 3 letras del nombre o el NIT de la empresa.');
+            // «900.396.512-3» es un NIT: se busca sin puntos ni dígito de verificación.
+            const nit = texto.replace(/[\s.]/g, '').split('-')[0];
+            let consulta = supabase.from('perfiles_gestor').select('id, razon_social, nit, municipio, estado_verificacion, permiso_path');
+            consulta = /^\d{6,15}$/.test(nit) ? consulta.like('nit', `${nit}%`) : consulta.ilike('razon_social', `%${texto}%`);
+            const { data, error } = await consulta.order('razon_social', { ascending: true }).limit(MAX_DOCUMENTOS);
+            if (error) throw errorDeBase('No pudimos buscar los documentos del gestor.', error);
+
+            const gestores = data || [];
+            const enlaces = gestores.flatMap((g) => [
+                ...(g.permiso_path ? [{ tipo: 'pdf', texto: `Permiso ambiental · ${g.razon_social}`, url: `/gestores/${g.id}/permiso` }] : []),
+                { tipo: 'ficha', texto: `Ficha · ${g.razon_social}`, url: `/gestores/${g.id}` }
+            ]);
+            return {
+                total: gestores.length,
+                gestores: gestores.map((g) => ({
+                    nombre: g.razon_social, nit: g.nit, municipio: g.municipio, estado: g.estado_verificacion,
+                    tiene_permiso: Boolean(g.permiso_path)
+                })),
+                enlaces
+            };
+        }
+    },
+
+    documentos_certificados: {
+        descripcion: 'Lista los certificados (actas) de disposición final o aprovechamiento cargados por los gestores, con '
+            + 'enlaces para abrir cada PDF. Filtra por municipio, tipo, gestor, rango de fechas o número de solicitud.',
+        parametros: {
+            municipio: { tipo: 'string', valores: MUNICIPIOS, descripcion: 'Municipio de la recolección.' },
+            tipo: { tipo: 'string', valores: ['DISPOSICION_FINAL', 'APROVECHAMIENTO'], descripcion: 'Tipo de certificado.' },
+            gestor: { tipo: 'string', descripcion: 'Nombre (o parte) de la empresa que lo cargó.' },
+            solicitud: { tipo: 'integer', descripcion: 'Número de la solicitud.' },
+            desde: { tipo: 'string', descripcion: 'Primer día, AAAA-MM-DD (fecha en que se cargó).' },
+            hasta: { tipo: 'string', descripcion: 'Último día incluido, AAAA-MM-DD.' }
+        },
+        async ejecutar(args) {
+            const municipio = municipioDe(args.municipio);
+            const tipo = opcionDe(args.tipo, ['DISPOSICION_FINAL', 'APROVECHAMIENTO'], 'tipo de certificado');
+            const fechas = rangoBogota(args.desde, args.hasta);
+            const gestor = textoBusqueda(args.gestor);
+
+            // gestor_asignado_id no tiene llave foránea: primero los ids del gestor.
+            const nombres = new Map();
+            if (gestor) {
+                const { data, error } = await supabase.from('perfiles_gestor').select('id, razon_social').ilike('razon_social', `%${gestor}%`).limit(20);
+                if (error) throw errorDeBase('No pudimos buscar el gestor.', error);
+                if (!data || !data.length) return { total: 0, certificados: [], nota: `No hay gestores con «${gestor}» en el nombre.` };
+                data.forEach((g) => nombres.set(g.id, g.razon_social));
+            }
+
+            let consulta = supabase.from('solicitudes_recoleccion')
+                .select('id, municipio, certificado_tipo, certificado_at, gestor_asignado_id, materiales_residuos(nombre_comun)', { count: 'exact' })
+                .not('certificado_url', 'is', null).neq('certificado_url', '');
+            if (Number.isInteger(args.solicitud)) consulta = consulta.eq('id', args.solicitud);
+            if (municipio) consulta = consulta.in('municipio', variantesMunicipio(municipio));
+            if (tipo) consulta = consulta.eq('certificado_tipo', tipo);
+            if (gestor) consulta = consulta.in('gestor_asignado_id', [...nombres.keys()]);
+            if (fechas.gte) consulta = consulta.gte('certificado_at', fechas.gte);
+            if (fechas.lt) consulta = consulta.lt('certificado_at', fechas.lt);
+            const respuesta = await consulta.order('certificado_at', { ascending: false }).limit(MAX_DOCUMENTOS);
+            const total = conteoDe(respuesta, 'los certificados');
+
+            const certificados = (respuesta.data || []).map((s) => ({
+                solicitud: s.id,
+                material: s.materiales_residuos && s.materiales_residuos.nombre_comun,
+                municipio: s.municipio,
+                tipo: s.certificado_tipo,
+                fecha: s.certificado_at ? String(s.certificado_at).slice(0, 10) : null,
+                ...(nombres.has(s.gestor_asignado_id) ? { gestor: nombres.get(s.gestor_asignado_id) } : {})
+            }));
+            return {
+                total,
+                certificados,
+                enlaces: certificados.map((c) => ({ tipo: 'pdf', texto: `Certificado · solicitud ${c.solicitud}${c.material ? ` (${c.material})` : ''}`, url: `/solicitudes/${c.solicitud}/certificado` })),
+                ...(total > MAX_DOCUMENTOS ? { nota: `Hay ${total}; se muestran los ${MAX_DOCUMENTOS} más recientes. Filtra por municipio, gestor o fechas para ver otros.` } : {})
+            };
+        }
+    },
+
+    descargar_reporte: {
+        descripcion: 'Da el enlace para descargar en Excel el reporte de recolecciones por municipio (el mismo de la '
+            + 'pantalla Reportes), con rango de fechas y categoría opcionales. Úsala cuando pidan descargar o exportar un informe o reporte.',
+        parametros: {
+            desde: { tipo: 'string', descripcion: 'Primer día, AAAA-MM-DD.' },
+            hasta: { tipo: 'string', descripcion: 'Último día incluido, AAAA-MM-DD.' },
+            categoria: { tipo: 'string', valores: Object.keys(CATEGORIAS), descripcion: 'Categoría del residuo.' }
+        },
+        async ejecutar(args) {
+            opcionDe(args.categoria, Object.keys(CATEGORIAS), 'categoría');
+            const filtros = filtrosReporte(args);
+            const descripcion = describirFiltrosReporte(filtros) || 'todas las recolecciones confirmadas';
+            return {
+                reporte: `Recolecciones por municipio · ${descripcion}`,
+                enlaces: [
+                    { tipo: 'excel', texto: `Descargar Excel · ${descripcion}`, url: enlaceExcelReporte(filtros) },
+                    { tipo: 'ficha', texto: 'Ver el reporte en pantalla', url: enlaceExcelReporte(filtros).replace('/reportes/excel', '/reportes') }
+                ]
+            };
         }
     }
 };
