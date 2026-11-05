@@ -17,10 +17,14 @@ import 'detalle_solicitud_screen.dart';
 /// gestor» aparece sola cuando el generador acepta a otro; «Rechazada», solo
 /// cuando descarta esa propuesta.
 class MisPostulacionesScreen extends StatefulWidget {
-  const MisPostulacionesScreen({super.key, this.repository, this.postulacionesIniciales});
+  const MisPostulacionesScreen({super.key, this.repository, this.postulacionesIniciales, this.pestanaInicial = 0});
+
+  /// Índice de la pestaña «Aceptadas», para abrir la pantalla directo en ella.
+  static const pestanaAceptadas = 1;
 
   final SolicitudesRepository? repository;
   final List<PostulacionRecoleccion>? postulacionesIniciales;
+  final int pestanaInicial;
 
   @override
   State<MisPostulacionesScreen> createState() => _MisPostulacionesScreenState();
@@ -133,6 +137,7 @@ class _MisPostulacionesScreenState extends State<MisPostulacionesScreen> {
 
     return DefaultTabController(
       length: _pestanas.length,
+      initialIndex: widget.pestanaInicial.clamp(0, _pestanas.length - 1),
       child: Scaffold(
         appBar: EcoTopAppBar(
           titulo: 'Postulaciones',
