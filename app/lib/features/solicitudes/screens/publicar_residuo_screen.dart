@@ -30,7 +30,7 @@ typedef SugerenciaIa = ({String categoria, int confianza});
 
 /// Formulario para publicar un residuo (27) o editar una publicación (28i).
 ///
-/// Gradiente de meta: muestra cuántos de los 5 campos obligatorios faltan
+/// Gradiente de meta: muestra cuántos de los 6 campos obligatorios faltan
 /// mientras se llena, en vez de errores sorpresa al final.
 class PublicarResiduoScreen extends StatefulWidget {
   const PublicarResiduoScreen({
@@ -87,7 +87,6 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
   String? _municipio;
   String? _fotoLocal;
   String? _fotoRemota;
-  bool _pedirTelefono = true;
 
   bool _analizando = false;
   SugerenciaIa? _sugerencia;
@@ -119,7 +118,6 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
       _municipio = municipioAdmitido(sesion.municipio);
       _telefono.text = sesion.telefono ?? '';
     }
-    _pedirTelefono = _telefono.text.trim().isEmpty;
 
     if (widget.materialesIniciales != null) {
       _materiales = widget.materialesIniciales!;
@@ -193,7 +191,7 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
     if (!_tieneTelefono) 'teléfono',
   ];
 
-  int get _totalCampos => _pedirTelefono ? 6 : 5;
+  static const _totalCampos = 6;
 
   String get _mensajeMeta {
     final faltan = _faltantes;
@@ -561,19 +559,18 @@ class _PublicarResiduoScreenState extends State<PublicarResiduoScreen> {
             items: [for (final m in municipiosAdmitidos) DropdownMenuItem(value: m, child: Text(m))],
             onChanged: (valor) => setState(() => _municipio = valor),
           ),
-          if (_pedirTelefono) ...[
-            const SizedBox(height: EcoSpace.s16),
-            TextField(
-              controller: _telefono,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Teléfono de contacto',
-                hintText: 'Para que el gestor coordine la recogida',
-                errorText: _mostrarErrores ? validarTelefono(_telefono.text) : null,
-              ),
+          // Siempre visible: viene precargado del perfil y se puede cambiar.
+          const SizedBox(height: EcoSpace.s16),
+          TextField(
+            controller: _telefono,
+            keyboardType: TextInputType.phone,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: 'Teléfono de contacto',
+              hintText: 'Para que el gestor coordine la recogida',
+              errorText: _mostrarErrores ? validarTelefono(_telefono.text) : null,
             ),
-          ],
+          ),
           const SizedBox(height: EcoSpace.s16),
           TextField(
             controller: _descripcion,
