@@ -181,6 +181,7 @@ void main() {
       expect(find.text('Girón'), findsOneWidget);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Confirma la contraseña'), 'clave1234');
 
       // Sin la autorización de datos (Ley 1581) no se avanza.
       await tester.tap(find.text('Continuar'));
@@ -237,6 +238,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Correo de la empresa'), 'gerencia@recuperadora.co');
       await tester.enterText(find.widgetWithText(TextFormField, 'Contraseña'), 'clave1234');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Confirma la contraseña'), 'clave1234');
       await autorizarDatos(tester);
 
       await tester.tap(find.text('Continuar'));
