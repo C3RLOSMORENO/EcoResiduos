@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/solicitudes/models/solicitud_recoleccion.dart';
 import '../features/solicitudes/repositories/solicitudes_repository.dart';
+import '../features/solicitudes/screens/mis_postulaciones_screen.dart';
 import '../models/postulacion_recoleccion.dart';
 import '../services/contador_novedades.dart';
 import '../theme/eco_theme.dart';
@@ -96,7 +97,8 @@ class _InicioGestorViewState extends State<InicioGestorView> {
     await futuro;
   }
 
-  void _irA(int pestana) => NavegacionPrincipal.of(context)?.irA(pestana);
+  void _irA(int pestana, {int subpestana = 0}) =>
+      NavegacionPrincipal.of(context)?.irA(pestana, subpestana: subpestana);
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +170,7 @@ class _InicioGestorViewState extends State<InicioGestorView> {
             if (s.updatedAt != null) 'aceptada ${tiempoRelativo(s.updatedAt)}',
           ].join(' · '),
           accion: 'Coordinar recolección',
-          onAccion: () => _irA(Pestana.postulaciones),
+          onAccion: () => _irA(Pestana.postulaciones, subpestana: MisPostulacionesScreen.pestanaAceptadas),
         ),
       );
       if (disponibles > 0) {

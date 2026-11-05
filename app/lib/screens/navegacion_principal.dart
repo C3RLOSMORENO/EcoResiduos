@@ -19,7 +19,9 @@ abstract final class Pestana {
 class NavegacionPrincipal extends InheritedWidget {
   const NavegacionPrincipal({super.key, required this.irA, required super.child});
 
-  final ValueChanged<int> irA;
+  /// Muestra la pestaña [pestana]; [subpestana] elige la pestaña interna de
+  /// la pantalla destino (p. ej. «Aceptadas» en Postulaciones).
+  final void Function(int pestana, {int subpestana}) irA;
 
   /// El más cercano en el árbol, o null si la pantalla está fuera de la navegación principal.
   static NavegacionPrincipal? of(BuildContext context) =>

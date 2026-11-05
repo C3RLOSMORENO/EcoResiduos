@@ -35,6 +35,7 @@ class _InicioScreenState extends State<InicioScreen> {
   late final SolicitudesRepository _repository;
   String? _rol;
   int _indice = Pestana.inicio;
+  int _subpestana = 0;
 
   // GlobalKeys pasadas a las vistas para los coach marks.
   final _keyFab = GlobalKey();
@@ -90,10 +91,12 @@ class _InicioScreenState extends State<InicioScreen> {
     );
   }
 
-  void _irA(int indice) {
+  void _irA(int indice, {int subpestana = 0}) {
     setState(() {
-      if (indice != _indice) _visitas[indice]++;
+      // Con subpestana se reconstruye aunque ya esté visible, para que la tome.
+      if (indice != _indice || subpestana != 0) _visitas[indice]++;
       _indice = indice;
+      _subpestana = subpestana;
     });
   }
 
@@ -139,7 +142,7 @@ class _InicioScreenState extends State<InicioScreen> {
   List<Widget> _pestanasGestor() => [
     InicioGestorView(repository: _repository, keyNav: _keyNav),
     SolicitudesDisponiblesScreen(repository: _repository),
-    MisPostulacionesScreen(repository: _repository),
+    MisPostulacionesScreen(repository: _repository, pestanaInicial: _subpestana),
     const GestoresAsociadosScreen(incluirResiduos: true),
   ];
 
