@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -56,6 +57,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _telefono = TextEditingController();
   final _correo = TextEditingController();
   final _contrasena = TextEditingController();
+  final _confirmacion = TextEditingController();
   final _nit = TextEditingController();
   final _razonSocial = TextEditingController();
   final _direccion = TextEditingController();
@@ -77,6 +79,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     _telefono,
     _correo,
     _contrasena,
+    _confirmacion,
     _nit,
     _razonSocial,
     _direccion,
@@ -124,13 +127,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   bool _lleno(TextEditingController c) => c.text.trim().isNotEmpty;
 
+  bool get _confirmacionValida => validarConfirmacion(_contrasena.text, _confirmacion.text) == null;
+
   Map<String, bool> get _camposGenerador => {
-    'nombre': _lleno(_nombre),
-    'documento': _lleno(_documento),
+    'nombre': validarNombre(_nombre.text) == null,
+    'documento': validarDocumento(_documento.text) == null,
     'teléfono': validarTelefono(_telefono.text) == null,
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+    'confirmación de la contraseña': _confirmacionValida,
     'autorización de datos personales': _autorizaDatos,
   };
 
@@ -139,6 +145,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+    'confirmación de la contraseña': _confirmacionValida,
     'autorización de datos personales': _autorizaDatos,
   };
 
@@ -147,12 +154,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Map<String, bool> get _camposGestorNuevo => {
     'NIT': _nitValido,
     'razón social': _lleno(_razonSocial),
-    'representante legal': _lleno(_representante),
+    'representante legal': validarNombre(_representante.text) == null,
     'teléfono': validarTelefono(_telefono.text) == null,
     'dirección': _lleno(_direccion),
     'municipio': _municipio != null,
     'correo': validarCorreo(_correo.text) == null,
     'contraseña': validarContrasena(_contrasena.text) == null,
+    'confirmación de la contraseña': _confirmacionValida,
     'permiso en PDF': _permiso != null,
     'autorización de datos personales': _autorizaDatos,
   };
@@ -535,6 +543,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     String? ayuda,
     int? maxLargo,
     bool soloLectura = false,
+    List<TextInputFormatter>? formatos,
   }) {
     return TextField(
       controller: controller,
@@ -544,15 +553,44 @@ class _RegistroScreenState extends State<RegistroScreen> {
       maxLines: maxLineas,
       maxLength: maxLargo,
       readOnly: soloLectura,
+      inputFormatters: formatos,
       textCapitalization: teclado == null ? TextCapitalization.words : TextCapitalization.none,
       decoration: InputDecoration(
         labelText: etiqueta,
         helperText: ayuda,
         helperMaxLines: 2,
         errorText: _mostrarErrores ? error : null,
+        errorMaxLines: 3,
         suffixIcon: soloLectura ? const Icon(Icons.lock_outline) : null,
       ),
     );
+  }
+
+  /// Contraseña y su confirmación, iguales en los tres formularios.
+  List<Widget> _camposContrasena() {
+    final theme = Theme.of(context);
+    final relleno = theme.brightness == Brightness.dark ? theme.colorScheme.surfaceContainerHigh : const Color(0xFFE6E3DB);
+    return [
+      CampoContrasena(
+        controller: _contrasena,
+        ayuda: 'Mínimo 8 caracteres, con letras y números',
+        errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
+        autofillHints: const [AutofillHints.newPassword],
+        textInputAction: TextInputAction.next,
+        fillColor: relleno,
+      ),
+      CampoContrasena(
+        controller: _confirmacion,
+        etiqueta: 'Confirma la contraseña',
+        // Aviso en cuanto escribe algo distinto, sin esperar a enviar.
+        errorText: _mostrarErrores ||
+                (_confirmacion.text.isNotEmpty && _confirmacion.text.length >= _contrasena.text.length)
+            ? validarConfirmacion(_contrasena.text, _confirmacion.text)
+            : null,
+        autofillHints: const [AutofillHints.newPassword],
+        fillColor: relleno,
+      ),
+    ];
   }
 
   Widget _selectorMunicipio() {
@@ -613,14 +651,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _campo(
           _nombre,
           'Nombre completo',
-          error: _lleno(_nombre) ? null : 'Escribe tu nombre',
+          error: validarNombre(_nombre.text),
           autofill: const [AutofillHints.name],
+          formatos: Formatos.nombre,
         ),
         _campo(
           _documento,
           'Documento / NIT',
           teclado: TextInputType.number,
-          error: _lleno(_documento) ? null : 'Escribe tu documento',
+          error: validarDocumento(_documento.text),
+          ayuda: 'Solo números. Si es NIT, el dígito de verificación va después del guion',
+          formatos: Formatos.documento,
         ),
         _campo(
           _telefono,
@@ -628,6 +669,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           teclado: TextInputType.phone,
           error: validarTelefono(_telefono.text),
           autofill: const [AutofillHints.telephoneNumber],
+          formatos: Formatos.telefono,
         ),
         _selectorMunicipio(),
         _campo(
@@ -636,16 +678,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
           teclado: TextInputType.emailAddress,
           error: validarCorreo(_correo.text),
           autofill: const [AutofillHints.email],
+          formatos: Formatos.correo,
         ),
-        CampoContrasena(
-          controller: _contrasena,
-          ayuda: 'Mínimo 8 caracteres, con letras y números',
-          errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
-          autofillHints: const [AutofillHints.newPassword],
-          fillColor: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).colorScheme.surfaceContainerHigh
-              : const Color(0xFFE6E3DB),
-        ),
+        ..._camposContrasena(),
         CasillaAutorizacionDatos(
           valor: _autorizaDatos,
           onChanged: (valor) => setState(() => _autorizaDatos = valor),
@@ -668,6 +703,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         teclado: TextInputType.number,
         error: _lleno(_nit) ? null : 'Escribe el NIT de la empresa',
         ayuda: 'Sin dígito de verificación. Ej.: 900456789',
+        formatos: Formatos.nit,
       ),
     ]);
   }
@@ -731,24 +767,23 @@ class _RegistroScreenState extends State<RegistroScreen> {
         soloLectura: true,
         ayuda: 'Es el correo registrado de tu empresa. Ahí te llega el enlace para activar la cuenta.',
       ),
-      _campo(_telefono, 'Teléfono', teclado: TextInputType.phone, error: validarTelefono(_telefono.text)),
+      _campo(
+        _telefono,
+        'Teléfono',
+        teclado: TextInputType.phone,
+        error: validarTelefono(_telefono.text),
+        formatos: Formatos.telefono,
+      ),
       _campo(
         _direccion,
         'Dirección',
         teclado: TextInputType.streetAddress,
         error: _lleno(_direccion) ? null : 'Escribe la dirección',
         maxLineas: null,
+        formatos: Formatos.texto(150),
       ),
       _selectorMunicipio(),
-      CampoContrasena(
-        controller: _contrasena,
-        ayuda: 'Mínimo 8 caracteres, con letras y números',
-        errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
-        autofillHints: const [AutofillHints.newPassword],
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? Theme.of(context).colorScheme.surfaceContainerHigh
-            : const Color(0xFFE6E3DB),
-      ),
+      ..._camposContrasena(),
       CasillaAutorizacionDatos(
         valor: _autorizaDatos,
         onChanged: (valor) => setState(() => _autorizaDatos = valor),
@@ -765,25 +800,34 @@ class _RegistroScreenState extends State<RegistroScreen> {
         'que recibas solicitudes.',
         style: theme.textTheme.bodyLarge,
       ),
-      _campo(_nit, 'NIT', teclado: TextInputType.number, error: validarNit(_nit.text)),
+      _campo(_nit, 'NIT', teclado: TextInputType.number, error: validarNit(_nit.text), formatos: Formatos.nit),
       _campo(
         _razonSocial,
         'Razón social',
         error: _lleno(_razonSocial) ? null : 'Escribe la razón social',
         maxLineas: null,
+        formatos: Formatos.texto(150),
       ),
       _campo(
         _representante,
         'Representante legal',
-        error: _lleno(_representante) ? null : 'Escribe el nombre del representante legal',
+        error: validarNombre(_representante.text, vacio: 'Escribe el nombre del representante legal'),
+        formatos: Formatos.nombre,
       ),
-      _campo(_telefono, 'Teléfono', teclado: TextInputType.phone, error: validarTelefono(_telefono.text)),
+      _campo(
+        _telefono,
+        'Teléfono',
+        teclado: TextInputType.phone,
+        error: validarTelefono(_telefono.text),
+        formatos: Formatos.telefono,
+      ),
       _campo(
         _direccion,
         'Dirección',
         teclado: TextInputType.streetAddress,
         error: _lleno(_direccion) ? null : 'Escribe la dirección',
         maxLineas: null,
+        formatos: Formatos.texto(150),
       ),
       _selectorMunicipio(),
       _campo(
@@ -793,6 +837,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         error: validarCorreo(_correo.text),
         autofill: const [AutofillHints.email],
         ayuda: 'Ahí te llega el enlace para activar la cuenta.',
+        formatos: Formatos.correo,
       ),
       _campo(
         _horario,
@@ -801,15 +846,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         maxLargo: 120,
         ayuda: 'Ej.: Lun a vie 7:30 a 17:00 · Sáb 8:00 a 12:00',
       ),
-      CampoContrasena(
-        controller: _contrasena,
-        ayuda: 'Mínimo 8 caracteres, con letras y números',
-        errorText: _mostrarErrores ? validarContrasena(_contrasena.text) : null,
-        autofillHints: const [AutofillHints.newPassword],
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? Theme.of(context).colorScheme.surfaceContainerHigh
-            : const Color(0xFFE6E3DB),
-      ),
+      ..._camposContrasena(),
       CasillaAutorizacionDatos(
         valor: _autorizaDatos,
         onChanged: (valor) => setState(() => _autorizaDatos = valor),

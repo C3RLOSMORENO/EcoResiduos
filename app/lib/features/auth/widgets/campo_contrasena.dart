@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../theme/eco_theme.dart';
 
 /// Campo de contraseña con botón para mostrarla u ocultarla. [ayuda] dice la
@@ -47,6 +48,7 @@ class _CampoContrasenaState extends State<CampoContrasena> {
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
       autofillHints: widget.autofillHints,
+      inputFormatters: [LengthLimitingTextInputFormatter(largoContrasena)],
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: widget.etiqueta,
@@ -77,12 +79,22 @@ class _CampoContrasenaState extends State<CampoContrasena> {
 String? validarContrasena(String? valor) {
   final texto = valor ?? '';
   if (texto.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+  if (texto.length > largoContrasena) return 'La contraseña puede tener máximo $largoContrasena caracteres';
   if (!texto.contains(RegExp(r'[0-9]'))) return 'La contraseña debe tener al menos un número';
   if (!texto.contains(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]'))) return 'La contraseña debe tener al menos una letra';
   return null;
 }
 
-final _correoValido = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+/// Máximo que admite Supabase Auth (bcrypt solo usa los primeros 72 bytes).
+const largoContrasena = 72;
+
+/// Segunda escritura de la contraseña al registrarse.
+String? validarConfirmacion(String contrasena, String? confirmacion) {
+  if ((confirmacion ?? '').isEmpty) return 'Vuelve a escribir la contraseña';
+  return confirmacion == contrasena ? null : 'Las contraseñas no coinciden';
+}
+
+final _correoValido = RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$');
 
 /// Validador de [TextFormField] para el correo: devuelve el mensaje de error, o
 /// null si el correo es válido.

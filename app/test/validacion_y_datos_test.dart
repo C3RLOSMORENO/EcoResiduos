@@ -59,6 +59,47 @@ void main() {
     expect(validarContrasena('12345678'), contains('una letra'));
     expect(validarContrasena('claveclave'), contains('un número'));
     expect(validarContrasena('cl4ve'), contains('8 caracteres'));
+    expect(validarContrasena('a1' * 40), contains('máximo'));
+  });
+
+  test('la confirmación debe coincidir con la contraseña', () {
+    expect(validarConfirmacion('clave1234', 'clave1234'), isNull);
+    expect(validarConfirmacion('clave1234', 'clave1235'), 'Las contraseñas no coinciden');
+    expect(validarConfirmacion('clave1234', ''), contains('Vuelve a escribir'));
+  });
+
+  test('nombres sin números y documentos solo con dígitos', () {
+    expect(validarNombre('Laura Gómez'), isNull);
+    expect(validarNombre("María D'Andrea-Ruiz"), isNull);
+    expect(validarNombre('Laura123'), contains('solo letras'));
+    expect(validarNombre('Al'), contains('completo'));
+    expect(validarDocumento('1098765432'), isNull);
+    expect(validarDocumento('890903938-8'), isNull);
+    expect(validarDocumento('12345'), contains('entre 6 y 15'));
+    expect(validarDocumento('1234567890123456789'), contains('entre 6 y 15'));
+    expect(validarCorreo('ana@gmail'), isNotNull);
+    expect(validarCorreo('ana@gmail.c0'), isNotNull);
+  });
+
+  testWidgets('los filtros no dejan escribir letras en el documento ni números en el nombre', (tester) async {
+    final documento = TextEditingController();
+    final nombre = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              TextField(key: const Key('doc'), controller: documento, inputFormatters: Formatos.documento),
+              TextField(key: const Key('nom'), controller: nombre, inputFormatters: Formatos.nombre),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(find.byKey(const Key('doc')), 'abc1098765432xyz999999999');
+    await tester.enterText(find.byKey(const Key('nom')), 'Laura 123 Gómez');
+    expect(documento.text, '10987654329999999');
+    expect(nombre.text, 'Laura  Gómez');
   });
 
   testWidgets('la política muestra todas sus secciones y la versión', (tester) async {

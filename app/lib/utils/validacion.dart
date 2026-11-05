@@ -1,6 +1,69 @@
 // Validación de teléfonos y NIT. Mismas reglas que el panel
 // (admin-panel/src/utils/validacion.js): si cambias una, cambia la otra.
 
+import 'package:flutter/services.dart';
+
+/// Filtros de escritura de los formularios: impiden teclear caracteres que
+/// el campo nunca acepta y cortan el largo, para que no se puedan pegar
+/// textos enormes o llenos de números.
+abstract final class Formatos {
+  /// Nombres de persona: letras (con tildes), espacios, punto, guion y apóstrofo.
+  static final nombre = [
+    FilteringTextInputFormatter.allow(RegExp(r"[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ .'\-]")),
+    LengthLimitingTextInputFormatter(largoNombre),
+  ];
+
+  /// Cédula o NIT: dígitos y guion (para el dígito de verificación).
+  static final documento = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9\-]')),
+    LengthLimitingTextInputFormatter(17),
+  ];
+
+  /// NIT: dígitos, punto y guion, como se suele escribir (900.456.789-1).
+  static final nit = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
+    LengthLimitingTextInputFormatter(20),
+  ];
+
+  /// Teléfono: dígitos, +, espacios, paréntesis, punto, guion y «x» de extensión.
+  static final telefono = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ().\-xX]')),
+    LengthLimitingTextInputFormatter(25),
+  ];
+
+  /// Correo: sin espacios y con el largo máximo de una dirección (RFC 5321).
+  static final correo = [
+    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+    LengthLimitingTextInputFormatter(254),
+  ];
+
+  /// Texto libre corto (razón social, dirección).
+  static List<TextInputFormatter> texto(int largo) => [LengthLimitingTextInputFormatter(largo)];
+}
+
+const largoNombre = 80;
+
+/// Nombre de persona: al menos 3 letras, sin números ni símbolos.
+String? validarNombre(String? valor, {String vacio = 'Escribe tu nombre'}) {
+  final texto = valor?.trim() ?? '';
+  if (texto.isEmpty) return vacio;
+  if (!RegExp(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ .'\-]+$").hasMatch(texto)) {
+    return 'Usa solo letras, sin números ni símbolos';
+  }
+  if (RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]').allMatches(texto).length < 3) return 'Escribe el nombre completo';
+  return null;
+}
+
+/// Cédula (6 a 10 dígitos) o NIT (8 a 15 dígitos, con dígito de verificación
+/// opcional después del guion).
+String? validarDocumento(String? valor) {
+  final texto = valor?.trim() ?? '';
+  if (texto.isEmpty) return 'Escribe tu documento';
+  if (texto.contains('-')) return validarNit(texto);
+  if (!RegExp(r'^\d{6,15}$').hasMatch(texto)) return 'El documento debe tener entre 6 y 15 dígitos';
+  return null;
+}
+
 /// Los 6 municipios del proyecto están en Santander: un fijo antiguo de 7
 /// dígitos se completa con su indicativo.
 const indicativoSantander = '607';
