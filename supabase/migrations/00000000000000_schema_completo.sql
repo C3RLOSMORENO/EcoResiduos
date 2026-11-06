@@ -1372,6 +1372,93 @@ BEGIN
 END $$;
 
 
+-- ─── Notificaciones en el teléfono (Firebase Cloud Messaging) ─────────────────
+
+-- dispositivos_push: un token de FCM por teléfono, de la cuenta que inició
+-- sesión en él. Si otra cuenta entra en el mismo teléfono, el token pasa a
+-- ella. La app lo escribe solo con las funciones de abajo.
+CREATE TABLE IF NOT EXISTS public.dispositivos_push (
+    token       TEXT PRIMARY KEY CHECK (char_length(token) BETWEEN 20 AND 4096),
+    usuario_id  UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_dispositivos_push_usuario ON public.dispositivos_push (usuario_id);
+
+REVOKE ALL ON public.dispositivos_push FROM PUBLIC, anon, authenticated;
+GRANT SELECT, DELETE ON public.dispositivos_push TO service_role;
+ALTER TABLE public.dispositivos_push ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.registrar_dispositivo_push(p_token TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    IF (SELECT auth.uid()) IS NULL THEN
+        RAISE EXCEPTION 'Inicia sesión para continuar.';
+    END IF;
+    INSERT INTO public.dispositivos_push (token, usuario_id, updated_at)
+    VALUES (btrim(p_token), (SELECT auth.uid()), NOW())
+    ON CONFLICT (token) DO UPDATE SET usuario_id = EXCLUDED.usuario_id, updated_at = NOW();
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.quitar_dispositivo_push(p_token TEXT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $$
+    DELETE FROM public.dispositivos_push
+    WHERE token = btrim(p_token) AND usuario_id = (SELECT auth.uid());
+$$;
+
+REVOKE ALL ON FUNCTION public.registrar_dispositivo_push(TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.quitar_dispositivo_push(TEXT)    FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_dispositivo_push(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.quitar_dispositivo_push(TEXT)    TO authenticated;
+
+-- Cada notificación nueva se manda a la Edge Function enviar-push, que la
+-- reenvía a los teléfonos del usuario. Usa pg_net (la llamada no espera la
+-- respuesta) y dos secretos de Vault: url_proyecto y push_secreto
+-- (supabase/functions/enviar-push/README.md). Si falta alguno no hace nada,
+-- y si algo falla solo deja un aviso en el registro: la notificación dentro
+-- de la app se guarda igual.
+CREATE OR REPLACE FUNCTION private.enviar_push()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_url     TEXT;
+    v_secreto TEXT;
+BEGIN
+    IF to_regproc('net.http_post') IS NULL OR to_regclass('vault.decrypted_secrets') IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.dispositivos_push WHERE usuario_id = NEW.usuario_id) THEN
+        RETURN NULL;
+    END IF;
+
+    EXECUTE $q$SELECT max(decrypted_secret) FILTER (WHERE name = 'url_proyecto'),
+                      max(decrypted_secret) FILTER (WHERE name = 'push_secreto')
+               FROM vault.decrypted_secrets WHERE name IN ('url_proyecto', 'push_secreto')$q$
+    INTO v_url, v_secreto;
+    IF v_url IS NULL OR v_secreto IS NULL THEN RETURN NULL; END IF;
+
+    EXECUTE 'SELECT net.http_post(url := $1, headers := $2, body := $3)'
+    USING rtrim(v_url, '/') || '/functions/v1/enviar-push',
+          jsonb_build_object('Content-Type', 'application/json', 'x-push-secreto', v_secreto),
+          jsonb_build_object('notificacion_id', NEW.id);
+    RETURN NULL;
+EXCEPTION WHEN others THEN
+    RAISE WARNING 'No se pudo pedir el envío al teléfono de la notificación %: %', NEW.id, SQLERRM;
+    RETURN NULL;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.enviar_push() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS notificaciones_enviar_push ON public.notificaciones;
+CREATE TRIGGER notificaciones_enviar_push
+AFTER INSERT ON public.notificaciones
+FOR EACH ROW EXECUTE FUNCTION private.enviar_push();
+
+
 -- ─── Permisos por tabla ───────────────────────────────────────────────────────
 
 REVOKE ALL ON

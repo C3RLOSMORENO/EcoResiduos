@@ -18,6 +18,7 @@ supabase/
 ├── migrations/
 │   └── 00000000000000_schema_completo.sql   # Toda la base: tablas, RLS, funciones, triggers y buckets
 └── functions/
+    ├── enviar-push/                         # Manda cada notificación al teléfono con Firebase (ver su README)
     └── limpiar-fotos-huerfanas/             # Borra fotos que ya no usa ninguna fila (ver su README)
 ```
 
@@ -47,7 +48,8 @@ Para que las recolecciones se confirmen solas a las 72 horas, activa antes la ex
 | `solicitudes_recoleccion` | Cada publicación: material, cantidad, dirección, estado, gestor asignado, problemas reportados y certificado. |
 | `postulaciones_recoleccion` | Ofertas de los gestores: valor, tipo de valor y modalidad de entrega. |
 | `solicitudes_historial_estados` | Cada cambio de estado de una solicitud. Lo escribe un trigger; la app solo lo lee. |
-| `notificaciones` | Avisos por usuario que generan los triggers (oferta nueva, recolección marcada…). |
+| `notificaciones` | Avisos por usuario que generan los triggers (oferta nueva, recolección marcada…). Un trigger manda cada una al teléfono con `enviar-push`. |
+| `dispositivos_push` | Token de Firebase de cada teléfono con sesión iniciada. La app lo escribe solo con funciones; solo el servidor lo lee. |
 | `gestor_decisiones` | Historial de aprobaciones, rechazos y suspensiones de gestores, con el motivo. Solo lo lee el panel. |
 | `historial_escaneos_ia` | Cada residuo identificado con la cámara: categoría, confianza y foto. |
 | `autoridades_ambientales` | CDMB, AMB, CAS y otras autoridades, con su contacto y horario. |
@@ -84,6 +86,8 @@ Las que cambian el estado de una solicitud bloquean la fila (`FOR UPDATE`) para 
 | `actualizar_materiales_gestor` | Gestor | Cambia los materiales que recibe; los nuevos quedan por verificar. |
 | `vincular_cuenta_gestor` | Gestor | Vincula la cuenta con su empresa al primer inicio de sesión. |
 | `registrar_autorizacion_datos` | Cualquier usuario | Guarda que aceptó la política de datos (Ley 1581 de 2012). |
+| `registrar_dispositivo_push` | Cualquier usuario | Guarda el token de Firebase del teléfono para su cuenta. |
+| `quitar_dispositivo_push` | Cualquier usuario | Borra ese token al cerrar sesión. |
 | `cancelar_solicitud_admin` | Panel | Cancela una solicitud. |
 | `cambiar_verificacion_gestor_admin` | Panel | Aprueba, rechaza o suspende un gestor y guarda el motivo en `gestor_decisiones`. |
 | `resolver_problema_no_recogido` | Panel | Resuelve un problema reportado: la solicitud vuelve a `EN_NEGOCIACION`. |

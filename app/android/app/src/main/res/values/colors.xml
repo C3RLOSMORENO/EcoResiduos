@@ -2,4 +2,6 @@
 <resources>
     <!-- Fondo blanco para resaltar el isotipo oficial -->
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Color del ícono de las notificaciones (primary de eco_colors.dart) -->
+    <color name="notificacion">#1F4A2C</color>
 </resources>

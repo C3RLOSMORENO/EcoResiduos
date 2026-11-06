@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/screens/autorizacion_datos_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'screens/inicio_screen.dart';
+import 'services/push_service.dart';
 import 'theme/eco_theme.dart';
 
 /// Inicia Supabase y abre la app.
@@ -18,6 +19,7 @@ Future<void> main() async {
     url: 'https://pjpuhhoaxkakvkmpyruk.supabase.co',
     publishableKey: 'sb_publishable_b3taKmvPTaoIa3nBffrr9A_YeJR2HL1',
   );
+  await PushService.iniciar();
   runApp(const EcoResiduosApp());
 }
 

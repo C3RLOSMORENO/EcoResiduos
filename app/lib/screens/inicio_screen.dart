@@ -7,11 +7,13 @@ import '../features/solicitudes/screens/solicitudes_disponibles_screen.dart';
 import '../repositories/notificaciones_repository.dart';
 import '../services/cola_publicaciones.dart';
 import '../services/contador_novedades.dart';
+import '../services/push_service.dart';
 import 'flujo_identificacion.dart';
 import 'gestores_asociados_screen.dart';
 import 'inicio_generador_view.dart';
 import 'inicio_gestor_view.dart';
 import 'navegacion_principal.dart';
+import 'notificaciones_screen.dart';
 import 'residuos_screen.dart';
 import 'splash_screen.dart';
 
@@ -54,6 +56,10 @@ class _InicioScreenState extends State<InicioScreen> {
     _rol = widget.rol?.toUpperCase();
     if (_rol == null) _cargarRol();
     ContadorNovedades.iniciar(SupabaseNotificacionesRepository());
+    PushService.alAbrirNotificacion = () {
+      if (mounted) NotificacionesScreen.show(context);
+    };
+    PushService.registrar();
     _ciclo = AppLifecycleListener(onResume: _enviarPendientes);
     ColaPublicaciones.cargar().then((_) => _enviarPendientes());
   }
@@ -62,6 +68,7 @@ class _InicioScreenState extends State<InicioScreen> {
   void dispose() {
     _ciclo.dispose();
     ContadorNovedades.detener();
+    PushService.alAbrirNotificacion = null;
     super.dispose();
   }
 
