@@ -141,6 +141,14 @@ const authController = {
         });
     },
 
+    /**
+     * GET /correo-verificado. A esta página manda Supabase a quien abre el
+     * enlace de verificación que envía la app (emailRedirectTo).
+     */
+    renderCorreoVerificado(req, res) {
+        res.render('correo-verificado', { titulo: 'Correo verificado' });
+    },
+
     /** POST /sesion/renovar. La renovación real la hace requireAuth; aquí solo se confirma. */
     renovarSesion(req, res) {
         res.status(200).json({ ok: true });

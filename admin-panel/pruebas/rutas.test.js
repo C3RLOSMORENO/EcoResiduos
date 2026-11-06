@@ -108,6 +108,14 @@ test('pantallas públicas: login, restablecer contraseña y 404', async () => {
     assert.match(noExiste.text, /Página no encontrada/);
 });
 
+test('correo verificado: página pública con el mensaje y el de enlace vencido', async () => {
+    const res = await request(app).get('/correo-verificado');
+    assert.equal(res.status, 200);
+    assert.match(res.text, /Tu correo quedó verificado/);
+    assert.match(res.text, /id="estadoVencido"[^>]*hidden/);
+    assert.match(res.text, /<script src="\/js\/correo-verificado\.js[^"]*" defer><\/script>/);
+});
+
 test('cerrar sesión: por POST limpia las cookies; por GET no hace nada', async () => {
     const post = await request(app).post('/logout').set('Cookie', SESION).set('X-CSRF-Token', TOKEN_CSRF);
     assert.equal(post.status, 302);
