@@ -7,6 +7,7 @@ import '../../../legal/politica_datos.dart';
 import '../../../models/perfil_generador.dart';
 import '../../../models/perfil_gestor.dart';
 import '../../../services/archivo_pdf.dart';
+import '../../../services/push_service.dart';
 import '../../../utils/sesion.dart';
 import '../models/gestor_directorio.dart';
 
@@ -340,7 +341,11 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() => _client.auth.signOut();
+  Future<void> signOut() async {
+    // Antes de cerrar: la base pide la sesión para quitar este teléfono.
+    await PushService.desregistrar();
+    await _client.auth.signOut();
+  }
 
   @override
   Future<String> getRolUsuario() => consultarRol(_client);
