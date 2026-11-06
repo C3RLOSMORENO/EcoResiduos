@@ -12,7 +12,7 @@ const request = require('supertest');
 const app = require('../src/crearApp')();
 
 const SESION = 'sb_access_token=token-admin';
-const PANTALLAS = ['/login', '/restablecer-password', '/dashboard', '/solicitudes', '/solicitudes/7', '/gestores/1', '/reportes', '/componentes'];
+const PANTALLAS = ['/login', '/restablecer-password', '/correo-verificado', '/dashboard', '/solicitudes', '/solicitudes/7', '/gestores/1', '/reportes', '/componentes'];
 
 test.beforeEach(() => {
     supabase.limpiar();
@@ -60,7 +60,7 @@ test('en producción se envía HSTS', async () => {
 
 test('ninguna pantalla tiene JavaScript ni estilos escritos dentro del HTML', async () => {
     for (const ruta of PANTALLAS) {
-        const publica = ['/login', '/restablecer-password'].includes(ruta);
+        const publica = ['/login', '/restablecer-password', '/correo-verificado'].includes(ruta);
         const res = await request(app).get(ruta).set('Cookie', publica ? '' : SESION);
         assert.equal(res.status, 200, ruta);
         const html = res.text;

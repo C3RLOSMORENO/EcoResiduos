@@ -11,6 +11,13 @@ import '../../../services/push_service.dart';
 import '../../../utils/sesion.dart';
 import '../models/gestor_directorio.dart';
 
+/// Página del panel a la que llevan los enlaces de verificación de correo
+/// (registro, reenvío y cambio de correo). Supabase verifica el correo al
+/// abrir el enlace y después redirige aquí, así que la página solo informa.
+/// Esta URL tiene que estar en Authentication → URL Configuration →
+/// Redirect URLs del proyecto de Supabase; si no, Supabase manda al Site URL.
+const urlCorreoVerificado = 'https://eco-residuos.vercel.app/correo-verificado';
+
 /// Autenticación, registro y perfil de la cuenta.
 abstract class AuthRepository {
   /// Usuario de la sesión actual, o null si no hay sesión.
@@ -178,7 +185,7 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> reenviarConfirmacion(String email) async {
     try {
-      await _client.auth.resend(type: OtpType.signup, email: email.trim());
+      await _client.auth.resend(type: OtpType.signup, email: email.trim(), emailRedirectTo: urlCorreoVerificado);
     } on AuthException catch (e) {
       throw _traducir(e);
     }
@@ -195,6 +202,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }) async {
     try {
       return await _client.auth.signUp(
+        emailRedirectTo: urlCorreoVerificado,
         email: email.trim().toLowerCase(),
         password: password,
         data: {
@@ -241,6 +249,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }) async {
     try {
       return await _client.auth.signUp(
+        emailRedirectTo: urlCorreoVerificado,
         email: email.trim().toLowerCase(),
         password: password,
         data: {
@@ -290,6 +299,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }) async {
     try {
       return await _client.auth.signUp(
+        emailRedirectTo: urlCorreoVerificado,
         email: email.trim().toLowerCase(),
         password: password,
         data: {
@@ -393,7 +403,10 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> cambiarCorreo(String correoNuevo) async {
     try {
-      await _client.auth.updateUser(UserAttributes(email: correoNuevo.trim().toLowerCase()));
+      await _client.auth.updateUser(
+        UserAttributes(email: correoNuevo.trim().toLowerCase()),
+        emailRedirectTo: urlCorreoVerificado,
+      );
     } on AuthException catch (e) {
       throw _traducir(e);
     }
