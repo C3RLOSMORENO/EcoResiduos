@@ -376,13 +376,13 @@ class SupabaseAuthRepository implements AuthRepository {
     required String telefonoContacto,
     required String direccion,
   }) async {
-    final user = currentUser;
-    if (user == null) return;
-    await _client.from('perfiles_gestor').update({
-      'email_contacto': emailContacto.trim().toLowerCase(),
-      'telefono_contacto': telefonoContacto.trim(),
-      'direccion': direccion.trim(),
-    }).eq('usuario_id', user.id);
+    // La app no tiene permiso de UPDATE sobre estas columnas: pasa por la
+    // función de la base, que valida y responde en español (P0001).
+    await _client.rpc('actualizar_contacto_gestor', params: {
+      'p_email_contacto': emailContacto.trim().toLowerCase(),
+      'p_telefono_contacto': telefonoContacto.trim(),
+      'p_direccion': direccion.trim(),
+    });
   }
 
   @override
@@ -437,7 +437,7 @@ class SupabaseAuthRepository implements AuthRepository {
         .from('permisos')
         .uploadBinary(ruta, pdf.bytes, fileOptions: const FileOptions(contentType: 'application/pdf'));
 
-    await _client.from('perfiles_gestor').update({'permiso_path': ruta}).eq('usuario_id', user.id);
+    await _client.rpc('renovar_permiso_gestor', params: {'p_ruta': ruta});
   }
 
   AuthException _traducir(AuthException e) => traducirErrorAuth(e);

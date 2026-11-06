@@ -81,6 +81,8 @@ Las que cambian el estado de una solicitud bloquean la fila (`FOR UPDATE`) para 
 | `actualizar_perfil_generador` | Generador | Cambia su nombre, documento y teléfono, validados en la base. |
 | `marcar_recolectado_gestor` | Gestor | Marca la recolección hecha. |
 | `cargar_certificado_gestor` | Gestor | Guarda el certificado de disposición final o aprovechamiento. |
+| `actualizar_contacto_gestor` | Gestor | Cambia su correo de contacto, teléfono y dirección, validados en la base. |
+| `renovar_permiso_gestor` | Gestor | Reemplaza su permiso ambiental por un PDF que subió a `renovacion/<gestor_id>/`. |
 | `actualizar_materiales_gestor` | Gestor | Cambia los materiales que recibe; los nuevos quedan por verificar. |
 | `vincular_cuenta_gestor` | Gestor | Vincula la cuenta con su empresa al primer inicio de sesión. |
 | `registrar_autorizacion_datos` | Cualquier usuario | Guarda que aceptó la política de datos (Ley 1581 de 2012). |
