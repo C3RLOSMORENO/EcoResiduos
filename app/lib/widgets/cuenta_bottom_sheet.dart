@@ -265,6 +265,8 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
       } else {
         await _auth.actualizarInfoContactoGestor(
           emailContacto: campo == _CampoEditable.email ? nuevo : (_emailContacto ?? ''),
+          // El teléfono que no cambia se manda tal cual: la base solo valida lo
+          // que cambia, y normalizarlo aquí lo haría «cambiar» y exigir el formato.
           telefonoContacto: campo == _CampoEditable.telefono ? nuevo : (_telefono ?? ''),
           direccion: campo == _CampoEditable.direccion ? nuevo : (_direccion ?? ''),
         );

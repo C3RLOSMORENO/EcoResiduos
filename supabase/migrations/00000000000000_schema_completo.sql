@@ -1134,6 +1134,82 @@ $$;
 REVOKE ALL ON FUNCTION public.actualizar_perfil_generador(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.actualizar_perfil_generador(TEXT, TEXT, TEXT) TO authenticated;
 
+-- El gestor cambia su correo de contacto, teléfono y dirección. NIT y razón
+-- social no: esos los cambia el panel. Solo se valida lo que cambia, para que
+-- un dato viejo con otro formato no impida guardar los demás.
+CREATE OR REPLACE FUNCTION public.actualizar_contacto_gestor(
+    p_email_contacto TEXT, p_telefono_contacto TEXT, p_direccion TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_actual    RECORD;
+    v_email     TEXT := lower(btrim(coalesce(p_email_contacto, '')));
+    v_telefono  TEXT := btrim(coalesce(p_telefono_contacto, ''));
+    v_direccion TEXT := regexp_replace(btrim(coalesce(p_direccion, '')), '[[:space:]]+', ' ', 'g');
+BEGIN
+    IF (SELECT auth.uid()) IS NULL THEN
+        RAISE EXCEPTION 'Inicia sesión para continuar.';
+    END IF;
+    SELECT email_contacto, telefono_contacto, direccion INTO v_actual
+    FROM public.perfiles_gestor WHERE usuario_id = (SELECT auth.uid()) FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Tu cuenta no tiene una empresa gestora vinculada.';
+    END IF;
+
+    IF v_email IS DISTINCT FROM lower(v_actual.email_contacto)
+       AND (char_length(v_email) > 254 OR v_email !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$') THEN
+        RAISE EXCEPTION 'El correo de contacto no es válido.';
+    END IF;
+    IF v_telefono IS DISTINCT FROM v_actual.telefono_contacto
+       AND v_telefono !~ '^(3[0-9]{9}|60[0-9]{8}|018000[0-9]{6})( ext[.] [0-9]{1,6})?$' THEN
+        RAISE EXCEPTION 'El teléfono no es un número colombiano válido.';
+    END IF;
+    IF v_direccion IS DISTINCT FROM v_actual.direccion
+       AND char_length(v_direccion) NOT BETWEEN 5 AND 200 THEN
+        RAISE EXCEPTION 'La dirección debe tener entre 5 y 200 caracteres.';
+    END IF;
+
+    UPDATE public.perfiles_gestor
+    SET email_contacto = v_email, telefono_contacto = v_telefono, direccion = v_direccion
+    WHERE usuario_id = (SELECT auth.uid());
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.actualizar_contacto_gestor(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.actualizar_contacto_gestor(TEXT, TEXT, TEXT) TO authenticated;
+
+-- El gestor reemplaza su permiso ambiental por un PDF que ya subió a
+-- permisos/renovacion/<su gestor_id>/. Se comprueba que el archivo exista y
+-- sea suyo, para que no pueda apuntar a uno ajeno.
+CREATE OR REPLACE FUNCTION public.renovar_permiso_gestor(p_ruta TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_gestor_id BIGINT;
+BEGIN
+    IF (SELECT auth.uid()) IS NULL THEN
+        RAISE EXCEPTION 'Inicia sesión para continuar.';
+    END IF;
+    SELECT id INTO v_gestor_id FROM public.perfiles_gestor
+    WHERE usuario_id = (SELECT auth.uid()) FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Tu cuenta no tiene una empresa gestora vinculada.';
+    END IF;
+    IF p_ruta IS NULL
+       OR p_ruta NOT LIKE 'renovacion/' || v_gestor_id || '/%'
+       OR NOT EXISTS (SELECT 1 FROM storage.objects
+                      WHERE bucket_id = 'permisos' AND name = p_ruta
+                        AND owner_id = (SELECT auth.uid())::text) THEN
+        RAISE EXCEPTION 'No encontramos el PDF del permiso. Súbelo de nuevo.';
+    END IF;
+
+    UPDATE public.perfiles_gestor SET permiso_path = p_ruta WHERE id = v_gestor_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.renovar_permiso_gestor(TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.renovar_permiso_gestor(TEXT) TO authenticated;
+
 -- Admin resuelve un problema reportado («No se recogió»).
 CREATE OR REPLACE FUNCTION public.resolver_problema_no_recogido(p_solicitud_id BIGINT, p_nota TEXT)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
@@ -1254,7 +1330,10 @@ BEGIN
         RETURN jsonb_build_object('vinculado', FALSE);
     END IF;
 
-    v_gestor_id := (v_meta->>'gestor_id')::BIGINT;
+    -- Primero la empresa ya vinculada a esta cuenta: su correo de contacto
+    -- pudo cambiar después de vincularla.
+    SELECT id INTO v_gestor_id FROM perfiles_gestor WHERE usuario_id = v_uid LIMIT 1;
+    v_gestor_id := coalesce(v_gestor_id, (v_meta->>'gestor_id')::BIGINT);
     IF v_gestor_id IS NULL THEN
         SELECT id INTO v_gestor_id FROM perfiles_gestor
         WHERE lower(email_contacto) = lower(v_email)
@@ -1298,16 +1377,22 @@ BEGIN
     IF v_gestor.usuario_id IS NOT NULL AND v_gestor.usuario_id <> v_uid THEN
         RAISE EXCEPTION 'Esta empresa ya tiene una cuenta vinculada.' USING ERRCODE = '42501';
     END IF;
-    IF lower(coalesce(v_gestor.email_contacto, '')) <> lower(v_email) THEN
+    -- El correo se compara solo al vincular por primera vez: después el gestor
+    -- puede cambiar su correo de contacto y no debe quedar fuera.
+    IF v_gestor.usuario_id IS NULL AND lower(coalesce(v_gestor.email_contacto, '')) <> lower(v_email) THEN
         RAISE EXCEPTION 'El correo no coincide con el registrado para la empresa.' USING ERRCODE = '42501';
     END IF;
 
-    UPDATE perfiles_gestor
-    SET usuario_id = v_uid,
-        telefono_contacto = coalesce(nullif(v_meta->>'telefono', ''), telefono_contacto),
-        direccion         = coalesce(nullif(v_meta->>'direccion', ''), direccion),
-        municipio         = coalesce(nullif(upper(v_meta->>'municipio'), ''), municipio)
-    WHERE id = v_gestor_id;
+    -- Los datos del registro se copian solo al vincular: en los inicios de
+    -- sesión siguientes pisarían lo que el gestor editó desde la app.
+    IF v_gestor.usuario_id IS NULL THEN
+        UPDATE perfiles_gestor
+        SET usuario_id = v_uid,
+            telefono_contacto = coalesce(nullif(v_meta->>'telefono', ''), telefono_contacto),
+            direccion         = coalesce(nullif(v_meta->>'direccion', ''), direccion),
+            municipio         = coalesce(nullif(upper(v_meta->>'municipio'), ''), municipio)
+        WHERE id = v_gestor_id;
+    END IF;
 
     INSERT INTO gestor_material (gestor_id, material_id, verificado)
     SELECT v_gestor_id, declarado::BIGINT, FALSE
@@ -1413,7 +1498,7 @@ GRANT INSERT (usuario_id, nombre_detectado, categoria_detectada, nivel_confianza
 ON public.historial_escaneos_ia TO authenticated;
 
 GRANT UPDATE (municipio)            ON public.perfiles_generador TO authenticated;
-GRANT UPDATE (municipio)            ON public.perfiles_gestor    TO authenticated;
+GRANT UPDATE (municipio, horario)   ON public.perfiles_gestor    TO authenticated;
 GRANT UPDATE (foto_perfil_path)     ON public.perfiles_generador TO authenticated;
 GRANT UPDATE (foto_perfil_path, portada_path) ON public.perfiles_gestor TO authenticated;
 GRANT INSERT (modalidad_entrega)    ON public.postulaciones_recoleccion TO authenticated;
