@@ -1,0 +1,16 @@
+=== Validación (20 % del dataset) ===
+                  precision    recall  f1-score   support
+
+    APROVECHABLE      0.750     0.804     0.776       138
+           FONDO      0.805     0.897     0.848        78
+       ORDINARIO      0.721     0.646     0.681        96
+        ORGANICO      0.916     0.979     0.946       144
+       PELIGROSO      0.825     0.803     0.814       147
+            RAEE      0.836     0.871     0.853       170
+             RCD      0.911     0.804     0.854       102
+RIESGO_BIOLOGICO      0.766     0.692     0.727       104
+
+        accuracy                          0.821       979
+       macro avg      0.816     0.812     0.813       979
+    weighted avg      0.821     0.821     0.820       979
+
