@@ -1,0 +1,18 @@
+Modelo: ecoresiduos_model.tflite
+Fotos: validación (20 % de dataset), 718 en total
+Exactitud global: 81.6%
+
+                  precision    recall  f1-score   support
+
+    Aprovechable      0.667     0.901     0.766        91
+     Sin residuo      0.866     0.921     0.892        63
+       Ordinario      0.727     0.539     0.619        89
+        Orgánico      0.876     0.945     0.909       127
+       Peligroso      0.727     0.762     0.744        63
+            RAEE      0.905     0.848     0.876       112
+             RCD      0.882     0.852     0.867        88
+Riesgo biológico      0.870     0.706     0.779        85
+
+        accuracy                          0.816       718
+       macro avg      0.815     0.809     0.807       718
+    weighted avg      0.822     0.816     0.813       718

@@ -36,7 +36,7 @@ IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 SEMILLA = 42
 EPOCAS_CABEZA = 12
-EPOCAS_AJUSTE = 15
+EPOCAS_AJUSTE = 50
 CAPAS_A_AJUSTAR = 60
 
 # Categorías de la app según la Resolución 2184 de 2019, más FONDO para fotos sin residuo.
@@ -215,7 +215,10 @@ def main():
         loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1),
         metrics=['accuracy'],
     )
-    modelo.fit(entrenamiento_aumentado, validation_data=validacion, epochs=EPOCAS_AJUSTE, callbacks=[parada])
+    # Con tasa 1e-5 la exactitud de validación sube y baja por ruido; la pérdida es más
+    # estable, así que el ajuste fino se detiene por ella y con más paciencia.
+    parada_ajuste = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=6, restore_best_weights=True)
+    modelo.fit(entrenamiento_aumentado, validation_data=validacion, epochs=EPOCAS_AJUSTE, callbacks=[parada_ajuste])
 
     texto, matriz = evaluar(modelo, validacion, nombres, 'Validación (20 % del dataset)')
     titulo_matriz = 'Validación'
