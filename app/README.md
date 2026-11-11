@@ -68,7 +68,7 @@ La clasificación ocurre en el teléfono, con el modelo **MobileNetV3 Large** en
 
 Clases: `APROVECHABLE`, `ORGANICO`, `ORDINARIO`, `PELIGROSO`, `RAEE`, `RCD`, `RIESGO_BIOLOGICO` y `FONDO`.
 
-La foto se guarda en el historial de escaneos del usuario en Supabase (bucket `escaneos_ia`); el análisis no se envía a ningún servicio externo.
+La foto no sale del teléfono: el historial de escaneos guarda en Supabase solo el resultado (residuo, categoría y confianza), y la foto se sube únicamente si el usuario publica el residuo. El análisis no se envía a ningún servicio externo.
 
 ---
 

@@ -237,7 +237,7 @@ El panel usa CSP con nonce por petición, protección CSRF y cookies `HttpOnly`,
 
 La app no deja registrarse sin autorizar el tratamiento de datos (Ley 1581 de 2012), y a quien ya tenía cuenta se lo pide la próxima vez que entra. La política está publicada en el panel (`/privacidad`) y en la app.
 
-La clasificación de las fotos ocurre en el teléfono y no pasa por ningún servicio de inteligencia artificial. Las fotos de escaneos y publicaciones sí se guardan en Supabase, en un bucket público para que la app pueda mostrarlas, así que quien tenga la URL exacta puede verlas (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
+La clasificación de las fotos ocurre en el teléfono y no pasa por ningún servicio de inteligencia artificial. La foto de un escaneo no sale del teléfono: el historial de escaneos guarda solo el resultado. Las fotos de las publicaciones sí se guardan en Supabase, en un bucket público para que la app pueda mostrarlas, así que quien tenga la URL exacta puede verlas (ver *Limitaciones conocidas* en el [README del panel](admin-panel/README.md#limitaciones-conocidas)).
 
 ---
 

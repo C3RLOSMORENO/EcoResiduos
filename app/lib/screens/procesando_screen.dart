@@ -35,7 +35,7 @@ class _ProcesandoScreenState extends State<ProcesandoScreen> {
     Widget siguiente;
     try {
       final resultado = await service.identificar(imagePath: widget.imagePath).timeout(_limite);
-      HistorialService.guardarEscaneoEnSegundoPlano(resultado, widget.imagePath);
+      HistorialService.guardarEscaneoEnSegundoPlano(resultado);
       siguiente = ResultadoScreen(item: resultado, imagePath: widget.imagePath);
     } on ResiduoNoIdentificadoException catch (e) {
       siguiente = ResiduoNoIdentificadoScreen(

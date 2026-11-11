@@ -51,7 +51,7 @@ Para que las recolecciones se confirmen solas a las 72 horas, activa antes la ex
 | `notificaciones` | Avisos por usuario que generan los triggers (oferta nueva, recolección marcada…). Un trigger manda cada una al teléfono con `enviar-push`. |
 | `dispositivos_push` | Token de Firebase de cada teléfono con sesión iniciada. La app lo escribe solo con funciones; solo el servidor lo lee. |
 | `gestor_decisiones` | Historial de aprobaciones, rechazos y suspensiones de gestores, con el motivo. Solo lo lee el panel. |
-| `historial_escaneos_ia` | Cada residuo identificado con la cámara: categoría, confianza y foto. |
+| `historial_escaneos_ia` | Cada residuo identificado con la cámara: nombre, categoría y confianza. La foto no se guarda (`imagen_path` solo existe en escaneos antiguos). |
 | `autoridades_ambientales` | CDMB, AMB, CAS y otras autoridades, con su contacto y horario. |
 
 ---
@@ -103,7 +103,7 @@ Además, un trigger copia a `usuarios` y a `perfiles_generador` el correo de acc
 
 | Bucket | Visibilidad | Límite | Tipos | Quién sube |
 |---|---|---|---|---|
-| `escaneos_ia` | Público | 5 MB | JPEG, PNG, WEBP | Cada usuario, en su carpeta (`<uid>/…`). Fotos de escaneos y publicaciones. |
+| `escaneos_ia` | Público | 5 MB | JPEG, PNG, WEBP | Cada usuario, en su carpeta (`<uid>/…`). Fotos de las publicaciones (y de escaneos antiguos). |
 | `fotos_perfil` | Público | 2 MB | JPEG, PNG, WEBP | Cada usuario, en su carpeta. Logo y portada de los gestores, foto de los generadores. |
 | `certificados` | Público | 10 MB | PDF | El gestor, en su carpeta. |
 | `permisos` | Privado | 10 MB | PDF | La empresa al registrarse (`registro/`) o al renovarlo (`renovacion/`), y el panel (`admin/`). Solo el servidor lo lee. |
