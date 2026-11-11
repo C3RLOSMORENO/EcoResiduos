@@ -11,6 +11,7 @@ import '../features/auth/screens/restablecer_password_screen.dart';
 import '../features/auth/widgets/campo_contrasena.dart' show validarCorreo;
 import '../features/solicitudes/screens/mis_materiales_screen.dart';
 import '../legal/politica_datos.dart' show correoDatosPersonales;
+import '../screens/manual_usuario_screen.dart';
 import '../services/archivo_pdf.dart';
 import '../services/foto_perfil_service.dart';
 import '../theme/eco_theme.dart';
@@ -603,6 +604,19 @@ class _CuentaBottomSheetState extends State<CuentaBottomSheet> {
                 navigator.push(MaterialPageRoute(builder: (_) => const MisMaterialesScreen()));
               },
             ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('Manual de uso'),
+            subtitle: const Text('Paso a paso, también sin internet'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              final navigator = Navigator.of(context);
+              final esGestor = _sesion.esGestor;
+              navigator.pop();
+              navigator.push(MaterialPageRoute(builder: (_) => ManualUsuarioScreen(esGestor: esGestor)));
+            },
+          ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.tour_outlined),

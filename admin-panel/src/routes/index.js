@@ -15,6 +15,7 @@ const recorridoRoutes = require('./RecorridoRoutes');
 const asistenteRoutes = require('./AsistenteRoutes');
 const { requireAuth } = require('../middlewares/authMiddleware');
 const politicaDatos = require('../utils/politicaDatos');
+const manualUsuario = require('../utils/manualUsuario');
 
 router.use('/', authRoutes);
 // Pública: debe poder leerse sin iniciar sesión.
@@ -35,6 +36,9 @@ router.use('/ciudadanos', requireAuth, generadorRoutes);
 router.use('/reportes', requireAuth, reporteRoutes);
 router.use('/recorridos', requireAuth, recorridoRoutes);
 router.use('/asistente', requireAuth, asistenteRoutes);
+router.get('/manual', requireAuth, (req, res) => {
+    res.render('manual', manualUsuario);
+});
 router.get('/componentes', requireAuth, (req, res) => {
     res.render('componentes', { titulo: 'Componentes', activeTab: '' });
 });

@@ -1,0 +1,84 @@
+<%- include('partials/header', { activeTab: 'manual', titulo: 'Manual de uso' }) %>
+<%
+  // Escribe un texto del manual con lo que va entre ** en negrita. Cada parte se escapa.
+  function textoManual(texto) {
+    return texto.split('**').map(function (parte, i) {
+      const segura = escapar(parte);
+      return i % 2 === 1 ? '<strong>' + segura + '</strong>' : segura;
+    }).join('');
+  }
+  function escapar(t) {
+    return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  let numeroFigura = 0;
+%>
+<div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
+  <div>
+    <h1 class="titulo-pagina">Manual de uso</h1>
+    <p class="mt-1 text-body-l text-on-surface-variant">Panel de administración de EcoResiduos · Versión <%= informacion.version %> · Actualizado el <%= informacion.actualizado %></p>
+  </div>
+
+  <section class="tarjeta flex flex-col gap-3" aria-labelledby="tituloAntes">
+    <h2 id="tituloAntes" class="seccion-titulo">Antes de empezar</h2>
+    <dl class="flex flex-col gap-3 text-body-l text-on-surface">
+      <div><dt class="font-semibold">A quién va dirigido</dt><dd><%= informacion.publico %></dd></div>
+      <div><dt class="font-semibold">Qué necesitas</dt><dd><%= informacion.requisitos %></dd></div>
+      <div><dt class="font-semibold">Cómo leer este manual</dt><dd><%- textoManual(informacion.convenciones) %></dd></div>
+    </dl>
+    <div class="flex gap-3 rounded-lg bg-surface-container p-4" role="note" aria-label="Avisos importantes">
+      <span class="material-symbols-outlined shrink-0" aria-hidden="true">info</span>
+      <ul class="flex list-disc flex-col gap-1 pl-4 text-body-m text-on-surface">
+        <% informacion.avisos.forEach(function (a) { %><li><%= a %></li><% }); %>
+        <li>Consulta la <a href="/privacidad">política de tratamiento de datos</a>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav aria-label="Temas del manual" class="tarjeta">
+    <h2 class="tarjeta-titulo">Temas</h2>
+    <ul class="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2" role="list">
+      <% secciones.forEach(function (s) { %>
+        <li><a href="#<%= s.id %>" class="flex items-center gap-2 rounded-lg px-2 py-1.5"><span class="material-symbols-outlined icono-20" aria-hidden="true"><%= s.icono %></span><%= s.titulo %></a></li>
+      <% }); %>
+      <li><a href="#preguntas" class="flex items-center gap-2 rounded-lg px-2 py-1.5"><span class="material-symbols-outlined icono-20" aria-hidden="true">quiz</span>Preguntas frecuentes</a></li>
+      <li><a href="#soporte" class="flex items-center gap-2 rounded-lg px-2 py-1.5"><span class="material-symbols-outlined icono-20" aria-hidden="true">mail</span>Soporte</a></li>
+    </ul>
+  </nav>
+
+  <% secciones.forEach(function (s) { %>
+    <section id="<%= s.id %>" class="tarjeta flex flex-col gap-3" aria-labelledby="titulo-<%= s.id %>">
+      <h2 id="titulo-<%= s.id %>" class="seccion-titulo flex items-center gap-2">
+        <span class="material-symbols-outlined" aria-hidden="true"><%= s.icono %></span><%= s.titulo %>
+      </h2>
+      <% if (s.intro) { %><p class="text-body-l text-on-surface"><%- textoManual(s.intro) %></p><% } %>
+      <% if (s.pasos && s.pasos.length) { %>
+        <ol class="flex list-decimal flex-col gap-2 pl-6 text-body-l text-on-surface">
+          <% s.pasos.forEach(function (p) { %><li><%- textoManual(p) %></li><% }); %>
+        </ol>
+      <% } %>
+      <% if (s.imagen) { numeroFigura += 1; %>
+        <figure class="flex flex-col gap-2">
+          <img src="<%= recurso(s.imagen.ruta) %>" alt="<%= s.imagen.alt %>" width="1200" height="755" loading="lazy" decoding="async" class="h-auto w-full rounded-lg border border-outline-variant">
+          <figcaption class="text-body-m text-on-surface-variant">Figura <%= numeroFigura %>. <%= s.titulo %>. Captura con datos de prueba.</figcaption>
+        </figure>
+      <% } %>
+    </section>
+  <% }); %>
+
+  <section id="preguntas" class="flex flex-col gap-3" aria-labelledby="tituloPreguntas">
+    <h2 id="tituloPreguntas" class="seccion-titulo">Preguntas frecuentes</h2>
+    <% preguntas.forEach(function (q) { %>
+      <details class="tarjeta">
+        <summary class="cursor-pointer font-semibold text-on-surface"><%= q.pregunta %></summary>
+        <p class="mt-2 text-body-l text-on-surface"><%- textoManual(q.respuesta) %></p>
+      </details>
+    <% }); %>
+  </section>
+
+  <section id="soporte" class="tarjeta flex flex-col gap-2" aria-labelledby="tituloSoporte">
+    <h2 id="tituloSoporte" class="seccion-titulo">Soporte</h2>
+    <p class="text-body-l text-on-surface">Si algo no funciona como dice este manual, escribe a <a href="mailto:<%= informacion.soporte %>"><%= informacion.soporte %></a> con la pantalla en la que estabas, lo que intentabas hacer y el mensaje que apareció.</p>
+  </section>
+</div>
+
+<%- include('partials/footer') %>

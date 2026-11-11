@@ -22,7 +22,7 @@ const SESION = `sb_access_token=token-admin; ${COOKIE_CSRF}`;
 // Si agregas o quitas una ruta, actualiza esta lista y el inventario.
 const INVENTARIO = [
     'GET /', 'GET /accesibilidad', 'GET /privacidad', 'GET /login', 'POST /login', 'POST /auth/login', 'GET /logout', 'POST /logout',
-    'GET /restablecer-password', 'GET /correo-verificado', 'POST /sesion/renovar', 'GET /componentes',
+    'GET /restablecer-password', 'GET /correo-verificado', 'POST /sesion/renovar', 'GET /componentes', 'GET /manual',
     'GET /dashboard',
     'GET /gestores', 'POST /gestores', 'POST /gestores/guardar', 'GET /gestores/nuevo',
     'GET /gestores/edit/:id', 'GET /gestores/editar/:id', 'POST /gestores/edit/:id', 'POST /gestores/editar/:id',
