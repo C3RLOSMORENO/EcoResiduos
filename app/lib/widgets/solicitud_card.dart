@@ -72,8 +72,16 @@ class SolicitudCard extends StatelessWidget {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Flexible(child: CategoriaChip(categoria: categoria)),
-                                  const Spacer(),
+                                  // El chip usa todo el ancho que deja la distancia; con
+                                  // Flexible + Spacer se repartían el espacio por mitades
+                                  // y «Aprovechable» se partía en dos líneas.
+                                  Expanded(
+                                    child: Align(
+                                      alignment: AlignmentDirectional.centerStart,
+                                      child: CategoriaChip(categoria: categoria),
+                                    ),
+                                  ),
+                                  if (distanciaKm != null) const SizedBox(width: EcoSpace.s8),
                                   if (distanciaKm != null)
                                     Text(
                                       'a ${formatoDistancia(distanciaKm!)}',
