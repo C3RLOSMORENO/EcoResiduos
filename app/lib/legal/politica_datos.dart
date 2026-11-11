@@ -6,10 +6,10 @@
 
 /// Versión vigente. Se guarda en `usuarios.autorizacion_datos_version` al
 /// aceptar.
-const versionPoliticaDatos = '2026-10-30';
+const versionPoliticaDatos = '2026-11-11';
 
 /// Correo para consultas, reclamos y revocatorias.
-const correoDatosPersonales = 'soporte@ecoresiduos.com';
+const correoDatosPersonales = 'soporte.ecoresiduos@gmail.com';
 
 class SeccionPolitica {
   const SeccionPolitica(this.titulo, this.parrafos);
@@ -30,7 +30,7 @@ const politicaDatos = [
         'foto, material y cantidad del residuo.',
     'Si te registras como empresa gestora: razón social, NIT, representante legal, correo, teléfono, dirección, '
         'horario, permiso o licencia ambiental en PDF, materiales que recibes, logo, portada y los certificados que cargas.',
-    'Cuando usas la cámara para identificar un residuo, la foto se analiza en tu teléfono y se guarda en tu historial de escaneos.',
+    'Cuando usas la cámara para identificar un residuo, la foto se analiza en tu teléfono y no se sube. En tu historial de escaneos guardamos solo el resultado: el residuo, la categoría y la confianza. La foto se sube solo si publicas el residuo.',
     'No recogemos datos sensibles (salud, origen étnico, orientación política, religiosa o sexual, ni datos biométricos). '
         'La aplicación no está dirigida a menores de 18 años.',
   ]),

@@ -4,8 +4,8 @@
 // (app/lib/legal/politica_datos.dart): si cambias uno, cambia el otro y sube
 // la versión. pruebas/privacidad.test.js revisa que coincidan.
 
-const VERSION = '2026-10-30';
-const CORREO = 'soporte@ecoresiduos.com';
+const VERSION = '2026-11-11';
+const CORREO = 'soporte.ecoresiduos@gmail.com';
 
 const SECCIONES = [
     ['Responsable', [
@@ -19,7 +19,7 @@ const SECCIONES = [
             + 'foto, material y cantidad del residuo.',
         'Si te registras como empresa gestora: razón social, NIT, representante legal, correo, teléfono, dirección, '
             + 'horario, permiso o licencia ambiental en PDF, materiales que recibes, logo, portada y los certificados que cargas.',
-        'Cuando usas la cámara para identificar un residuo, la foto se analiza en tu teléfono y se guarda en tu historial de escaneos.',
+        'Cuando usas la cámara para identificar un residuo, la foto se analiza en tu teléfono y no se sube. En tu historial de escaneos guardamos solo el resultado: el residuo, la categoría y la confianza. La foto se sube solo si publicas el residuo.',
         'No recogemos datos sensibles (salud, origen étnico, orientación política, religiosa o sexual, ni datos biométricos). '
             + 'La aplicación no está dirigida a menores de 18 años.'
     ]],

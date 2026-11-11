@@ -228,15 +228,19 @@ COMMENT ON COLUMN public.postulaciones_recoleccion.modalidad_entrega IS
     'RECOLECCION_DOMICILIO: el gestor recoge en la dirección del generador. ENTREGA_EN_GESTOR: el generador lleva el material al punto del gestor.';
 
 -- historial_escaneos_ia: cada residuo identificado por la IA en la app.
+-- Guarda solo el resultado. La foto del escaneo no sale del teléfono: se sube
+-- únicamente si el usuario publica el residuo (Ley 1581 de 2012, RNF-08).
+-- imagen_path queda para los escaneos antiguos que sí tenían foto.
 CREATE TABLE IF NOT EXISTS public.historial_escaneos_ia (
     id                   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     usuario_id           UUID   NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
     nombre_detectado     TEXT   NOT NULL,
     categoria_detectada  TEXT   NOT NULL,
     nivel_confianza      NUMERIC(5,4) NOT NULL,
-    imagen_path          TEXT   NOT NULL,
+    imagen_path          TEXT,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.historial_escaneos_ia ALTER COLUMN imagen_path DROP NOT NULL;
 
 -- solicitudes_historial_estados: log de cambios de estado de cada solicitud.
 -- Lo escribe el trigger al_cambiar_solicitud.

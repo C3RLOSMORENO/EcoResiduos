@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/historial_escaneo_ia.dart';
 import '../models/waste_item.dart';
-import 'fotos_service.dart';
 
 /// Historial de escaneos con IA (tabla `historial_escaneos_ia`).
 class HistorialService {
@@ -18,28 +17,25 @@ class HistorialService {
     }
   }
 
-  /// Sube la foto y registra el escaneo. No se espera su resultado: si falla,
-  /// el usuario igual ve su resultado.
-  static Future<void> guardarEscaneoEnSegundoPlano(WasteItem item, String imagePath) async {
+  /// Registra el resultado del escaneo, sin la foto: la foto no sale del
+  /// teléfono salvo que el usuario publique el residuo (Ley 1581 de 2012,
+  /// RNF-08). No se espera su resultado: si falla, el usuario igual ve su
+  /// resultado.
+  static Future<void> guardarEscaneoEnSegundoPlano(WasteItem item) async {
     final client = _supabase;
     if (client == null) return;
     final userId = client.auth.currentUser?.id;
     if (userId == null) return;
 
-    final fotos = FotosService(client: client);
-    String? imageUrl;
     try {
-      imageUrl = await fotos.subir(imagePath, CarpetaFoto.escaneos);
       await client.from('historial_escaneos_ia').insert({
         'usuario_id': userId,
         'nombre_detectado': item.nombre,
         'categoria_detectada': item.categoria,
         'nivel_confianza': item.confianza,
-        'imagen_path': imageUrl,
       });
     } catch (e) {
       debugPrint('No se pudo guardar el escaneo en el historial: $e');
-      await fotos.eliminar(imageUrl);
     }
   }
 
