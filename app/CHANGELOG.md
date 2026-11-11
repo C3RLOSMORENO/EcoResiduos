@@ -2,6 +2,14 @@
 
 Cada versión publicada en [Releases](https://github.com/C3RLOSMORENO/EcoResiduos/releases) muestra la sección que le corresponde. El encabezado de cada sección debe ser `## X.Y.Z`, igual a la versión de `pubspec.yaml`.
 
+## 1.3.0
+
+- En Cuenta hay una opción nueva, Manual de uso, con los pasos para usar la app según tu rol: quien tiene residuos ve cómo identificarlos, publicarlos y confirmar la recolección, y la empresa gestora ve cómo postularse, recoger y cargar el certificado. Funciona sin internet y desde ahí se puede repetir el recorrido en pantalla.
+- La foto de un residuo identificado ya no se sube al servidor. El historial de escaneos guarda solo el resultado (residuo, categoría y confianza), y la foto se sube únicamente cuando publicas el residuo.
+- La política de tratamiento de datos se actualizó para decirlo (versión 2026-11-11). La app pide aceptarla de nuevo la próxima vez que entres.
+- El correo de soporte ahora es soporte.ecoresiduos@gmail.com, en la política de datos y en el manual.
+- En Solicitudes, el nombre de la categoría de cada tarjeta se lee en una sola línea; antes «Aprovechable» y «Peligroso (RESPEL)» se partían en dos o tres.
+
 ## 1.2.0
 
 - Antes de instalar esta versión hay que desinstalar la 1.1.0: la app tiene ahora su propio identificador, co.edu.udes.ecoresiduos, y Android la toma como una app nueva. La cuenta y las publicaciones siguen igual, porque se guardan en el servidor.

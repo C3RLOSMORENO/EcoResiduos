@@ -42,6 +42,7 @@ const RUTAS_GET = [
     '/ciudadanos?q=laura&municipio=Bucaramanga',
     '/reportes',
     '/reportes?desde=2026-09-01&hasta=2026-09-30&categoria=PELIGROSO',
+    '/manual',
     '/componentes'
 ];
 
@@ -316,4 +317,35 @@ test('el permiso que se sube desde el panel no puede pasar de 4 MB', async () =>
     const gestorService = require('../src/services/GestorService');
     const grande = Buffer.concat([Buffer.from('%PDF-1.7'), Buffer.alloc(4 * 1024 * 1024)]);
     await assert.rejects(() => gestorService.subirPermiso(1, grande), /supera los 4 MB/);
+});
+
+test('el manual de uso muestra sus temas y está enlazado en el menú', async () => {
+    const { informacion, secciones, preguntas } = require('../src/utils/manualUsuario');
+    const res = await request(app).get('/manual').set('Cookie', SESION);
+    assert.equal(res.status, 200);
+    // Elementos de ISO/IEC/IEEE 26514: versión y fecha, público, avisos y soporte.
+    assert.ok(res.text.includes(`Versión ${informacion.version} · Actualizado el ${informacion.actualizado}`));
+    assert.match(res.text, /A quién va dirigido/);
+    assert.match(res.text, /href="\/privacidad"/);
+    assert.ok(res.text.includes(`mailto:${informacion.soporte}`));
+    // Cada imagen existe, tiene texto alternativo y no frena la carga de la página.
+    const fs = require('fs');
+    const path = require('path');
+    for (const s of secciones.filter((x) => x.imagen)) {
+        assert.ok(fs.existsSync(path.join(__dirname, '../src/public', s.imagen.ruta)), s.imagen.ruta);
+        assert.ok(s.imagen.alt.length > 20, s.id);
+        assert.ok(res.text.includes(`alt="${s.imagen.alt}"`), s.id);
+    }
+    assert.equal((res.text.match(/loading="lazy"/g) || []).length, secciones.filter((x) => x.imagen).length);
+    assert.match(res.text, /<h1 class="titulo-pagina">Manual de uso<\/h1>/);
+    for (const s of secciones) assert.ok(res.text.includes(`id="${s.id}"`), s.id);
+    assert.match(res.text, /<strong>Descargar Excel<\/strong>/);
+    assert.doesNotMatch(res.text, /\*\*/);
+    assert.match(res.text, /href="\/manual" class="nav-item mb-2" aria-current="page"/);
+    for (const t of [...secciones.flatMap((s) => [s.intro, ...(s.pasos || [])]), ...preguntas.map((q) => q.respuesta)]) {
+        if (t) assert.equal(t.split('**').length % 2, 1, t);
+    }
+
+    const inicio = await request(app).get('/dashboard').set('Cookie', SESION);
+    assert.match(inicio.text, /href="\/manual" class="nav-item mb-2"/);
 });
